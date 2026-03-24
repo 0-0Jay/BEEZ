@@ -1,34 +1,41 @@
-<script setup>
-import { useLayout } from '@/layout/composables/layout';
-import { computed } from 'vue';
-import AppFooter from './AppFooter.vue';
-import AppSidebar from './AppSidebar.vue';
-import AppTopbar from './AppTopbar.vue';
-
-const { layoutConfig, layoutState, hideMobileMenu } = useLayout();
-
-const containerClass = computed(() => {
-  return {
-    'layout-overlay': layoutConfig.menuMode === 'overlay',
-    'layout-static': layoutConfig.menuMode === 'static',
-    'layout-overlay-active': layoutState.overlayMenuActive,
-    'layout-mobile-active': layoutState.mobileMenuActive,
-    'layout-static-inactive': layoutState.staticMenuInactive
-  };
-});
-</script>
-
 <template>
-  <div class="layout-wrapper" :class="containerClass">
+  <div class="flex h-screen">
+    <!-- 사이드바 -->
     <AppSidebar />
-    <AppTopbar />
-    <div class="layout-main-container">
-      <div class="layout-main">
-        <router-view />
+
+    <!-- 메인 영역 -->
+    <div class="flex-1 flex flex-col">
+      <!-- 헤더 -->
+      <AppHeader />
+
+      <!-- 페이지 -->
+      <div class="p-4 bg-gray-100 flex-1 overflow-auto">
+        <router-view @selectProject="setProject" />
       </div>
-      <AppFooter />
     </div>
-    <div class="layout-mask animate-fadein" @click="hideMobileMenu" />
   </div>
-  <Toast />
 </template>
+
+<script setup>
+import { provide, ref } from 'vue';
+import AppHeader from './AppHeader.vue';
+import AppSidebar from './AppSidebar.vue';
+
+// 사이드바 상태
+const isOpen = ref(true);
+const toggleMenu = () => {
+  isOpen.value = !isOpen.value;
+};
+
+// 프로젝트 상태
+const selectedProject = ref(null);
+
+const setProject = (project) => {
+  selectedProject.value = project;
+};
+
+// provide로 전역 공유
+provide('menuState', isOpen);
+provide('toggleMenu', toggleMenu);
+provide('selectedProject', selectedProject);
+</script>
