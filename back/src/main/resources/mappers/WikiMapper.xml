@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.beez.beez.wiki.mapper.WikiMapper">
+  
+  <insert id="insertWiki" parameterType="com.beez.beez.wiki.dto.WikiRequest">
+    INSERT INTO wiki (id, project_id, version_id)
+    VALUES (#{id}, #{projectId}, #{versionId})
+  </insert>
+  
+  <insert id="insertWikiVersion" parameterType="com.beez.beez.wiki.dto.WikiVersionRequest">
+    INSERT INTO wiki_version ( version_id, content, user_id, created_on, wiki_id, description, version_name, links )
+    VALUES                   ( #{versionId}, #{content}, #{userId}, SYSTIMESTAMP, #{wikiId}, #{description}, #{versionName}, #{links} )
+  </insert>
+
+  <select id="selectWikiList" parameterType="com.beez.beez.wiki.dto.WikiRequest">
+    SELECT id, project_id, version_id
+    FROM wiki
+    WHERE project_id = #{project_id}
+  </select>
+  
+  <select id="selectLatestVersion" parameterType="com.beez.beez.wiki.dto.WikiVersionRequest">
+    SELECT * FROM (
+      SELECT * FROM wiki_version
+      WHERE wiki_id = #{wikiId}
+      ORDER BY created_on DESC )
+    WHERE ROWNUM = 1
+  </select>
+  
+</mapper>
