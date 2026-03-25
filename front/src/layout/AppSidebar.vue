@@ -1,6 +1,6 @@
 <template>
   <div :class="['bg-gray-900 text-white h-full transition-all duration-300 overflow-hidden flex flex-col', isOpen ? 'w-64' : 'w-20']">
-    <!-- 펼쳐진 상태 헤더 -->
+    <!-- 펼쳐진 상태 사이드바 상단 -->
     <div v-if="isOpen" class="flex items-center justify-between h-20 px-5 shrink-0">
       <div v-show="showContent" class="flex items-center gap-2">
         <img src="/demo/images/logo.png" alt="logo" class="w-10 h-10 object-contain shrink-0" />
@@ -11,7 +11,7 @@
       </div>
     </div>
 
-    <!-- 접힌 상태 헤더 -->
+    <!-- 접힌 상태 사이드바 상단 -->
     <div v-else class="flex flex-col items-center px-5 py-5 pb-2 shrink-0 gap-2">
       <template v-if="showContent">
         <img src="/demo/images/logo.png" alt="logo" class="w-10 h-10 object-contain" />
