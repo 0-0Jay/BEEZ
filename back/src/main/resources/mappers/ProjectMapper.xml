@@ -3,9 +3,9 @@
 <mapper namespace="com.beez.beez.project.mapper.ProjectMapper">
 
 <!--  프로젝트 생성  -->
-  <insert id="insertProject" parameterType="ProjectCreateRequest">
+  <insert id="insertProject" parameterType="com.beez.beez.project.dto.ProjectCreateRequest">
     <selectKey keyProperty="id" resultType="string" order="BEFORE">
-      SELECT gernerate_pk('project') FROM dual
+      SELECT BEEZ.generate_pk_auto('project') FROM dual
     </selectKey>
       
       INSERT INTO project (
@@ -30,7 +30,7 @@
         #{isPublic},
         #{parentId},
         SYSDATE,
-        #{SYSDATE},
+        SYSDATE,
         #{endDate},
         'K1',
         'L0',
@@ -38,5 +38,15 @@
         #{userId}
     )
   </insert>
+  
+  <!--  프로젝트 목록 조회  -->
+  <select id="findAllProjects">
+    SELECT id,
+           title,
+           user_id,
+           end_date
+    FROM project
+    ORDER BY id
+  </select>
 
 </mapper>
