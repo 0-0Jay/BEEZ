@@ -1,110 +1,160 @@
 <script setup>
 import { useChatStore } from '@/stores/chat';
-import SockJS from 'sockjs-client';
-import Stomp from 'stompjs';
+import { Client } from '@stomp/stompjs';
 import { nextTick, onMounted, ref } from 'vue';
 
-const chatStore = useChatStore();
+/* ---------------- 상태 ---------------- */
 const isOpen = ref(false);
 const message = ref('');
-const messagesContainer = ref(null);
+const messages = ref([]);
 const replyTarget = ref(null);
+const messagesContainer = ref(null);
+const unreadCount = ref(0);
+const hasNewMessage = ref(false); // "새로운 채팅이 있습니다." 배너 표시 여부
+const chatStore = useChatStore();
 
-const stompClient = ref(null);
-const projectId = 'testproject';
+const projectId = 'PROJ260326001';
+const userId = '20261111';
+const userName = '김개발';
 
-onMounted(async () => {
-  const res = chatStore.findChatList(projectId);
-  message.value = res;
-  connect();
-});
+let stompClient = null;
 
-const connect = () => {
-  const socket = new SockJS('http://localhost:8888/ws/chat');
-  stompClient.value = Stomp.over(socket);
-
-  stompClient.value.connect({}, () => {
-    console.log('connected');
-
-    // 구독
-    stompClient.value.subscribe(`/chat/${projectId}`, (res) => {
-      const msg = JSON.parse(res.body);
-
-      messages.value.push({
-        id: msg.id,
-        text: msg.text,
-        isMine: false,
-        time: msg.createdOn,
-        userId: msg.userId,
-        userName: msg.userName,
-        replyTo: msg.parentId
-      });
-    });
-  });
-};
-
-const messages = ref([
-  { id: 1, text: '안녕하세요! 무엇을 도와드릴까요? 😊', isMine: false, time: '오후 2:30', userId: 20261111, userName: '김개발', replyTo: null },
-  { id: 2, text: '네, 주문 관련해서 문의드리고 싶어요.', isMine: true, time: '오후 2:31', userId: 20261111, userName: '김개발', replyTo: null },
-  { id: 3, text: '물론이죠! 주문 번호를 알려주시겠어요?', isMine: false, time: '오후 2:31', userId: 20261111, userName: '김개발', replyTo: null },
-  {
-    id: 4,
-    text: '주문 번호는 ORD-20240325-001 입니다!',
-    isMine: true,
-    time: '오후 2:32',
-    userId: 20261111,
-    userName: '김개발',
-    replyTo: { id: 3, text: '물론이죠! 주문 번호를 알려주시겠어요?', userName: '김개발' }
-  },
-  {
-    id: 5,
-    text: '확인했습니다. 해당 주문은 현재 배송 중입니다.',
-    isMine: false,
-    time: '오후 2:33',
-    userId: 20261111,
-    userName: '김개발',
-    replyTo: { id: 4, text: '주문 번호는 ORD-20240325-001 입니다!', userName: '김개발' }
-  }
-]);
-
+/* ---------------- 채팅창 토글 ---------------- */
 const toggleChat = () => {
   isOpen.value = !isOpen.value;
+  if (isOpen.value) {
+    unreadCount.value = 0;
+    scrollToBottom();
+  }
 };
 
+/* ---------------- 스크롤 하단 여부 판단 ---------------- */
+const isNearBottom = () => {
+  const el = messagesContainer.value;
+  if (!el) return true;
+  return el.scrollHeight - el.scrollTop - el.clientHeight < 100; // 하단에서 100px 이내면 "최하단"으로 간주
+};
+
+/* ---------------- 스크롤 ---------------- */
+const scrollToBottom = async () => {
+  await nextTick();
+  if (messagesContainer.value) {
+    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+    hasNewMessage.value = false;
+  }
+};
+
+const scrollToMessage = async (id) => {
+  await nextTick();
+  const el = document.getElementById(`msg-${id}`);
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.classList.add('highlight');
+    setTimeout(() => el.classList.remove('highlight'), 1500);
+  }
+};
+
+/* ---------------- 새 메시지 수신 처리 ---------------- */
+const handleNewMessage = (mapped) => {
+  messages.value.push(mapped);
+  linkReplies();
+
+  if (isOpen.value) {
+    if (isNearBottom()) {
+      scrollToBottom();
+    } else {
+      hasNewMessage.value = true;
+    }
+  } else {
+    unreadCount.value++;
+  }
+};
+
+/* ---------------- 답장 ---------------- */
 const setReply = (msg) => {
-  replyTarget.value = { id: msg.id, text: msg.text, userName: msg.userName };
-  nextTick(() => document.querySelector('.msg-input')?.focus());
+  replyTarget.value = msg;
 };
-
 const cancelReply = () => {
   replyTarget.value = null;
 };
 
-const scrollToMessage = (targetId) => {
-  const el = document.getElementById(`msg-${targetId}`);
-  if (!el) return;
-  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  el.classList.add('highlight');
-  setTimeout(() => el.classList.remove('highlight'), 1500);
+/* ---------------- 메시지 변환 ---------------- */
+const mapMessage = (chat) => ({
+  id: chat.id || Date.now(),
+  text: chat.content,
+  userId: chat.userId,
+  userName: chat.name || null,
+  time: chat.createdOn ? new Date(chat.createdOn).toLocaleTimeString() : new Date().toLocaleTimeString(),
+  isMine: chat.userId === userId,
+  parentId: chat.parentId,
+  replyTo: null
+});
+
+/* ---------------- 부모 메시지 연결 ---------------- */
+const linkReplies = () => {
+  const map = {};
+  messages.value.forEach((m) => (map[m.id] = m));
+  messages.value.forEach((m) => {
+    if (m.parentId && map[m.parentId]) {
+      m.replyTo = {
+        id: map[m.parentId].id,
+        userName: map[m.parentId].userName,
+        text: map[m.parentId].text
+      };
+    }
+  });
 };
 
-const sendMessage = async () => {
+/* ---------------- 메시지 전송 ---------------- */
+const sendMessage = () => {
   if (!message.value.trim()) return;
-  const time = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
-  messages.value.push({
-    id: Date.now(),
-    text: message.value,
-    isMine: true,
-    time,
-    userId: 20261111,
-    userName: '김개발',
-    replyTo: replyTarget.value ? { ...replyTarget.value } : null
+
+  stompClient.publish({
+    destination: `/send/chat/${projectId}`,
+    body: JSON.stringify({
+      userId,
+      content: message.value,
+      parentId: replyTarget.value ? replyTarget.value.id : null
+    })
   });
+
   message.value = '';
   replyTarget.value = null;
-  await nextTick();
-  if (messagesContainer.value) messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
 };
+
+/* ---------------- 웹소켓 연결 ---------------- */
+const connect = () => {
+  stompClient = new Client({
+    brokerURL: 'ws://localhost:8888/ws/chat',
+    reconnectDelay: 5000,
+    onConnect: () => {
+      stompClient.subscribe(`/chat/${projectId}`, (msg) => {
+        const data = JSON.parse(msg.body);
+        const mapped = mapMessage({ ...data, userName: data.userName || data.userId });
+        handleNewMessage(mapped);
+      });
+    }
+  });
+  stompClient.activate();
+};
+
+/* ---------------- 초기 메시지 조회 ---------------- */
+const loadMessages = async () => {
+  try {
+    const res = await chatStore.findChatList(projectId);
+    messages.value = res.map(mapMessage);
+    linkReplies();
+    scrollToBottom();
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+/* ---------------- lifecycle ---------------- */
+onMounted(() => {
+  loadMessages();
+  connect();
+});
 </script>
 
 <template>
@@ -113,8 +163,8 @@ const sendMessage = async () => {
     <Transition name="chat-slide">
       <div v-if="isOpen" class="chat-window fixed bottom-8 right-[90px] w-[340px] h-[480px] bg-white rounded-[20px] flex flex-col overflow-hidden">
         <!-- 헤더 -->
-        <div class="flex items-center justify-between px-[18px] shrink-0 bg-[#f5a623]">
-          <p class="text-[15px] font-bold text-white pt-4">프로젝트 이름</p>
+        <div class="flex items-center justify-between px-[18px] py-4 shrink-0 bg-[#f5a623]">
+          <p class="text-[15px] font-bold text-white m-0">프로젝트 이름</p>
           <button class="close-btn w-[30px] h-[30px] rounded-full flex items-center justify-center border-none cursor-pointer text-white" @click="toggleChat">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M1 1L13 13M13 1L1 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
@@ -122,42 +172,58 @@ const sendMessage = async () => {
           </button>
         </div>
 
-        <!-- 메시지 영역 -->
-        <div ref="messagesContainer" class="messages-area flex-1 px-[14px] py-4 overflow-y-auto bg-[#fafafa] flex flex-col gap-[10px] scroll-smooth">
-          <div v-for="msg in messages" :id="`msg-${msg.id}`" :key="msg.id" class="flex" :class="msg.isMine ? 'justify-end' : 'justify-start'">
-            <div class="flex flex-col gap-1 max-w-[78%]" :class="msg.isMine ? 'items-end' : 'items-start'">
-              <!-- 답장 인용 블록 -->
-              <button
-                v-if="msg.replyTo"
-                class="reply-quote flex items-center gap-[7px] px-[10px] py-[6px] pl-2 rounded-[10px] border-none cursor-pointer text-left w-full"
-                :class="msg.isMine ? 'bg-[rgba(245,166,35,0.13)]' : 'bg-black/5'"
-                @click="scrollToMessage(msg.replyTo.id)"
-              >
-                <div class="w-[3px] self-stretch rounded-sm shrink-0" :class="msg.isMine ? 'bg-[#f5a623]' : 'bg-[#bbb]'"></div>
-                <div class="flex flex-col gap-[2px] flex-1 min-w-0">
-                  <span class="text-[11px] font-bold" :class="msg.isMine ? 'text-[#e8970f]' : 'text-[#888]'">{{ msg.replyTo.userName }}</span>
-                  <span class="text-[12px] text-[#777] truncate">{{ msg.replyTo.text }}</span>
-                </div>
-                <svg class="text-[#ccc] shrink-0" width="12" height="12" viewBox="0 0 24 24" fill="none">
-                  <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </button>
-
-              <!-- 말풍선 + 답장 버튼 -->
-              <div class="bubble-group flex items-center gap-1" :class="msg.isMine ? 'flex-row' : 'flex-row-reverse'">
-                <button class="reply-btn p-[5px] rounded-full border-none cursor-pointer flex items-center justify-center shrink-0 text-[#ccc] opacity-0 transition-all duration-150" @click="setReply(msg)" title="답장">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-                    <path d="M9 17L4 12L9 7M4 12H15C17.2091 12 19 13.7909 19 16V20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        <!-- 메시지 영역 (relative로 배너 기준점) -->
+        <div class="relative flex-1 overflow-hidden">
+          <div ref="messagesContainer" class="messages-area h-full px-[14px] py-4 overflow-y-auto bg-[#fafafa] flex flex-col gap-[10px] scroll-smooth">
+            <div v-for="msg in messages" :id="`msg-${msg.id}`" :key="msg.id" class="flex" :class="msg.isMine ? 'justify-end' : 'justify-start'">
+              <div class="flex flex-col gap-1 max-w-[78%]" :class="msg.isMine ? 'items-end' : 'items-start'">
+                <!-- 답장 인용 블록 -->
+                <button
+                  v-if="msg.replyTo"
+                  class="reply-quote flex items-center gap-[7px] px-[10px] py-[6px] pl-2 rounded-[10px] border-none cursor-pointer text-left w-full"
+                  :class="msg.isMine ? 'bg-[rgba(245,166,35,0.13)]' : 'bg-black/5'"
+                  @click="scrollToMessage(msg.replyTo.id)"
+                >
+                  <div class="w-[3px] self-stretch rounded-sm shrink-0" :class="msg.isMine ? 'bg-[#f5a623]' : 'bg-[#bbb]'"></div>
+                  <div class="flex flex-col gap-[2px] flex-1 min-w-0">
+                    <span class="text-[11px] font-bold" :class="msg.isMine ? 'text-[#e8970f]' : 'text-[#888]'">{{ msg.replyTo.userName }}</span>
+                    <span class="text-[12px] text-[#777] truncate">{{ msg.replyTo.text }}</span>
+                  </div>
+                  <svg class="text-[#ccc] shrink-0" width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                   </svg>
                 </button>
-                <div class="bubble px-[14px] py-[10px] rounded-[18px] text-[14px] leading-[1.5] break-words" :class="msg.isMine ? 'bg-[#f5a623] text-white rounded-br-[4px]' : 'bg-white text-[#1a1a1a] rounded-bl-[4px] bubble-theirs'">
-                  {{ msg.text }}
-                </div>
-              </div>
 
-              <span class="text-[11px] text-[#bbb]">{{ msg.userName }}({{ msg.userId }}) · {{ msg.time }}</span>
+                <!-- 말풍선 + 답장 버튼 -->
+                <div class="bubble-group flex items-center gap-1" :class="msg.isMine ? 'flex-row' : 'flex-row-reverse'">
+                  <button class="reply-btn p-[5px] rounded-full border-none cursor-pointer flex items-center justify-center shrink-0 text-[#ccc] opacity-0 transition-all duration-150" @click="setReply(msg)" title="답장">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                      <path d="M9 17L4 12L9 7M4 12H15C17.2091 12 19 13.7909 19 16V20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </button>
+                  <div class="bubble px-[14px] py-[10px] rounded-[18px] text-[14px] leading-[1.5] break-words" :class="msg.isMine ? 'bg-[#f5a623] text-white rounded-br-[4px]' : 'bg-white text-[#1a1a1a] rounded-bl-[4px] bubble-theirs'">
+                    {{ msg.text }}
+                  </div>
+                </div>
+
+                <span class="text-[11px] text-[#bbb]">{{ msg.userName }}({{ msg.userId }}) · {{ msg.time }}</span>
+              </div>
             </div>
           </div>
+
+          <!-- 새 메시지 배너 -->
+          <Transition name="banner-slide">
+            <button
+              v-if="hasNewMessage"
+              class="new-msg-banner absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-[7px] rounded-full border-none cursor-pointer text-white text-[13px] font-semibold whitespace-nowrap"
+              @click="scrollToBottom"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M12 5V19M12 19L5 12M12 19L19 12" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              새로운 채팅이 있습니다.
+            </button>
+          </Transition>
         </div>
 
         <!-- 답장 미리보기 바 -->
@@ -211,15 +277,17 @@ const sendMessage = async () => {
           <path d="M18 6L6 18M6 6L18 18" stroke="white" stroke-width="2.5" stroke-linecap="round" />
         </svg>
       </Transition>
-      <span v-if="!isOpen" class="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center border-2 border-white">3</span>
+
+      <Transition name="badge-pop">
+        <span v-if="!isOpen && unreadCount > 0" class="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center border-2 border-white leading-none">
+          {{ unreadCount > 99 ? '99+' : unreadCount }}
+        </span>
+      </Transition>
     </button>
   </div>
 </template>
 
 <style>
-/* ── Tailwind로 표현 불가한 것만 남김 ── */
-
-/* 채팅창 그림자 */
 .chat-window {
   box-shadow:
     0 20px 60px rgba(0, 0, 0, 0.12),
@@ -227,7 +295,6 @@ const sendMessage = async () => {
   font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif;
 }
 
-/* 헤더 닫기 버튼 호버 */
 .close-btn {
   background: rgba(255, 255, 255, 0.2);
   transition: background 0.2s;
@@ -236,7 +303,6 @@ const sendMessage = async () => {
   background: rgba(255, 255, 255, 0.35);
 }
 
-/* 메시지 스크롤바 */
 .messages-area::-webkit-scrollbar {
   width: 4px;
 }
@@ -248,14 +314,12 @@ const sendMessage = async () => {
   border-radius: 4px;
 }
 
-/* 상대방 말풍선 그림자 */
 .bubble-theirs {
   box-shadow:
     0 1px 6px rgba(0, 0, 0, 0.08),
     0 0 0 1px rgba(0, 0, 0, 0.05);
 }
 
-/* 말풍선 호버 시 답장 버튼 노출 */
 .bubble-group:hover .reply-btn {
   opacity: 1;
 }
@@ -264,7 +328,6 @@ const sendMessage = async () => {
   background: rgba(245, 166, 35, 0.1);
 }
 
-/* 답장 인용 블록 호버 */
 .reply-quote {
   transition:
     opacity 0.15s,
@@ -275,7 +338,6 @@ const sendMessage = async () => {
   transform: translateY(-1px);
 }
 
-/* 전송 버튼 그림자 & 호버 */
 .send-btn {
   box-shadow: 0 2px 8px rgba(245, 166, 35, 0.4);
 }
@@ -283,7 +345,6 @@ const sendMessage = async () => {
   background: #e8970f !important;
 }
 
-/* 토글 버튼 그림자 & 호버 */
 .toggle-btn {
   box-shadow:
     0 4px 20px rgba(245, 166, 35, 0.5),
@@ -296,7 +357,21 @@ const sendMessage = async () => {
     0 2px 10px rgba(0, 0, 0, 0.12);
 }
 
-/* 원본 메시지 하이라이트 */
+.new-msg-banner {
+  background: #f5a623;
+  box-shadow:
+    0 4px 16px rgba(245, 166, 35, 0.45),
+    0 1px 4px rgba(0, 0, 0, 0.12);
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
+}
+.new-msg-banner:hover {
+  box-shadow:
+    0 6px 20px rgba(245, 166, 35, 0.55),
+    0 2px 6px rgba(0, 0, 0, 0.14);
+}
+
 @keyframes highlight-pulse {
   0% {
     box-shadow: none;
@@ -312,7 +387,33 @@ const sendMessage = async () => {
   animation: highlight-pulse 1.5s ease;
 }
 
-/* Vue Transition */
+.badge-pop-enter-active {
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.badge-pop-leave-active {
+  transition: all 0.15s ease-in;
+}
+.badge-pop-enter-from,
+.badge-pop-leave-to {
+  opacity: 0;
+  transform: scale(0.4);
+}
+
+.banner-slide-enter-active {
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.banner-slide-leave-active {
+  transition: all 0.18s ease-in;
+}
+.banner-slide-enter-from {
+  opacity: 0;
+  transform: translateX(-50%) translateY(12px);
+}
+.banner-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(12px);
+}
+
 .chat-slide-enter-active {
   transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -349,10 +450,7 @@ const sendMessage = async () => {
 .preview-slide-leave-active {
   transition: all 0.15s ease;
 }
-.preview-slide-enter-from {
-  opacity: 0;
-  transform: translateY(6px);
-}
+.preview-slide-enter-from,
 .preview-slide-leave-to {
   opacity: 0;
   transform: translateY(6px);
