@@ -1,7 +1,10 @@
 <script setup>
+import Notification from '@/components/notification/Notification.vue';
 import { inject } from 'vue';
 
 const selectedProject = inject('selectedProject');
+
+const userId = '20261111';
 </script>
 
 <template>
@@ -26,9 +29,7 @@ const selectedProject = inject('selectedProject');
     <div class="flex items-center gap-4 pr-10">
       <Button icon="pi pi-user" label="사용자명" plain text size="large" />
       <div class="relative inline-flex">
-        <Button icon="pi pi-bell" label="알림" plain text size="large" />
-        <!-- 알림이 있을 때만 표시 -->
-        <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+        <Notification :user-id="userId" />
       </div>
       <Button icon="pi pi-sign-out" label="로그아웃" plain text size="large" />
     </div>

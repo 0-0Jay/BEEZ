@@ -10,10 +10,11 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@Controller
+@RestController
 @RequiredArgsConstructor
 public class ChatController {
   private final ChatService chatService;
@@ -25,7 +26,7 @@ public class ChatController {
     return chat;
   }
   
-  @GetMapping("/chat/{projectId}")
+  @GetMapping("/api/chat/{projectId}")
   public List<ChatVo> getChats(@PathVariable String projectId) {
     return chatService.findChatList(projectId);
   }

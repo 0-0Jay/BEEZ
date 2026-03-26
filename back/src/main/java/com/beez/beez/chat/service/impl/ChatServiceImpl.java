@@ -19,8 +19,7 @@ public class ChatServiceImpl implements ChatService {
   
   @Override
   public void sendChat(String projectId, ChatSendRequest chat) {
-    ChatVo vo = new ChatVo(projectId, chat);
-    chatMapper.insertChat(vo);
+    chatRepository.insertChat(projectId, chat.getUserId(), chat.getContent(), chat.getParentId());
   }
   
   @Override

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.beez.beez.chat.mapper.ChatMapper">
-  <insert id="insertChat">
-    <selectKey keyProperty="id" resultType="String" order="BEFORE">
-      SELECT generate_pk('chat') FROM dual
-    </selectKey>
-    INSERT INTO chat(id, project_id, user_id, content, created_on, parent_id)
-    VALUES(#{id}, #{project_id}, #{user_id}, #{content}, #{created_on}, #{parent_id})
-  </insert>
+  <select id="findChatList" resultType="ChatVo">
+    SELECT c.id, c.user_id, c.content, c.created_on, c.parent_id, u.name
+    FROM chat c
+    JOIN users u ON c.user_id = u.id
+    WHERE c.project_id = #{projectId}
+    ORDER BY c.created_on
+  </select>
 </mapper>
