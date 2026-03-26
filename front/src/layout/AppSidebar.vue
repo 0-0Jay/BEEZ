@@ -69,7 +69,7 @@ watch(isOpen, (val) => {
       </router-link>
       <div v-if="selectedProject" class="mt-1">
         <div class="px-3 py-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap">
-          {{ selectedProject.name }}
+          {{ selectedProject.title }}
         </div>
         <div class="mt-1 space-y-0.5">
           <div class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150">개요</div>
