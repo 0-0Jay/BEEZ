@@ -12,9 +12,10 @@ import java.util.List;
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, String> {
   // 특정 유저의 모든 알림 조회 (최신순)
-  List<Notification> findByUserIdOrderByCreatedAtDesc(String userId);
+  List<Notification> findByUserIdOrderByCreatedOnDesc(String userId);
   
   // 특정 유저의 읽지 않은 알림 수 조회
+  @Query("SELECT COUNT(n) FROM Notification n")
   long countByUserIdAndReadFalse(String userId);
   
   // 특정 유저의 모든 알림 삭제
@@ -24,6 +25,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Stri
   
   // 특정 유저의 읽지 않은 알림 전체 읽음 처리
   @Modifying
-  @Query("UPDATE Notification n SET n.read = true WHERE n.userId = :userId AND n.read = false")
+  @Query("UPDATE Notification n SET n.status = '1' WHERE n.userId = :userId AND n.status = '0'")
   void markAllAsReadByUserId(@Param("userId") String userId);
 }

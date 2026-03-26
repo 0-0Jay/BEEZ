@@ -76,7 +76,7 @@ public class NotificationServiceImpl implements NotificationService {
    * 특정 유저의 알림 목록 조회
    */
   public List<NotificationResponse> getNotifications(String userId) {
-    return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId)
+    return notificationRepository.findByUserIdOrderByCreatedOnDesc(userId)
       .stream()
       .map(NotificationResponse::toDto)
       .collect(Collectors.toList());
