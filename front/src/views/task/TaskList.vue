@@ -12,7 +12,7 @@ const tasks = ref([
     userId: '김민준',
     type: '결함',
     category: '보안',
-    workflow: '진행 중',
+    workflow: '진행',
     priority: '높음',
     plannedStart: '2025-03-01',
     plannedEnd: '2025-03-15',
@@ -35,7 +35,7 @@ const tasks = ref([
     userId: '박지수',
     type: '새기능',
     category: '프론트',
-    workflow: '검토 대기',
+    workflow: '해결',
     priority: '보통',
     plannedStart: '2025-03-10',
     plannedEnd: '2025-03-28',
@@ -74,7 +74,7 @@ const tasks = ref([
   }
 ]);
 
-// ── 필터 상태 ───────────────────────────────────────────────────
+// ── 필터 상태 ────────────────────────────────────────────────
 const filters = ref({
   workflow: null,
   userId: null,
@@ -87,17 +87,18 @@ const filters = ref({
   includeSubProject: false
 });
 
-// ── 드롭다운 옵션 ───────────────────────────────────────────────
-const workflowOptions = ['대기', '진행 중', '검토 대기', '완료', '반려'];
+// ── 드롭다운 옵션 ─────────────────────────────────────────────
+const workflowOptions = ['신규', '진행', '해결', '반려', '완료'];
 const userOptions = ['김민준', '박지수', '이서연', '최동현', '홍길동'];
 const typeOptions = ['결함', '새기능', '지원', '테스트', '기타'];
 const categoryOptions = ['보안', '백', '프론트', '디자인', '인프라', '기타'];
 const priorityOptions = ['긴급', '높음', '보통', '낮음'];
 
-// ── 담당자 드롭다운 검색 ─────────────────────────────────────────
+// ── 담당자 검색 드롭다운 ──────────────────────────────────────
 const userSearch = ref('');
 const userDropdownOpen = ref(false);
 const filteredUsers = computed(() => userOptions.filter((u) => u.includes(userSearch.value)));
+
 function selectUser(u) {
   filters.value.userId = u;
   userSearch.value = u;
@@ -108,7 +109,7 @@ function clearUser() {
   userSearch.value = '';
 }
 
-// ── 필터 초기화 ─────────────────────────────────────────────────
+// ── 필터 초기화 ───────────────────────────────────────────────
 function resetFilters() {
   filters.value = {
     workflow: null,
@@ -124,7 +125,7 @@ function resetFilters() {
   userSearch.value = '';
 }
 
-// ── 페이징 ─────────────────────────────────────────────────────
+// ── 페이징 ───────────────────────────────────────────────────
 const currentPage = ref(1);
 const pageSize = 10;
 const pageBlockSize = 10;
@@ -134,12 +135,13 @@ const currentBlock = computed(() => Math.ceil(currentPage.value / pageBlockSize)
 const blockStart = computed(() => (currentBlock.value - 1) * pageBlockSize + 1);
 const blockEnd = computed(() => Math.min(blockStart.value + pageBlockSize - 1, totalPages.value));
 const pageNumbers = computed(() => {
-  const arr = [];
-  for (let i = blockStart.value; i <= blockEnd.value; i++) arr.push(i);
-  return arr;
+  const a = [];
+  for (let i = blockStart.value; i <= blockEnd.value; i++) a.push(i);
+  return a;
 });
 const hasPrevBlock = computed(() => currentBlock.value > 1);
 const hasNextBlock = computed(() => blockEnd.value < totalPages.value);
+const pagedTasks = computed(() => tasks.value.slice((currentPage.value - 1) * pageSize, currentPage.value * pageSize));
 
 function goPage(p) {
   currentPage.value = p;
@@ -151,794 +153,322 @@ function nextBlock() {
   if (hasNextBlock.value) currentPage.value = blockEnd.value + 1;
 }
 
-const pagedTasks = computed(() => {
-  const start = (currentPage.value - 1) * pageSize;
-  return tasks.value.slice(start, start + pageSize);
-});
+// ── 유틸 ────────────────────────────────────────────────────
 
-// ── 유틸 ───────────────────────────────────────────────────────
-function progressColor(p) {
+function progressBarColor(p) {
   if (p >= 100) return '#C97700';
   if (p >= 60) return '#F5A623';
   if (p >= 30) return '#FFDA7A';
-  return '#E5E2D9';
+  return '#C8C4B8';
 }
 
-const priorityStyle = {
-  긴급: { bg: '#3D2000', text: '#FFF0C2' },
-  높음: { bg: '#9A5800', text: '#FFFBF0' },
-  보통: { bg: '#E5E2D9', text: '#3A3835' },
-  낮음: { bg: '#F2F0EB', text: '#6E6B65' }
+const workflowClass = {
+  신규: 'status-new',
+  진행: 'status-in-progress',
+  해결: 'status-resolved',
+  반려: 'status-rejected',
+  완료: 'status-done'
 };
 
-const workflowStyle = {
-  대기: { bg: '#F2F0EB', text: '#6E6B65' },
-  '진행 중': { bg: '#FFF0C2', text: '#9A5800' },
-  '검토 대기': { bg: '#FFDA7A', text: '#3D2000' },
-  완료: { bg: '#C97700', text: '#FFFBF0' },
-  반려: { bg: '#3A3835', text: '#FFF0C2' }
+const priorityClass = {
+  긴급: 'priority-urgent',
+  높음: 'priority-high',
+  보통: 'priority-mid',
+  낮음: 'priority-low'
 };
 </script>
 
 <template>
-  <div class="task-page">
-    <!-- ── 페이지 헤더 ───────────────────────────────────────── -->
-    <div class="page-header">
-      <div class="header-left">
-        <span class="header-eyebrow">PRJ-001 · 버전 1.3</span>
-        <h1 class="header-title">일감 목록</h1>
+  <div class="min-h-screen bg-stone-50 px-10 py-8 text-stone-700">
+    <!-- ── 페이지 헤더 ──────────────────────────────────────── -->
+    <div class="flex items-end justify-between mb-7">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight text-stone-900">일감 목록</h1>
       </div>
-      <button class="btn-add">
-        <span class="btn-add-icon">＋</span>
+      <button
+        class="inline-flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-amber-50 font-semibold text-sm px-5 py-2.5 rounded-lg shadow-md shadow-amber-200 transition-all duration-150 hover:-translate-y-0.5 cursor-pointer border-none"
+      >
+        <span class="text-base leading-none font-bold">＋</span>
         일감 추가
       </button>
     </div>
 
     <!-- ── 필터 카드 ────────────────────────────────────────── -->
-    <div class="filter-card">
-      <div class="filter-card-header">
-        <span class="filter-card-title"><i class="pi pi-search" style="font-size: 0.8rem"></i> 검색 필터</span>
-      </div>
+    <div class="bg-white border border-stone-200 rounded-xl shadow-sm px-7 pt-5 pb-5 mb-5">
+      <p class="text-xl font-bold tracking-wider uppercase text-amber-700 mb-4"><i class="pi pi-search" style="font-size: 1rem"></i> 검색 필터</p>
 
-      <div class="filter-grid">
+      <div class="grid grid-cols-4 gap-x-5 gap-y-4">
         <!-- 진행 상태 -->
-        <div class="filter-field">
-          <label class="filter-label">진행 상태</label>
-          <select v-model="filters.workflow" class="filter-select">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-base font-semibold uppercase tracking-wider text-stone-400">진행 상태</label>
+          <select v-model="filters.workflow" class="h-9 px-3 bg-stone-50 border border-stone-200 rounded-md text-sm text-stone-700 outline-none focus:border-amber-400 focus:bg-amber-50 transition-colors cursor-pointer">
             <option :value="null">전체</option>
             <option v-for="w in workflowOptions" :key="w" :value="w">{{ w }}</option>
           </select>
         </div>
 
-        <!-- 담당자 (검색 가능 드롭다운) -->
-        <div class="filter-field" style="position: relative">
-          <label class="filter-label">담당자</label>
-          <div class="searchable-dropdown">
-            <input v-model="userSearch" class="filter-input" placeholder="이름으로 검색" @focus="userDropdownOpen = true" @blur="setTimeout(() => (userDropdownOpen = false), 150)" />
-            <button v-if="filters.userId" class="clear-btn" @click="clearUser">✕</button>
-            <div v-if="userDropdownOpen" class="dropdown-list">
-              <div v-for="u in filteredUsers" :key="u" class="dropdown-item" @mousedown.prevent="selectUser(u)">{{ u }}</div>
-              <div v-if="filteredUsers.length === 0" class="dropdown-empty">결과 없음</div>
+        <!-- 담당자 -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-base font-semibold uppercase tracking-wider text-stone-400">담당자</label>
+          <div class="relative">
+            <input
+              v-model="userSearch"
+              class="h-9 w-full px-3 pr-8 bg-stone-50 border border-stone-200 rounded-md text-sm text-stone-700 outline-none focus:border-amber-400 focus:bg-amber-50 transition-colors"
+              placeholder="이름으로 검색"
+              @focus="userDropdownOpen = true"
+              @blur="setTimeout(() => (userDropdownOpen = false), 150)"
+            />
+            <button v-if="filters.userId" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 text-xs cursor-pointer bg-transparent border-none leading-none p-0" @click="clearUser">✕</button>
+            <div v-if="userDropdownOpen" class="absolute top-full mt-1 left-0 right-0 bg-white border border-stone-200 rounded-lg shadow-lg z-50 overflow-hidden">
+              <div v-for="u in filteredUsers" :key="u" class="px-3 py-2 text-sm text-stone-700 hover:bg-amber-100 hover:text-amber-700 cursor-pointer transition-colors" @mousedown.prevent="selectUser(u)">{{ u }}</div>
+              <div v-if="filteredUsers.length === 0" class="px-3 py-2.5 text-sm text-stone-400">결과 없음</div>
             </div>
           </div>
         </div>
 
-        <!-- 마감일 범위 -->
-        <div class="filter-field date-range-field">
-          <label class="filter-label">마감일</label>
-          <div class="date-range">
-            <input v-model="filters.plannedStart" type="date" class="filter-input date-input" />
-            <span class="date-sep">~</span>
-            <input v-model="filters.plannedEnd" type="date" class="filter-input date-input" />
+        <!-- 마감일 범위 (2칸) -->
+        <div class="flex flex-col gap-1.5 col-span-2">
+          <label class="text-base font-semibold uppercase tracking-wider text-stone-400">마감일</label>
+          <div class="flex items-center gap-2">
+            <input v-model="filters.plannedStart" type="date" class="h-9 flex-1 px-3 bg-stone-50 border border-stone-200 rounded-md text-sm text-stone-700 outline-none focus:border-amber-400 focus:bg-amber-50 transition-colors" />
+            <span class="text-stone-400 text-sm shrink-0">~</span>
+            <input v-model="filters.plannedEnd" type="date" class="h-9 flex-1 px-3 bg-stone-50 border border-stone-200 rounded-md text-sm text-stone-700 outline-none focus:border-amber-400 focus:bg-amber-50 transition-colors" />
           </div>
         </div>
 
         <!-- 일감 유형 -->
-        <div class="filter-field">
-          <label class="filter-label">일감 유형</label>
-          <select v-model="filters.type" class="filter-select">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-base font-semibold uppercase tracking-wider text-stone-400">일감 유형</label>
+          <select v-model="filters.type" class="h-9 px-3 bg-stone-50 border border-stone-200 rounded-md text-sm text-stone-700 outline-none focus:border-amber-400 focus:bg-amber-50 transition-colors cursor-pointer">
             <option :value="null">전체</option>
             <option v-for="t in typeOptions" :key="t" :value="t">{{ t }}</option>
           </select>
         </div>
 
         <!-- 일감 범주 -->
-        <div class="filter-field">
-          <label class="filter-label">일감 범주</label>
-          <select v-model="filters.category" class="filter-select">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-base font-semibold uppercase tracking-wider text-stone-400">일감 범주</label>
+          <select v-model="filters.category" class="h-9 px-3 bg-stone-50 border border-stone-200 rounded-md text-sm text-stone-700 outline-none focus:border-amber-400 focus:bg-amber-50 transition-colors cursor-pointer">
             <option :value="null">전체</option>
             <option v-for="c in categoryOptions" :key="c" :value="c">{{ c }}</option>
           </select>
         </div>
 
         <!-- 우선순위 -->
-        <div class="filter-field">
-          <label class="filter-label">우선순위</label>
-          <select v-model="filters.priority" class="filter-select">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-base font-semibold uppercase tracking-wider text-stone-400">우선순위</label>
+          <select v-model="filters.priority" class="h-9 px-3 bg-stone-50 border border-stone-200 rounded-md text-sm text-stone-700 outline-none focus:border-amber-400 focus:bg-amber-50 transition-colors cursor-pointer">
             <option :value="null">전체</option>
             <option v-for="p in priorityOptions" :key="p" :value="p">{{ p }}</option>
           </select>
         </div>
 
-        <!-- 제목 -->
-        <div class="filter-field title-field">
-          <label class="filter-label">제목</label>
-          <input v-model="filters.title" class="filter-input" placeholder="일감 제목 검색..." />
+        <!-- 제목 (2칸) -->
+        <div class="flex flex-col gap-1.5 col-span-2">
+          <label class="text-base font-semibold uppercase tracking-wider text-stone-400">제목</label>
+          <input v-model="filters.title" class="h-9 w-full px-3 bg-stone-50 border border-stone-200 rounded-md text-sm text-stone-700 outline-none focus:border-amber-400 focus:bg-amber-50 transition-colors" placeholder="일감 제목 검색..." />
         </div>
       </div>
 
       <!-- 하단 옵션 행 -->
-      <div class="filter-footer">
-        <label class="checkbox-label">
-          <input v-model="filters.includeSubProject" type="checkbox" class="filter-checkbox" />
-          <span class="checkbox-custom"></span>
+      <div class="flex items-center justify-between mt-5 pt-4 border-t border-stone-100">
+        <!-- 하위 프로젝트 체크박스 -->
+        <label class="flex items-center gap-2 text-sm text-stone-500 cursor-pointer select-none">
+          <input v-model="filters.includeSubProject" type="checkbox" class="hidden peer" />
+          <span class="w-4 h-4 rounded border border-stone-300 bg-stone-50 flex items-center justify-center transition-colors shrink-0" :class="filters.includeSubProject ? 'bg-amber-600 border-amber-600' : ''">
+            <svg v-if="filters.includeSubProject" class="w-2.5 h-2.5 text-amber-50" viewBox="0 0 10 10" fill="none">
+              <polyline points="1.5,5 4,7.5 8.5,2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
           하위 프로젝트 일감 보기
         </label>
-        <div class="filter-actions">
-          <button class="btn-reset" @click="resetFilters">초기화</button>
-          <button class="btn-search">조회</button>
+
+        <div class="flex gap-2.5">
+          <button class="px-4 py-2 text-sm font-semibold text-stone-500 bg-stone-100 border border-stone-200 rounded-lg hover:bg-stone-200 transition-colors cursor-pointer" @click="resetFilters">초기화</button>
+          <button class="px-5 py-2 text-sm font-bold text-amber-50 bg-amber-400 hover:bg-amber-600 rounded-lg shadow shadow-amber-200 transition-colors cursor-pointer border-none">조회</button>
         </div>
       </div>
     </div>
 
-    <!-- ── 일감 목록 표 ─────────────────────────────────────── -->
-    <div class="table-card">
-      <div class="table-meta">
-        <span class="table-count"
-          >총 <strong>{{ tasks.length }}</strong
-          >개</span
-        >
+    <!-- ── 테이블 카드 ──────────────────────────────────────── -->
+    <div class="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
+      <!-- 메타 -->
+      <div class="px-6 py-3.5 border-b border-stone-100">
+        <span class="text-sm text-stone-400">
+          총 <strong class="text-stone-700 font-bold">{{ tasks.length }}</strong
+          >개
+        </span>
       </div>
 
-      <div class="table-wrapper">
-        <table class="task-table">
+      <!-- 표 -->
+      <div class="overflow-x-auto">
+        <table class="w-full border-collapse text-sm">
           <thead>
-            <tr>
-              <th class="col-id">번호</th>
-              <th class="col-type">유형</th>
-              <th class="col-status">상태</th>
-              <th class="col-priority">우선순위</th>
-              <th class="col-title">제목</th>
-              <th class="col-progress">진척도</th>
-              <th class="col-assignee">담당자</th>
-              <th class="col-due">마감일</th>
+            <tr class="bg-stone-100 border-b border-stone-200">
+              <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-50">번호</th>
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-24">유형</th>
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-28">상태</th>
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-24">우선순위</th>
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-24">범주</th>
+              <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-stone-400 min-w-52">제목</th>
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-50">진척도</th>
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-28">담당자</th>
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-30">마감일</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(task, idx) in pagedTasks" :key="task.id" class="task-row" :class="{ 'row-even': idx % 2 === 0 }">
+            <tr v-for="(task, idx) in pagedTasks" :key="task.id" class="border-b border-stone-100 last:border-none hover:bg-amber-50 transition-colors duration-100" :class="idx % 2 !== 0 ? 'bg-stone-50/60' : 'bg-white'">
               <!-- 번호 -->
-              <td class="col-id">
-                <span class="task-id">{{ task.id }}</span>
-              </td>
-
-              <!-- 유형 -->
-              <td class="col-type">
-                <span class="type-badge">
-                  {{ task.type }}
+              <td class="px-4 py-3.5">
+                <span class="font-mono text-m font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded">
+                  {{ task.id }}
                 </span>
               </td>
 
+              <!-- 유형 -->
+              <td class="px-4 py-3.5 text-base text-stone-600 text-center">
+                {{ task.type }}
+              </td>
+
               <!-- 상태 -->
-              <td class="col-status">
-                <span
-                  class="status-badge"
-                  :style="{
-                    background: workflowStyle[task.workflow]?.bg ?? '#F2F0EB',
-                    color: workflowStyle[task.workflow]?.text ?? '#3A3835'
-                  }"
-                  >{{ task.workflow }}</span
-                >
+              <td class="px-4 py-3.5 text-center">
+                <span class="inline-block px-2.5 py-0.5 rounded-full text-sm font-semibold whitespace-nowrap" :class="workflowClass[task.workflow] ?? 'bg-stone-100 text-stone-500'">{{ task.workflow }}</span>
               </td>
 
               <!-- 우선순위 -->
-              <td class="col-priority">
-                <span
-                  class="priority-badge"
-                  :style="{
-                    background: priorityStyle[task.priority]?.bg ?? '#E5E2D9',
-                    color: priorityStyle[task.priority]?.text ?? '#3A3835'
-                  }"
-                  >{{ task.priority }}</span
-                >
+              <td class="px-4 py-3.5 text-center">
+                <span class="inline-block px-2.5 py-0.5 rounded-full text-sm font-semibold" :class="priorityClass[task.priority] ?? 'bg-stone-100 text-stone-400'">{{ task.priority }}</span>
+              </td>
+
+              <!-- 범주 -->
+              <td class="px-4 py-3.5 text-center">
+                <span class="inline-block mt-1 text-sm text-stone-400 bg-stone-100 px-2 py-px rounded">
+                  {{ task.category }}
+                </span>
               </td>
 
               <!-- 제목 -->
-              <td class="col-title">
-                <a href="#" class="task-title-link">{{ task.title }}</a>
-                <span class="task-category">{{ task.category }}</span>
+              <td class="px-4 py-3.5">
+                <a href="#" class="block text-base font-medium text-stone-800 hover:text-amber-600 transition-colors leading-snug">
+                  {{ task.title }}
+                </a>
               </td>
 
               <!-- 진척도 -->
-              <td class="col-progress">
-                <div class="progress-wrap">
-                  <div class="progress-bar-bg">
-                    <div
-                      class="progress-bar-fill"
-                      :style="{
-                        width: task.progress + '%',
-                        background: progressColor(task.progress)
-                      }"
-                    ></div>
+              <td class="px-4 py-3.5">
+                <div class="flex items-center gap-2">
+                  <div class="flex-1 h-1.5 bg-stone-200 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full transition-all duration-500" :style="{ width: task.progress + '%', background: progressBarColor(task.progress) }"></div>
                   </div>
-                  <span class="progress-pct">{{ task.progress }}%</span>
+                  <span class="text-base font-semibold text-stone-500 w-9 text-right shrink-0"> {{ task.progress }}% </span>
                 </div>
               </td>
 
               <!-- 담당자 -->
-              <td class="col-assignee">
-                <div class="assignee-wrap">
-                  <span class="avatar">{{ task.userId.charAt(0) }}</span>
-                  {{ task.userId }}
-                </div>
+              <td class="px-4 py-3.5 text-base text-stone-600 text-center">
+                {{ task.userId }}
               </td>
 
               <!-- 마감일 -->
-              <td class="col-due">
-                <span class="due-date">{{ task.plannedEnd }}</span>
+              <td class="px-4 py-3.5 text-base text-stone-500 tabular-nums text-center">
+                {{ task.plannedEnd }}
               </td>
             </tr>
 
-            <!-- 데이터 없을 때 -->
+            <!-- 빈 상태 -->
             <tr v-if="pagedTasks.length === 0">
-              <td colspan="8" class="empty-row">일감이 없습니다.</td>
+              <td colspan="8" class="text-center py-16 text-sm text-stone-400">일감이 없습니다.</td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <!-- ── 페이징 ──────────────────────────────────────────── -->
-      <div class="pagination">
-        <button class="page-btn nav-btn" :disabled="!hasPrevBlock" @click="prevBlock">‹</button>
-        <button v-for="p in pageNumbers" :key="p" class="page-btn" :class="{ active: p === currentPage }" @click="goPage(p)">{{ p }}</button>
-        <button class="page-btn nav-btn" :disabled="!hasNextBlock" @click="nextBlock">›</button>
+      <!-- 페이징 -->
+      <div class="flex items-center justify-center gap-1 px-6 py-5 border-t border-stone-100">
+        <button
+          class="w-8 h-8 flex items-center justify-center rounded-md border border-stone-200 bg-white text-stone-400 text-base hover:bg-amber-100 hover:border-amber-300 hover:text-amber-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+          :disabled="!hasPrevBlock"
+          @click="prevBlock"
+        >
+          ‹
+        </button>
+
+        <button
+          v-for="p in pageNumbers"
+          :key="p"
+          class="w-8 h-8 flex items-center justify-center rounded-md border text-sm font-medium transition-colors cursor-pointer"
+          :class="p === currentPage ? 'bg-amber-600 border-amber-600 text-amber-50 font-bold shadow-sm shadow-amber-300' : 'border-stone-200 bg-white text-stone-500 hover:bg-amber-100 hover:border-amber-300 hover:text-amber-700'"
+          @click="goPage(p)"
+        >
+          {{ p }}
+        </button>
+
+        <button
+          class="w-8 h-8 flex items-center justify-center rounded-md border border-stone-200 bg-white text-stone-400 text-base hover:bg-amber-100 hover:border-amber-300 hover:text-amber-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+          :disabled="!hasNextBlock"
+          @click="nextBlock"
+        >
+          ›
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-/* ── 기본 변수 ──────────────────────────────────────────────── */
-:root {
-  --amber-50: #fffbf0;
-  --amber-100: #fff0c2;
-  --amber-200: #ffda7a;
-  --amber-400: #f5a623;
-  --amber-500: #e8920e;
-  --amber-600: #c97700;
-  --amber-700: #9a5800;
-  --amber-900: #3d2000;
-  --stone-50: #fafaf8;
-  --stone-100: #f2f0eb;
-  --stone-200: #e5e2d9;
-  --stone-300: #c8c4b8;
-  --stone-400: #9a9690;
-  --stone-500: #6e6b65;
-  --stone-700: #3a3835;
-  --stone-900: #1a1816;
-  --white: #ffffff;
+/* Tailwind로 처리하기 어려운 최소한의 보조 스타일만 */
+select {
+  appearance: auto;
 }
-
-/* ── 페이지 레이아웃 ─────────────────────────────────────────── */
-.task-page {
-  min-height: 100vh;
-  background: #fafaf8;
-  padding: 32px 40px 60px;
-  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
-  color: #3a3835;
-}
-
-/* ── 헤더 ───────────────────────────────────────────────────── */
-.page-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  margin-bottom: 28px;
-}
-.header-eyebrow {
-  display: block;
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  color: #9a9690;
-  text-transform: uppercase;
-  margin-bottom: 4px;
-}
-.header-title {
-  font-size: 26px;
-  font-weight: 700;
-  color: #1a1816;
-  letter-spacing: -0.02em;
-  margin: 0;
-}
-
-/* ── 일감 추가 버튼 ──────────────────────────────────────────── */
-.btn-add {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: #c97700;
-  color: #fffbf0;
-  font-size: 14px;
-  font-weight: 600;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  letter-spacing: 0.01em;
-  transition:
-    background 0.15s,
-    transform 0.1s;
-  box-shadow: 0 2px 8px rgba(201, 119, 0, 0.25);
-}
-.btn-add:hover {
-  background: #9a5800;
-  transform: translateY(-1px);
-}
-.btn-add-icon {
-  font-size: 18px;
-  line-height: 1;
-}
-
-/* ── 필터 카드 ───────────────────────────────────────────────── */
-.filter-card {
-  background: #ffffff;
-  border: 1px solid #e5e2d9;
-  border-radius: 12px;
-  padding: 24px 28px 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 1px 4px rgba(26, 24, 22, 0.05);
-}
-.filter-card-header {
-  margin-bottom: 18px;
-}
-.filter-card-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: #9a5800;
-  letter-spacing: 0.03em;
-}
-
-.filter-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px 18px;
-}
-.filter-field {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-.date-range-field {
-  grid-column: span 2;
-}
-.title-field {
-  grid-column: span 2;
-}
-
-.filter-label {
-  font-size: 11.5px;
-  font-weight: 600;
-  color: #6e6b65;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-.filter-select,
-.filter-input {
-  height: 38px;
-  padding: 0 12px;
-  background: #fafaf8;
-  border: 1.5px solid #e5e2d9;
-  border-radius: 7px;
-  font-size: 13.5px;
-  color: #3a3835;
-  outline: none;
-  transition: border-color 0.15s;
-  width: 100%;
-  box-sizing: border-box;
-}
-.filter-select:focus,
-.filter-input:focus {
-  border-color: #f5a623;
-  background: #fffbf0;
-}
-.filter-select {
+input[type='date']::-webkit-calendar-picker-indicator {
+  opacity: 0.5;
   cursor: pointer;
 }
 
-/* 날짜 범위 */
-.date-range {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.date-input {
-  flex: 1;
-}
-.date-sep {
-  color: #9a9690;
-  font-size: 13px;
-  flex-shrink: 0;
+/* 우선순위 */
+.priority-low {
+  background-color: #eaf3de;
+  color: #3b6d11;
 }
 
-/* 검색 가능 드롭다운 */
-.searchable-dropdown {
-  position: relative;
-}
-.clear-btn {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: #9a9690;
-  cursor: pointer;
-  font-size: 12px;
-  padding: 0;
-  line-height: 1;
-}
-.dropdown-list {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  background: #ffffff;
-  border: 1.5px solid #e5e2d9;
-  border-radius: 7px;
-  z-index: 50;
-  box-shadow: 0 4px 16px rgba(26, 24, 22, 0.1);
-  overflow: hidden;
-}
-.dropdown-item {
-  padding: 9px 14px;
-  font-size: 13.5px;
-  color: #3a3835;
-  cursor: pointer;
-  transition: background 0.1s;
-}
-.dropdown-item:hover {
-  background: #fff0c2;
-  color: #9a5800;
-}
-.dropdown-empty {
-  padding: 10px 14px;
-  font-size: 13px;
-  color: #9a9690;
+.priority-mid {
+  background-color: #e6f1fb;
+  color: #0c447c;
 }
 
-/* 하단 행 */
-.filter-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 18px;
-  padding-top: 16px;
-  border-top: 1px solid #f2f0eb;
+.priority-high {
+  background-color: #faeeda;
+  color: #633806;
 }
 
-/* 체크박스 */
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13.5px;
-  color: #6e6b65;
-  cursor: pointer;
-  user-select: none;
-}
-.filter-checkbox {
-  display: none;
-}
-.checkbox-custom {
-  width: 16px;
-  height: 16px;
-  border: 1.5px solid #c8c4b8;
-  border-radius: 4px;
-  background: #fafaf8;
-  display: inline-block;
-  position: relative;
-  flex-shrink: 0;
-  transition:
-    background 0.15s,
-    border-color 0.15s;
-}
-.filter-checkbox:checked + .checkbox-custom {
-  background: #c97700;
-  border-color: #c97700;
-}
-.filter-checkbox:checked + .checkbox-custom::after {
-  content: '';
-  position: absolute;
-  left: 4px;
-  top: 1px;
-  width: 5px;
-  height: 9px;
-  border: 2px solid #fffbf0;
-  border-top: none;
-  border-left: none;
-  transform: rotate(45deg);
+.priority-urgent {
+  background-color: #fcebeb;
+  color: #791f1f;
 }
 
-/* 필터 버튼들 */
-.filter-actions {
-  display: flex;
-  gap: 10px;
-}
-.btn-reset {
-  padding: 8px 18px;
-  background: #f2f0eb;
-  color: #6e6b65;
-  border: 1.5px solid #e5e2d9;
-  border-radius: 7px;
-  font-size: 13.5px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.btn-reset:hover {
-  background: #e5e2d9;
-}
-.btn-search {
-  padding: 8px 22px;
-  background: #f5a623;
-  color: #fffbf0;
-  border: none;
-  border-radius: 7px;
-  font-size: 13.5px;
-  font-weight: 700;
-  cursor: pointer;
-  letter-spacing: 0.02em;
-  transition: background 0.15s;
-  box-shadow: 0 2px 6px rgba(245, 166, 35, 0.3);
-}
-.btn-search:hover {
-  background: #c97700;
+/* 상태 */
+.status-new {
+  background-color: #f1efe8;
+  color: #444441;
 }
 
-/* ── 테이블 카드 ─────────────────────────────────────────────── */
-.table-card {
-  background: #ffffff;
-  border: 1px solid #e5e2d9;
-  border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(26, 24, 22, 0.05);
-  overflow: hidden;
-}
-.table-meta {
-  padding: 16px 24px 12px;
-  border-bottom: 1px solid #f2f0eb;
-}
-.table-count {
-  font-size: 13px;
-  color: #9a9690;
-}
-.table-count strong {
-  color: #3a3835;
-  font-weight: 700;
+.status-in-progress {
+  background-color: #eeedfe;
+  color: #3c3489;
 }
 
-.table-wrapper {
-  overflow-x: auto;
+.status-resolved {
+  background-color: #e1f5ee;
+  color: #085041;
 }
 
-/* ── 표 ────────────────────────────────────────────────────── */
-.task-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13.5px;
+.status-rejected {
+  background-color: #faece7;
+  color: #712b13;
 }
 
-.task-table thead tr {
-  background: #f2f0eb;
-}
-.task-table th {
-  padding: 11px 16px;
-  text-align: left;
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: #6e6b65;
-  white-space: nowrap;
-  border-bottom: 1px solid #e5e2d9;
-}
-
-.task-row td {
-  padding: 13px 16px;
-  border-bottom: 1px solid #f2f0eb;
-  vertical-align: middle;
-  color: #3a3835;
-}
-.task-row:last-child td {
-  border-bottom: none;
-}
-.task-row:hover td {
-  background: #fffbf0;
-}
-.row-even td {
-  background: #fafaf8;
-}
-.row-even:hover td {
-  background: #fffbf0;
-}
-
-/* 열 너비 */
-.col-id {
-  width: 96px;
-}
-.col-type {
-  width: 100px;
-}
-.col-status {
-  width: 110px;
-}
-.col-priority {
-  width: 88px;
-}
-.col-title {
-  min-width: 220px;
-}
-.col-progress {
-  width: 160px;
-}
-.col-assignee {
-  width: 108px;
-}
-.col-due {
-  width: 110px;
-}
-
-/* 셀 요소들 */
-.task-id {
-  font-family: 'Courier New', monospace;
-  font-size: 12px;
-  color: #9a5800;
-  font-weight: 600;
-  background: #fff0c2;
-  padding: 2px 7px;
-  border-radius: 4px;
-  letter-spacing: 0.02em;
-}
-
-.type-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12.5px;
-  color: #6e6b65;
-}
-
-.status-badge,
-.priority-badge {
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.task-title-link {
-  display: block;
-  color: #1a1816;
-  text-decoration: none;
-  font-weight: 500;
-  line-height: 1.4;
-  transition: color 0.12s;
-}
-.task-title-link:hover {
-  color: #c97700;
-}
-.task-category {
-  display: inline-block;
-  margin-top: 3px;
-  font-size: 11px;
-  color: #9a9690;
-  background: #f2f0eb;
-  padding: 1px 7px;
-  border-radius: 4px;
-}
-
-/* 진척도 */
-.progress-wrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.progress-bar-bg {
-  flex: 1;
-  height: 7px;
-  background: #e5e2d9;
-  border-radius: 99px;
-  overflow: hidden;
-}
-.progress-bar-fill {
-  height: 100%;
-  border-radius: 99px;
-  transition: width 0.4s ease;
-}
-.progress-pct {
-  font-size: 12px;
-  font-weight: 600;
-  color: #6e6b65;
-  min-width: 36px;
-  text-align: right;
-}
-
-/* 담당자 */
-.assignee-wrap {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 13px;
-}
-.avatar {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: #ffda7a;
-  color: #9a5800;
-  font-size: 12px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-/* 마감일 */
-.due-date {
-  font-size: 13px;
-  color: #6e6b65;
-}
-
-/* 빈 행 */
-.empty-row {
-  text-align: center;
-  padding: 48px;
-  color: #9a9690;
-  font-size: 14px;
-}
-
-/* ── 페이징 ─────────────────────────────────────────────────── */
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 4px;
-  padding: 20px 24px;
-  border-top: 1px solid #f2f0eb;
-}
-.page-btn {
-  min-width: 34px;
-  height: 34px;
-  padding: 0 6px;
-  border: 1.5px solid #e5e2d9;
-  border-radius: 7px;
-  background: #ffffff;
-  color: #6e6b65;
-  font-size: 13.5px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.12s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.page-btn:hover:not(:disabled) {
-  background: #fff0c2;
-  border-color: #f5a623;
-  color: #9a5800;
-}
-.page-btn.active {
-  background: #c97700;
-  border-color: #c97700;
-  color: #fffbf0;
-  font-weight: 700;
-}
-.page-btn:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-.nav-btn {
-  font-size: 16px;
+.status-done {
+  background-color: #eaf3de;
+  color: #27500a;
 }
 </style>
