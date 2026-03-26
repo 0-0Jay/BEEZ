@@ -82,7 +82,7 @@ public class NotificationController {
    * PATCH /api/notifications/{id}/read
    */
   @PatchMapping("/{id}/read")
-  public void markAsRead(@PathVariable Long id) {
+  public void markAsRead(@PathVariable String id) {
     notificationService.markAsRead(id);
   }
   

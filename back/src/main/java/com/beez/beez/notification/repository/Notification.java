@@ -2,14 +2,15 @@ package com.beez.beez.notification.repository;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Getter
+@Data
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Notification {
   @Id
   private String id;
