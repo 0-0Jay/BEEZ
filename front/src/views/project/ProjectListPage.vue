@@ -1,30 +1,31 @@
 <script setup>
-import { inject, ref } from 'vue';
+import { useProjectStore } from '@/stores/project';
+import { storeToRefs } from 'pinia';
+import { inject, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
+
+const projectStore = useProjectStore();
+const { projects, loading } = storeToRefs(projectStore);
 
 const setProject = inject('selectedProject');
 const router = useRouter();
 const menu = ref();
 const selectedRow = ref(null);
 
+/* [필터 로직 주석 처리] 
 const filters = ref({
-  title: null,
-  pm: null,
-  startDate: null,
-  endDate: null,
-  showArchived: false
+  global: { value: null, matchMode: 'contains' },
+  title: { value: null, matchMode: 'contains' },
+  pm: { value: null, matchMode: 'equals' }
+});
+*/
+
+// 페이지 로드 시 자동으로 조회 실행
+onMounted(() => {
+  fetchProjects();
 });
 
-const projects = ref([
-  { id: 1, title: '모바일 앱 v3.0 리뉴얼 이거 아닌 것 같아', issueCount: '10/30', progress: 33, pm: '곽현우', endDate: '2026-12-30' },
-  { id: 2, title: '백엔드 API 마이그레이션', issueCount: '1/10', progress: 10, pm: '노정화', endDate: '2027-01-24' },
-  { id: 3, title: '관리자 대시보드 설계', issueCount: '13/25', progress: 52, pm: '조영진', endDate: '2026-08-11' },
-  { id: 4, title: 'QA 자동화 테스트 구축', issueCount: '10/30', progress: 33, pm: '한유민', endDate: '2026-07-15' }
-]);
-
-const projectOptions = ref(['모바일 앱 리뉴얼', 'API 마이그레이션', '대시보드 설계']);
-const pmOptions = ref(['곽현우', '노정화', '조영진', '한유민']);
-
+// 우클릭/메뉴 아이템
 const actionItems = ref([
   { label: '프로젝트 잠금보관', icon: 'pi pi-lock', command: () => console.log('잠금:', selectedRow.value) },
   { label: '프로젝트 복사', icon: 'pi pi-copy' },
@@ -38,90 +39,81 @@ const toggleMenu = (event, data) => {
 };
 
 const goToDetail = (project) => {
-  setProject.value = { title: project.title };
+  if (setProject) setProject.value = { title: project.title };
+  // router.push(`/project/detail/${project.id}`); // 상세 페이지 이동 시 주석 해제
 };
 
-const formatDate = (date) => {
-  if (!date) return '-';
-  return date;
-};
-
-const resetFilters = () => {
-  filters.value = { title: null, pm: null, startDate: null, endDate: null, showArchived: false };
-};
-
+// 조회 버튼 클릭 시 스토어의 액션 호출
 const fetchProjects = () => {
-  console.log('조회 실행:', filters.value);
+  projectStore.fetchProjects(); // 인자 없이 전체 목록만 요청
 };
 
 const openAddProject = () => {
-  console.log('등록 모달 열기');
+  console.log('프로젝트 등록 모달 열기');
+};
+
+// 날짜 포맷
+const formatDate = (v) => {
+  if (!v) return '-';
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) return v;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}.${m}.${day}`;
 };
 </script>
 
 <template>
-  <div class="p-8 bg-[#FAFAF8] min-h-screen text-[#1A1816]">
-    <!-- 타이틀 + 등록 버튼 -->
+  <div class="p-8 bg-[#FAFAF8] text-[#1A1816]">
     <div class="flex justify-between items-end mb-6">
       <h1 class="text-2xl font-bold text-[#1A1816]">프로젝트 목록</h1>
       <Button label="프로젝트 등록" icon="pi pi-plus" outlined class="btn-register-outline" @click="openAddProject" />
     </div>
 
-    <div class="bg-[#F2F0EB] px-10 py-8 rounded-lg mb-8 shadow-sm border border-[#C7C7C2] flex">
-      <!-- 입력칸 + 체크박스 묶음 -->
-      <div class="flex items-center">
-        <label class="filter-label mr-5">프로젝트명</label>
-        <Select v-model="filters.title" :options="projectOptions" placeholder="선택" class="filter-input w-80 mr-10" />
+    <div class="flex-1 overflow-auto bg-white rounded-xl shadow-sm border border-[#C7C7C2]">
+      <DataTable :value="projects" :loading="loading" dataKey="id" :rowHover="true" tableLayout="fixed">
+        <template #empty>
+          <div class="text-center py-6 text-gray-400">데이터 없음</div>
+        </template>
 
-        <label class="filter-label mr-5">PM/PL</label>
-        <Select v-model="filters.pm" :options="pmOptions" placeholder="선택" class="filter-input w-42 mr-10" />
+        <Column header="No." headerClass="table-header" bodyClass="table-body" style="width: 80px">
+          <template #body="slotProps">
+            {{ slotProps.index + 1 }}
+          </template>
+        </Column>
 
-        <label class="filter-label mr-5">마감일</label>
-        <DatePicker v-model="filters.startDate" placeholder="연도-월-일" class="filter-input w-36 mr-15" />
-        <span class="text-sm text-[#6B6B63] px-4">~</span>
-        <DatePicker v-model="filters.endDate" placeholder="연도-월-일" class="filter-input w-36 mr-25" />
-
-        <Checkbox v-model="filters.showArchived" :binary="true" inputId="archived" class="mr-3" />
-        <label for="archived" class="text-sm font-medium text-[#1A1816] whitespace-nowrap cursor-pointer">잠금 보관 프로젝트 보기</label>
-      </div>
-
-      <!-- 버튼 묶음 — ml-auto로 오른쪽, items-end로 아래 -->
-      <div class="flex gap-2 ml-auto">
-        <Button label="초기화" text class="btn-reset filter-btn mr-1" @click="resetFilters" />
-        <Button label="조회" icon="pi pi-search" class="btn-amber filter-btn" @click="fetchProjects" />
-      </div>
-    </div>
-
-    <!-- 테이블 -->
-    <div class="bg-white rounded-xl shadow-sm border border-[#C7C7C2] overflow-hidden">
-      <DataTable :value="projects" :paginator="true" :rows="10" dataKey="id" responsiveLayout="scroll" stripedRows class="p-datatable-sm">
-        <Column field="id" header="No." headerClass="table-header" headerStyle="padding-left: 3rem;" style="width: 70px" />
-        <Column field="title" header="프로젝트명" headerClass="table-header" headerStyle="padding-left: 10rem;" style="width: 180px">
+        <Column field="title" header="프로젝트명" headerClass="table-header" class="text-center" style="width: 150px">
           <template #body="{ data }">
             <span class="font-semibold text-[#C97700] cursor-pointer hover:underline" @click="goToDetail(data)">
               {{ data.title }}
             </span>
           </template>
         </Column>
-        <Column header="일감 수" headerClass="table-header" headerStyle="padding-left: 4.8rem;" style="width: 100px">
+
+        <Column header="일감 수" headerClass="table-header" bodyClass="table-body" style="width: 100px">
           <template #body="{ data }">
             <span class="text-[#3A3B35]">{{ data.issueCount }}</span>
           </template>
         </Column>
-        <Column header="진행률" headerClass="table-header" headerStyle="padding-left: 12rem;" style="width: 200px">
+
+        <Column header="진행률" headerClass="table-header" bodyClass="table-body" style="width: 200px">
           <template #body="{ data }">
-            <div class="flex flex-col gap-1">
-              <ProgressBar :value="data.progress" :showValue="false" class="progress-bar-custom" style="height: 8px" />
-              <span class="text-xs text-right text-[#9A9B90]">{{ data.progress }}%</span>
+            <div class="flex items-center gap-2">
+              <ProgressBar :value="data.progress" :showValue="false" class="progress-bar-custom flex-1" style="height: 8px" />
+              <span class="text-xs text-[#9A9B90] whitespace-nowrap">{{ data.progress }}%</span>
             </div>
           </template>
         </Column>
-        <Column field="pm" header="PM/PL" headerClass="table-header" headerStyle="padding-left: 6rem;" style="width: 100px" />
-        <Column header="마감일" headerClass="table-header" headerStyle="padding-left: 8rem;" style="width: 150px">
+
+        <Column field="pm" header="PM/PL" headerClass="table-header" bodyClass="table-body" style="width: 1-0px" />
+
+        <Column header="마감일" headerClass="table-header" bodyClass="table-body" style="width: 120px">
           <template #body="{ data }">
             <span class="text-[#3A3B35]">{{ formatDate(data.endDate) }}</span>
           </template>
         </Column>
+
         <Column headerClass="table-header" style="width: 50px">
           <template #body="{ data }">
             <Button icon="pi pi-ellipsis-h" class="p-button-text p-button-rounded text-[#6B6B63] hover:bg-[#F2F0EB]" @click="toggleMenu($event, data)" />
@@ -209,27 +201,26 @@ const openAddProject = () => {
   color: #1a1816 !important;
 }
 
-/* ===== 테이블 헤더 ===== */
+/* ===== 테이블 헤더 공통 스타일 (위치 정렬 포함) ===== */
 :deep(.table-header) {
   background-color: #f2f0eb !important;
   color: #1a1816 !important;
   border-bottom: 2px solid #c7c7c2 !important;
-  padding-top: 1.5rem !important;
-  padding-bottom: 1.5rem !important;
+  padding: 1.5rem 0 !important; /* 위아래 패딩만 */
   font-weight: 700 !important;
   font-size: 1rem !important;
 }
 
-/* ===== 테이블 바디 ===== */
+:deep(.table-header .p-datatable-column-header-content) {
+  justify-content: center;
+}
+
+/* ===== 테이블 바디 공통 스타일 ===== */
 :deep(.p-datatable-tbody > tr > td) {
-  text-align: center;
+  padding: 1rem 0 !important;
+  text-align: center !important; /* 바디 글자 가운데로 */
   border-bottom: 1px solid #f2f0eb !important;
-}
-:deep(.p-datatable-striped .p-datatable-tbody > tr:nth-child(even)) {
-  background-color: #fafaf8 !important;
-}
-:deep(.p-datatable-tbody > tr:hover) {
-  background-color: #fff8e8 !important;
+  vertical-align: middle;
 }
 
 /* ===== 진행률 바 ===== */
