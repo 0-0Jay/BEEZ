@@ -4,43 +4,52 @@ import com.beez.beez.wiki.dto.WikiRequest;
 import com.beez.beez.wiki.dto.WikiVersionRequest;
 import com.beez.beez.wiki.mapper.WikiMapper;
 import com.beez.beez.wiki.service.WikiService;
-import jakarta.transaction.Transactional;
+
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 // 로직 구현체 파일 - 실제로 어떻게 동작하는지 코드 작성
 @Service
+@RequiredArgsConstructor
 public class WikiServiceImpl implements WikiService {
   
-  //
-  @Autowired
-  private WikiMapper wikiMapper;
+  private final WikiMapper wikiMapper;
   
   @Override
-  @Transactional
-  public void createWiki(WikiRequest wikiRequest, WikiVersionRequest wikiVersionRequest){
-    //위키 기본 정보 저장
+  @Transactional // 생성시 세가지 작업 모두 수행 -
+  public void insertWiki(WikiRequest wikiRequest, WikiVersionRequest versionRequest){
+    System.out.println(wikiRequest.getId());
+    System.out.println(versionRequest.getVersionId());
     wikiMapper.insertWiki(wikiRequest);
-    
-    //새로 저장된 위키의 ID를 버전 정보의 wikiId 필드에 세팅
-    wikiVersionRequest.setWikiId(wikiRequest.getId());
-    
-    //위키 본문 내용 저장
+    wikiMapper.insertWikiVersion(versionRequest);
+    wikiMapper.updateWiki(wikiRequest);
+  }
+  
+  @Override
+  @Transactional // 수정시 본문 추가랑 wiki테이블 최신 버전 갱신
+  public void updateWikiContent(WikiVersionRequest wikiVersionRequest, WikiRequest wikiRequest){
     wikiMapper.insertWikiVersion(wikiVersionRequest);
+    wikiMapper.updateWiki(wikiRequest);
   }
   
-  //프로젝트 ID넘겨서 wiki list 받아오기
-  @Override
-  public List<WikiRequest> getWikiList(String projectId){
-    return wikiMapper.selectWikiList(projectId);
+  @Override //projectId별로 위키목록 조회
+  public List<WikiRequest> findWikiByProjectId(String projectId){
+    return wikiMapper.findWikiByProjectId(projectId);
   }
   
-  //위키에게ID주고 최신 버전 받아오기
-  @Override
-  public WikiVersionRequest getWikiDetail(String wikiId){
-    return wikiMapper.selectLatestVersion(wikiId);
+  @Override // wikiId별로 최신 본문 조회
+  public WikiVersionRequest findLatestVersion(String wikiId){
+    return wikiMapper.findLatestVersion(wikiId);
   }
   
-}
+  @Override //wikiId별로 히스토리 조회
+  public List<WikiVersionRequest> findWikiVersionList(String wikiId){
+    return wikiMapper.findWikiVersionList(wikiId);
+  }
+  
+  
+} // class end
