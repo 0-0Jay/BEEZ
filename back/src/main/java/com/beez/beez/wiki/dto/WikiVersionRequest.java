@@ -19,4 +19,5 @@ public class WikiVersionRequest {
   private String description;  //버전설명 - 수정이유
   private String versionName; //버전이름
   private String links;        //관련링크
+  private String wikiInfo;    //페이지 한줄 설명 글
 }
