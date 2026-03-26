@@ -1,5 +1,9 @@
 import AppLayout from '@/layout/AppLayout.vue';
 import { createRouter, createWebHistory } from 'vue-router';
+import Routes1 from './routes1';
+import Routes2 from './routes2';
+import Routes3 from './routes3';
+import Routes4 from './routes4';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -22,7 +26,11 @@ const router = createRouter({
           path: '/test',
           name: 'test',
           component: () => import('@/views/TestPage.vue')
-        }
+        },
+        ...Routes1,
+        ...Routes2,
+        ...Routes3,
+        ...Routes4
       ]
     }
     // 여기에 페이지 추가 금지

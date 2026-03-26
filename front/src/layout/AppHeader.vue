@@ -20,7 +20,7 @@ const userId = '20261111';
 
       <!-- 프로젝트명 -->
       <span v-if="selectedProject" class="ml-4 text-gray-600">
-        {{ selectedProject.title }}
+        {{ selectedProject.name }}
       </span>
       <span v-else class="ml-4 text-gray-600">선택한 프로젝트 이름 나올 자리</span>
     </div>

@@ -1,6 +1,6 @@
 package com.beez.beez.notification.dto;
 
-import com.beez.beez.notification.repository.Notification;
+import com.beez.beez.notification.repository.Notifications;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,7 +20,7 @@ public class NotificationResponse {
   private LocalDateTime createdOn;
   private String link;
   
-  public static NotificationResponse toDto(Notification notification) {
+  public static NotificationResponse toDto(Notifications notification) {
     return NotificationResponse.builder()
       .id(notification.getId())
       .userId(notification.getUserId())
