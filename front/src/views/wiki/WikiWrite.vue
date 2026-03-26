@@ -2,17 +2,23 @@
 import { computed, ref } from 'vue';
 
 // 헤더 데이터
-const projectTitle = ref('임시 프로젝트 제목'); // 프로젝트 제목 고정 또는 받아오기
-const userId = ref('');
-const saveSuccess = ref(false);
+const projectTitle = ref('임시 프로젝트 제목'); //프로젝트 제목 고정 또는 받아오기
+const wiki_info = ref(''); //위키페이지 한줄 설명
+const userId = ref(''); //일단 유저명 작성으로 넣어둠
+const created_on = ref(null); //날짜도 오늘 날짜로 설정되도록
+const saveSuccess = ref(false); //저장 성공 여부
 
 const errors = ref({
-  userId: false
+  userId: false,
+  created_on: false
 });
 
 function validateForm() {
-  errors.value.userId = !userId.value.trim();
-  return !errors.value.userId;
+  //작성자명이랑 날짜를 작성해야함
+  errors.value.userId = !userId.value || !userId.value.trim();
+  errors.value.created_on = !created_on.value; // 날짜가 선택되지 않았으면 true
+
+  return !errors.value.userId && !errors.value.created_on;
 }
 
 function handleCancel() {
@@ -206,6 +212,7 @@ function applyFormat(command) {
     <div class="editor-section">
       <!-- 툴바 -->
       <div class="editor-toolbar">
+        이 툴바는 뼈대만 있습니다
         <select v-model="textStyle" class="toolbar-select">
           <option value="본문">본문</option>
           <option value="제목1">제목1</option>
@@ -234,10 +241,6 @@ function applyFormat(command) {
         <button class="toolbar-btn" title="체크리스트" @click="applyFormat('checklist')">☑</button>
 
         <div class="toolbar-divider" />
-
-        <button class="toolbar-btn callout" title="콜아웃" @click="applyFormat('callout')">⚡ 콜아웃</button>
-        <button class="toolbar-btn code" title="코드" @click="applyFormat('code')">{} 코드</button>
-        <button class="toolbar-btn divider" title="구분선" @click="applyFormat('divider')">— 구분선</button>
       </div>
 
       <!-- 에디터 본문 -->
@@ -268,7 +271,7 @@ function applyFormat(command) {
   display: flex;
   align-items: flex-start;
   gap: 20px;
-  background: #fff;
+  background: #e4e4e4;
   border: 1px solid #ddd;
   border-radius: 6px;
   padding: 16px 20px;
@@ -287,7 +290,8 @@ function applyFormat(command) {
 
 .project-desc-input {
   width: 100%;
-  border: 1px solid #ccc;
+  border: 1px solid #ffffff;
+  background-color: #ffffff;
   border-radius: 4px;
   padding: 6px 10px;
   font-size: 13px;
@@ -317,7 +321,8 @@ function applyFormat(command) {
 }
 
 .field-input {
-  border: 1px solid #ccc;
+  border: 1px solid #3129292f;
+  background-color: #ffffff;
   border-radius: 4px;
   padding: 6px 10px;
   font-size: 13px;
@@ -372,21 +377,21 @@ function applyFormat(command) {
 }
 
 .btn-edit {
-  background: #4a4a4a;
+  /* 선형 그라데이션: 위에서 아래로 옅은 오렌지 -> 진한 오렌지 */
+  background: linear-gradient(180deg, #ff8d4b 0%, #f5a623 100%);
   color: #fff;
 }
-
 .btn-edit:hover {
-  background: #333;
+  background: #f5a623;
 }
 
 .btn-primary {
-  background: #3d7eff;
+  background: linear-gradient(180deg, #ff8d4b 0%, #f5a623 100%);
   color: #fff;
 }
 
 .btn-primary:hover {
-  background: #2b6be0;
+  background: #f5a623;
 }
 
 .btn-add-link {
