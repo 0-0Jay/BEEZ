@@ -44,10 +44,13 @@
 
 <script setup>
 import { inject, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
 
 const isOpen = inject('menuState');
 const toggleMenu = inject('toggleMenu');
 const selectedProject = inject('selectedProject');
+
+const router = useRouter();
 
 const showContent = ref(isOpen.value);
 
