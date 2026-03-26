@@ -2,7 +2,7 @@ package com.beez.beez.notification.service.impl;
 
 import com.beez.beez.notification.dto.NotificationRequest;
 import com.beez.beez.notification.dto.NotificationResponse;
-import com.beez.beez.notification.repository.Notification;
+import com.beez.beez.notification.repository.Notifications;
 import com.beez.beez.notification.repository.NotificationRepository;
 import com.beez.beez.notification.service.NotificationService;
 import com.beez.beez.notification.service.sse.SseEmitterManager;
@@ -36,7 +36,7 @@ public class NotificationServiceImpl implements NotificationService {
   @Transactional
   public NotificationResponse sendToUser(NotificationRequest request) {
     // 1. DB 저장
-    Notification notification = Notification.builder()
+    Notifications notification = Notifications.builder()
       .userId(request.getUserId())
       .content(request.getContent())
       .link(request.getLink())
@@ -108,7 +108,7 @@ public class NotificationServiceImpl implements NotificationService {
    */
   @Transactional
   public void markAsRead(String id) {
-    Notification notification = notificationRepository.findById(id)
+    Notifications notification = notificationRepository.findById(id)
       .orElseThrow(() -> new IllegalArgumentException("알림을 찾을 수 없습니다. id=" + id));
     notification.setStatus("1");
   }

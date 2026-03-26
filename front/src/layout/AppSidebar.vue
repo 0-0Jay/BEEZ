@@ -56,7 +56,7 @@ watch(isOpen, (val) => {
         <span>대시보드</span>
       </router-link>
 
-      <router-link to="/projects" class="menu-item whitespace-nowrap cursor-pointer px-3 py-2.5 rounded-lg hover:bg-gray-700 transition-colors duration-150 flex items-center justify-between">
+      <router-link to="/project/list" class="menu-item whitespace-nowrap cursor-pointer px-3 py-2.5 rounded-lg hover:bg-gray-700 transition-colors duration-150 flex items-center justify-between">
         <span>프로젝트 목록</span>
       </router-link>
 
