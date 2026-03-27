@@ -1,4 +1,4 @@
-package com.beez.beez.chat.repository;
+package com.beez.beez.websocket.repository;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

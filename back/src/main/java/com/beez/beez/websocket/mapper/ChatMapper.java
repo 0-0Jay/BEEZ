@@ -1,6 +1,6 @@
-package com.beez.beez.chat.mapper;
+package com.beez.beez.websocket.mapper;
 
-import com.beez.beez.chat.dto.ChatVo;
+import com.beez.beez.websocket.dto.ChatVo;
 
 import java.util.List;
 

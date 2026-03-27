@@ -1,13 +1,12 @@
-package com.beez.beez.chat.web;
+package com.beez.beez.websocket.web;
 
-import com.beez.beez.chat.dto.ChatSendRequest;
-import com.beez.beez.chat.dto.ChatVo;
-import com.beez.beez.chat.service.ChatService;
+import com.beez.beez.websocket.dto.ChatSendRequest;
+import com.beez.beez.websocket.dto.ChatVo;
+import com.beez.beez.websocket.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;

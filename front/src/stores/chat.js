@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from '@/stores/AxiosInstance';
 import { defineStore } from 'pinia';
 
 export const useChatStore = defineStore('chat', {
@@ -10,13 +10,9 @@ export const useChatStore = defineStore('chat', {
   // actions
   actions: {
     async findChatList(projectId) {
-      try {
-        const res = await axios.get(`/api/chat/${projectId}`);
-        this.chatlist = res.data;
-        return this.chatlist;
-      } catch (err) {
-        console.log(err);
-      }
+      const res = await axios.get(`/chat/${projectId}`);
+      this.chatlist = res.data;
+      return this.chatlist;
     }
   },
   persist: true

@@ -1,15 +1,11 @@
-package com.beez.beez.chat.repository;
+package com.beez.beez.websocket.repository;
 
-import com.beez.beez.chat.dto.ChatSendRequest;
-import com.beez.beez.chat.dto.ChatVo;
 import jakarta.transaction.Transactional;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
 
 @Repository
 public interface ChatRepository extends JpaRepository<Chat, String> {

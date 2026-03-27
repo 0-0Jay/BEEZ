@@ -1,11 +1,10 @@
-package com.beez.beez.chat.service.impl;
+package com.beez.beez.websocket.service.impl;
 
-import com.beez.beez.chat.dto.ChatSendRequest;
-import com.beez.beez.chat.dto.ChatVo;
-import com.beez.beez.chat.mapper.ChatMapper;
-import com.beez.beez.chat.repository.Chat;
-import com.beez.beez.chat.repository.ChatRepository;
-import com.beez.beez.chat.service.ChatService;
+import com.beez.beez.websocket.dto.ChatSendRequest;
+import com.beez.beez.websocket.dto.ChatVo;
+import com.beez.beez.websocket.mapper.ChatMapper;
+import com.beez.beez.websocket.repository.ChatRepository;
+import com.beez.beez.websocket.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

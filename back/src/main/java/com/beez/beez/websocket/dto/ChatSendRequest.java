@@ -1,4 +1,4 @@
-package com.beez.beez.chat.dto;
+package com.beez.beez.websocket.dto;
 
 import lombok.Data;
 
