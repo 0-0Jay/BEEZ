@@ -1,12 +1,20 @@
 <script setup>
 import { computed, ref } from 'vue';
 
-// 헤더 데이터
-const projectTitle = ref('임시 프로젝트 제목'); //프로젝트 제목 고정 또는 받아오기
-const wiki_info = ref(''); //위키페이지 한줄 설명
-const userId = ref(''); //일단 유저명 작성으로 넣어둠
-const created_on = ref(null); //날짜도 오늘 날짜로 설정되도록
-const saveSuccess = ref(false); //저장 성공 여부
+// 최상단 헤더 데이터
+const projectInfo = ref({
+  id: '', //프로젝트 고유 번호
+  identifier: '',
+  title: '',
+  description: '',
+  startDate: null,
+  endDate: null,
+  userId: ''
+});
+
+//--------------------------------------
+
+//--------------------------------------
 
 const errors = ref({
   userId: false,
@@ -34,13 +42,6 @@ function handleEdit() {
 //목차
 const tocItems = ref([{ title: '' }]);
 const emptyTocSlots = computed(() => Math.max(0, 7 - tocItems.value.length));
-
-// 프로젝트 정보
-const projectInfo = ref({
-  status: '진행중',
-  endDate: '2026.04.27',
-  pm: '홍길동'
-});
 
 // 링크
 const linkItems = ref([
@@ -108,23 +109,26 @@ function applyFormat(command) {
     <!-- ① 상단 헤더 영역 -->
     <div class="header-section">
       <div class="header-left">
-        <h1 class="project-title">{{ projectTitle || '뼈대 페이지' }}</h1>
-        <input v-model="projectDescription" type="text" class="project-desc-input" placeholder="프로젝트 한 줄 설명을 입력하세요" />
+        <h1 class="project-title">
+          {{ projectInfo.projectName || '프로젝트 제목 출력 부분' }}
+        </h1>
+
+        <input v-model="projectDescription" type="text" class="project-desc-input" placeholder="위키 관련 한 줄 설명을 입력하세요" />
       </div>
 
       <div class="header-fields">
         <!-- 작성자명 -->
         <div class="field-group">
           <label class="field-label required">작성자명</label>
-          <input v-model="authorName" type="text" class="field-input" :class="{ 'is-error': errors.authorName }" placeholder="성함을 입력해 주세요." />
-          <span v-if="errors.authorName" class="error-msg">성함입력은 필수 입니다.</span>
+          <input v-model="userId" type="text" class="field-input" :class="{ 'is-error': errors.userId }" placeholder="성함을 입력해 주세요." />
+          <span v-if="errors.userId" class="error-msg">성함입력은 필수 입니다.</span>
         </div>
 
         <!-- 작성일 -->
         <div class="field-group">
           <label class="field-label required">작성일</label>
-          <input v-model="writtenDate" type="date" class="field-input" :class="{ 'is-error': errors.writtenDate }" placeholder="날짜를 선택해주세요." />
-          <span v-if="errors.writtenDate" class="error-msg">날짜를 선택 해주세요.</span>
+          <input v-model="created_on" type="date" class="field-input" :class="{ 'is-error': errors.created_on }" placeholder="날짜를 선택해주세요." />
+          <span v-if="errors.created_on" class="error-msg">날짜를 선택 해주세요.</span>
         </div>
       </div>
 

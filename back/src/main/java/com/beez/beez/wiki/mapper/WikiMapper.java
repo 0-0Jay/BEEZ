@@ -1,5 +1,6 @@
 package com.beez.beez.wiki.mapper;
 
+import com.beez.beez.project.dto.ProjectCreateRequest;
 import com.beez.beez.wiki.dto.WikiRequest;
 import com.beez.beez.wiki.dto.WikiVersionRequest;
 import org.apache.ibatis.annotations.Mapper;
@@ -32,4 +33,6 @@ public interface WikiMapper {
   //특정 위키(wikiId)의 최신 버전 상세 가져오기 - 프로젝트의 어떤 위키 / 화면에 뿌려주기 위함
   WikiVersionRequest findLatestVersion(String wikiId);
   
+  //위키 페이지에 프로젝트 관련 정보를 뿌려주기 위함
+  ProjectCreateRequest findProjectById(String projectId);
 }

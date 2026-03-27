@@ -1,5 +1,6 @@
 package com.beez.beez.wiki.service;
 
+import com.beez.beez.project.dto.ProjectCreateRequest;
 import com.beez.beez.wiki.dto.WikiRequest;
 import com.beez.beez.wiki.dto.WikiVersionRequest;
 
@@ -23,4 +24,7 @@ public interface WikiService {
   
   //히스토리 조회
   List<WikiVersionRequest> findWikiVersionList(String wikiId);
+  
+  //프로젝트 정보 조회 (위키 헤더용)
+  ProjectCreateRequest getProjectInfo(String projectId);
 }
