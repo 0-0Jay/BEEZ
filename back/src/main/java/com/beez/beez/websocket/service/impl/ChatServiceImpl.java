@@ -16,11 +16,13 @@ public class ChatServiceImpl implements ChatService {
   private final ChatRepository chatRepository;
   private final ChatMapper chatMapper;
   
+  // 채팅 전송
   @Override
   public void sendChat(String projectId, ChatSendRequest chat) {
     chatRepository.insertChat(projectId, chat.getUserId(), chat.getContent(), chat.getParentId());
   }
   
+  // 채팅 목록
   @Override
   public List<ChatVo> findChatList(String projectId) {
     return chatMapper.findChatList(projectId);

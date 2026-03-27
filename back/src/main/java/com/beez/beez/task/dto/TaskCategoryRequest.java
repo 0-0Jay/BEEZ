@@ -1,4 +1,4 @@
-package com.beez.beez.websocket.dto;
+package com.beez.beez.task.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,8 +9,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class NotificationRequest {
-  private String userId;
-  private String content;
-  private String link;
+public class TaskCategoryRequest {
+  private String id;
+  private String name;
+  private String description;
 }

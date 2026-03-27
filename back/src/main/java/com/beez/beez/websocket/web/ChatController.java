@@ -18,6 +18,7 @@ import java.util.List;
 public class ChatController {
   private final ChatService chatService;
   
+  // 채팅 전송
   @MessageMapping("/chat/{projectId}")
   @SendTo("/chat/{projectId}")
   public ChatSendRequest sendChat(@DestinationVariable String projectId, ChatSendRequest chat) {
@@ -25,6 +26,7 @@ public class ChatController {
     return chat;
   }
   
+  // 채팅 목록
   @GetMapping("/api/chat/{projectId}")
   public List<ChatVo> getChats(@PathVariable String projectId) {
     return chatService.findChatList(projectId);

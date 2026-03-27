@@ -1,5 +1,6 @@
 package com.beez.beez.websocket.dto;
 
+import com.beez.beez.websocket.repository.Notifications;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,5 +16,16 @@ public class NotificationResponse {
   private String id;
   private String content;
   private LocalDateTime createdOn;
+  private String status;
   private String link;
+  
+  public static NotificationResponse toDto(Notifications entity) {
+    return NotificationResponse.builder()
+      .id(entity.getId())
+      .content(entity.getContent())
+      .createdOn(entity.getCreatedOn())
+      .status(entity.getStatus())
+      .link(entity.getLink())
+      .build();
+  }
 }
