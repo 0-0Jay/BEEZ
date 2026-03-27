@@ -55,7 +55,7 @@ const toggleMenu = (event, data) => {
 };
 
 const goToDetail = (project) => {
-  if (setProject) setProject.value = { title: project.title };
+  if (setProject) setProject.value = { title: project.title, id: project.id };
   // router.push(`/project/detail/${project.id}`);
 };
 
