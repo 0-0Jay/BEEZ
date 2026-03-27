@@ -1,6 +1,7 @@
 package com.beez.beez.wiki.web;
 
 import com.beez.beez.project.dto.ProjectCreateRequest;
+import com.beez.beez.wiki.dto.WikiProjectRequest;
 import com.beez.beez.wiki.dto.WikiRequest;
 import com.beez.beez.wiki.dto.WikiSaveRequest;
 import com.beez.beez.wiki.dto.WikiVersionRequest;
@@ -54,7 +55,7 @@ public class WikiController {
 
   //위키에 프로젝트 정보 출력
   @GetMapping("/wiki/project/{projectId}")
-  public ProjectCreateRequest findProjectById(@PathVariable String projectId){
+  public WikiProjectRequest findProjectById(@PathVariable String projectId){
     return wikiService.getProjectInfo(projectId);
   }
 }

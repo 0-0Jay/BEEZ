@@ -61,7 +61,7 @@ watch(isOpen, (val) => {
       </router-link>
 
       <router-link to="/test" class="menu-item whitespace-nowrap cursor-pointer px-3 py-2.5 rounded-lg hover:bg-gray-700 transition-colors duration-150 flex items-center justify-between">
-        <span>채팅 테스트</span>
+        <span>채팅/알림 테스트</span>
       </router-link>
 
       <div v-if="selectedProject" class="mt-1">
@@ -96,7 +96,10 @@ watch(isOpen, (val) => {
           <router-link to="" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
             <span>문서</span>
           </router-link>
-          <router-link to="/wiki/write" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
+          <router-link
+            :to="`/wiki/write/${selectedProject.id}`"
+            class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between"
+          >
             <span>위키</span>
           </router-link>
           <router-link to="" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">

@@ -2,26 +2,54 @@ package com.beez.beez.websocket.service.impl;
 
 import com.beez.beez.websocket.dto.NotificationRequest;
 import com.beez.beez.websocket.dto.NotificationResponse;
+import com.beez.beez.websocket.mapper.NotificationMapper;
+import com.beez.beez.websocket.repository.NotificationRepository;
 import com.beez.beez.websocket.service.NotificationService;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 
 @Service
+@RequiredArgsConstructor
 public class NotificationServiceImpl implements NotificationService {
-  @Override
-  public void sendNotification(NotificationRequest notificationRequest) {
+  private final NotificationRepository notificationRepository;
+  private final NotificationMapper notificationMapper;
+  private final SimpMessagingTemplate messagingTemplate;
   
+  // 알림 전송
+  @Override
+  @Transactional
+  public void sendNotification(NotificationRequest dto) {
+    notificationRepository.insertChat(dto.getUserId(), dto.getContent(), dto.getLink());
+    NotificationResponse notificationResponse = notificationMapper.findNotification(dto.getUserId());
+    messagingTemplate.convertAndSend("/notification/" + dto.getUserId(), notificationResponse);
   }
   
+  // 알림 목록
   @Override
-  public List<NotificationResponse> findNotificationList(String user) {
-    return List.of();
+  public List<NotificationResponse> findNotificationList(String userId) {
+    return notificationRepository.findAllByUserIdOrderByIdDesc(userId).stream().map(NotificationResponse::toDto).toList();
   }
   
+  // 알림 읽음
   @Override
   public void readNotification(String id) {
+    notificationMapper.readNotification(id);
+  }
   
+  // 알림 전부 읽음
+  @Override
+  public void readAllNotification(String userId) {
+    notificationMapper.readAllNotification(userId);
+  }
+  
+  // 알림 삭제
+  @Override
+  public void deleteNotification(String id) {
+    notificationRepository.deleteById(id);
   }
 }

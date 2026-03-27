@@ -1,6 +1,7 @@
 package com.beez.beez.project.service.impl;
 
 import com.beez.beez.project.dto.ProjectCreateRequest;
+import com.beez.beez.project.dto.ProjectFilterRequest;
 import com.beez.beez.project.dto.ProjectListResponse;
 import com.beez.beez.project.mapper.ProjectMapper;
 import com.beez.beez.project.service.ProjectService;
@@ -26,8 +27,23 @@ public class ProjectServiceImpl implements ProjectService {
   }
   
   @Override
-  public List<ProjectListResponse> findAllProjects() {
-    return projectMapper.findAllProjects();
+  public List<ProjectListResponse> selectProjectList(ProjectFilterRequest filter) {
+    return projectMapper.selectProjectList(filter);
+  }
+  
+  @Override
+  public void updateProjectLock(String id) {
+    projectMapper.updateProjectLock(id);
+  }
+  
+  @Override
+  public void updateUnProjectLock(String id) {
+    projectMapper.updateUnProjectLock(id);
+  }
+  
+  @Override
+  public void updateProjectStatus(String id) {
+    projectMapper.updateProjectStatus(id);
   }
   
 }
