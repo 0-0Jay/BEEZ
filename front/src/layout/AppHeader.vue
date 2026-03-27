@@ -1,20 +1,16 @@
 <script setup>
+import Notification from '@/components/notification/Notification.vue';
 import { inject } from 'vue';
 
 const selectedProject = inject('selectedProject');
+
+const userId = '20261111';
 </script>
 
 <template>
   <div class="h-20 bg-header border-b shadow flex items-center justify-between px-4">
     <!-- 좌측 -->
     <div class="flex items-center gap-3">
-      <!-- 메뉴 버튼 -->
-      <!-- <Button icon="pi pi-bars" size="large" @click="toggleMenu" plain text /> -->
-
-      <!-- 로고 -->
-      <!-- <img src="/demo/images/logo.png" alt="logo" class="w-10 h-10 object-contain" /> -->
-      <!-- <span class="font-bold text-4xl title-color">BEEZ</span> -->
-
       <!-- 프로젝트명 -->
       <span v-if="selectedProject" class="ml-4 text-gray-600">
         {{ selectedProject.name }}
@@ -26,9 +22,7 @@ const selectedProject = inject('selectedProject');
     <div class="flex items-center gap-4 pr-10">
       <Button icon="pi pi-user" label="사용자명" plain text size="large" />
       <div class="relative inline-flex">
-        <Button icon="pi pi-bell" label="알림" plain text size="large" />
-        <!-- 알림이 있을 때만 표시 -->
-        <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+        <Notification :user-id="userId" />
       </div>
       <Button icon="pi pi-sign-out" label="로그아웃" plain text size="large" />
     </div>

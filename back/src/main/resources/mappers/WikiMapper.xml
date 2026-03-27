@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.beez.beez.wiki.mapper.WikiMapper">
+  
+  <insert id="insertWiki">
+    INSERT INTO wiki (id, project_id, version_id)
+    VALUES (#{id}, #{projectId}, #{versionId})
+  </insert>
+  
+  <insert id="insertWikiVersion">
+    INSERT INTO wiki_version ( version_id, content, user_id, created_on, wiki_id, description, version_name, links, wiki_info )
+    VALUES                   ( #{versionId}, #{content}, #{userId}, SYSTIMESTAMP, #{wikiId}, #{description}, #{versionName}, #{links}, #{wikiInfo} )
+  </insert>
+
+  <update id="updateWiki" >
+    UPDATE WIKI
+    SET VERSION_ID = #{versionId}
+    WHERE ID = #{id}
+  </update>
+  
+  <select id="findWikiVersionList" >
+    SELECT
+        VERSION_ID,
+        CONTENT,
+        USER_ID,
+        CREATED_ON,
+        WIKI_ID,
+        DESCRIPTION,
+        VERSION_NAME,
+        LINKS,
+        WIKI_INFO
+    FROM WIKI_VERSION
+    WHERE WIKI_ID = #{wikiId}
+    ORDER BY CREATED_ON DESC
+  </select>
+  
+  <select id="findWikiByProjectId" >
+    SELECT
+        ID,
+        PROJECT_ID,
+        VERSION_ID
+    FROM WIKI
+    WHERE PROJECT_ID = #{projectId}
+  </select>
+  
+  <select id="findLatestVersion" >
+    SELECT
+        V.VERSION_ID,
+        V.CONTENT,
+        V.USER_ID,
+        V.CREATED_ON,
+        V.WIKI_ID,
+        V.DESCRIPTION,
+        V.VERSION_NAME,
+        V.LINKS,
+        V.WIKI_INFO
+    FROM WIKI W
+    JOIN WIKI_VERSION V ON W.VERSION_ID = V.VERSION_ID
+    WHERE W.ID = #{wikiId}
+  </select>
+  
+  <!-- 위키 화면에 프로젝트 관련 정보를 뿌려주기 위함-->
+  <select id="findProjectById" resultType="com.beez.beez.project.dto.ProjectCreateRequest">
+    SELECT * FROM project
+    WHERE id = #{projectId}
+  </select>
+  
+</mapper>
