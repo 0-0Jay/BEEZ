@@ -1,10 +1,10 @@
 <script setup>
 import { useProjectStore } from '@/stores/project';
 import { storeToRefs } from 'pinia';
-import { inject, onMounted, reactive, ref } from 'vue';
+import { computed, inject, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-// --- 1. 스토어 연결 (진짜 데이터 소스) ---
+// --- 1. 스토어 연결 ---
 const projectStore = useProjectStore();
 const { projects, loading } = storeToRefs(projectStore);
 
@@ -15,35 +15,44 @@ const selectedRow = ref(null);
 
 // --- 2. 필터 상태 ---
 const filters = reactive({
-  title: null,
-  pm: null,
+  id: null,
+  pmId: null,
   startDate: null,
   endDate: null,
-  showArchived: false
+  isLock: false
 });
 
-// Select 옵션 (이건 보통 공통 코드 API로 받아오지만, 일단 화면용으로 유지)
-const projectOptions = ref(['모바일 앱 리뉴얼', 'API 마이그레이션', '대시보드 설계']);
-const pmOptions = ref(['곽현우', '노정화', '조영진', '한유민']);
+// 목록 조회 후 Select 옵션 구성
+const projectOptions = ref([]);
+const pmOptions = ref([]);
 
-// --- 3. 진짜 조회 로직 ---
-onMounted(() => {
-  fetchProjects(); // 페이지 진입 시 최초 조회
+// --- 3. 조회 로직 ---
+onMounted(async () => {
+  await projectStore.fetchProjects(filters);
+
+  // select 옵션 구성
+  projectOptions.value = projectStore.projects.map((p) => ({
+    label: p.title,
+    value: p.id
+  }));
+  pmOptions.value = [...new Map(projectStore.projects.map((p) => [p.pm, { label: p.pm, value: p.pmId }])).values()]; // 중복 제거
 });
 
 const fetchProjects = () => {
-  // 스토어의 액션을 호출하여 API 통신 실행
-  // 필터값을 인자로 넘겨 서버측 필터링이 가능하도록 구성
-  projectStore.fetchProjects(filters);
+  projectStore.fetchProjects({
+    ...filters,
+    startDate: formatDate(filters.startDate),
+    endDate: formatDate(filters.endDate)
+  });
 };
 
 const resetFilters = () => {
   Object.assign(filters, {
-    title: null,
-    pm: null,
+    id: null,
+    pmId: null,
     startDate: null,
     endDate: null,
-    showArchived: false
+    isLock: false
   });
   fetchProjects(); // 초기화 후 재조회
 };
@@ -55,21 +64,46 @@ const toggleMenu = (event, data) => {
 };
 
 const goToDetail = (project) => {
-  if (setProject) setProject.value = { title: project.title };
+  if (project.isLock === 'L1') return;
+  if (setProject) setProject.value = { title: project.title, id: project.id };
   // router.push(`/project/detail/${project.id}`);
 };
 
-const formatDate = (v) => {
-  if (!v) return '-';
-  const d = new Date(v);
-  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+// 날짜 포맷 변환 함수
+const formatDate = (date) => {
+  if (!date) return null;
+  const d = new Date(date);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-const actionItems = ref([
-  { label: '프로젝트 잠금보관', icon: 'pi pi-lock' },
+const actionItems = computed(() => [
+  {
+    label: selectedRow.value?.isLock === 'L1' ? '잠금보관 해제' : '프로젝트 잠금보관',
+    icon: selectedRow.value?.isLock === 'L1' ? 'pi pi-lock-open' : 'pi pi-lock',
+    command: () => (selectedRow.value?.isLock === 'L1' ? unlockProject(selectedRow.value.id) : lockProject(selectedRow.value.id))
+  },
   { label: '프로젝트 복사', icon: 'pi pi-copy' },
-  { label: '프로젝트 삭제', icon: 'pi pi-trash', class: 'text-red-500' }
+  { label: '프로젝트 삭제', icon: 'pi pi-trash', command: () => deleteProject(selectedRow.value.id) }
 ]);
+
+const rowClass = (data) => {
+  return data.isLock === 'L1' ? 'locked-row' : '';
+};
+
+const lockProject = async (id) => {
+  await projectStore.lockProject(id);
+  fetchProjects();
+};
+
+const unlockProject = async (id) => {
+  await projectStore.unlockProject(id);
+  fetchProjects();
+};
+
+const deleteProject = async (id) => {
+  await projectStore.deleteProject(id);
+  fetchProjects();
+};
 </script>
 
 <template>
@@ -77,22 +111,22 @@ const actionItems = ref([
     <!-- 타이틀 + 등록 버튼 -->
     <div class="flex justify-between items-end mb-6">
       <h1 class="text-2xl font-bold text-[#1A1816]">프로젝트 목록</h1>
-      <Button label="프로젝트 등록" icon="pi pi-plus" outlined class="btn-register-outline" />
+      <Button label="프로젝트 등록" icon="pi pi-plus" outlined class="btn-register-outline" @click="router.push('/project/create')" />
     </div>
 
     <div class="bg-[#F2F0EB] px-10 py-8 rounded-lg mb-8 shadow-sm border border-[#C7C7C2] flex">
       <!-- 입력칸 + 체크박스 묶음 -->
       <div class="flex items-center">
         <label class="filter-label mr-5">프로젝트명</label>
-        <Select v-model="filters.title" :options="projectOptions" placeholder="선택" class="filter-input w-80 mr-10" />
+        <Select v-model="filters.id" :options="projectOptions" optionLabel="label" optionValue="value" placeholder="선택" class="filter-input w-80 mr-10" />
 
         <label class="filter-label mr-5">PM/PL</label>
-        <Select v-model="filters.pm" :options="pmOptions" placeholder="선택" class="filter-input w-42 mr-10" />
+        <Select v-model="filters.pmId" :options="pmOptions" optionLabel="label" optionValue="value" placeholder="선택" class="filter-input w-42 mr-10" />
         <label class="filter-label mr-5">마감일</label>
-        <DatePicker v-model="filters.startDate" placeholder="연도-월-일" class="filter-input w-36 mr-15" />
+        <DatePicker v-model="filters.startDate" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" class="filter-input w-36 mr-15" />
         <span class="text-sm text-[#6B6B63] px-4">~</span>
-        <DatePicker v-model="filters.endDate" placeholder="연도-월-일" class="filter-input w-36 mr-25" />
-        <Checkbox v-model="filters.showArchived" :binary="true" inputId="archived" class="mr-3" />
+        <DatePicker v-model="filters.endDate" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" class="filter-input w-36 mr-25" />
+        <Checkbox v-model="filters.isLock" :binary="true" inputId="archived" class="mr-3" />
         <label for="archived" class="text-sm font-medium text-[#1A1816] whitespace-nowrap cursor-pointer">잠금 보관 프로젝트 보기</label>
       </div>
 
@@ -104,7 +138,7 @@ const actionItems = ref([
     </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-[#C7C7C2] overflow-hidden">
-      <DataTable :value="projects" :loading="loading" dataKey="id" :rowHover="true">
+      <DataTable :value="projects" :loading="loading" dataKey="id" :rowHover="true" :rowClass="rowClass">
         <template #empty>
           <div class="text-center py-10 text-gray-400">조회된 데이터가 없습니다.</div>
         </template>
@@ -168,6 +202,10 @@ const actionItems = ref([
 :deep(.filter-input) {
   height: 38px !important;
 }
+:deep(.filter-input .p-select-label) {
+  display: flex;
+  align-items: center;
+}
 :deep(.btn-amber) {
   background-color: #e8920e !important;
   color: #ffffff !important;
@@ -226,5 +264,16 @@ const actionItems = ref([
 :deep(.progress-bar-custom .p-progressbar-value) {
   background-color: #e8920e;
   border-radius: 10px;
+}
+:deep(.locked-row) {
+  background-color: #f5f5f5 !important;
+  color: #b0b0b0 !important;
+}
+:deep(.locked-row td) {
+  color: #b0b0b0 !important;
+  background-color: #f5f5f5 !important;
+}
+:deep(.locked-row td span) {
+  color: #b0b0b0 !important;
 }
 </style>
