@@ -7,11 +7,16 @@ import java.util.List;
 
 public interface NotificationService {
   // 알림 전송
-  public void sendNotification(NotificationRequest notificationRequest);
+  void sendNotification(NotificationRequest notificationRequest);
   
   // 알림 목록
-  public List<NotificationResponse> findNotificationList(String user);
+  List<NotificationResponse> findNotificationList(String user);
   
-  // 알림 읽음 처리
-  public void readNotification(String id);
+  // 알림 읽음
+  void readNotification(String id);
+  
+  // 알림 전부 읽음
+  void readAllNotification(String userId);
+  
+  void deleteNotification(String id);
 }

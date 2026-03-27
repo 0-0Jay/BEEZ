@@ -1,5 +1,6 @@
 <script setup>
 import { useNotificationStore } from '@/stores/notification';
+import { Client } from '@stomp/stompjs';
 import Button from 'primevue/button';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 
@@ -8,11 +9,27 @@ const isOpen = ref(false);
 const panelRef = ref(null);
 const btnRef = ref(null);
 const notificationStore = useNotificationStore();
-
-// ── 백엔드 데이터 ─────────────────────────────────────────────
 const notifications = ref([]);
+const unreadCount = computed(() => notifications.value.filter((n) => n.status == '0').length);
 
-// ── link → 타입 유추 ─────────────────────────────────────────
+let stompClient = null;
+
+/* ---------------- 웹소켓 연결 ---------------- */
+const connect = () => {
+  stompClient = new Client({
+    brokerURL: 'ws://localhost:8888/ws/chat',
+    reconnectDelay: 5000,
+    onConnect: () => {
+      stompClient.subscribe(`/notification/${userId}`, (msg) => {
+        const data = JSON.parse(msg.body);
+        notifications.value.unshift(data);
+      });
+    }
+  });
+  stompClient.activate();
+};
+
+// 타입 추출
 function resolveType(link) {
   if (!link) return 'default';
   if (link.includes('task') || link.includes('issue')) return 'task';
@@ -38,7 +55,7 @@ const typeBg = {
   default: 'bg-stone-100 text-stone-500'
 };
 
-// ── created_on → 상대 시간 변환 ───────────────────────────────
+// 시간 변환
 function formatTime(createdOn) {
   if (!createdOn) return '';
   const now = new Date();
@@ -51,20 +68,6 @@ function formatTime(createdOn) {
   return new Date(createdOn).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
 }
 
-// ── 백엔드 데이터 → 컴포넌트 형식으로 매핑 ──────────────────────
-function mapNotification(raw) {
-  return {
-    id: raw.id, // NOTI000 형식
-    content: raw.content,
-    time: formatTime(raw.created_on),
-    isRead: raw.status === '1', // "0" 안읽음 / "1" 읽음
-    link: raw.link
-  };
-}
-
-// ── 안읽음 개수 (computed) ────────────────────────────────────
-const unreadCount = computed(() => notifications.value.filter((n) => !n.isRead).length);
-
 // 알림 목록
 async function loadNotifications() {
   notifications.value = (await notificationStore.findNotificationList(userId)) ?? [];
@@ -76,27 +79,22 @@ function togglePanel() {
 }
 
 function markAsRead(n) {
-  if (n.status) return;
+  if (n.status == '1') return;
   n.status = '1';
   notificationStore.readNotification(n.id);
 }
 
 function markAllAsRead() {
   notifications.value.forEach((n) => (n.status = '1'));
-  notificationStore.readNotification();
+  notificationStore.readAllNotification(userId);
 }
 
 async function deleteNotification(id, e) {
   e.stopPropagation();
-  try {
-    await notificationStore.deleteNotification(id);
-    notifications.value = notifications.value.filter((n) => n.id !== id);
-  } catch (err) {
-    console.error('알림 삭제 실패', err);
-  }
+  await notificationStore.deleteNotification(id);
+  notifications.value = notifications.value.filter((n) => n.id !== id);
 }
 
-// ── 외부 클릭 시 닫기 ─────────────────────────────────────────
 function handleClickOutside(e) {
   if (isOpen.value && panelRef.value && !panelRef.value.contains(e.target) && !btnRef.value.contains(e.target)) {
     isOpen.value = false;
@@ -105,9 +103,13 @@ function handleClickOutside(e) {
 
 onMounted(() => {
   loadNotifications();
+  connect();
   document.addEventListener('mousedown', handleClickOutside);
 });
-onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside));
+onUnmounted(() => {
+  stompClient?.deactivate();
+  document.removeEventListener('mousedown', handleClickOutside);
+});
 </script>
 
 <template>
@@ -150,23 +152,22 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
             v-for="n in notifications"
             :key="n.id"
             class="group flex items-start gap-3.5 px-5 py-4 transition-colors duration-100"
-            :class="[n.isRead ? 'bg-white hover:bg-stone-50' : 'bg-amber-50/60 hover:bg-amber-50', n.link ? 'cursor-pointer' : 'cursor-default']"
+            :class="[n.status == '1' ? 'bg-white hover:bg-stone-50' : 'bg-amber-50/60 hover:bg-amber-50', n.link ? 'cursor-pointer' : 'cursor-default']"
             @click="markAsRead(n)"
           >
             <!-- 타입 아이콘 -->
-            <div class="shrink-0 w-9 h-9 rounded-full flex items-center justify-center mt-0.5" :class="typeBg[n.type]">
-              <i :class="[typeIcon[n.type], 'text-sm']"></i>
+            <div class="shrink-0 w-9 h-9 rounded-full flex items-center justify-center mt-0.5" :class="typeBg[resolveType(n.link)]">
+              <i :class="[typeIcon[resolveType(n.link)], 'text-sm']"></i>
             </div>
 
             <!-- 알림 내용 -->
             <div class="flex-1 min-w-0">
-              <p class="text-sm text-stone-700 leading-relaxed line-clamp-2" :class="n.isRead ? 'font-normal' : 'font-semibold'">
+              <p class="text-sm text-stone-700 leading-relaxed line-clamp-2" :class="n.status == '1' ? 'font-normal' : 'font-semibold'">
                 {{ n.content }}
-                <span v-if="!n.isRead" class="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 ml-1 mb-px align-middle"></span>
+                <span v-if="n.status == '0'" class="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 ml-1 mb-px align-middle"></span>
               </p>
               <div class="flex items-center gap-2 mt-1.5">
-                <p class="text-[11px] text-stone-400 font-medium">{{ n.time }}</p>
-                <span class="text-[10px] font-mono text-stone-300">{{ n.id }}</span>
+                <p class="text-[11px] text-stone-400 font-medium">{{ formatTime(n.createdOn) }}</p>
               </div>
             </div>
 

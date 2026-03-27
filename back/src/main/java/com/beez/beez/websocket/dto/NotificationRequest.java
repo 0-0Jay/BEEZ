@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class NotificationRequest {
-  private String user_id;
+  private String userId;
   private String content;
   private String link;
 }
