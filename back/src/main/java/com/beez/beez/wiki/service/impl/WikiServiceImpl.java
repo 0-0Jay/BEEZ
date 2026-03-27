@@ -1,6 +1,6 @@
 package com.beez.beez.wiki.service.impl;
 
-import com.beez.beez.project.dto.ProjectCreateRequest;
+import com.beez.beez.wiki.dto.WikiProjectRequest;
 import com.beez.beez.wiki.dto.WikiRequest;
 import com.beez.beez.wiki.dto.WikiVersionRequest;
 import com.beez.beez.wiki.mapper.WikiMapper;
@@ -53,7 +53,7 @@ public class WikiServiceImpl implements WikiService {
   }
   
   @Override //위키 페이지 헤더에 프로젝트 정보 받기
-  public ProjectCreateRequest getProjectInfo(String projectId){
+  public WikiProjectRequest getProjectInfo(String projectId){
     return wikiMapper.findProjectById(projectId);
   }
   

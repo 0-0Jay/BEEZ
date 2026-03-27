@@ -1,15 +1,28 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { useWikiStore } from '@/stores/wiki';
+import { computed, onMounted, ref } from 'vue';
+import { useRoute } from 'vue-router';
 
-// 최상단 헤더 데이터
-const projectInfo = ref({
-  id: '', //프로젝트 고유 번호
-  identifier: '',
-  title: '',
-  description: '',
-  startDate: null,
-  endDate: null,
-  userId: ''
+const wikiStore = useWikiStore(); //스토어 연결
+
+const saveSuccess = ref(false);
+const route = useRoute();
+const userId = ref(''); //입력받을 작성자명
+const created_on = ref(''); //입력 받을 작성날짜
+
+//스토어랑 연결
+const projectInfo = computed(() => wikiStore.projectInfo);
+
+//페이지 로드 될 때 실행
+onMounted(async () => {
+  const projectId = route.params.projectId;
+  if (projectId) {
+    await wikiStore.fetchProjectData(projectId);
+    console.log(`${projectId}번 프로젝트 정보 가져옴`);
+  } else {
+    console.log('프로젝트가 불러와지지 않음');
+  }
+  console.log('데이터 로드 완료!');
 });
 
 //--------------------------------------
@@ -40,8 +53,32 @@ function handleEdit() {
 }
 
 //목차
-const tocItems = ref([{ title: '' }]);
+const tocItems = ref([]);
 const emptyTocSlots = computed(() => Math.max(0, 7 - tocItems.value.length));
+
+function onEditorInput(e) {
+  editorContent.value = e.target.innerHTML;
+  updateTOC(e.target); // 목차 업데이트 함수 호출
+}
+
+function updateTOC(container) {
+  // 에디터 내의 h1, h2, h3 태그만 추출
+  const headings = container.querySelectorAll('h1, h2, h3');
+  const tempToc = [];
+
+  headings.forEach((heading, index) => {
+    // 목차 클릭 시 이동을 위해 ID가 없으면 생성
+    if (!heading.id) heading.id = `section-${index}`;
+
+    tempToc.push({
+      id: heading.id,
+      title: heading.innerText,
+      level: heading.tagName // 'H1', 'H2' 등
+    });
+  });
+
+  tocItems.value = tempToc;
+}
 
 // 링크
 const linkItems = ref([
@@ -90,17 +127,71 @@ const editorRef = ref(null);
 const editorContent = ref('');
 const textStyle = ref('본문');
 
-function onEditorInput(e) {
-  editorContent.value = e.target.innerHTML;
-}
+// 반드시 ref로 감싸고 모든 속성을 초기화해야 합니다.
+const activeStyles = ref({
+  bold: false,
+  italic: false,
+  underline: false,
+  strikeThrough: false
+});
+
+// function onEditorInput(e) {
+//   editorContent.value = e.target.innerHTML;
+// }
 
 function onEditorKeydown(e) {
   // TODO: 단축키 처리
 }
 
-function applyFormat(command) {
-  // TODO: execCommand or 커스텀 에디터 명령 처리
-  console.log('format:', command);
+//에디터 함수
+function applyFormat(command, value = null) {
+  editorRef.value.focus();
+  const selection = window.getSelection();
+  if (!selection.rangeCount) return;
+  const range = selection.getRangeAt(0);
+
+  if (command === 'formatBlock') {
+    let container = range.commonAncestorContainer;
+    if (container.nodeType === 3) container = container.parentNode;
+    const blockElement = container.closest('h1, h2, h3, p') || container;
+
+    // 공통 로직: 새로운 태그 생성 (p 또는 h1, h2, h3)
+    const newElement = document.createElement(value);
+
+    // 제목일 경우에만 ID 부여 (목차용)
+    if (value !== 'p') {
+      newElement.id = `section-${Date.now()}`;
+    }
+
+    // 기존 내용을 새 엘리먼트로 옮기기 (비어있으면 공백 삽입)
+    newElement.innerHTML = blockElement.innerHTML && blockElement.innerHTML !== '<br>' ? blockElement.innerHTML : '<br>';
+
+    // 핵심: 기존 요소를 새 요소로 교체 (복사가 아니라 '교체'입니다)
+    if (blockElement !== editorRef.value && blockElement.parentNode) {
+      blockElement.parentNode.replaceChild(newElement, blockElement);
+    } else {
+      // 부모가 에디터 자체인 경우 안전하게 삽입
+      range.deleteContents();
+      range.insertNode(newElement);
+    }
+
+    // 작성 편의를 위해 제목(h) 뒤에 본문(p) 줄이 없다면 추가
+    if (value !== 'p' && !newElement.nextSibling) {
+      const nextLine = document.createElement('p');
+      nextLine.innerHTML = '<br>';
+      newElement.after(nextLine);
+    }
+
+    // 커서 위치를 새 요소 내부로 이동
+    range.selectNodeContents(newElement);
+    range.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  } else {
+    document.execCommand(command, false, value);
+  }
+
+  onEditorInput({ target: editorRef.value });
 }
 </script>
 
@@ -109,11 +200,8 @@ function applyFormat(command) {
     <!-- ① 상단 헤더 영역 -->
     <div class="header-section">
       <div class="header-left">
-        <h1 class="project-title">
-          {{ projectInfo.projectName || '프로젝트 제목 출력 부분' }}
-        </h1>
-
-        <input v-model="projectDescription" type="text" class="project-desc-input" placeholder="위키 관련 한 줄 설명을 입력하세요" />
+        <h1 class="project-title">{{ projectInfo.title || '프로젝트 제목 출력 부분' }}</h1>
+        <input v-model="projectInfo.description" type="text" class="project-desc-input" placeholder="위키 관련 한 줄 설명을 입력하세요" />
       </div>
 
       <div class="header-fields">
@@ -148,8 +236,8 @@ function applyFormat(command) {
       <div class="panel toc-panel">
         <h3 class="panel-title">목차 - 자동생성</h3>
         <ul class="toc-list">
-          <li v-for="(item, index) in tocItems" :key="index" class="toc-item">
-            <a :href="`#section-${index}`">{{ index + 1 }}. {{ item.title }}</a>
+          <li v-for="(item, index) in tocItems" :key="index" :class="['toc-item', item.level]">
+            <a :href="`#${item.id}`">{{ index + 1 }}. {{ item.title }}</a>
           </li>
           <!-- 빈 항목 placeholder -->
           <li v-for="n in emptyTocSlots" :key="`empty-${n}`" class="toc-item empty">·</li>
@@ -158,19 +246,32 @@ function applyFormat(command) {
 
       <!-- ③ 프로젝트 정보 카드 -->
       <div class="panel info-panel">
-        <h3 class="panel-title center">YEDAM PMS TOOL 프로젝트</h3>
+        <h3 class="project-title">{{ projectInfo.title || '프로젝트 제목 출력 부분' }}</h3>
         <div class="info-rows">
           <div class="info-row">
-            <span class="info-label">상태 :</span>
-            <span class="info-value status-badge">{{ projectInfo.status }}</span>
+            <span class="info-label">프로젝트번호 :</span>
+            <span class="info-value status-badge">{{ projectInfo.id }}</span>
+          </div>
+          <div class="info-row">
+            <div class="info-row">
+              <span class="info-label">프로젝트 설명 :</span>
+              <span class="info-value status-badge">{{ projectInfo.description }}</span>
+            </div>
+            <span class="info-label">프로젝트 생성자명 :</span>
+            <span class="info-value status-badge">{{ projectInfo.userName }}</span>
+          </div>
+
+          <div class="info-row">
+            <span class="info-label">시작일 :</span>
+            <span class="info-value status-badge">{{ projectInfo.startDate ? projectInfo.startDate.replace('T', ' ').substring(0, 10) : '-' }}</span>
           </div>
           <div class="info-row">
             <span class="info-label">종료일 :</span>
-            <span class="info-value">{{ projectInfo.endDate }}</span>
+            <span class="info-value status-badge">{{ projectInfo.endDate ? projectInfo.endDate.replace('T', ' ').substring(0, 10) : '-' }}</span>
           </div>
           <div class="info-row">
-            <span class="info-label">PM :</span>
-            <span class="info-value">{{ projectInfo.pm }}</span>
+            <span class="info-label">상태값 :</span>
+            <span class="info-value status-badge">{{ projectInfo.status }}</span>
           </div>
         </div>
       </div>
@@ -196,11 +297,11 @@ function applyFormat(command) {
           <div v-if="showEditModal" class="modal-overlay" @click.self="closeEditModal">
             <div class="modal-box">
               <div class="modal-header">
-                <span>편집 사유(=버전설명)</span>
+                <span>버전설명</span>
                 <button class="modal-close" @click="closeEditModal">×</button>
               </div>
               <div class="modal-body">
-                <textarea v-model="editReason" class="modal-textarea" placeholder="편집 사유를 입력해주세요." />
+                <textarea v-model="editReason" class="modal-textarea" placeholder="등록 사유를 입력해주세요." />
               </div>
               <div class="modal-footer">
                 <button class="btn btn-cancel" @click="closeEditModal">취소</button>
@@ -216,18 +317,16 @@ function applyFormat(command) {
     <div class="editor-section">
       <!-- 툴바 -->
       <div class="editor-toolbar">
-        이 툴바는 뼈대만 있습니다
-        <select v-model="textStyle" class="toolbar-select">
-          <option value="본문">본문</option>
-          <option value="제목1">제목1</option>
-          <option value="제목2">제목2</option>
-          <option value="제목3">제목3</option>
+        <select v-model="textStyle" class="toolbar-select" @change="applyFormat('formatBlock', textStyle)">
+          <option value="p">본문</option>
+          <option value="h2">제목1</option>
+          <option value="h3">제목2</option>
         </select>
 
         <div class="toolbar-divider" />
 
         <button class="toolbar-btn bold" title="굵게" @click="applyFormat('bold')"><b>B</b></button>
-        <button class="toolbar-btn italic" title="기울임" @click="applyFormat('italic')"><i>I</i></button>
+        <button class="toolbar-btn italic" title="기울게" @click="applyFormat('italic')"><i>I</i></button>
         <button class="toolbar-btn underline" title="밑줄" @click="applyFormat('underline')"><u>U</u></button>
         <button class="toolbar-btn strikethrough" title="취소선" @click="applyFormat('strikeThrough')"><s>S</s></button>
         <button class="toolbar-btn" title="글자색" @click="applyFormat('foreColor')">A</button>
@@ -647,7 +746,28 @@ function applyFormat(command) {
   left: 20px;
   font-size: 15px;
 }
+/* 활성화된 버튼 스타일 (확실한 눌림 표시) */
+.toolbar-btn.is-active {
+  /* 1. 배경색을 더 어둡고 푸른 계열로 바꿔서 강조 (선택사항) */
+  background-color: #d1d9e6 !important;
 
+  /* 2. 테두리를 파란색 계열로 주어 강조 */
+  border: 1px solid #4a90e2 !important;
+
+  /* 3. 글자색을 더 진하게 */
+  color: #1a73e8 !important;
+
+  /* 4. 안쪽 그림자를 더 깊게 주어 버튼이 눌린 입체감 표현 */
+  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.2);
+
+  /* 5. 약간의 여백 보정 (테두리가 생겨서 버튼이 흔들리는 것 방지) */
+  padding: 3px 7px;
+}
+
+/* 마우스를 올렸을 때 더 밝은 회색으로 */
+.toolbar-btn:hover:not(.is-active) {
+  background-color: #ebebeb;
+}
 /* ===================== 트랜지션 ===================== */
 .fade-enter-active,
 .fade-leave-active {

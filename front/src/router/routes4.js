@@ -1,7 +1,7 @@
 //곽현우 router
 const Routes4 = [
   {
-    path: '/wiki/write',
+    path: '/wiki/write/:projectId',
     name: 'WikiWrite',
     component: () => import('@/views/wiki/WikiWrite.vue')
   },
