@@ -60,4 +60,10 @@
     WHERE W.ID = #{wikiId}
   </select>
   
+  <!-- 위키 화면에 프로젝트 관련 정보를 뿌려주기 위함-->
+  <select id="findProjectById" resultType="com.beez.beez.project.dto.ProjectCreateRequest">
+    SELECT * FROM project
+    WHERE id = #{projectId}
+  </select>
+  
 </mapper>

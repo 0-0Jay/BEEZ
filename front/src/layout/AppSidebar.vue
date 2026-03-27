@@ -64,9 +64,6 @@ watch(isOpen, (val) => {
         <span>채팅 테스트</span>
       </router-link>
 
-      <router-link to="/wiki/write" class="menu-item whitespace-nowrap cursor-pointer px-3 py-2.5 rounded-lg hover:bg-gray-700 transition-colors duration-150 flex items-center justify-between">
-        <span>위키 작성페이지(임시)</span>
-      </router-link>
       <div v-if="selectedProject" class="mt-1">
         <div class="px-3 py-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap">
           {{ selectedProject.title }}
@@ -99,7 +96,7 @@ watch(isOpen, (val) => {
           <router-link to="" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
             <span>문서</span>
           </router-link>
-          <router-link to="" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
+          <router-link to="/wiki/write" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
             <span>위키</span>
           </router-link>
           <router-link to="" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
