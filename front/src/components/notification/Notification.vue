@@ -10,7 +10,7 @@ const panelRef = ref(null);
 const btnRef = ref(null);
 const notificationStore = useNotificationStore();
 const notifications = ref([]);
-const unreadCount = computed(() => notifications.value.filter((n) => n.status == '0').length);
+const unreadCount = computed(() => notifications.value.filter((n) => n.status == 'G0').length);
 
 let stompClient = null;
 
@@ -79,13 +79,13 @@ function togglePanel() {
 }
 
 function markAsRead(n) {
-  if (n.status == '1') return;
-  n.status = '1';
+  if (n.status == 'G1') return;
+  n.status = 'G1';
   notificationStore.readNotification(n.id);
 }
 
 function markAllAsRead() {
-  notifications.value.forEach((n) => (n.status = '1'));
+  notifications.value.forEach((n) => (n.status = 'G1'));
   notificationStore.readAllNotification(userId);
 }
 
@@ -152,7 +152,7 @@ onUnmounted(() => {
             v-for="n in notifications"
             :key="n.id"
             class="group flex items-start gap-3.5 px-5 py-4 transition-colors duration-100"
-            :class="[n.status == '1' ? 'bg-white hover:bg-stone-50' : 'bg-amber-50/60 hover:bg-amber-50', n.link ? 'cursor-pointer' : 'cursor-default']"
+            :class="[n.status == 'G1' ? 'bg-white hover:bg-stone-50' : 'bg-amber-50/60 hover:bg-amber-50', n.link ? 'cursor-pointer' : 'cursor-default']"
             @click="markAsRead(n)"
           >
             <!-- 타입 아이콘 -->
@@ -162,9 +162,9 @@ onUnmounted(() => {
 
             <!-- 알림 내용 -->
             <div class="flex-1 min-w-0">
-              <p class="text-sm text-stone-700 leading-relaxed line-clamp-2" :class="n.status == '1' ? 'font-normal' : 'font-semibold'">
+              <p class="text-sm text-stone-700 leading-relaxed line-clamp-2" :class="n.status == 'G1' ? 'font-normal' : 'font-semibold'">
                 {{ n.content }}
-                <span v-if="n.status == '0'" class="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 ml-1 mb-px align-middle"></span>
+                <span v-if="n.status == 'G0'" class="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 ml-1 mb-px align-middle"></span>
               </p>
               <div class="flex items-center gap-2 mt-1.5">
                 <p class="text-[11px] text-stone-400 font-medium">{{ formatTime(n.createdOn) }}</p>

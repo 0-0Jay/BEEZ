@@ -1,6 +1,9 @@
 <script setup>
 import { computed, ref } from 'vue';
 
+// ── 현재 로그인 사용자 ID ────────────────────────────────────
+const myUserId = '20261111';
+
 // ── 예시 데이터 ────────────────────────────────────────────────
 const tasks = ref([
   {
@@ -9,7 +12,8 @@ const tasks = ref([
     versionId: 'VER-1.2',
     title: '로그인 페이지 보안 취약점 수정',
     description: 'SQL Injection 방어 로직 추가 및 입력값 검증 강화',
-    userId: '김민준',
+    userId: '20269999',
+    userName: '김민준',
     type: '결함',
     category: '보안',
     workflow: '진행',
@@ -24,7 +28,8 @@ const tasks = ref([
     parentId: null,
     isPublic: '1',
     creator: '이서연',
-    fileId: 'FILE-012'
+    fileId: 'FILE-012',
+    isWatch: 1
   },
   {
     id: 'TASK-002',
@@ -32,7 +37,8 @@ const tasks = ref([
     versionId: 'VER-1.3',
     title: '대시보드 차트 컴포넌트 신규 개발',
     description: '실시간 데이터 시각화를 위한 Chart.js 기반 컴포넌트 구현',
-    userId: '박지수',
+    userId: '20261111',
+    userName: '김개발',
     type: '새기능',
     category: '프론트',
     workflow: '해결',
@@ -47,7 +53,8 @@ const tasks = ref([
     parentId: null,
     isPublic: '1',
     creator: '최동현',
-    fileId: null
+    fileId: null,
+    isWatch: 0
   },
   {
     id: 'TASK-003',
@@ -55,7 +62,8 @@ const tasks = ref([
     versionId: 'VER-2.0',
     title: 'REST API 응답 성능 최적화',
     description: '주요 엔드포인트 쿼리 튜닝 및 캐싱 레이어 도입',
-    userId: '이서연',
+    userId: '20264444',
+    userName: '이서연',
     type: '지원',
     category: '백',
     workflow: '완료',
@@ -70,7 +78,8 @@ const tasks = ref([
     parentId: null,
     isPublic: '0',
     creator: '김민준',
-    fileId: 'FILE-009'
+    fileId: 'FILE-009',
+    isWatch: 0
   }
 ]);
 
@@ -84,7 +93,8 @@ const filters = ref({
   category: null,
   priority: null,
   title: '',
-  includeSubProject: false
+  showMyTasks: false,
+  showWatching: false
 });
 
 // ── 드롭다운 옵션 ─────────────────────────────────────────────
@@ -120,17 +130,81 @@ function resetFilters() {
     category: null,
     priority: null,
     title: '',
-    includeSubProject: false
+    showMyTasks: false,
+    showWatching: false
   };
   userSearch.value = '';
 }
+
+// ── 정렬 상태 ────────────────────────────────────────────────
+const sortKey = ref(null); // 'id' | 'priority' | 'plannedEnd' | 'progress'
+const sortDir = ref('asc'); // 'asc' | 'desc'
+
+const priorityWeight = { 긴급: 4, 높음: 3, 보통: 2, 낮음: 1 };
+
+function toggleSort(key) {
+  if (sortKey.value === key) {
+    sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortKey.value = key;
+    sortDir.value = 'asc';
+  }
+}
+
+function sortIcon(key) {
+  if (sortKey.value !== key) return '↕';
+  return sortDir.value === 'asc' ? '↑' : '↓';
+}
+
+// ── 필터링 + 정렬된 전체 목록 ───────────────────────────────
+const processedTasks = computed(() => {
+  let list = [...tasks.value];
+
+  // 체크박스 필터 (내 일감 / 관람 중)
+  const { showMyTasks, showWatching } = filters.value;
+  if (showMyTasks || showWatching) {
+    list = list.filter((t) => {
+      const isMyTask = showMyTasks && t.userId === myUserId;
+      const isWatching = showWatching && t.isWatch === 1;
+      return isMyTask || isWatching; // 합집합
+    });
+  }
+
+  // 나머지 필터
+  if (filters.value.workflow) list = list.filter((t) => t.workflow === filters.value.workflow);
+  if (filters.value.userId) list = list.filter((t) => t.userName === filters.value.userId);
+  if (filters.value.type) list = list.filter((t) => t.type === filters.value.type);
+  if (filters.value.category) list = list.filter((t) => t.category === filters.value.category);
+  if (filters.value.priority) list = list.filter((t) => t.priority === filters.value.priority);
+  if (filters.value.title) list = list.filter((t) => t.title.includes(filters.value.title));
+  if (filters.value.plannedStart) list = list.filter((t) => t.plannedEnd && t.plannedEnd >= filters.value.plannedStart);
+  if (filters.value.plannedEnd) list = list.filter((t) => t.plannedEnd && t.plannedEnd <= filters.value.plannedEnd);
+
+  // 정렬
+  if (sortKey.value) {
+    const dir = sortDir.value === 'asc' ? 1 : -1;
+    list.sort((a, b) => {
+      if (sortKey.value === 'priority') {
+        return ((priorityWeight[a.priority] ?? 0) - (priorityWeight[b.priority] ?? 0)) * dir;
+      }
+      if (sortKey.value === 'progress') {
+        return (a.progress - b.progress) * dir;
+      }
+      const va = a[sortKey.value] ?? '';
+      const vb = b[sortKey.value] ?? '';
+      return va < vb ? -dir : va > vb ? dir : 0;
+    });
+  }
+
+  return list;
+});
 
 // ── 페이징 ───────────────────────────────────────────────────
 const currentPage = ref(1);
 const pageSize = 10;
 const pageBlockSize = 10;
 
-const totalPages = computed(() => Math.max(1, Math.ceil(tasks.value.length / pageSize)));
+const totalPages = computed(() => Math.max(1, Math.ceil(processedTasks.value.length / pageSize)));
 const currentBlock = computed(() => Math.ceil(currentPage.value / pageBlockSize));
 const blockStart = computed(() => (currentBlock.value - 1) * pageBlockSize + 1);
 const blockEnd = computed(() => Math.min(blockStart.value + pageBlockSize - 1, totalPages.value));
@@ -141,7 +215,7 @@ const pageNumbers = computed(() => {
 });
 const hasPrevBlock = computed(() => currentBlock.value > 1);
 const hasNextBlock = computed(() => blockEnd.value < totalPages.value);
-const pagedTasks = computed(() => tasks.value.slice((currentPage.value - 1) * pageSize, currentPage.value * pageSize));
+const pagedTasks = computed(() => processedTasks.value.slice((currentPage.value - 1) * pageSize, currentPage.value * pageSize));
 
 function goPage(p) {
   currentPage.value = p;
@@ -154,12 +228,12 @@ function nextBlock() {
 }
 
 // ── 유틸 ────────────────────────────────────────────────────
-
 function progressBarColor(p) {
-  if (p >= 100) return '#C97700';
-  if (p >= 60) return '#F5A623';
-  if (p >= 30) return '#FFDA7A';
-  return '#C8C4B8';
+  if (p == 100) return '#22C55E';
+  if (p >= 90) return '#86EFAC';
+  if (p >= 60) return '#EAB308';
+  if (p >= 30) return '#F97316';
+  return '#EF4444';
 }
 
 const workflowClass = {
@@ -193,7 +267,7 @@ const priorityClass = {
       </button>
     </div>
 
-    <!-- ── 필터 카드 ────────────────────────────────────────── -->
+    <!-- 필터 카드  -->
     <div class="bg-white border border-stone-200 rounded-xl shadow-sm px-7 pt-5 pb-5 mb-5">
       <p class="text-xl font-bold tracking-wider uppercase text-amber-700 mb-4"><i class="pi pi-search" style="font-size: 1rem"></i> 검색 필터</p>
 
@@ -226,7 +300,7 @@ const priorityClass = {
           </div>
         </div>
 
-        <!-- 마감일 범위 (2칸) -->
+        <!-- 마감일 범위 -->
         <div class="flex flex-col gap-1.5 col-span-2">
           <label class="text-base font-semibold uppercase tracking-wider text-stone-400">마감일</label>
           <div class="flex items-center gap-2">
@@ -263,7 +337,7 @@ const priorityClass = {
           </select>
         </div>
 
-        <!-- 제목 (2칸) -->
+        <!-- 제목 -->
         <div class="flex flex-col gap-1.5 col-span-2">
           <label class="text-base font-semibold uppercase tracking-wider text-stone-400">제목</label>
           <input v-model="filters.title" class="h-9 w-full px-3 bg-stone-50 border border-stone-200 rounded-md text-sm text-stone-700 outline-none focus:border-amber-400 focus:bg-amber-50 transition-colors" placeholder="일감 제목 검색..." />
@@ -272,16 +346,28 @@ const priorityClass = {
 
       <!-- 하단 옵션 행 -->
       <div class="flex items-center justify-between mt-5 pt-4 border-t border-stone-100">
-        <!-- 하위 프로젝트 체크박스 -->
-        <label class="flex items-center gap-2 text-sm text-stone-500 cursor-pointer select-none">
-          <input v-model="filters.includeSubProject" type="checkbox" class="hidden peer" />
-          <span class="w-4 h-4 rounded border border-stone-300 bg-stone-50 flex items-center justify-center transition-colors shrink-0" :class="filters.includeSubProject ? 'bg-amber-600 border-amber-600' : ''">
-            <svg v-if="filters.includeSubProject" class="w-2.5 h-2.5 text-amber-50" viewBox="0 0 10 10" fill="none">
-              <polyline points="1.5,5 4,7.5 8.5,2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-          </span>
-          하위 프로젝트 일감 보기
-        </label>
+        <!-- 체크박스 2개 -->
+        <div class="flex items-center gap-5">
+          <!-- 내 일감 보기 -->
+          <label class="flex items-center gap-2 text-sm text-stone-500 cursor-pointer select-none" @click="filters.showMyTasks = !filters.showMyTasks">
+            <span class="w-4 h-4 rounded border flex items-center justify-center transition-colors shrink-0" :class="filters.showMyTasks ? 'bg-amber-600 border-amber-600' : 'border-stone-300 bg-stone-50'">
+              <svg v-if="filters.showMyTasks" class="w-2.5 h-2.5 text-amber-50" viewBox="0 0 10 10" fill="none">
+                <polyline points="1.5,5 4,7.5 8.5,2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </span>
+            내 일감 보기
+          </label>
+
+          <!-- 관람 중인 일감 보기 -->
+          <label class="flex items-center gap-2 text-sm text-stone-500 cursor-pointer select-none" @click="filters.showWatching = !filters.showWatching">
+            <span class="w-4 h-4 rounded border flex items-center justify-center transition-colors shrink-0" :class="filters.showWatching ? 'bg-amber-600 border-amber-600' : 'border-stone-300 bg-stone-50'">
+              <svg v-if="filters.showWatching" class="w-2.5 h-2.5 text-amber-50" viewBox="0 0 10 10" fill="none">
+                <polyline points="1.5,5 4,7.5 8.5,2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </span>
+            관람 중인 일감 보기
+          </label>
+        </div>
 
         <div class="flex gap-2.5">
           <button class="px-4 py-2 text-sm font-semibold text-stone-500 bg-stone-100 border border-stone-200 rounded-lg hover:bg-stone-200 transition-colors cursor-pointer" @click="resetFilters">초기화</button>
@@ -295,7 +381,7 @@ const priorityClass = {
       <!-- 메타 -->
       <div class="px-6 py-3.5 border-b border-stone-100">
         <span class="text-sm text-stone-400">
-          총 <strong class="text-stone-700 font-bold">{{ tasks.length }}</strong
+          총 <strong class="text-stone-700 font-bold">{{ processedTasks.length }}</strong
           >개
         </span>
       </div>
@@ -305,15 +391,35 @@ const priorityClass = {
         <table class="w-full border-collapse text-sm">
           <thead>
             <tr class="bg-stone-100 border-b border-stone-200">
-              <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-50">번호</th>
+              <!-- 작업번호: 정렬 가능 -->
+              <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-50">
+                <button class="sort-btn" :class="{ active: sortKey === 'id' }" @click="toggleSort('id')">
+                  번호 <span class="sort-icon">{{ sortIcon('id') }}</span>
+                </button>
+              </th>
               <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-24">유형</th>
               <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-28">상태</th>
-              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-24">우선순위</th>
+              <!-- 우선순위: 정렬 가능 -->
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-24">
+                <button class="sort-btn" :class="{ active: sortKey === 'priority' }" @click="toggleSort('priority')">
+                  우선순위 <span class="sort-icon">{{ sortIcon('priority') }}</span>
+                </button>
+              </th>
               <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-24">범주</th>
               <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-stone-400 min-w-52">제목</th>
-              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-50">진척도</th>
+              <!-- 진척도: 정렬 가능 -->
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-50">
+                <button class="sort-btn" :class="{ active: sortKey === 'progress' }" @click="toggleSort('progress')">
+                  진척도 <span class="sort-icon">{{ sortIcon('progress') }}</span>
+                </button>
+              </th>
               <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-28">담당자</th>
-              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-30">마감일</th>
+              <!-- 마감일: 정렬 가능 -->
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-30">
+                <button class="sort-btn" :class="{ active: sortKey === 'plannedEnd' }" @click="toggleSort('plannedEnd')">
+                  마감일 <span class="sort-icon">{{ sortIcon('plannedEnd') }}</span>
+                </button>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -326,9 +432,7 @@ const priorityClass = {
               </td>
 
               <!-- 유형 -->
-              <td class="px-4 py-3.5 text-base text-stone-600 text-center">
-                {{ task.type }}
-              </td>
+              <td class="px-4 py-3.5 text-base text-stone-600 text-center">{{ task.type }}</td>
 
               <!-- 상태 -->
               <td class="px-4 py-3.5 text-center">
@@ -342,9 +446,7 @@ const priorityClass = {
 
               <!-- 범주 -->
               <td class="px-4 py-3.5 text-center">
-                <span class="inline-block mt-1 text-sm text-stone-400 bg-stone-100 px-2 py-px rounded">
-                  {{ task.category }}
-                </span>
+                <span class="inline-block mt-1 text-sm text-stone-400 bg-stone-100 px-2 py-px rounded">{{ task.category }}</span>
               </td>
 
               <!-- 제목 -->
@@ -360,24 +462,20 @@ const priorityClass = {
                   <div class="flex-1 h-1.5 bg-stone-200 rounded-full overflow-hidden">
                     <div class="h-full rounded-full transition-all duration-500" :style="{ width: task.progress + '%', background: progressBarColor(task.progress) }"></div>
                   </div>
-                  <span class="text-base font-semibold text-stone-500 w-9 text-right shrink-0"> {{ task.progress }}% </span>
+                  <span class="text-base font-semibold text-stone-500 w-9 text-right shrink-0">{{ task.progress }}%</span>
                 </div>
               </td>
 
               <!-- 담당자 -->
-              <td class="px-4 py-3.5 text-base text-stone-600 text-center">
-                {{ task.userId }}
-              </td>
+              <td class="px-4 py-3.5 text-base text-stone-600 text-center">{{ task.userName }}</td>
 
               <!-- 마감일 -->
-              <td class="px-4 py-3.5 text-base text-stone-500 tabular-nums text-center">
-                {{ task.plannedEnd }}
-              </td>
+              <td class="px-4 py-3.5 text-base text-stone-500 tabular-nums text-center">{{ task.plannedEnd }}</td>
             </tr>
 
             <!-- 빈 상태 -->
             <tr v-if="pagedTasks.length === 0">
-              <td colspan="8" class="text-center py-16 text-sm text-stone-400">일감이 없습니다.</td>
+              <td colspan="9" class="text-center py-16 text-sm text-stone-400">일감이 없습니다.</td>
             </tr>
           </tbody>
         </table>
@@ -416,7 +514,6 @@ const priorityClass = {
 </template>
 
 <style scoped>
-/* Tailwind로 처리하기 어려운 최소한의 보조 스타일만 */
 select {
   appearance: auto;
 }
@@ -425,48 +522,77 @@ input[type='date']::-webkit-calendar-picker-indicator {
   cursor: pointer;
 }
 
-/* 우선순위 */
+/* ── 정렬 버튼 ── */
+.sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  transition:
+    background 0.15s,
+    color 0.15s;
+  white-space: nowrap;
+}
+.sort-btn:hover {
+  background: #fef3c7;
+  color: #92400e;
+}
+.sort-btn.active {
+  color: #b45309;
+}
+.sort-icon {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+.sort-btn.active .sort-icon {
+  opacity: 1;
+  color: #d97706;
+}
+
+/* ── 우선순위 ── */
 .priority-low {
   background-color: #eaf3de;
   color: #3b6d11;
 }
-
 .priority-mid {
   background-color: #e6f1fb;
   color: #0c447c;
 }
-
 .priority-high {
   background-color: #faeeda;
   color: #633806;
 }
-
 .priority-urgent {
   background-color: #fcebeb;
   color: #791f1f;
 }
 
-/* 상태 */
+/* ── 상태 ── */
 .status-new {
   background-color: #f1efe8;
   color: #444441;
 }
-
 .status-in-progress {
   background-color: #eeedfe;
   color: #3c3489;
 }
-
 .status-resolved {
   background-color: #e1f5ee;
   color: #085041;
 }
-
 .status-rejected {
   background-color: #faece7;
   color: #712b13;
 }
-
 .status-done {
   background-color: #eaf3de;
   color: #27500a;

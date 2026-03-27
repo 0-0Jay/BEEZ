@@ -13,7 +13,7 @@ public interface NotificationRepository extends JpaRepository<Notifications, Str
   @Transactional
   @Query(value =
     "INSERT INTO notifications(id, user_id, content, created_on, status, link) " +
-      "VALUES(generate_pk('notifications'), :userId, :content, SYSTIMESTAMP, '0', :link)",
+      "VALUES(generate_pk('notifications'), :userId, :content, SYSTIMESTAMP, 'G0', :link)",
     nativeQuery = true)
   void insertChat(
     @Param("userId") String userId,

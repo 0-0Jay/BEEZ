@@ -3,13 +3,13 @@
 <mapper namespace="com.beez.beez.websocket.mapper.NotificationMapper">
   <update id="readNotification">
     UPDATE notifications
-    SET status = '1'
+    SET status = 'G1'
     WHERE id = #{id}
   </update>
   
   <update id="readAllNotification">
     UPDATE notifications
-    SET status = '1'
+    SET status = 'G1'
     WHERE user_id = #{userId}
   </update>
   
