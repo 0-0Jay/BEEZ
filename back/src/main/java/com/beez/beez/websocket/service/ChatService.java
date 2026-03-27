@@ -1,8 +1,7 @@
-package com.beez.beez.chat.service;
+package com.beez.beez.websocket.service;
 
-import com.beez.beez.chat.dto.ChatSendRequest;
-import com.beez.beez.chat.dto.ChatVo;
-import com.beez.beez.chat.repository.Chat;
+import com.beez.beez.websocket.dto.ChatSendRequest;
+import com.beez.beez.websocket.dto.ChatVo;
 
 import java.util.List;
 

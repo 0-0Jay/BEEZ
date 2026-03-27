@@ -1,533 +1,208 @@
 <script setup>
-import { useNotification } from '@/service/NotificationService';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { useNotificationStore } from '@/stores/notification';
+import Button from 'primevue/button';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 
-const props = defineProps({
-  userId: {
-    type: [String, Number],
-    required: true
-  }
-});
+const userId = '20261111';
+const isOpen = ref(false);
+const panelRef = ref(null);
+const btnRef = ref(null);
+const notificationStore = useNotificationStore();
 
-const { notifications, isOpen, hasUnread, unreadCount, togglePanel, closePanel, fetchNotifications, subscribeSSE, unsubscribeSSE, deleteNotification, deleteAllNotifications, readNotification, markAllAsRead } = useNotification();
-const wrapperRef = ref(null);
+// ── 백엔드 데이터 ─────────────────────────────────────────────
+const notifications = ref([]);
 
-// 패널 외부 클릭 시 닫기
-function handleOutsideClick(e) {
-  if (wrapperRef.value && !wrapperRef.value.contains(e.target)) {
-    closePanel();
-  }
+// ── link → 타입 유추 ─────────────────────────────────────────
+function resolveType(link) {
+  if (!link) return 'default';
+  if (link.includes('task') || link.includes('issue')) return 'task';
+  if (link.includes('comment')) return 'comment';
+  if (link.includes('mention')) return 'mention';
+  if (link.includes('status')) return 'status';
+  return 'default';
 }
 
-async function handleDelete(id) {
-  await deleteNotification(id);
-}
+const typeIcon = {
+  task: 'pi pi-check-square',
+  comment: 'pi pi-comment',
+  mention: 'pi pi-at',
+  status: 'pi pi-sync',
+  default: 'pi pi-bell'
+};
 
-async function handleClearAll() {
-  await deleteAllNotifications(props.userId);
-}
+const typeBg = {
+  task: 'bg-amber-100 text-amber-600',
+  comment: 'bg-blue-100 text-blue-500',
+  mention: 'bg-purple-100 text-purple-500',
+  status: 'bg-green-100 text-green-600',
+  default: 'bg-stone-100 text-stone-500'
+};
 
-async function handleRead(notification) {
-  if (!notification.read) {
-    await readNotification(notification.id);
-  }
-}
-
-async function handleMarkAllAsRead() {
-  markAllAsRead();
-}
-
-// 시간 포맷
-function formatTime(iso) {
-  if (!iso) return '';
-  const date = new Date(iso);
+// ── created_on → 상대 시간 변환 ───────────────────────────────
+function formatTime(createdOn) {
+  if (!createdOn) return '';
   const now = new Date();
-  const diff = Math.floor((now - date) / 1000);
+  const diff = Math.floor((now - new Date(createdOn)) / 1000); // 초 단위
 
   if (diff < 60) return '방금 전';
   if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
-  return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+  if (diff < 604800) return `${Math.floor(diff / 86400)}일 전`;
+  return new Date(createdOn).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
 }
 
-onMounted(async () => {
-  document.addEventListener('click', handleOutsideClick);
-  await fetchNotifications(props.userId);
-  subscribeSSE(props.userId);
-});
+// ── 백엔드 데이터 → 컴포넌트 형식으로 매핑 ──────────────────────
+function mapNotification(raw) {
+  return {
+    id: raw.id, // NOTI000 형식
+    content: raw.content,
+    time: formatTime(raw.created_on),
+    isRead: raw.status === '1', // "0" 안읽음 / "1" 읽음
+    link: raw.link
+  };
+}
 
-onUnmounted(() => {
-  document.removeEventListener('click', handleOutsideClick);
-  unsubscribeSSE();
+// ── 안읽음 개수 (computed) ────────────────────────────────────
+const unreadCount = computed(() => notifications.value.filter((n) => !n.isRead).length);
+
+// 알림 목록
+async function loadNotifications() {
+  notifications.value = (await notificationStore.findNotificationList(userId)) ?? [];
+}
+
+function togglePanel() {
+  if (!isOpen.value) loadNotifications(); // 열 때마다 최신화
+  isOpen.value = !isOpen.value;
+}
+
+function markAsRead(n) {
+  if (n.status) return;
+  n.status = '1';
+  notificationStore.readNotification(n.id);
+}
+
+function markAllAsRead() {
+  notifications.value.forEach((n) => (n.status = '1'));
+  notificationStore.readNotification();
+}
+
+async function deleteNotification(id, e) {
+  e.stopPropagation();
+  try {
+    await notificationStore.deleteNotification(id);
+    notifications.value = notifications.value.filter((n) => n.id !== id);
+  } catch (err) {
+    console.error('알림 삭제 실패', err);
+  }
+}
+
+// ── 외부 클릭 시 닫기 ─────────────────────────────────────────
+function handleClickOutside(e) {
+  if (isOpen.value && panelRef.value && !panelRef.value.contains(e.target) && !btnRef.value.contains(e.target)) {
+    isOpen.value = false;
+  }
+}
+
+onMounted(() => {
+  loadNotifications();
+  document.addEventListener('mousedown', handleClickOutside);
 });
+onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside));
 </script>
 
 <template>
-  <div class="notification-wrapper" ref="wrapperRef">
-    <Button icon="pi pi-bell" label="알림" plain text size="large" :class="{ active: isOpen }" @click="togglePanel" />
-    <span v-if="hasUnread" class="unread-dot">
-      <span v-if="unreadCount <= 9" class="unread-count">{{ unreadCount }}</span>
-      <span v-else class="unread-count">9+</span>
-    </span>
+  <div class="relative">
+    <!-- 알림 아이콘 -->
+    <div ref="btnRef" class="relative inline-flex">
+      <Button icon="pi pi-bell" label="알림" plain text size="large" :class="isOpen ? '!text-amber-600' : ''" @click="togglePanel" />
+      <!-- 안읽은 뱃지 -->
+      <span
+        v-if="unreadCount > 0"
+        class="absolute top-1 -right-2 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-amber-500 text-white text-[10px] font-bold leading-none shadow-sm shadow-amber-300 select-none pointer-events-none"
+      >
+        {{ unreadCount > 99 ? '99+' : unreadCount }}
+      </span>
+    </div>
 
     <!-- 알림 패널 -->
-    <Transition name="panel">
-      <div v-if="isOpen" class="notification-panel" role="dialog" aria-label="알림 목록">
+    <Transition
+      enter-active-class="transition-all duration-200 ease-out"
+      enter-from-class="opacity-0 translate-y-1 scale-95"
+      enter-to-class="opacity-100 translate-y-0 scale-100"
+      leave-active-class="transition-all duration-150 ease-in"
+      leave-from-class="opacity-100 translate-y-0 scale-100"
+      leave-to-class="opacity-0 translate-y-1 scale-95"
+    >
+      <div v-if="isOpen" ref="panelRef" class="absolute right-0 top-[calc(100%+10px)] w-[380px] bg-white border border-stone-200 rounded-xl shadow-xl shadow-stone-200/80 z-50 overflow-hidden origin-top-right">
         <!-- 헤더 -->
-        <div class="panel-header">
-          <div class="panel-title">
-            <i class="pi pi-bell" style="font-size: 1.25rem" />
-            <span>알림</span>
-            <span v-if="unreadCount > 0" class="header-badge">{{ unreadCount }}</span>
+        <div class="flex items-center justify-between px-5 py-4 border-b border-stone-100">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-bell text-amber-500 text-base"></i>
+            <span class="text-base font-bold text-stone-800 tracking-tight">알림</span>
+            <span v-if="unreadCount > 0" class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-bold"> {{ unreadCount }}개 안읽음 </span>
           </div>
-          <div class="panel-actions">
-            <button v-if="notifications.length > 0" class="action-btn read-all-btn" @click="handleMarkAllAsRead" title="모두 읽음">모두 읽음</button>
-            <button v-if="notifications.length > 0" class="action-btn clear-btn" @click="handleClearAll" title="전체 삭제">전체 삭제</button>
-          </div>
+          <button v-if="unreadCount > 0" class="text-xs text-stone-400 hover:text-amber-600 font-medium transition-colors cursor-pointer bg-transparent border-none outline-none px-0 py-0" @click="markAllAsRead">모두 읽음</button>
         </div>
 
         <!-- 알림 목록 -->
-        <div class="panel-body">
-          <TransitionGroup name="notification-list" tag="ul" class="notification-list">
-            <li v-for="notification in notifications" :key="notification.id" class="notification-item" :class="{ read: notification.read, unread: !notification.read }" @click="handleRead(notification)">
-              <!-- 내용 -->
-              <div class="notif-content">
-                <p class="notif-message">{{ notification.message }}</p>
-                <span class="notif-time">{{ formatTime(notification.createdAt) }}</span>
+        <ul class="max-h-[420px] overflow-y-auto divide-y divide-stone-50">
+          <li
+            v-for="n in notifications"
+            :key="n.id"
+            class="group flex items-start gap-3.5 px-5 py-4 transition-colors duration-100"
+            :class="[n.isRead ? 'bg-white hover:bg-stone-50' : 'bg-amber-50/60 hover:bg-amber-50', n.link ? 'cursor-pointer' : 'cursor-default']"
+            @click="markAsRead(n)"
+          >
+            <!-- 타입 아이콘 -->
+            <div class="shrink-0 w-9 h-9 rounded-full flex items-center justify-center mt-0.5" :class="typeBg[n.type]">
+              <i :class="[typeIcon[n.type], 'text-sm']"></i>
+            </div>
+
+            <!-- 알림 내용 -->
+            <div class="flex-1 min-w-0">
+              <p class="text-sm text-stone-700 leading-relaxed line-clamp-2" :class="n.isRead ? 'font-normal' : 'font-semibold'">
+                {{ n.content }}
+                <span v-if="!n.isRead" class="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 ml-1 mb-px align-middle"></span>
+              </p>
+              <div class="flex items-center gap-2 mt-1.5">
+                <p class="text-[11px] text-stone-400 font-medium">{{ n.time }}</p>
+                <span class="text-[10px] font-mono text-stone-300">{{ n.id }}</span>
               </div>
+            </div>
 
-              <!-- 읽음 표시 점 -->
-              <span v-if="!notification.read" class="unread-indicator" />
+            <!-- 삭제 버튼 -->
+            <button
+              class="shrink-0 w-6 h-6 flex items-center justify-center rounded-full text-stone-300 hover:text-red-400 hover:bg-red-50 transition-all duration-150 cursor-pointer bg-transparent border-none outline-none opacity-0 group-hover:opacity-100 mt-0.5"
+              title="알림 삭제"
+              @click="deleteNotification(n.id, $event)"
+            >
+              <i class="pi pi-times text-[11px]"></i>
+            </button>
+          </li>
 
-              <!-- 삭제 버튼 -->
-              <button class="delete-btn" @click.stop="handleDelete(notification.id)" title="삭제">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                  <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
-                  <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
-                </svg>
-              </button>
-            </li>
-          </TransitionGroup>
-
-          <!-- 알림 없음 -->
-          <div v-if="notifications.length === 0" class="empty-state">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" opacity="0.3">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="#666" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-              <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="#666" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-              <line x1="1" y1="1" x2="23" y2="23" stroke="#666" stroke-width="1.5" stroke-linecap="round" />
-            </svg>
-            <p>새로운 알림이 없습니다</p>
-          </div>
-        </div>
+          <!-- 알림 없을 때 -->
+          <li v-if="notifications.length === 0" class="flex flex-col items-center justify-center gap-2 py-14 text-stone-400">
+            <i class="pi pi-bell-slash text-3xl opacity-40"></i>
+            <span class="text-sm">알림이 없습니다</span>
+          </li>
+        </ul>
       </div>
     </Transition>
   </div>
 </template>
 
 <style scoped>
-.notification-wrapper {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-
-/* 종 버튼 */
-.bell-btn {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  border: none;
-  background: transparent;
-  color: #555;
-  cursor: pointer;
-  transition:
-    background 0.18s,
-    color 0.18s;
-}
-
-.bell-btn:hover,
-.bell-btn.active {
-  background: #ebebeb;
-  color: #222;
-}
-
-.bell-icon {
-  width: 20px;
-  height: 20px;
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.bell-icon.ringing {
-  animation: ring 1.2s ease-in-out infinite;
-  transform-origin: top center;
-}
-
-@keyframes ring {
-  0%,
-  100% {
-    transform: rotate(0deg);
-  }
-  10% {
-    transform: rotate(14deg);
-  }
-  20% {
-    transform: rotate(-10deg);
-  }
-  30% {
-    transform: rotate(8deg);
-  }
-  40% {
-    transform: rotate(-6deg);
-  }
-  50% {
-    transform: rotate(4deg);
-  }
-  60% {
-    transform: rotate(-2deg);
-  }
-  70%,
-  100% {
-    transform: rotate(0deg);
-  }
-}
-
-/* 읽지 않은 알림 뱃지 */
-.unread-dot {
-  position: absolute;
-  top: 5px;
-  right: -5px;
-  min-width: 16px;
-  height: 16px;
-  background: #e53e3e;
-  border-radius: 10px;
-  border: 2px solid white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: pop-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.unread-count {
-  font-size: 9px;
-  font-weight: 700;
-  color: white;
-  line-height: 1;
-  padding: 0 2px;
-  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
-}
-
-@keyframes pop-in {
-  from {
-    transform: scale(0);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-/* 알림 패널 */
-.notification-panel {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
-  width: 340px;
-  max-height: 480px;
-  background: #e0e0e0;
-  border-radius: 16px;
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.08),
-    0 12px 32px -4px rgba(0, 0, 0, 0.14),
-    0 0 0 1px rgba(0, 0, 0, 0.04);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  z-index: 9999;
-}
-
-/* 패널 헤더 */
-.panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 16px 12px;
-  background: #d4d4d4;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  flex-shrink: 0;
-}
-
-.panel-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  font-weight: 700;
-  color: #222;
-  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
-}
-
-.header-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 4px;
-  background: #e53e3e;
-  border-radius: 9px;
-  font-size: 10px;
-  font-weight: 700;
-  color: white;
-}
-
-.panel-actions {
-  display: flex;
-  gap: 4px;
-}
-
-.action-btn {
-  padding: 4px 8px;
-  border-radius: 6px;
-  border: none;
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.15s;
-  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
-}
-
-.read-all-btn {
-  background: rgba(0, 0, 0, 0.07);
-  color: #444;
-}
-.read-all-btn:hover {
-  background: rgba(0, 0, 0, 0.13);
-}
-
-.clear-btn {
-  background: rgba(229, 62, 62, 0.1);
-  color: #c53030;
-}
-.clear-btn:hover {
-  background: rgba(229, 62, 62, 0.18);
-}
-
-/* 패널 바디 */
-.panel-body {
-  overflow-y: auto;
-  flex: 1;
-  min-height: 0;
-}
-
-.panel-body::-webkit-scrollbar {
+ul::-webkit-scrollbar {
   width: 4px;
 }
-.panel-body::-webkit-scrollbar-track {
+ul::-webkit-scrollbar-track {
   background: transparent;
 }
-.panel-body::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 2px;
+ul::-webkit-scrollbar-thumb {
+  background: #e7e5e4;
+  border-radius: 99px;
 }
-
-/* 알림 목록 */
-.notification-list {
-  list-style: none;
-  margin: 0;
-  padding: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-/* 각 알림 아이템 */
-.notification-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background 0.15s;
-  position: relative;
-  background: rgba(255, 255, 255, 0.45);
-}
-
-.notification-item:hover {
-  background: rgba(255, 255, 255, 0.72);
-}
-
-/* 읽지 않은 알림 - 진하게 */
-.notification-item.unread {
-  background: rgba(255, 255, 255, 0.7);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
-
-.notification-item.unread .notif-message {
-  color: #1a1a1a;
-  font-weight: 600;
-}
-
-/* 읽은 알림 - 연하게 */
-.notification-item.read {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.notification-item.read .notif-message {
-  color: #888;
-  font-weight: 400;
-}
-
-.notification-item.read .notif-time {
-  color: #aaa;
-}
-
-/* 타입 아이콘 */
-.notif-icon {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 1px;
-}
-
-.icon-info {
-  background: #dbeafe;
-  color: #2563eb;
-}
-.icon-success {
-  background: #dcfce7;
-  color: #16a34a;
-}
-.icon-warning {
-  background: #fef9c3;
-  color: #d97706;
-}
-.icon-error {
-  background: #fee2e2;
-  color: #dc2626;
-}
-.icon-default {
-  background: rgba(0, 0, 0, 0.07);
-  color: #555;
-}
-
-/* 알림 내용 */
-.notif-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.notif-message {
-  font-size: 13px;
-  line-height: 1.45;
-  margin: 0 0 3px;
-  word-break: keep-all;
-  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
-  color: #333;
-}
-
-.notif-time {
-  font-size: 11px;
-  color: #999;
-  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
-}
-
-/* 읽지 않음 표시 점 */
-.unread-indicator {
-  flex-shrink: 0;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #4f8ef7;
-  margin-top: 5px;
-  align-self: flex-start;
-}
-
-/* 삭제 버튼 */
-.delete-btn {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
-  color: #bbb;
-  cursor: pointer;
-  opacity: 0;
-  transition:
-    opacity 0.15s,
-    background 0.15s,
-    color 0.15s;
-  padding: 0;
-  margin-top: 1px;
-}
-
-.notification-item:hover .delete-btn {
-  opacity: 1;
-}
-
-.delete-btn:hover {
-  background: rgba(229, 62, 62, 0.1);
-  color: #e53e3e;
-}
-
-/* 빈 상태 */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  gap: 10px;
-  color: #999;
-  font-size: 13px;
-  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
-}
-
-/* 패널 트랜지션 */
-.panel-enter-active {
-  transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.panel-leave-active {
-  transition: all 0.16s ease-in;
-}
-.panel-enter-from {
-  opacity: 0;
-  transform: translateY(-8px) scale(0.96);
-}
-.panel-leave-to {
-  opacity: 0;
-  transform: translateY(-6px) scale(0.97);
-}
-
-/* 리스트 트랜지션 */
-.notification-list-enter-active {
-  transition: all 0.25s ease;
-}
-.notification-list-leave-active {
-  transition: all 0.2s ease;
-}
-.notification-list-enter-from {
-  opacity: 0;
-  transform: translateX(12px);
-}
-.notification-list-leave-to {
-  opacity: 0;
-  transform: translateX(-8px);
-  height: 0;
-  margin: 0;
-  padding: 0;
+ul::-webkit-scrollbar-thumb:hover {
+  background: #d6d3d1;
 }
 </style>
