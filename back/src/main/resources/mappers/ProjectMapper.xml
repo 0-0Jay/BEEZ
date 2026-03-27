@@ -41,11 +41,13 @@
   
   <!--  프로젝트 목록 조회  -->
   <select id="findAllProjects">
-    SELECT id,
-           title,
-           user_id,
-           end_date
-    FROM project
+    SELECT p.id,
+           p.title,
+           u.name AS pmName,
+           p.end_date AS endDate
+    FROM project p
+    LEFT JOIN users u
+    ON u.id = p.user_id
     ORDER BY id
   </select>
 
