@@ -61,7 +61,7 @@ watch(isOpen, (val) => {
       </router-link>
 
       <router-link to="/test" class="menu-item whitespace-nowrap cursor-pointer px-3 py-2.5 rounded-lg hover:bg-gray-700 transition-colors duration-150 flex items-center justify-between">
-        <span>채팅 테스트</span>
+        <span>채팅/알림 테스트</span>
       </router-link>
 
       <div v-if="selectedProject" class="mt-1">
