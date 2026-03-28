@@ -20,6 +20,7 @@ public class TaskCategoryResponse {
     return TaskCategoryResponse.builder()
       .id(category.getId())
       .name(category.getName())
+      .description(category.getDescription())
       .build();
   }
   
