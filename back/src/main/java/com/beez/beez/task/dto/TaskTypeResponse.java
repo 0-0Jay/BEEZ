@@ -21,6 +21,7 @@ public class TaskTypeResponse {
       .id(type.getId())
       .name(type.getName())
       .defaultStatus(type.getDefaultStatus())
+      .description(type.getDescription())
       .build();
   }
   

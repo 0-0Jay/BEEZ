@@ -11,7 +11,13 @@ const props = defineProps({
 const emit = defineEmits(['update:visible', 'save', 'cancel']);
 
 // ── 드롭다운 옵션 ─────────────────────────────────────────────
-const statusOptions = ['신규', '진행', '해결', '반려', '완료'];
+const statusOptions = [
+  { name: '신규', code: 'Q0' },
+  { name: '진행', code: 'Q1' },
+  { name: '해결', code: 'Q2' },
+  { name: '반려', code: 'Q3' },
+  { name: '완료', code: 'Q4' }
+];
 
 const workflowCopyOptions = computed(() => props.existingTypes.filter((t) => props.mode === 'add' || t.id !== form.value.id).map((t) => t.name));
 
@@ -95,7 +101,7 @@ function handleCancel() {
           </label>
           <select v-model="form.defaultStatus" class="h-9 px-3 bg-stone-50 border border-stone-200 rounded-lg text-base text-stone-700 outline-none focus:border-amber-400 focus:bg-amber-50 transition-colors cursor-pointer appearance-auto">
             <option :value="null" disabled>초기 상태 선택</option>
-            <option v-for="s in statusOptions" :key="s" :value="s">{{ s }}</option>
+            <option v-for="s in statusOptions" :key="s.code" :value="s.code">{{ s.name }}</option>
           </select>
           <p v-if="!form.defaultStatus" class="text-base text-stone-400 mt-0.5">일감 생성 시 기본으로 지정될 상태입니다.</p>
         </div>

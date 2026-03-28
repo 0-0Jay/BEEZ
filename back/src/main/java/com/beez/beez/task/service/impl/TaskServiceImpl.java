@@ -53,6 +53,7 @@ public class TaskServiceImpl implements TaskService {
   // 일감 범주 수정
   @Override
   public void updateTaskCategory(TaskCategoryRequest dto) {
+    System.out.println(dto.getDescription());
     taskCategoryRepository.save(TaskCategory.toEntity(dto));
   }
   
