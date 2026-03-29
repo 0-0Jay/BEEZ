@@ -21,7 +21,7 @@
     WHERE id = #{id}
   </select>
 
-  <insert id="save" parameterType="com.beez.beez.users.dto.UsersDto">
+  <insert id="insertUser" parameterType="com.beez.beez.users.dto.UsersDto">
     <selectKey keyProperty="id" resultType="string" order="BEFORE">
       SELECT BEEZ.generate_pk_auto('USERS') FROM dual
     </selectKey>

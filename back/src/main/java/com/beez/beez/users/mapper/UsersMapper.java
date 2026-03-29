@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public interface UsersMapper {
 
-  void save(UsersDto usersDto);
+  void insertUser(UsersDto usersDto);
 
   Optional<Users> findById(String id);
 }
