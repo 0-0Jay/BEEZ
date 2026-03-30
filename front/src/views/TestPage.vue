@@ -1,5 +1,5 @@
 <script setup>
-import ChatRoom from '@/components/chat/ChatRoom.vue';
+import ChatRoom from '@/components/chat/ChatComponent.vue';
 import DeleteModal from '@/components/DeleteModal.vue';
 import WorkflowChangeModal from '@/components/task/WorkflowChangeModal.vue';
 import WorkflowRejectModal from '@/components/task/WorkflowRejectModal.vue';
@@ -56,7 +56,7 @@ const flowChange = {
 };
 function doChange(id) {
   console.log(id);
-  // 여기에 반려 로직
+  // 여기에 변경로직
 }
 function showChangeModal() {
   changeModalVisible.value = true;
@@ -65,7 +65,6 @@ function showChangeModal() {
 
 <template>
   <div>
-
     <div class="grid grid-cols-12 gap-8">
       <div class="col-span-12 xl:col-span-6 h-50">
         <InputText type="text" v-model="content" placeholder="알림 내용 작성해보기" /><br />

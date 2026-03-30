@@ -24,7 +24,7 @@ public class NotificationServiceImpl implements NotificationService {
   @Override
   @Transactional
   public void sendNotification(NotificationRequest dto) {
-    notificationRepository.insertChat(dto.getUserId(), dto.getContent(), dto.getLink());
+    notificationRepository.insertNotification(dto.getUserId(), dto.getContent(), dto.getLink());
     NotificationResponse notificationResponse = notificationMapper.findNotification(dto.getUserId());
     messagingTemplate.convertAndSend("/notification/" + dto.getUserId(), notificationResponse);
   }

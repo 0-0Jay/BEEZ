@@ -2,6 +2,62 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.beez.beez.task.mapper.TaskMapper">
   <select id="findTaskList" resultType="TaskListResponse">
-    SELECT
+    SELECT t.id,
+           t.title,
+           t.user_id,
+           u.name AS user_name,
+           t.type,
+           t.category,
+           t.workflow,
+           t.priority,
+           t.planned_end,
+           t.progress,
+           (SELECT COUNT(*)
+            FROM task_watcher w
+            WHERE w.task_id = t.id AND w.user_id = #{userId}) AS isWatch
+    FROM task t
+    JOIN users u ON t.user_id = u.id
+    WHERE t.project_id = #{projectId}
   </select>
+  
+  <select id="findMemberList" resultType="MemberResponse">
+    SELECT p.user_id AS id,
+           u.name
+    FROM project_member p
+    JOIN users u ON p.user_id = u.id
+    WHERE p.project_id = #{projectId}
+  </select>
+  
+  <select id="findPriorityList" resultType="PriorityResponse">
+    SELECT com_value AS id,
+           com_name AS name
+    FROM common_code
+    WHERE group_value = '0S'
+  </select>
+  
+  <select id="findWorkflowList" resultType="WorkflowResponse">
+    SELECT com_value AS id,
+           com_name AS name
+    FROM common_code
+    WHERE group_value = '0Q'
+  </select>
+  
+  <select id="findVersionList" resultType="VersionResponse">
+    SELECT *
+    FROM version
+    WHERE project_id = #{projectId}
+  </select>
+  
+  <select id="findLastfileId" resultType="String">
+    SELECT id
+    FROM
+      (SELECT *
+       FROM files
+       ORDER BY created_on DESC)
+    WHERE ROWNUM = 1
+  </select>
+  
+  <insert id="insertTask">
+    
+  </insert>
 </mapper>
