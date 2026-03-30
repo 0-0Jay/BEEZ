@@ -48,7 +48,7 @@ public class SecurityConfig {
         // 특정 역할이 필요한 경로
         // .requestMatchers("/projects/**").hasAnyAuthority("ROLE0001", "ROLE0002")
         // 그 외 페이지
-        .anyRequest().authenticated())
+        .anyRequest().permitAll())
       // jwt 필터 추가
       .addFilterBefore(new JwtAuthenticationFilter(jwtProvider, userDetailsService), UsernamePasswordAuthenticationFilter.class);
 

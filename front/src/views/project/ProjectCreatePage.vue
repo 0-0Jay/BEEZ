@@ -1,21 +1,21 @@
 <script setup>
 import { useProjectStore } from '@/stores/project';
-import { reactive } from 'vue';
+import { onMounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
 const projectStore = useProjectStore();
 
 // 상위 프로젝트 옵션 - 기존 프로젝트 목록 활용
-// const projectOptions = ref([]);
+const projectOptions = ref([]);
 
-// onMounted(async () => {
-//   await projectStore.fetchProjects({});
-//   projectOptions.value = projectStore.projects.map((p) => ({
-//     label: p.title,
-//     value: p.id
-//   }));
-// });
+onMounted(async () => {
+  await projectStore.fetchProjects({});
+  projectOptions.value = projectStore.projects.map((p) => ({
+    label: p.title,
+    value: p.id
+  }));
+});
 
 const form = reactive({
   title: '',
@@ -31,7 +31,8 @@ const errors = reactive({
   title: '',
   identifier: '',
   startDate: '',
-  endDate: ''
+  endDate: '',
+  date: ''
 });
 
 const validate = () => {
@@ -60,8 +61,28 @@ const validate = () => {
     errors.endDate = '마감일을 선택해주세요.';
     valid = false;
   }
+  if (errors.date) {
+    valid = false;
+  }
   return valid;
 };
+
+watch(
+  () => [form.startDate, form.endDate],
+  () => {
+    if (form.startDate && form.endDate) {
+      const startDate = new Date(form.startDate);
+      const endDate = new Date(form.endDate);
+      if (startDate > endDate) {
+        errors.date = '시작일이 마감일 이후일 수 없습니다.';
+      } else {
+        errors.date = '';
+      }
+    } else {
+      errors.date = '';
+    }
+  }
+);
 
 const formatDate = (date) => {
   if (!date) return null;
@@ -78,7 +99,7 @@ const handleSubmit = async () => {
     description: form.description,
     startDate: formatDate(form.startDate),
     endDate: formatDate(form.endDate),
-    isPublic: form.isPublic ? 'Y' : 'N'
+    isPublic: form.isPublic ? 'J1' : 'J0'
   });
 
   router.push('/project/list');
@@ -137,8 +158,9 @@ const handleCancel = () => {
             <div class="flex flex-col">
               <DatePicker v-model="form.startDate" dateFormat="yy-mm-dd" placeholder="시작일" class="form-input w-40" :class="{ 'p-invalid': errors.startDate }" />
               <small v-if="errors.startDate" class="text-red-500 mt-1">{{ errors.startDate }}</small>
+              <small v-if="errors.date" class="text-red-500 mt-1">{{ errors.date }}</small>
             </div>
-            <span class="text-xl text-[#6B6B63] mt-2 ml-10">~</span>
+            <span class="text-xl text-[#6B6B63] mt-2 ml-3">~</span>
             <div class="flex flex-col">
               <DatePicker v-model="form.endDate" dateFormat="yy-mm-dd" placeholder="마감일" class="form-input w-40" :class="{ 'p-invalid': errors.endDate }" />
               <small v-if="errors.endDate" class="text-red-500 mt-1">{{ errors.endDate }}</small>
@@ -190,6 +212,14 @@ const handleCancel = () => {
   height: 38px !important;
   border-color: #c7c7c2 !important;
   background-color: #fafaf8 !important;
+}
+
+:deep(.p-select-label) {
+  line-height: normal !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  display: flex !important;
+  align-items: center !important;
 }
 
 :deep(.form-input:focus) {
