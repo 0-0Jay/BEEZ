@@ -45,7 +45,7 @@ public class Users implements UserDetails {
   @Override
   public String getUsername() { return this.id; }
 
-  public void setRoles(List<String> authorities) {
+  public void setRoles(List<String> roles) {
     this.roles = (roles == null) ? new ArrayList<>() : new ArrayList<>(roles);
   }
 

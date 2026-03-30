@@ -64,23 +64,26 @@ function showChangeModal() {
 </script>
 
 <template>
-  <div class="grid grid-cols-12 gap-8">
-    <div class="col-span-12 xl:col-span-6 h-50">
-      <InputText type="text" v-model="content" placeholder="알림 내용 작성해보기" /><br />
-      <Button icon="pi pi-bell" label="알림을 전송해보자!" @Click="sendTest"></Button>
+  <div>
+
+    <div class="grid grid-cols-12 gap-8">
+      <div class="col-span-12 xl:col-span-6 h-50">
+        <InputText type="text" v-model="content" placeholder="알림 내용 작성해보기" /><br />
+        <Button icon="pi pi-bell" label="알림을 전송해보자!" @Click="sendTest"></Button>
+      </div>
+      <ChatRoom></ChatRoom>
     </div>
-    <ChatRoom></ChatRoom>
-  </div>
-  <div>
-    <Button label="삭제" @click="showDelModal()"></Button>
-    <DeleteModal v-model:visible="deleteModalVisible" :target="target" @delete="(task) => doDelete(task.id)" />
-  </div>
-  <div>
-    <Button label="반려" @click="showRejectModal()"></Button>
-    <WorkflowRejectModal v-model:visible="rejectModalVisible" :task="taskRequest" @reject="(task) => doReject(task)" />
-  </div>
-  <div>
-    <Button label="변경" @click="showChangeModal()"></Button>
-    <WorkflowChangeModal v-model:visible="changeModalVisible" :task="flowChange" @confirm="(task) => doChange(task)" />
+    <div>
+      <Button label="삭제" @click="showDelModal()"></Button>
+      <DeleteModal v-model:visible="deleteModalVisible" :target="target" @delete="(task) => doDelete(task.id)" />
+    </div>
+    <div>
+      <Button label="반려" @click="showRejectModal()"></Button>
+      <WorkflowRejectModal v-model:visible="rejectModalVisible" :task="taskRequest" @reject="(task) => doReject(task)" />
+    </div>
+    <div>
+      <Button label="변경" @click="showChangeModal()"></Button>
+      <WorkflowChangeModal v-model:visible="changeModalVisible" :task="flowChange" @confirm="(task) => doChange(task)" />
+    </div>
   </div>
 </template>

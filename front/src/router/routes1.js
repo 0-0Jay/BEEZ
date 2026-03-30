@@ -1,8 +1,8 @@
 const Routes1 = [
   {
-    path: '/test',
-    name: 'Test',
-    component: () => import('@/views/TestPage.vue')
+    path: '/users/list',
+    name: 'userList',
+    component: () => import('@/views/users/UserListPage.vue')
   }
 ];
 export default Routes1;
