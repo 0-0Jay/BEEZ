@@ -55,6 +55,7 @@ export const useProjectStore = defineStore('project', {
 
     async createProject(data) {
       const response = await axios.post('/project', data);
+      console.log(response.data);
       return response.data;
     }
   },
