@@ -1,15 +1,16 @@
 package com.beez.beez.task.service.impl;
 
-import com.beez.beez.task.dto.TaskCategoryRequest;
-import com.beez.beez.task.dto.TaskCategoryResponse;
-import com.beez.beez.task.dto.TaskTypeRequest;
-import com.beez.beez.task.dto.TaskTypeResponse;
+import com.beez.beez.task.dto.*;
+import com.beez.beez.task.mapper.TaskMapper;
 import com.beez.beez.task.repository.*;
 import com.beez.beez.task.service.TaskService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -17,6 +18,7 @@ public class TaskServiceImpl implements TaskService {
   private final TaskTypeRepository taskTypeRepository;
   private final TaskCategoryRepository taskCategoryRepository;
   private final TaskRepository taskRepository;
+  private final TaskMapper taskMapper;
   
   // 일감 유형 목록
   public List<TaskTypeResponse> findTaskType() {
@@ -61,6 +63,64 @@ public class TaskServiceImpl implements TaskService {
   @Override
   public void deleteTaskCategory(String id) {
     taskCategoryRepository.deleteById(id);
+  }
+  
+  // 일감 목록 조회
+  @Override
+  public List<TaskListResponse> findTaskList(String projectId, String userId) {
+    return taskMapper.findTaskList(projectId, userId);
+  }
+  
+  // 담당자 목록 조회
+  @Override
+  public List<MemberResponse> findMemberList(String projectId) {
+    return taskMapper.findMemberList(projectId);
+  }
+  
+  // 우선순위 목록
+  @Override
+  public List<PriorityResponse> findPriorityList() {
+    List<PriorityResponse> list = taskMapper.findPriorityList();
+    return taskMapper.findPriorityList();
+  }
+  
+  // 진행상태 목록
+  @Override
+  public List<WorkflowResponse> findWorkflowList() {
+    return taskMapper.findWorkflowList();
+  }
+  
+  @Override
+  public List<VersionResponse> findVersionList(String projectId) {
+    return taskMapper.findVersionList(projectId);
+  }
+  
+  @Override
+  @Transactional
+  public void insertTask(TaskRequest task, List<MultipartFile> files) {
+//    if (files != null && !files.isEmpty()) {
+//      taskRepository.insertFiles(task.getUserId());
+//      String fileId = taskMapper.findLastFileId();
+//
+//      for (MultipartFile file : files) {
+//        String originalName = file.getOriginalFilename();
+//        String extension = originalName.substring(originalName.lastIndexOf(".") + 1);
+//        String storedName = UUID.randomUUID().toString() + "." + extension;
+//        long fileSize = file.getSize();
+//
+//        FileDetailRequest fileDetail = FileDetailRequest.builder()
+//          .fileId(fileId)
+//          .originalName(originalName)
+//          .storedName(storedName)
+//          .extension(extension)
+//          .fileSize(fileSize)
+//          .build();
+//
+//        taskMapper.insertFileDetail(fileDetail);
+//      }
+//    }
+    taskMapper.insertTask(task);
+    
   }
   
 }

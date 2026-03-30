@@ -1,12 +1,11 @@
 package com.beez.beez.task.web;
 
-import com.beez.beez.task.dto.TaskCategoryRequest;
-import com.beez.beez.task.dto.TaskCategoryResponse;
-import com.beez.beez.task.dto.TaskTypeRequest;
-import com.beez.beez.task.dto.TaskTypeResponse;
+import com.beez.beez.task.dto.*;
 import com.beez.beez.task.service.TaskService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -62,5 +61,41 @@ public class TaskController {
   @DeleteMapping("/category/{id}")
   public void deleteTaskCategory(@PathVariable String id) {
     taskService.deleteTaskCategory(id);
+  }
+  
+  // 일감 목록 조회
+  @GetMapping("/{projectId}/{userId}")
+  public List<TaskListResponse> findTaskList(@PathVariable String projectId, @PathVariable String userId) {
+    return taskService.findTaskList(projectId, userId);
+  }
+  
+  // 담당자 목록 조회
+  @GetMapping("/member/{projectId}")
+  public List<MemberResponse> findMemberList(@PathVariable String projectId) {
+    return taskService.findMemberList(projectId);
+  }
+  
+  // 우선순위 목록
+  @GetMapping("/priority")
+  public List<PriorityResponse> findPriorityList() {
+    return taskService.findPriorityList();
+  }
+  
+  // 진행상태 목록
+  @GetMapping("/workflow")
+  public List<WorkflowResponse> findWorkflowList() {
+    return taskService.findWorkflowList();
+  }
+  
+  // 버전 목록
+  @GetMapping("/version/{projectId}")
+  public List<VersionResponse> findVersionList(@PathVariable String projectId) {
+    return taskService.findVersionList(projectId);
+  }
+  
+  // 일감 추가
+  @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public void insertTask(@ModelAttribute TaskRequest task, @RequestPart(value = "attachments", required = false) List<MultipartFile> files) {
+    taskService.insertTask(task, files);
   }
 }

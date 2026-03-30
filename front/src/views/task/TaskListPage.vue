@@ -1,90 +1,29 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { useTaskStore } from '@/stores/task';
+import { computed, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
-// ── 현재 로그인 사용자 ID ────────────────────────────────────
-const myUserId = '20261111';
+const taskStore = useTaskStore();
+const router = useRouter();
+const projectId = 'PROJ2511001';
+const userId = '20261111';
+const tasks = computed(() => taskStore.taskList);
 
-// ── 예시 데이터 ────────────────────────────────────────────────
-const tasks = ref([
-  {
-    id: 'TASK-001',
-    projectId: 'PRJ-001',
-    versionId: 'VER-1.2',
-    title: '로그인 페이지 보안 취약점 수정',
-    description: 'SQL Injection 방어 로직 추가 및 입력값 검증 강화',
-    userId: '20269999',
-    userName: '김민준',
-    type: '결함',
-    category: '보안',
-    workflow: '진행',
-    priority: '높음',
-    plannedStart: '2025-03-01',
-    plannedEnd: '2025-03-15',
-    actualStart: '2025-03-02',
-    actualEnd: null,
-    estimatedTime: 16,
-    progress: 65,
-    status: '1',
-    parentId: null,
-    isPublic: '1',
-    creator: '이서연',
-    fileId: 'FILE-012',
-    isWatch: 1
-  },
-  {
-    id: 'TASK-002',
-    projectId: 'PRJ-001',
-    versionId: 'VER-1.3',
-    title: '대시보드 차트 컴포넌트 신규 개발',
-    description: '실시간 데이터 시각화를 위한 Chart.js 기반 컴포넌트 구현',
-    userId: '20261111',
-    userName: '김개발',
-    type: '새기능',
-    category: '프론트',
-    workflow: '해결',
-    priority: '보통',
-    plannedStart: '2025-03-10',
-    plannedEnd: '2025-03-28',
-    actualStart: '2025-03-11',
-    actualEnd: null,
-    estimatedTime: 24,
-    progress: 90,
-    status: '1',
-    parentId: null,
-    isPublic: '1',
-    creator: '최동현',
-    fileId: null,
-    isWatch: 0
-  },
-  {
-    id: 'TASK-003',
-    projectId: 'PRJ-002',
-    versionId: 'VER-2.0',
-    title: 'REST API 응답 성능 최적화',
-    description: '주요 엔드포인트 쿼리 튜닝 및 캐싱 레이어 도입',
-    userId: '20264444',
-    userName: '이서연',
-    type: '지원',
-    category: '백',
-    workflow: '완료',
-    priority: '긴급',
-    plannedStart: '2025-02-20',
-    plannedEnd: '2025-03-05',
-    actualStart: '2025-02-21',
-    actualEnd: '2025-03-04',
-    estimatedTime: 32,
-    progress: 100,
-    status: '1',
-    parentId: null,
-    isPublic: '0',
-    creator: '김민준',
-    fileId: 'FILE-009',
-    isWatch: 0
-  }
-]);
+// 드롭다운 옵션
+const workflowOptions = computed(() => taskStore.workflowList);
+const userOptions = computed(() => taskStore.memberList);
+const typeOptions = computed(() => taskStore.typeList);
+const categoryOptions = computed(() => taskStore.cateList);
+const priorityOptions = computed(() => taskStore.priorityList);
 
-// ── 필터 상태 ────────────────────────────────────────────────
-const filters = ref({
+// value → name 맵핑
+const workflowMap = computed(() => Object.fromEntries(workflowOptions.value.map((w) => [w.id, w.name])));
+const priorityMap = computed(() => Object.fromEntries(priorityOptions.value.map((p) => [p.id, p.name])));
+const taskTypeMap = computed(() => Object.fromEntries(typeOptions.value.map((t) => [t.id, t.name])));
+const taskCateMap = computed(() => Object.fromEntries(categoryOptions.value.map((c) => [c.id, c.name])));
+
+// 필터 초기값
+const defaultFilters = () => ({
   workflow: null,
   userId: null,
   plannedStart: null,
@@ -97,21 +36,31 @@ const filters = ref({
   showWatching: false
 });
 
-// ── 드롭다운 옵션 ─────────────────────────────────────────────
-const workflowOptions = ['신규', '진행', '해결', '반려', '완료'];
-const userOptions = ['김민준', '박지수', '이서연', '최동현', '홍길동'];
-const typeOptions = ['결함', '새기능', '지원', '테스트', '기타'];
-const categoryOptions = ['보안', '백', '프론트', '디자인', '인프라', '기타'];
-const priorityOptions = ['긴급', '높음', '보통', '낮음'];
+const filters = ref(defaultFilters());
+const appliedFilters = ref(defaultFilters());
 
-// ── 담당자 검색 드롭다운 ──────────────────────────────────────
+// 조회 버튼 클릭
+function applyFilters() {
+  appliedFilters.value = { ...filters.value };
+  currentPage.value = 1;
+}
+
+// 필터 초기화
+function resetFilters() {
+  filters.value = defaultFilters();
+  userSearch.value = '';
+  appliedFilters.value = defaultFilters();
+  currentPage.value = 1;
+}
+
+// 담당자 검색 드롭다운
 const userSearch = ref('');
 const userDropdownOpen = ref(false);
-const filteredUsers = computed(() => userOptions.filter((u) => u.includes(userSearch.value)));
+const filteredUsers = computed(() => userOptions.value.filter((u) => u.name?.includes(userSearch.value)));
 
 function selectUser(u) {
-  filters.value.userId = u;
-  userSearch.value = u;
+  filters.value.userId = u.name;
+  userSearch.value = u.name;
   userDropdownOpen.value = false;
 }
 function clearUser() {
@@ -119,28 +68,11 @@ function clearUser() {
   userSearch.value = '';
 }
 
-// ── 필터 초기화 ───────────────────────────────────────────────
-function resetFilters() {
-  filters.value = {
-    workflow: null,
-    userId: null,
-    plannedStart: null,
-    plannedEnd: null,
-    type: null,
-    category: null,
-    priority: null,
-    title: '',
-    showMyTasks: false,
-    showWatching: false
-  };
-  userSearch.value = '';
-}
-
-// ── 정렬 상태 ────────────────────────────────────────────────
+// 정렬
 const sortKey = ref(null); // 'id' | 'priority' | 'plannedEnd' | 'progress'
 const sortDir = ref('asc'); // 'asc' | 'desc'
 
-const priorityWeight = { 긴급: 4, 높음: 3, 보통: 2, 낮음: 1 };
+const priorityWeight = { S3: 4, S2: 3, S1: 2, S0: 1 };
 
 function toggleSort(key) {
   if (sortKey.value === key) {
@@ -156,29 +88,27 @@ function sortIcon(key) {
   return sortDir.value === 'asc' ? '↑' : '↓';
 }
 
-// ── 필터링 + 정렬된 전체 목록 ───────────────────────────────
+// 필터 결과
 const processedTasks = computed(() => {
   let list = [...tasks.value];
 
-  // 체크박스 필터 (내 일감 / 관람 중)
-  const { showMyTasks, showWatching } = filters.value;
+  const { showMyTasks, showWatching } = appliedFilters.value;
   if (showMyTasks || showWatching) {
     list = list.filter((t) => {
-      const isMyTask = showMyTasks && t.userId === myUserId;
+      const isMyTask = showMyTasks && t.userId === userId;
       const isWatching = showWatching && t.isWatch === 1;
-      return isMyTask || isWatching; // 합집합
+      return isMyTask || isWatching;
     });
   }
 
-  // 나머지 필터
-  if (filters.value.workflow) list = list.filter((t) => t.workflow === filters.value.workflow);
-  if (filters.value.userId) list = list.filter((t) => t.userName === filters.value.userId);
-  if (filters.value.type) list = list.filter((t) => t.type === filters.value.type);
-  if (filters.value.category) list = list.filter((t) => t.category === filters.value.category);
-  if (filters.value.priority) list = list.filter((t) => t.priority === filters.value.priority);
-  if (filters.value.title) list = list.filter((t) => t.title.includes(filters.value.title));
-  if (filters.value.plannedStart) list = list.filter((t) => t.plannedEnd && t.plannedEnd >= filters.value.plannedStart);
-  if (filters.value.plannedEnd) list = list.filter((t) => t.plannedEnd && t.plannedEnd <= filters.value.plannedEnd);
+  if (appliedFilters.value.workflow) list = list.filter((t) => t.workflow === appliedFilters.value.workflow);
+  if (appliedFilters.value.userId) list = list.filter((t) => t.userName === appliedFilters.value.userId);
+  if (appliedFilters.value.type) list = list.filter((t) => t.type === appliedFilters.value.type);
+  if (appliedFilters.value.category) list = list.filter((t) => t.category === appliedFilters.value.category);
+  if (appliedFilters.value.priority) list = list.filter((t) => t.priority === appliedFilters.value.priority);
+  if (appliedFilters.value.title) list = list.filter((t) => t.title.includes(appliedFilters.value.title));
+  if (appliedFilters.value.plannedStart) list = list.filter((t) => t.plannedEnd && t.plannedEnd >= appliedFilters.value.plannedStart);
+  if (appliedFilters.value.plannedEnd) list = list.filter((t) => t.plannedEnd && t.plannedEnd <= appliedFilters.value.plannedEnd);
 
   // 정렬
   if (sortKey.value) {
@@ -199,7 +129,7 @@ const processedTasks = computed(() => {
   return list;
 });
 
-// ── 페이징 ───────────────────────────────────────────────────
+// 페이징
 const currentPage = ref(1);
 const pageSize = 10;
 const pageBlockSize = 10;
@@ -227,7 +157,7 @@ function nextBlock() {
   if (hasNextBlock.value) currentPage.value = blockEnd.value + 1;
 }
 
-// ── 유틸 ────────────────────────────────────────────────────
+// 유틸
 function progressBarColor(p) {
   if (p == 100) return '#22C55E';
   if (p >= 90) return '#86EFAC';
@@ -237,37 +167,47 @@ function progressBarColor(p) {
 }
 
 const workflowClass = {
-  신규: 'status-new',
-  진행: 'status-in-progress',
-  해결: 'status-resolved',
-  반려: 'status-rejected',
-  완료: 'status-done'
+  Q0: 'status-new',
+  Q1: 'status-in-progress',
+  Q2: 'status-resolved',
+  Q3: 'status-rejected',
+  Q4: 'status-done'
 };
 
 const priorityClass = {
-  긴급: 'priority-urgent',
-  높음: 'priority-high',
-  보통: 'priority-mid',
-  낮음: 'priority-low'
+  S3: 'priority-urgent',
+  S2: 'priority-high',
+  S1: 'priority-mid',
+  S0: 'priority-low'
 };
+
+onMounted(async () => {
+  await taskStore.findCateList();
+  await taskStore.findTypeList();
+  await taskStore.findMember(projectId);
+  await taskStore.findTaskList(projectId, userId);
+  await taskStore.findPriorityList();
+  await taskStore.findWorkflowList();
+});
 </script>
 
 <template>
   <div class="min-h-screen bg-stone-50 px-10 py-8 text-stone-700">
-    <!-- ── 페이지 헤더 ──────────────────────────────────────── -->
+    <!-- 페이지 헤더  -->
     <div class="flex items-end justify-between mb-7">
       <div>
         <h1 class="text-2xl font-bold tracking-tight text-stone-900">일감 목록</h1>
       </div>
       <button
         class="inline-flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-amber-50 font-semibold text-sm px-5 py-2.5 rounded-lg shadow-md shadow-amber-200 transition-all duration-150 hover:-translate-y-0.5 cursor-pointer border-none"
+        @click="router.push('/task/create')"
       >
         <span class="text-base leading-none font-bold">＋</span>
         일감 추가
       </button>
     </div>
 
-    <!-- 필터 카드  -->
+    <!-- 필터 카드 -->
     <div class="bg-white border border-stone-200 rounded-xl shadow-sm px-7 pt-5 pb-5 mb-5">
       <p class="text-xl font-bold tracking-wider uppercase text-amber-700 mb-4"><i class="pi pi-search" style="font-size: 1rem"></i> 검색 필터</p>
 
@@ -277,7 +217,7 @@ const priorityClass = {
           <label class="text-base font-semibold uppercase tracking-wider text-stone-400">진행 상태</label>
           <select v-model="filters.workflow" class="h-9 px-3 bg-stone-50 border border-stone-200 rounded-md text-sm text-stone-700 outline-none focus:border-amber-400 focus:bg-amber-50 transition-colors cursor-pointer">
             <option :value="null">전체</option>
-            <option v-for="w in workflowOptions" :key="w" :value="w">{{ w }}</option>
+            <option v-for="w in workflowOptions" :key="w.id" :value="w.id">{{ w.name }}</option>
           </select>
         </div>
 
@@ -294,7 +234,9 @@ const priorityClass = {
             />
             <button v-if="filters.userId" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 text-xs cursor-pointer bg-transparent border-none leading-none p-0" @click="clearUser">✕</button>
             <div v-if="userDropdownOpen" class="absolute top-full mt-1 left-0 right-0 bg-white border border-stone-200 rounded-lg shadow-lg z-50 overflow-hidden">
-              <div v-for="u in filteredUsers" :key="u" class="px-3 py-2 text-sm text-stone-700 hover:bg-amber-100 hover:text-amber-700 cursor-pointer transition-colors" @mousedown.prevent="selectUser(u)">{{ u }}</div>
+              <div v-for="u in filteredUsers" :key="u.id" class="px-3 py-2 text-sm text-stone-700 hover:bg-amber-100 hover:text-amber-700 cursor-pointer transition-colors" @mousedown.prevent="selectUser(u)">
+                {{ u.name }}
+              </div>
               <div v-if="filteredUsers.length === 0" class="px-3 py-2.5 text-sm text-stone-400">결과 없음</div>
             </div>
           </div>
@@ -315,7 +257,7 @@ const priorityClass = {
           <label class="text-base font-semibold uppercase tracking-wider text-stone-400">일감 유형</label>
           <select v-model="filters.type" class="h-9 px-3 bg-stone-50 border border-stone-200 rounded-md text-sm text-stone-700 outline-none focus:border-amber-400 focus:bg-amber-50 transition-colors cursor-pointer">
             <option :value="null">전체</option>
-            <option v-for="t in typeOptions" :key="t" :value="t">{{ t }}</option>
+            <option v-for="t in typeOptions" :key="t.id" :value="t.id">{{ t.name }}</option>
           </select>
         </div>
 
@@ -324,7 +266,7 @@ const priorityClass = {
           <label class="text-base font-semibold uppercase tracking-wider text-stone-400">일감 범주</label>
           <select v-model="filters.category" class="h-9 px-3 bg-stone-50 border border-stone-200 rounded-md text-sm text-stone-700 outline-none focus:border-amber-400 focus:bg-amber-50 transition-colors cursor-pointer">
             <option :value="null">전체</option>
-            <option v-for="c in categoryOptions" :key="c" :value="c">{{ c }}</option>
+            <option v-for="c in categoryOptions" :key="c.id" :value="c.id">{{ c.name }}</option>
           </select>
         </div>
 
@@ -333,7 +275,7 @@ const priorityClass = {
           <label class="text-base font-semibold uppercase tracking-wider text-stone-400">우선순위</label>
           <select v-model="filters.priority" class="h-9 px-3 bg-stone-50 border border-stone-200 rounded-md text-sm text-stone-700 outline-none focus:border-amber-400 focus:bg-amber-50 transition-colors cursor-pointer">
             <option :value="null">전체</option>
-            <option v-for="p in priorityOptions" :key="p" :value="p">{{ p }}</option>
+            <option v-for="p in priorityOptions" :key="p.id" :value="p.id">{{ p.name }}</option>
           </select>
         </div>
 
@@ -344,9 +286,7 @@ const priorityClass = {
         </div>
       </div>
 
-      <!-- 하단 옵션 행 -->
       <div class="flex items-center justify-between mt-5 pt-4 border-t border-stone-100">
-        <!-- 체크박스 2개 -->
         <div class="flex items-center gap-5">
           <!-- 내 일감 보기 -->
           <label class="flex items-center gap-2 text-sm text-stone-500 cursor-pointer select-none" @click="filters.showMyTasks = !filters.showMyTasks">
@@ -371,12 +311,12 @@ const priorityClass = {
 
         <div class="flex gap-2.5">
           <button class="px-4 py-2 text-sm font-semibold text-stone-500 bg-stone-100 border border-stone-200 rounded-lg hover:bg-stone-200 transition-colors cursor-pointer" @click="resetFilters">초기화</button>
-          <button class="px-5 py-2 text-sm font-bold text-amber-50 bg-amber-400 hover:bg-amber-600 rounded-lg shadow shadow-amber-200 transition-colors cursor-pointer border-none">조회</button>
+          <button class="px-5 py-2 text-sm font-bold text-amber-50 bg-amber-400 hover:bg-amber-600 rounded-lg shadow shadow-amber-200 transition-colors cursor-pointer border-none" @click="applyFilters">조회</button>
         </div>
       </div>
     </div>
 
-    <!-- ── 테이블 카드 ──────────────────────────────────────── -->
+    <!-- 테이블 카드 -->
     <div class="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
       <!-- 메타 -->
       <div class="px-6 py-3.5 border-b border-stone-100">
@@ -391,7 +331,6 @@ const priorityClass = {
         <table class="w-full border-collapse text-sm">
           <thead>
             <tr class="bg-stone-100 border-b border-stone-200">
-              <!-- 작업번호: 정렬 가능 -->
               <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-50">
                 <button class="sort-btn" :class="{ active: sortKey === 'id' }" @click="toggleSort('id')">
                   번호 <span class="sort-icon">{{ sortIcon('id') }}</span>
@@ -399,7 +338,6 @@ const priorityClass = {
               </th>
               <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-24">유형</th>
               <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-28">상태</th>
-              <!-- 우선순위: 정렬 가능 -->
               <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-24">
                 <button class="sort-btn" :class="{ active: sortKey === 'priority' }" @click="toggleSort('priority')">
                   우선순위 <span class="sort-icon">{{ sortIcon('priority') }}</span>
@@ -407,14 +345,12 @@ const priorityClass = {
               </th>
               <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-24">범주</th>
               <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-stone-400 min-w-52">제목</th>
-              <!-- 진척도: 정렬 가능 -->
               <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-50">
                 <button class="sort-btn" :class="{ active: sortKey === 'progress' }" @click="toggleSort('progress')">
                   진척도 <span class="sort-icon">{{ sortIcon('progress') }}</span>
                 </button>
               </th>
               <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-28">담당자</th>
-              <!-- 마감일: 정렬 가능 -->
               <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-30">
                 <button class="sort-btn" :class="{ active: sortKey === 'plannedEnd' }" @click="toggleSort('plannedEnd')">
                   마감일 <span class="sort-icon">{{ sortIcon('plannedEnd') }}</span>
@@ -432,21 +368,29 @@ const priorityClass = {
               </td>
 
               <!-- 유형 -->
-              <td class="px-4 py-3.5 text-base text-stone-600 text-center">{{ task.type }}</td>
+              <td class="px-4 py-3.5 text-base text-stone-600 text-center">
+                {{ taskTypeMap[task.type] ?? task.type }}
+              </td>
 
               <!-- 상태 -->
               <td class="px-4 py-3.5 text-center">
-                <span class="inline-block px-2.5 py-0.5 rounded-full text-sm font-semibold whitespace-nowrap" :class="workflowClass[task.workflow] ?? 'bg-stone-100 text-stone-500'">{{ task.workflow }}</span>
+                <span class="inline-block px-2.5 py-0.5 rounded-full text-sm font-semibold whitespace-nowrap" :class="workflowClass[task.workflow] ?? 'bg-stone-100 text-stone-500'">
+                  {{ workflowMap[task.workflow] ?? task.workflow }}
+                </span>
               </td>
 
               <!-- 우선순위 -->
               <td class="px-4 py-3.5 text-center">
-                <span class="inline-block px-2.5 py-0.5 rounded-full text-sm font-semibold" :class="priorityClass[task.priority] ?? 'bg-stone-100 text-stone-400'">{{ task.priority }}</span>
+                <span class="inline-block px-2.5 py-0.5 rounded-full text-sm font-semibold" :class="priorityClass[task.priority] ?? 'bg-stone-100 text-stone-400'">
+                  {{ priorityMap[task.priority] ?? task.priority }}
+                </span>
               </td>
 
               <!-- 범주 -->
               <td class="px-4 py-3.5 text-center">
-                <span class="inline-block mt-1 text-sm text-stone-400 bg-stone-100 px-2 py-px rounded">{{ task.category }}</span>
+                <span class="inline-block mt-1 text-sm text-stone-400 bg-stone-100 px-2 py-px rounded">
+                  {{ taskCateMap[task.category] ?? task.category }}
+                </span>
               </td>
 
               <!-- 제목 -->

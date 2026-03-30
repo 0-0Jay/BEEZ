@@ -15,7 +15,7 @@ public interface NotificationRepository extends JpaRepository<Notifications, Str
     "INSERT INTO notifications(id, user_id, content, created_on, status, link) " +
       "VALUES(generate_pk('notifications'), :userId, :content, SYSTIMESTAMP, 'G0', :link)",
     nativeQuery = true)
-  void insertChat(
+  void insertNotification(
     @Param("userId") String userId,
     @Param("content") String content,
     @Param("link") String link

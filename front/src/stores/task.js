@@ -5,7 +5,12 @@ export const useTaskStore = defineStore('task', {
   // state
   state: () => ({
     typeList: [],
-    cateList: []
+    cateList: [],
+    memberList: [],
+    taskList: [],
+    priorityList: [],
+    workflowList: [],
+    versionList: []
   }),
   // getters
   // actions
@@ -35,6 +40,26 @@ export const useTaskStore = defineStore('task', {
     },
     async deleteCate(id) {
       const res = await axios.delete(`/task/category/${id}`);
+    },
+    async findMember(projectId) {
+      const res = await axios.get(`/task/member/${projectId}`);
+      this.memberList = res.data;
+    },
+    async findTaskList(projectId, userId) {
+      const res = await axios.get(`/task/${projectId}/${userId}`);
+      this.taskList = res.data;
+    },
+    async findPriorityList() {
+      const res = await axios.get(`/task/priority`);
+      this.priorityList = res.data;
+    },
+    async findWorkflowList() {
+      const res = await axios.get(`/task/workflow`);
+      this.workflowList = res.data;
+    },
+    async findVersionList(projectId) {
+      const res = await axios.get(`/task/version/${projectId}`);
+      this.versionList = res.data;
     }
   },
   persist: true

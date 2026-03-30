@@ -1,9 +1,7 @@
 package com.beez.beez.task.service;
 
-import com.beez.beez.task.dto.TaskCategoryRequest;
-import com.beez.beez.task.dto.TaskCategoryResponse;
-import com.beez.beez.task.dto.TaskTypeRequest;
-import com.beez.beez.task.dto.TaskTypeResponse;
+import com.beez.beez.task.dto.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -32,4 +30,19 @@ public interface TaskService {
   // 일감 범주 삭제
   void deleteTaskCategory(String id);
   
+  // 일감 목록
+  List<TaskListResponse> findTaskList(String projectId, String userId);
+  
+  // 담당자 목록
+  List<MemberResponse> findMemberList(String projectId);
+  
+  // 우선순위 목록
+  List<PriorityResponse> findPriorityList();
+  
+  // 진행상태 목록
+  List<WorkflowResponse> findWorkflowList();
+  
+  List<VersionResponse> findVersionList(String projectId);
+  
+  void insertTask(TaskRequest task, List<MultipartFile> files);
 }

@@ -1,5 +1,5 @@
 <script setup>
-import Notification from '@/components/notification/Notification.vue';
+import Notification from '@/components/notification/NotificationComponent.vue';
 import { inject } from 'vue';
 
 const selectedProject = inject('selectedProject');
