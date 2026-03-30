@@ -17,7 +17,6 @@ public class JwtProvider {
   //Jwts : jwt를 사용할 수 있도록 하는 라이브러리 안의 클래스 -> 토큰을 발급, 해석 및 검증(parser), 암호화 방식 등을 제공
 
   private final SecretKey key = Jwts.SIG.HS256.key().build(); // 암호화 키
-  private final long tokenValidTime = 60 * 60 * 1000L; // 토큰 유효 시간 : 1시간
 
   // 토큰 발급
   public String createToken(Users user){
@@ -25,9 +24,13 @@ public class JwtProvider {
 
     Date now = new Date();
 
+    // 토큰 유효 시간 : 1시간
+    long tokenValidTime = 60 * 60 * 1000L;
+
     return Jwts.builder()
       .subject(user.getId()) // 사원번호를 식별
       .claim("roles", roles) // 어떤 권한을 가졌는지 토큰에 넣음
+      .claim("name", user.getName())
       .issuedAt(now) // 발급시간
       .expiration(new Date(now.getTime() + tokenValidTime)) // 만료 시간
       .signWith(key) // 비밀키로 전자 서명

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.beez.beez.logs.mapper.LogsMapper">
+
+  <insert id="insertLogs" parameterType="com.beez.beez.logs.dto.LogsCreateRequest">
+    <selectKey keyProperty="logId" resultType="string" order="BEFORE">
+      SELECT BEEZ.generate_pk_auto('logs') FROM dual
+    </selectKey>
+    
+    INSERT INTO logs (
+        log_id,
+        project_id,
+        type,
+        category,
+        content,
+        created_on,
+        link
+    ) VALUES (
+        #{logId},
+        #{projectId},
+        #{type},
+        #{category},
+        #{content},
+        SYSDATE,
+        #{link}
+    )
+  </insert>
+
+</mapper>

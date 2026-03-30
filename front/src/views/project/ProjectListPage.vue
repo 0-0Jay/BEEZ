@@ -4,6 +4,28 @@ import { storeToRefs } from 'pinia';
 import { computed, inject, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
+// 삭제할 id를 임시 저장
+const pendingDeleteId = ref(null);
+const visible = ref(false);
+const confirmMsg = ref('');
+
+const openDeleteConfirm = (id) => {
+  pendingDeleteId.value = id;
+  confirmMsg.value = '정말 삭제하시겠습니까?';
+  visible.value = true;
+};
+
+const handleDelConfirm = async () => {
+  visible.value = false;
+  if (pendingDeleteId.value !== null) {
+    await projectStore.deleteProject(pendingDeleteId.value);
+    pendingDeleteId.value = null;
+    fetchProjects();
+  }
+};
+
+defineEmits(['selectProject']);
+
 // --- 1. 스토어 연결 ---
 const projectStore = useProjectStore();
 const { projects, loading } = storeToRefs(projectStore);
@@ -83,7 +105,7 @@ const actionItems = computed(() => [
     command: () => (selectedRow.value?.isLock === 'L1' ? unlockProject(selectedRow.value.id) : lockProject(selectedRow.value.id))
   },
   { label: '프로젝트 복사', icon: 'pi pi-copy' },
-  { label: '프로젝트 삭제', icon: 'pi pi-trash', command: () => deleteProject(selectedRow.value.id) }
+  { label: '프로젝트 삭제', icon: 'pi pi-trash', command: () => openDeleteConfirm(selectedRow.value.id) }
 ]);
 
 const rowClass = (data) => {
@@ -97,11 +119,6 @@ const lockProject = async (id) => {
 
 const unlockProject = async (id) => {
   await projectStore.unlockProject(id);
-  fetchProjects();
-};
-
-const deleteProject = async (id) => {
-  await projectStore.deleteProject(id);
   fetchProjects();
 };
 </script>
@@ -190,6 +207,10 @@ const deleteProject = async (id) => {
 
     <Menu ref="menu" :model="actionItems" :popup="true" />
   </div>
+
+  <ConfirmDialog v-model:visible="visible" confirmLabel="확인" @confirm="handleDelConfirm">
+    <span class="text-gray-700 font-medium">{{ confirmMsg }}</span>
+  </ConfirmDialog>
 </template>
 
 <style scoped>

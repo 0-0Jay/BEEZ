@@ -66,3 +66,10 @@ BEGIN
   RETURN v_result;
 END;
 /
+
+SELECT id, title, is_lock, status FROM project;
+
+SELECT p.id, p.title, p.user_id, u.name, p.end_date, p.is_lock, p.status
+FROM project p
+LEFT JOIN users u ON u.id = p.user_id
+WHERE p.status = 'K1'

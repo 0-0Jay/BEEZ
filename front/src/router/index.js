@@ -1,5 +1,6 @@
 import AppLayout from '@/layout/AppLayout.vue';
 import { createRouter, createWebHistory } from 'vue-router';
+import { setupAuthGuard } from './authGuard';
 import Routes1 from './routes1';
 import Routes2 from './routes2';
 import Routes3 from './routes3';
@@ -8,12 +9,14 @@ import Routes4 from './routes4';
 const router = createRouter({
   history: createWebHistory(),
   routes: [
+    { path: '/', name: 'login', component: () => import('@/views/auth/Login.vue') },
+
     {
-      path: '/',
+      path: '/main',
       component: AppLayout,
       children: [
         {
-          path: '/',
+          path: '/main',
           name: 'dashboard',
           component: () => import('@/views/Dashboard.vue')
         },
@@ -27,6 +30,13 @@ const router = createRouter({
           name: 'test',
           component: () => import('@/views/TestPage.vue')
         },
+        // 권한 테스트용
+        {
+          path: '/test/auth',
+          name: 'authTest',
+          component: () => import('@/views/AuthTest.vue'),
+          meta: { requiresAuth: true, role: 'ROLE0001' } // 필요한 권한을 메타 정보에 기록
+        },
         ...Routes1,
         ...Routes2,
         ...Routes3,
@@ -39,4 +49,5 @@ const router = createRouter({
   ]
 });
 
+router.beforeEach(setupAuthGuard);
 export default router;
