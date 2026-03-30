@@ -5,10 +5,10 @@ import { useRoute } from 'vue-router';
 
 const wikiStore = useWikiStore(); //스토어 연결
 
-const saveSuccess = ref(false);
+const saveSuccess = ref(false); // 저장여부
 const route = useRoute();
 const userId = ref(''); //입력받을 작성자명
-const created_on = ref(''); //입력 받을 작성날짜
+const wikiInfo = ref(''); //작성창 한줄 설명
 
 //스토어랑 연결
 const projectInfo = computed(() => wikiStore.projectInfo);
@@ -18,52 +18,41 @@ onMounted(async () => {
   const projectId = route.params.projectId;
   if (projectId) {
     await wikiStore.fetchProjectData(projectId);
-    console.log(`${projectId}번 프로젝트 정보 가져옴`);
-  } else {
-    console.log('프로젝트가 불러와지지 않음');
   }
-  console.log('데이터 로드 완료!');
 });
 
-//--------------------------------------
-
-//--------------------------------------
-
 const errors = ref({
-  userId: false,
-  created_on: false
+  //작성자명 작성해야 오류 안뜸
+  userId: false
 });
 
 function validateForm() {
-  //작성자명이랑 날짜를 작성해야함
+  //작성자명 작성해야함
   errors.value.userId = !userId.value || !userId.value.trim();
-  errors.value.created_on = !created_on.value; // 날짜가 선택되지 않았으면 true
-
-  return !errors.value.userId && !errors.value.created_on;
-}
-
-function handleCancel() {
-  // TODO: 취소 처리 (라우터 뒤로가기 등)
-  console.log('취소');
+  return !errors.value.userId;
 }
 
 function handleEdit() {
+  // 작성자명 안쓰면 안되고 쓰면 모달창 출력
   if (!validateForm()) return;
   showEditModal.value = true;
 }
+//--------------------------------------------------
 
 //목차
 const tocItems = ref([]);
-const emptyTocSlots = computed(() => Math.max(0, 7 - tocItems.value.length));
+const emptyTocSlots = computed(() => Math.max(0, 5 - tocItems.value.length)); // 목차 점 갯수
 
 function onEditorInput(e) {
+  // 본문에 입력할때 목차가 반영됨
   editorContent.value = e.target.innerHTML;
   updateTOC(e.target); // 목차 업데이트 함수 호출
 }
 
 function updateTOC(container) {
+  // 목차 추출로직
   // 에디터 내의 h1, h2, h3 태그만 추출
-  const headings = container.querySelectorAll('h1, h2, h3');
+  const headings = container.querySelectorAll('h2, h3'); //h1은 일부러 제외함
   const tempToc = [];
 
   headings.forEach((heading, index) => {
@@ -71,15 +60,16 @@ function updateTOC(container) {
     if (!heading.id) heading.id = `section-${index}`;
 
     tempToc.push({
+      //id부여
       id: heading.id,
       title: heading.innerText,
       level: heading.tagName // 'H1', 'H2' 등
     });
   });
 
-  tocItems.value = tempToc;
+  tocItems.value = tempToc; //목차 리스트 반영
 }
-
+//----------------------------------------------------
 // 링크
 const linkItems = ref([
   { title: '', url: '' },
@@ -109,17 +99,47 @@ function closeEditModal() {
   editReason.value = '';
 }
 
-function confirmEdit() {
+//--------------------------------------------------------------
+async function confirmEdit() {
   if (!editReason.value.trim()) return;
-  console.log('편집 사유:', editReason.value);
-  closeEditModal.value = false;
-  showEditModal.value = false;
-  editReason.value = '';
-  saveSuccess.value = true;
-  setTimeout(() => {
-    saveSuccess.value = false;
-  }, 3000);
-  // TODO: 저장 API 연동
+
+  //유효한 링크만 필터링해서 JSON처리
+  const validLinks = linkItems.value.filter((l) => l.title.trim() || l.url.trim());
+  const linksJson = JSON.stringify(validLinks); // JSON문자열로 links를 변형하기 위함
+
+  // 백엔드 wikiSaveRequdst 구조에 맞도록 조립 (2개 받아서 하나로 묶어야 됨)
+  const saveData = {
+    wikiRequest: {
+      id: 'WIKI_007', //위키 ID (신규면 빈값 혹은 생성된 값)
+      projectId: route.params.projectId,
+      versionId: 'VER_001' //백엔드나 프론트에서 생성할 버전 ID
+    },
+    versionRequest: {
+      content: editorContent.value,
+      userId: userId.value,
+      wikiId: 'WIKI_007',
+      description: editReason.value, //수정이유
+      versionName: projectInfo.value.title,
+      links: linksJson //JSON 문자열로 전송할 예정
+      // wikiInfo: wikiStore.wikiDetail.wikiInfo //이건 back작업 마저 해야함
+    }
+  }; // saveData end
+
+  const result = await wikiStore.saveWiki(saveData);
+
+  if (result) {
+    showEditModal.value = false;
+    saveSuccess.value = true;
+    editReason.value = '';
+
+    //입력값 초기화
+    userId.value = '';
+
+    setTimeout(() => {
+      saveSuccess.value = false;
+    }, 3000);
+  }
+  //------------------------------------------------------------
 }
 
 // 에디터
@@ -201,7 +221,7 @@ function applyFormat(command, value = null) {
     <div class="header-section">
       <div class="header-left">
         <h1 class="project-title">{{ projectInfo.title || '프로젝트 제목 출력 부분' }}</h1>
-        <input v-model="projectInfo.description" type="text" class="project-desc-input" placeholder="위키 관련 한 줄 설명을 입력하세요" />
+        <input v-model="wikiStore.wikiDetail.wikiInfo" type="text" class="project-desc-input" placeholder="위키 관련 한 줄 설명을 입력하세요" />
       </div>
 
       <div class="header-fields">
@@ -213,11 +233,6 @@ function applyFormat(command, value = null) {
         </div>
 
         <!-- 작성일 -->
-        <div class="field-group">
-          <label class="field-label required">작성일</label>
-          <input v-model="created_on" type="date" class="field-input" :class="{ 'is-error': errors.created_on }" placeholder="날짜를 선택해주세요." />
-          <span v-if="errors.created_on" class="error-msg">날짜를 선택 해주세요.</span>
-        </div>
       </div>
 
       <div class="header-actions">
@@ -225,15 +240,17 @@ function applyFormat(command, value = null) {
         <transition name="fade">
           <div v-if="saveSuccess" class="toast-success">편집 성공<br />위키 등록을 성공하였습니다.</div>
         </transition>
-        <button class="btn btn-cancel" @click="handleCancel">취소</button>
-        <button class="btn btn-edit" @click="handleEdit">등록</button>
+        <div class="link-form-actions">
+          <button class="btn btn-cancel" @click="handleCancel">취소</button>
+          <button class="btn btn-edit" @click="handleEdit">등록</button>
+        </div>
       </div>
     </div>
 
     <!-- 본문 3단 그리드 -->
     <div class="content-grid">
       <!-- ② 목차 자동생성 -->
-      <div class="panel toc-panel">
+      <div class="panel info-panel">
         <h3 class="panel-title">목차 - 자동생성</h3>
         <ul class="toc-list">
           <li v-for="(item, index) in tocItems" :key="index" :class="['toc-item', item.level]">
@@ -252,11 +269,13 @@ function applyFormat(command, value = null) {
             <span class="info-label">프로젝트번호 :</span>
             <span class="info-value status-badge">{{ projectInfo.id }}</span>
           </div>
+
           <div class="info-row">
-            <div class="info-row">
-              <span class="info-label">프로젝트 설명 :</span>
-              <span class="info-value status-badge">{{ projectInfo.description }}</span>
-            </div>
+            <span class="info-label">프로젝트 설명 :</span>
+            <span class="info-value status-badge">{{ projectInfo.description }}</span>
+          </div>
+
+          <div class="info-row">
             <span class="info-label">프로젝트 생성자명 :</span>
             <span class="info-value status-badge">{{ projectInfo.userName }}</span>
           </div>
@@ -279,9 +298,11 @@ function applyFormat(command, value = null) {
       <!-- ④ 링크 연결 패널 -->
       <div class="panel link-panel">
         <div class="link-form">
-          <div v-for="(link, index) in linkItems" :key="index" class="link-item-group">
-            <input v-model="link.title" type="text" class="field-input" placeholder="연결할 문서 제목을 작성해주세요." />
-            <input v-model="link.url" type="text" class="field-input" placeholder="연결할 링크를 입력해주세요." />
+          <div class="link-items-container">
+            <div v-for="(link, index) in linkItems" :key="index" class="link-item-group">
+              <input v-model="link.title" type="text" class="field-input" placeholder="연결할 문서 제목을 작성해주세요." />
+              <input v-model="link.url" type="text" class="field-input" placeholder="연결할 링크를 입력해주세요." />
+            </div>
           </div>
 
           <button class="btn btn-add-link" @click="addLinkItem">링크 추가</button>
@@ -507,7 +528,7 @@ function applyFormat(command, value = null) {
 /* ===================== 3단 그리드 ===================== */
 .content-grid {
   display: grid;
-  grid-template-columns: 180px 1fr 1fr;
+  grid-template-columns: 450px 1fr 1fr;
   gap: 16px;
 }
 
@@ -569,8 +590,9 @@ function applyFormat(command, value = null) {
 
 .info-label {
   font-weight: 600;
-  min-width: 60px;
+  min-width: 110px;
   font-size: 13px;
+  white-space: nowrap; /* 라벨이 줄바꿈되지 않도록 설정 */
 }
 
 .info-value {
@@ -579,6 +601,9 @@ function applyFormat(command, value = null) {
   padding: 4px 12px;
   font-size: 13px;
   flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis; /* 내용이 너무 길면 ...으로 표시 */
+  white-space: nowrap;
 }
 
 .status-badge {
@@ -604,6 +629,39 @@ function applyFormat(command, value = null) {
   justify-content: flex-end;
   gap: 8px;
   margin-top: 8px;
+}
+
+/* 링크 아이템들을 감싸는 컨테이너 */
+.link-items-container {
+  max-height: 200px; /* 원하는 높이로 조절 (예: 아이템 2~3개 분량) */
+  overflow-y: auto; /* 내용이 넘치면 세로 스크롤 생성 */
+  padding-right: 4px; /* 스크롤바와 입력창 사이 간격 */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 스크롤바 디자인 (선택 사항: 더 깔끔하게 보이게 함) */
+.link-items-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.link-items-container::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 4px;
+}
+
+.link-items-container::-webkit-scrollbar-track {
+  background-color: #f1f1f1;
+}
+
+/* 기존 스타일 유지 및 보정 */
+.link-item-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  /* 여백이 너무 크면 스크롤이 금방 생기므로 적절히 조절 */
+  margin-bottom: 4px;
 }
 
 /* 편집 사유 모달 */

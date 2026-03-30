@@ -22,6 +22,7 @@ export const useWikiStore = defineStore('wiki', {
       content: '',
       userId: '',
       createdOn: ''
+      // wikiInfo: '' // back작업 안되어있음 확인해야함
     },
     loading: false
   }),
@@ -43,6 +44,10 @@ export const useWikiStore = defineStore('wiki', {
     async saveWiki(saveData) {
       const response = await axios.post('/wiki/insert', saveData);
       this.wikiDetail.content = saveData.versionRequest.content;
+      //중첩 객체 처리
+      if (saveData.versionRequest) {
+        this.wikiDetail.content = saveData.versionRequest.content;
+      }
       return response.data;
     },
 
