@@ -110,14 +110,15 @@ async function confirmEdit() {
   // 백엔드 wikiSaveRequdst 구조에 맞도록 조립 (2개 받아서 하나로 묶어야 됨)
   const saveData = {
     wikiRequest: {
-      id: 'WIKI_007', //위키 ID (신규면 빈값 혹은 생성된 값)
+      id: 'WIKI_008', //위키 ID (신규면 빈값 혹은 생성된 값)
       projectId: route.params.projectId,
       versionId: 'VER_001' //백엔드나 프론트에서 생성할 버전 ID
     },
     versionRequest: {
+      versionId: 'VER_001',
       content: editorContent.value,
       userId: userId.value,
-      wikiId: 'WIKI_007',
+      wikiId: 'WIKI_008',
       description: editReason.value, //수정이유
       versionName: projectInfo.value.title,
       links: linksJson //JSON 문자열로 전송할 예정
@@ -126,6 +127,8 @@ async function confirmEdit() {
   }; // saveData end
 
   const result = await wikiStore.saveWiki(saveData);
+
+  console.log('저장 결과:', result);
 
   if (result) {
     showEditModal.value = false;
