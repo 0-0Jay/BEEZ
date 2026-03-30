@@ -1,4 +1,4 @@
-import router from '@/router'; // 필요 시 라우터 연동
+import router from '@/router';
 import axios from 'axios';
 
 const axiosInstance = axios.create({
@@ -6,7 +6,24 @@ const axiosInstance = axios.create({
   timeout: 10000
 });
 
-// 공통 에러 처리
+// token 관련 처리(요청)
+// 서버로 가기 전 LocalStorage에서 토큰을 꺼내서 붙여줌
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('accessToken');
+
+    if (token) {
+      // Authorization 헤더에 Bearer 토큰 추가
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// 공통 에러 처리(응답)
 axiosInstance.interceptors.response.use(
   (response) => response, // 성공은 그대로 통과
 
@@ -38,12 +55,16 @@ const ERROR_MESSAGES = {
 function handleError(status, message) {
   switch (status) {
     case 401:
-      // 예: 로그인 페이지로 이동
-      router.push('/login');
+      alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('user');
+
+      window.location.href = '/';
       break;
 
     case 403:
-      // router.push('/forbidden');
+      alert(ERROR_MESSAGES[403]);
+      router.push('/main');
       break;
 
     case 404:

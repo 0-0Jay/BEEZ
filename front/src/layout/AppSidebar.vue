@@ -1,4 +1,5 @@
 <script setup>
+import { useAuthStore } from '@/stores/auth';
 import { inject, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -7,6 +8,7 @@ const toggleMenu = inject('toggleMenu');
 const selectedProject = inject('selectedProject');
 
 const router = useRouter();
+const authStore = useAuthStore();
 
 const showContent = ref(isOpen.value);
 
@@ -25,6 +27,12 @@ watch(isOpen, (val) => {
     }, 300);
   }
 });
+
+const isAdminMenuOpen = ref(false);
+
+const toggleAdminMenu = () => {
+  isAdminMenuOpen.value = !isAdminMenuOpen.value;
+};
 </script>
 
 <template>
@@ -51,8 +59,8 @@ watch(isOpen, (val) => {
     </div>
 
     <!-- 메뉴 -->
-    <div v-show="showContent && isOpen" class="px-2 py-2 space-y-1">
-      <router-link to="/" class="menu-item whitespace-nowrap cursor-pointer px-3 py-2.5 rounded-lg hover:bg-gray-700 transition-colors duration-150 flex items-center justify-between">
+    <div v-show="showContent && isOpen">
+      <router-link to="/main" class="menu-item whitespace-nowrap cursor-pointer px-3 py-2.5 rounded-lg hover:bg-gray-700 transition-colors duration-150 flex items-center justify-between">
         <span>대시보드</span>
       </router-link>
 
@@ -109,6 +117,26 @@ watch(isOpen, (val) => {
             <span>로그</span>
           </router-link>
         </div>
+      </div>
+
+      <div v-show="showContent && isOpen">
+        <template v-if="authStore.user?.roles.includes('ROLE0001')">
+          <div @click="toggleAdminMenu" class="menu-item whitespace-nowrap cursor-pointer px-3 py-2.5 rounded-lg hover:bg-gray-700 transition-colors duration-150 flex items-center justify-between">
+            <span>관리</span>
+          </div>
+
+          <div v-if="isAdminMenuOpen" class="mt-1 space-y-0.5">
+            <router-link to="/users/list" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
+              <span>사용자 관리</span>
+            </router-link>
+            <router-link to="/admin/projects" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
+              <span>전체 프로젝트 관리</span>
+            </router-link>
+            <router-link to="/admin/codes" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
+              <span>공통 코드 관리</span>
+            </router-link>
+          </div>
+        </template>
       </div>
     </div>
   </div>
