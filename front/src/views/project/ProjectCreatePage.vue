@@ -6,13 +6,25 @@ import { useRouter } from 'vue-router';
 const router = useRouter();
 const projectStore = useProjectStore();
 
+// 상위 프로젝트 옵션 - 기존 프로젝트 목록 활용
+// const projectOptions = ref([]);
+
+// onMounted(async () => {
+//   await projectStore.fetchProjects({});
+//   projectOptions.value = projectStore.projects.map((p) => ({
+//     label: p.title,
+//     value: p.id
+//   }));
+// });
+
 const form = reactive({
   title: '',
   identifier: '',
   description: '',
   startDate: null,
   endDate: null,
-  isPublic: true
+  isPublic: true,
+  parentId: null
 });
 
 const errors = reactive({
@@ -141,6 +153,20 @@ const handleCancel = () => {
             <Checkbox v-model="form.isPublic" :binary="true" inputId="isPublic" />
             <label for="isPublic" class="text-sm text-[#3A3B35] cursor-pointer">공개 프로젝트로 설정</label>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 상위 프로젝트 섹션 -->
+    <div class="bg-white rounded-lg shadow-sm border border-[#C7C7C2] overflow-hidden mb-6">
+      <div class="bg-[#F2F0EB] px-8 py-3 border-b border-[#C7C7C2]">
+        <span class="text-lg font-bold text-[#1A1816]">상위 프로젝트</span>
+      </div>
+
+      <div class="flex items-start px-8 py-4">
+        <label class="form-label w-36 pt-2 shrink-0">상위 프로젝트</label>
+        <div class="flex-1">
+          <Select v-model="form.parentId" :options="projectOptions" optionLabel="label" optionValue="value" placeholder="선택" class="form-input w-64" />
         </div>
       </div>
     </div>

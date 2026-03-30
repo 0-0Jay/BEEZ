@@ -26,6 +26,7 @@ public class TaskCategory {
     return TaskCategory.builder()
       .id(dto.getId())
       .name(dto.getName())
+      .description(dto.getDescription())
       .build();
   }
 }
