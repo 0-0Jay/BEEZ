@@ -37,9 +37,7 @@ public class UsersServiceImpl implements UsersService {
 
   // 사용자 등록 시 자동생성 될 정보 생성
   @Override
-  public Map<String, String> getNextInfo() {
-    String nextId = usersMapper.getNextId();
-
+  public Map<String, String> getInitPw() {
     // 초기 비밀번호 생성
     StringBuilder sb = new StringBuilder(7);
     for(int i = 0; i < 7; i++) {
@@ -48,8 +46,6 @@ public class UsersServiceImpl implements UsersService {
     String initPw = sb.toString();
 
     Map<String, String> result = new HashMap<>();
-
-    result.put("id", nextId);
     result.put("password", initPw);
 
     return result;

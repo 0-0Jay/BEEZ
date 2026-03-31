@@ -15,9 +15,6 @@ public interface UsersMapper {
   // 사용자 목록 조회
   List<UserListResponse> findAllUsers(UserSearchRequest search);
 
-  // 다음 생성되는 사번 조회
-  String getNextId();
-
   // 사용자 등록
   void insertUser(Users user);
 }

@@ -13,8 +13,8 @@ public interface UsersService {
   // 사용자 목록 조회
   List<UserListResponse> findAllUsers(UserSearchRequest search);
 
-  // 사용자 등록 시 자동생성 될 정보
-  Map<String, String> getNextInfo();
+  // 초기 비밀번호 생성
+  Map<String, String> getInitPw();
 
   // 사용자 등록
   void insertUser(UserRegisterRequest userRegisterRequest);

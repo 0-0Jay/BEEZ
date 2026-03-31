@@ -1,6 +1,7 @@
 <script setup>
 import { useUsersStore } from '@/stores/users';
-import { reactive, ref } from 'vue';
+import { useToast } from 'primevue';
+import { reactive, ref, watch } from 'vue';
 
 const props = defineProps({
   visible: { type: Boolean, required: true }
@@ -8,17 +9,53 @@ const props = defineProps({
 
 const emit = defineEmits(['update:visible', 'saved']);
 const usersStore = useUsersStore();
+const toast = useToast();
 
 const initialState = {
-  emp_code: 'EMP-2026-0047',
-  temp_pw: 'R9wx465',
+  id: null,
+  password: '',
   name: '',
   email: '',
   role: null
 };
 
 const form = reactive({ ...initialState });
-const submitted = ref(false);
+const submitted = ref(false); // 등록 버튼 스위치
+
+const roleOptions = [
+  { code: 'ROLE0001', name: '관리자', desc: '전체 시스템 접근' },
+  { code: 'ROLE0002', name: 'PM / PL', desc: '프로젝트 관리' }
+];
+
+// 모달이 열릴 때마다 서버에서 사번/비번 가져오기
+watch(
+  () => props.visible,
+  async (newVal) => {
+    if (newVal) {
+      try {
+        await usersStore.getInitPw();
+        const data = usersStore.initPw;
+        form.password = data.password;
+      } catch (err) {
+        console.error('초기 정보 로드 실패:', err);
+      }
+    } else {
+      // 모달 닫힐 때 초기화
+      resetForm();
+    }
+  }
+);
+
+const resetForm = () => {
+  Object.assign(form, {
+    id: null,
+    password: '',
+    name: '',
+    email: '',
+    role: null
+  });
+  submitted.value = false;
+};
 
 const close = () => {
   Object.assign(form, initialState);
@@ -28,13 +65,30 @@ const close = () => {
 
 const handleRegister = async () => {
   submitted.value = true;
-  if (!form.name || !form.email.includes('@')) return;
+
+  // 유효성 검사
+  if (!form.name || !form.email || !form.email.includes('@')) return;
+
   try {
-    console.log('등록 데이터:', form);
+    await usersStore.insertUser(form);
+    toast.add({
+      severity: 'success',
+      summary: '등록 완료',
+      detail: `${form.name} 사용자가 등록되었습니다.`,
+      life: 3000,
+      closable: false
+    });
     emit('saved');
     close();
   } catch (error) {
     console.error('등록 실패:', error);
+    toast.add({
+      severity: 'error',
+      summary: '등록 실패',
+      detail: '사용자 등록 중 오류가 발생했습니다.',
+      life: 3000,
+      closable: false
+    });
   }
 };
 </script>
@@ -50,12 +104,12 @@ const handleRegister = async () => {
         </p>
         <div class="flex justify-around">
           <div class="flex flex-col items-center gap-1 text-center">
-            <span class="text-xs uppercase tracking-widest text-stone-400 font-medium">사원번호(자동생성)</span>
-            <span class="font-mono font-bold text-stone-900 tracking-wide">{{ form.emp_code }}</span>
+            <span class="text-xs uppercase tracking-widest text-stone-400 font-medium">사원번호</span>
+            <span class="font-mono font-bold text-amber-600 tracking-wide">AUTO-GENERATED</span>
           </div>
           <div class="flex flex-col items-center gap-1 text-center">
             <span class="text-xs uppercase tracking-widest text-stone-400 font-medium">초기 비밀번호</span>
-            <span class="font-mono font-bold text-stone-900 tracking-wide">{{ form.temp_pw }}</span>
+            <span class="font-mono font-bold text-stone-900 tracking-wide">{{ form.password || '로딩 중...' }}</span>
           </div>
         </div>
       </div>
@@ -85,7 +139,6 @@ const handleRegister = async () => {
       </div>
 
       <!-- 역할 -->
-      <!-- 역할 -->
       <div class="flex flex-col gap-2">
         <div class="flex items-center justify-between">
           <label class="text-sm font-semibold text-stone-700">역할</label>
@@ -96,39 +149,26 @@ const handleRegister = async () => {
           </span>
         </div>
         <div class="grid grid-cols-2 gap-3">
-          <!-- 관리자 -->
           <div
+            v-for="role in roleOptions"
+            :key="role.code"
             class="flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-all duration-150"
-            :class="form.role === 'ADMIN' ? 'border-amber-400 bg-amber-50 shadow-[0_0_0_3px_rgba(245,166,35,0.12)]' : 'border-stone-200 bg-stone-50 hover:border-amber-200 hover:bg-amber-50'"
-            @click="form.role = form.role === 'ADMIN' ? null : 'ADMIN'"
+            :class="form.role === role.code ? 'border-amber-400 bg-amber-50 shadow-[0_0_0_3px_rgba(245,166,35,0.12)]' : 'border-stone-200 bg-stone-50'"
+            @click="form.role = form.role === role.code ? null : role.code"
           >
-            <RadioButton :modelValue="form.role" value="ADMIN" />
+            <RadioButton v-model="form.role" :value="role.code" />
             <div class="flex flex-col gap-0.5">
-              <span class="text-sm font-bold text-stone-900">관리자</span>
-              <span class="text-xs text-stone-400">전체 시스템 접근</span>
-            </div>
-          </div>
-
-          <!-- PM / PL -->
-          <div
-            class="flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-all duration-150"
-            :class="form.role === 'PM / PL' ? 'border-amber-400 bg-amber-50 shadow-[0_0_0_3px_rgba(245,166,35,0.12)]' : 'border-stone-200 bg-stone-50 hover:border-amber-200 hover:bg-amber-50'"
-            @click="form.role = form.role === 'PM / PL' ? null : 'PM / PL'"
-          >
-            <RadioButton :modelValue="form.role" value="PM / PL" />
-            <div class="flex flex-col gap-0.5">
-              <span class="text-sm font-bold text-stone-900">PM / PL</span>
-              <span class="text-xs text-stone-400">프로젝트 관리</span>
+              <span class="text-sm font-bold text-stone-900">{{ role.name }}</span>
+              <span class="text-xs text-stone-400">{{ role.desc }}</span>
             </div>
           </div>
         </div>
 
-        <!-- 선택 상태 표시 -->
         <div class="flex items-center gap-1.5 mt-1 text-xs text-stone-400">
           <i class="pi pi-user text-xs" />
           현재 역할 :
           <span class="font-medium text-stone-600">
-            {{ form.role === 'ADMIN' ? '관리자' : form.role === 'PM / PL' ? 'PM / PL' : '일반 사용자' }}
+            {{ roleOptions.find((r) => r.code === form.role)?.name || '일반 사용자' }}
           </span>
         </div>
       </div>
@@ -136,8 +176,8 @@ const handleRegister = async () => {
 
     <template #footer>
       <div class="flex justify-end gap-2 pt-1">
-        <Button label="취소" severity="secondary" text @click="close" />
-        <Button label="등록" @click="handleRegister" class="!bg-stone-900 !border-stone-900 hover:!bg-amber-600 hover:!border-amber-600 transition-colors duration-150" />
+        <Button label="취소" class="btn-cancel" @click="close" />
+        <Button label="등록" class="btn-confirm" @click="handleRegister" />
       </div>
     </template>
   </Dialog>
@@ -164,5 +204,28 @@ const handleRegister = async () => {
 }
 :deep(.p-radiobutton .p-radiobutton-box:not(.p-highlight):hover) {
   border-color: #f5a623;
+}
+
+:deep(.btn-cancel) {
+  background-color: #ffffff !important;
+  color: #6b6b63 !important;
+  border: 1px solid #c7c7c2 !important;
+  box-shadow: none !important;
+  padding: 8px 16px !important;
+}
+:deep(.btn-cancel:hover) {
+  background-color: #e5e2d9 !important;
+  color: #1a1816 !important;
+}
+:deep(.btn-confirm) {
+  background-color: #e8920e !important;
+  color: #ffffff !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  padding: 8px 16px !important;
+}
+:deep(.btn-confirm:hover) {
+  background-color: #c97700 !important;
+  border-color: #c97700 !important;
 }
 </style>

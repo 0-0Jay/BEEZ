@@ -2,14 +2,12 @@
 import UserFormModal from '@/components/users/UserFormModal.vue';
 import { useUsersStore } from '@/stores/users';
 import { computed, defineEmits, onMounted, reactive, ref } from 'vue';
-import { useRouter } from 'vue-router';
 
 const usersStore = useUsersStore();
-const router = useRouter();
 
 const loading = ref(false);
 const visible = ref(false);
-const emit = defineEmits(['selectProject']); // 자꾸 콘솔에 경고가 생겨서 넣음, 실제로는 사용 안함
+const emit = defineEmits(['selectProject']);
 
 const search = reactive({
   name: '',
@@ -23,60 +21,35 @@ const statusOptions = [
   { label: '비활성', value: 'H2' }
 ];
 
-const currentPage = ref(1);
-const pageSize = 10;
+const totalCount = computed(() => usersStore.userList.length);
 
-// 조회 / 초기화
 const fetchUsers = async () => {
   loading.value = true;
-
   try {
-    const searchParams = {
+    await usersStore.fetchUsers({
       name: search.name,
       status: search.status,
       startDate: formatDate(search.startDate),
       endDate: formatDate(search.endDate)
-    };
-
-    await usersStore.fetchUsers(searchParams);
-    currentPage.value = 1; // 검색 시 1페이지로 이동
+    });
   } finally {
     loading.value = false;
   }
 };
 
-// 페이지네이션
-const totalCount = computed(() => usersStore.userList.length);
-const totalPages = computed(() => Math.max(1, Math.ceil(totalCount.value / pageSize)));
-
-const pagedUsers = computed(() => {
-  const start = (currentPage.value - 1) * pageSize;
-  return usersStore.userList.slice(start, start + pageSize);
-});
-
-// 초기 로드
 onMounted(() => {
   fetchUsers();
 });
 
 const resetFilters = () => {
   Object.assign(search, { name: '', status: '', startDate: null, endDate: null });
-  currentPage.value = 1;
   fetchUsers();
-};
-
-const goToPage = (page) => {
-  if (page < 1 || page > totalPages.value) return;
-  currentPage.value = page;
 };
 
 const formatDate = (date) => {
   if (!date) return null;
   const d = new Date(date);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
 const openUserFormModal = () => {
@@ -87,6 +60,7 @@ const openUserFormModal = () => {
 <template>
   <div class="p-8 bg-[#FAFAF8]">
     <h1 class="text-2xl font-bold text-[#1A1816]">사용자 목록</h1>
+
     <!-- 검색 필터 -->
     <div class="bg-[#F2F0EB] px-10 py-8 rounded-lg mb-4 shadow-sm border border-[#C7C7C2] flex items-center">
       <div class="flex items-center flex-wrap gap-y-3">
@@ -113,13 +87,12 @@ const openUserFormModal = () => {
     <!-- 전체 건수 + 사용자 추가 -->
     <div class="flex justify-between items-center mb-3">
       <span class="text-sm text-[#3A3B35] font-medium">전체 {{ totalCount }}명</span>
-      <Button label="사용자 추가" icon="pi pi-plus" class="btn-amber" @click="openUserFormModal" />
-      <!-- @click="router.push('/user/create')" -->
+      <Button label="사용자 추가" icon="pi pi-plus" class="btn-register-outline" @click="openUserFormModal" />
     </div>
 
     <!-- 테이블 -->
     <div class="bg-white rounded-xl shadow-sm border border-[#C7C7C2] overflow-hidden mb-6">
-      <DataTable :value="pagedUsers" :loading="loading" dataKey="id" :rowHover="true">
+      <DataTable :value="usersStore.userList" :loading="loading" dataKey="id" :rowHover="true" paginator :rows="10" paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown">
         <template #empty>
           <div class="flex flex-col items-center justify-center py-10">
             <i class="pi pi-search text-4xl text-[#C7C7C2] mb-3"></i>
@@ -133,7 +106,7 @@ const openUserFormModal = () => {
 
         <Column header="관리자 여부" headerClass="table-header" style="width: 120px">
           <template #body="{ data }">
-            {{ data.role && data.role.includes('ADMIN') ? '예' : '아니오' }}
+            {{ data.role && data.role.includes('ROLE0001') ? '예' : '아니오' }}
           </template>
         </Column>
 
@@ -150,22 +123,9 @@ const openUserFormModal = () => {
         </Column>
       </DataTable>
     </div>
-
-    <!-- 페이지네이션 -->
-    <div class="flex justify-center items-center gap-1 mt-4">
-      <button class="pagination-btn" :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">
-        <i class="pi pi-chevron-left text-xs" />
-      </button>
-      <button v-for="page in totalPages" :key="page" class="pagination-btn" :class="{ 'pagination-btn-active': page === currentPage }" @click="goToPage(page)">
-        {{ page }}
-      </button>
-      <button class="pagination-btn" :disabled="currentPage === totalPages" @click="goToPage(currentPage + 1)">
-        <i class="pi pi-chevron-right text-xs" />
-      </button>
-    </div>
   </div>
 
-  <UserFormModal v-model:visible="visible"></UserFormModal>
+  <UserFormModal v-model:visible="visible" />
 </template>
 
 <style scoped>
@@ -190,11 +150,21 @@ const openUserFormModal = () => {
   height: 36px !important;
   min-height: 36px !important;
   box-sizing: border-box !important;
-  padding: 18px;
+  padding: 8px 16px !important;
 }
 :deep(.btn-amber:hover) {
   background-color: #c97700 !important;
   border-color: #c97700 !important;
+}
+:deep(.btn-register-outline) {
+  background-color: #fafaf8 !important;
+  border-color: #e8920e !important;
+  color: #e8920e !important;
+}
+:deep(.btn-register-outline:hover) {
+  background-color: #fff8e8 !important;
+  border-color: #c97700 !important;
+  color: #c97700 !important;
 }
 :deep(.btn-reset) {
   color: #6b6b63 !important;
@@ -202,7 +172,8 @@ const openUserFormModal = () => {
   height: 36px !important;
   min-height: 36px !important;
   box-sizing: border-box !important;
-  padding: 18px;
+  padding: 8px 16px !important;
+  background-color: #ffffff !important;
 }
 :deep(.btn-reset:hover) {
   background-color: #e5e2d9 !important;
@@ -223,31 +194,32 @@ const openUserFormModal = () => {
   padding: 1rem 0 !important;
   border-bottom: 1px solid #f2f0eb !important;
 }
-.pagination-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  border: 1px solid #e5e2d9;
-  background: white;
-  color: #3a3b35;
-  font-size: 0.85rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s;
+
+/* paginator 스타일 */
+:deep(.p-paginator) {
+  background: transparent !important;
+  border: none !important;
+  padding: 1rem 0 !important;
 }
-.pagination-btn:hover:not(:disabled) {
-  background-color: #f2f0eb;
+:deep(.p-paginator-page-selected) {
+  background-color: #fd9e0f !important;
+  color: #ffffff !important;
+  border-color: #fd9e0f !important;
+  font-weight: 700 !important;
 }
-.pagination-btn:disabled {
-  opacity: 0.35;
-  cursor: default;
+:deep(.p-paginator-page:not(.p-highlight):hover),
+:deep(.p-paginator-first:hover),
+:deep(.p-paginator-prev:hover),
+:deep(.p-paginator-next:hover),
+:deep(.p-paginator-last:hover) {
+  background-color: #f2f0eb !important;
+  color: #1a1816 !important;
 }
-.pagination-btn-active {
-  background-color: #e8920e !important;
-  color: white !important;
-  border-color: #e8920e !important;
-  font-weight: 700;
+
+:deep(.p-paginator-page-selected:focus),
+:deep(.p-paginator-page-selected:focus-visible) {
+  box-shadow: none !important;
+  outline: none !important;
+  border-color: #fd9e0f !important;
 }
 </style>

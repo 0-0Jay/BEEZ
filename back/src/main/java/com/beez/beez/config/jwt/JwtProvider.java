@@ -3,10 +3,14 @@ package com.beez.beez.config.jwt;
 import com.beez.beez.users.repository.Users;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 
@@ -16,7 +20,16 @@ public class JwtProvider {
   // 토큰을 만들고 검사하는 클래스
   //Jwts : jwt를 사용할 수 있도록 하는 라이브러리 안의 클래스 -> 토큰을 발급, 해석 및 검증(parser), 암호화 방식 등을 제공
 
-  private final SecretKey key = Jwts.SIG.HS256.key().build(); // 암호화 키
+  @Value("${jwt.secret}")
+  private String secretKey; // 암호화 키
+  private SecretKey key;
+
+  // 의존성 주입 후 메서드 자동 실행
+  @PostConstruct
+  protected void init() {
+    byte[] keyBytes = secretKey.getBytes(StandardCharsets.UTF_8); // 바이트 배열로 변환
+    this.key = Keys.hmacShaKeyFor(keyBytes); // 비밀키 객체 생성
+  }
 
   // 토큰 발급
   public String createToken(Users user){
