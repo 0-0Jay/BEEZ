@@ -12,7 +12,7 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     const authStore = useAuthStore();
-    const token = authStore.accessToken;
+    const token = authStore.accessToken || localStorage.getItem('accessToken');
 
     if (token) {
       // Authorization 헤더에 Bearer 토큰 추가

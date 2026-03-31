@@ -43,7 +43,7 @@ public class SecurityConfig {
         // 누구나 접근 가능
         .requestMatchers("/api/auth/**").permitAll()
         // role에 따른 접근 제어
-        .requestMatchers("/api/test/auth").hasAuthority("ROLE0001")
+        .requestMatchers("/api/users/**").hasAuthority("ROLE0001")
         // 프로젝트 관련 기능
         // 특정 역할이 필요한 경로
         // .requestMatchers("/projects/**").hasAnyAuthority("ROLE0001", "ROLE0002")

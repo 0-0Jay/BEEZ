@@ -25,15 +25,18 @@ public class UsersController {
   }
 
   // 사용자 등록 시 자동생성 될 정보 가져오기
-  @GetMapping("/next-info")
-  public ResponseEntity<Map<String, String>> getNextInfo() {
-    return ResponseEntity.ok(usersService.getNextInfo());
+  @GetMapping("/getInitPw")
+  public ResponseEntity<Map<String, String>> getInitPw() {
+    return ResponseEntity.ok(usersService.getInitPw());
   }
 
   // 사용자 등록
   @PostMapping("/register")
   public ResponseEntity<String> insertUser(@RequestBody UserRegisterRequest dto) {
     try{
+//      System.out.println("========================================");
+//      System.out.println("등록 요청 도착!!! 데이터: " + dto);
+//      System.out.println("========================================");
       usersService.insertUser(dto);
       return ResponseEntity.ok("사용자 등록이 완료되었습니다.");
     }catch(Exception e){

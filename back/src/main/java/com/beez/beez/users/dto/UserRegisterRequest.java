@@ -20,6 +20,11 @@ public class UserRegisterRequest {
   private String role;
 
   public Users toEntity() {
+    // 기본값 ROLE0003: 일반 사용자
+    if (this.role == null || this.role.isEmpty()) {
+      this.role = "ROLE0003";
+    }
+
     return Users.builder()
       .id(this.id)
       .email(this.email)

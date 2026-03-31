@@ -58,13 +58,12 @@
     ORDER BY created_on DESC
   </select>
 
-  <!-- 다음 생성되는 사번 조회 -->
-  <select id="getNextId" resultType="string">
-    SELECT BEEZ.generate_pk_auto('users') FROM dual
-  </select>
-
   <!-- 사용자 등록 -->
   <insert id="insertUser" parameterType="com.beez.beez.users.repository.Users">
+    <selectKey keyProperty="id" resultType="string" order="BEFORE">
+      SELECT BEEZ.generate_pk_auto('users') FROM dual
+    </selectKey>
+
     INSERT INTO USERS (
       id,
       email,
