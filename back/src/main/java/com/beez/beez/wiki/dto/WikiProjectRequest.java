@@ -5,6 +5,7 @@ import lombok.Data;
 import java.util.Date;
 
 @Data
+//위키 별 화면에 출력할 프로젝트 정보
 public class WikiProjectRequest {
   private String id;
   private String identifier;
