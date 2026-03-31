@@ -49,20 +49,22 @@
       </if>
 
       <if test="startDate != null">
-        AND created_on &gt;= #{startDate}
+        AND TRUNC(created_on) &gt;= #{startDate}
       </if>
       <if test="endDate != null">
-        AND created_on &lt;= #{endDate}
+        AND TRUNC(created_on) &lt;= #{endDate}
       </if>
     </where>
     ORDER BY created_on DESC
   </select>
 
-  <insert id="insertUser" parameterType="com.beez.beez.users.dto.UsersDto">
-    <selectKey keyProperty="id" resultType="string" order="BEFORE">
-      SELECT BEEZ.generate_pk_auto('USERS') FROM dual
-    </selectKey>
+  <!-- 다음 생성되는 사번 조회 -->
+  <select id="getNextId" resultType="string">
+    SELECT BEEZ.generate_pk_auto('users') FROM dual
+  </select>
 
+  <!-- 사용자 등록 -->
+  <insert id="insertUser" parameterType="com.beez.beez.users.repository.Users">
     INSERT INTO USERS (
       id,
       email,
@@ -78,6 +80,6 @@
       #{name},
       'H1',
       SYSDATE,
-      #{role})
+      #{roles[0]})
   </insert>
 </mapper>
