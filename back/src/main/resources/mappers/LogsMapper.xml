@@ -14,7 +14,8 @@
         category,
         content,
         created_on,
-        link
+        link,
+        user_id
     ) VALUES (
         #{logId},
         #{projectId},
@@ -22,7 +23,8 @@
         #{category},
         #{content},
         SYSDATE,
-        #{link}
+        #{link},
+        #{userId}
     )
   </insert>
 

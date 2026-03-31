@@ -15,13 +15,14 @@ public class LogsServiceImpl implements LogsService {
   private final LogsMapper logsMapper;
   
   @Override
-  public void insertLogs(String projectId, String type, String category, String content, String link) {
+  public void insertLogs(String projectId, String type, String category, String content, String link, String userId) {
     LogsCreateRequest dto = LogsCreateRequest.builder()
       .projectId(projectId)
       .type(type)
       .category(category)
       .content(content)
       .link(link)
+      .userId(userId)
       .build();
     
     logsMapper.insertLogs(dto);

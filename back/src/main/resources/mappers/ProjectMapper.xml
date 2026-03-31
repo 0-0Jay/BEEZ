@@ -30,7 +30,7 @@
         #{isPublic},
         #{parentId},
         SYSDATE,
-        SYSDATE,
+        #{startDate},
         #{endDate},
         'K1',
         'L0',

@@ -15,4 +15,5 @@ public class LogsCreateRequest {
   private String content;
   private Date createdOn;
   private String link;
+  private String userId;
 }

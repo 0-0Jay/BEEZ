@@ -5,6 +5,8 @@ import com.beez.beez.project.dto.*;
 import com.beez.beez.project.mapper.ProjectMapper;
 import com.beez.beez.project.service.ProjectService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,13 +20,19 @@ public class ProjectServiceImpl implements ProjectService {
   private final ProjectMapper projectMapper;
   private final LogsService logsService;
   
+  private String getCurrentUserId() {
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    return auth.getName();
+  }
+  
   @Override
   public String insertProject(ProjectCreateRequest dto) {
-    dto.setUserId("20210001");
+    String userId = getCurrentUserId();
+    dto.setUserId(userId);
     projectMapper.insertProject(dto);
     
     String link = "/project/" + dto.getId();
-    logsService.insertLogs(dto.getId(), "A1", "B0", "프로젝트 생성", link);
+    logsService.insertLogs(dto.getId(), "A1", "B0", "프로젝트 생성", link, userId);
     
     return dto.getId();
   }
@@ -36,23 +44,26 @@ public class ProjectServiceImpl implements ProjectService {
   
   @Override
   public void updateProjectLock(String id) {
+    String userId = getCurrentUserId();
     projectMapper.updateProjectLock(id);
     String link = "/project/list";
-    logsService.insertLogs(id, "A0", "B0", "프로젝트 잠금보관", link);
+    logsService.insertLogs(id, "A0", "B0", "프로젝트 잠금보관", link, userId);
   }
   
   @Override
   public void updateUnProjectLock(String id) {
+    String userId = getCurrentUserId();
     projectMapper.updateUnProjectLock(id);
     String link = "/project/list";
-    logsService.insertLogs(id, "A0", "B0", "프로젝트 잠금보관 해제", link);
+    logsService.insertLogs(id, "A0", "B0", "프로젝트 잠금보관 해제", link, userId);
   }
   
   @Override
   public void updateProjectStatus(String id) {
+    String userId = getCurrentUserId();
     projectMapper.updateProjectStatus(id);
     String link = "/project/list";
-    logsService.insertLogs(id, "A3", "B0", "프로젝트 삭제", link);
+    logsService.insertLogs(id, "A3", "B0", "프로젝트 삭제", link, userId);
   }
   
   @Override
@@ -62,10 +73,11 @@ public class ProjectServiceImpl implements ProjectService {
   
   @Override
   public ProjectInfoResponse updateProject(String id, ProjectUpdateRequest dto) {
+    String userId = getCurrentUserId();
     dto.setId(id);
     
     String link = "/project/" + dto.getId();
-    logsService.insertLogs(id, "A2", "B0", "프로젝트 수정", link);
+    logsService.insertLogs(id, "A2", "B0", "프로젝트 수정", link, userId);
     
     projectMapper.updateProject(dto);
     return projectMapper.findById(id);
