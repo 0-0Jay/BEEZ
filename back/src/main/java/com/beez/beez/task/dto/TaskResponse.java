@@ -37,6 +37,9 @@ public class TaskResponse {
   private List<JournalResponse> journalList;
   private List<TaskTimeResponse> timeList;
   private List<TaskReplyResponse> replyList;
+  private List<FileDetailResponse> fileList;
+  private List<TaskListResponse> childTaskList;
+  private List<TaskListResponse> linkedTaskList;
   
   public static TaskResponse toDto(Task task) {
     return TaskResponse.builder()

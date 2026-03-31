@@ -129,6 +129,13 @@ public class TaskServiceImpl implements TaskService {
   @Override
   public TaskResponse findTaskDetail(String id) {
     Optional<Task> task = taskRepository.findById(id);
-    return task.map(TaskResponse::toDto).orElse(null);
+    TaskResponse response = task.map(TaskResponse::toDto).orElse(null);
+//    response.setJournalList();
+//    response.setTimeList();
+//    response.setFileList();
+//    response.setChildTaskList();
+//    response.setLinkedTaskList();
+    
+    return response;
   }
 }

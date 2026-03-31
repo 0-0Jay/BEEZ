@@ -1,12 +1,19 @@
 <script setup>
+import { useAuthStore } from '@/stores/auth';
+import { useProjectStore } from '@/stores/project';
 import { useTaskStore } from '@/stores/task';
-import { computed, onMounted, ref } from 'vue';
+import DatePicker from 'primevue/datepicker';
+import InputText from 'primevue/inputtext';
+import Select from 'primevue/select';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
 const taskStore = useTaskStore();
+const projectStore = useProjectStore();
+const authStore = useAuthStore();
 const router = useRouter();
-const projectId = 'PROJ2511001';
-const userId = '20261111';
+const project = computed(() => projectStore.selectedProject);
+const userId = computed(() => authStore.user.id ?? null);
 const tasks = computed(() => taskStore.taskList);
 
 // 드롭다운 옵션
@@ -21,6 +28,16 @@ const workflowMap = computed(() => Object.fromEntries(workflowOptions.value.map(
 const priorityMap = computed(() => Object.fromEntries(priorityOptions.value.map((p) => [p.id, p.name])));
 const taskTypeMap = computed(() => Object.fromEntries(typeOptions.value.map((t) => [t.id, t.name])));
 const taskCateMap = computed(() => Object.fromEntries(categoryOptions.value.map((c) => [c.id, c.name])));
+
+// 날짜 포맷 유틸 (DatePicker → 'YYYY-MM-DD' 문자열)
+function formatDate(d) {
+  if (!d) return null;
+  if (typeof d === 'string') return d;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
 
 // 필터 초기값
 const defaultFilters = () => ({
@@ -48,38 +65,26 @@ function applyFilters() {
 // 필터 초기화
 function resetFilters() {
   filters.value = defaultFilters();
-  userSearch.value = '';
   appliedFilters.value = defaultFilters();
   currentPage.value = 1;
 }
 
 // ── 내 일감 / 관람 중인 일감: 즉시 반영 ──────────────────────────────────
-function toggleMyTasks() {
-  filters.value.showMyTasks = !filters.value.showMyTasks;
-  appliedFilters.value.showMyTasks = filters.value.showMyTasks;
-  currentPage.value = 1;
-}
+watch(
+  () => filters.value.showMyTasks,
+  (val) => {
+    appliedFilters.value.showMyTasks = val;
+    currentPage.value = 1;
+  }
+);
 
-function toggleWatching() {
-  filters.value.showWatching = !filters.value.showWatching;
-  appliedFilters.value.showWatching = filters.value.showWatching;
-  currentPage.value = 1;
-}
-
-// 담당자 검색 드롭다운
-const userSearch = ref('');
-const userDropdownOpen = ref(false);
-const filteredUsers = computed(() => userOptions.value.filter((u) => u.name?.includes(userSearch.value)));
-
-function selectUser(u) {
-  filters.value.userId = u.name;
-  userSearch.value = u.name;
-  userDropdownOpen.value = false;
-}
-function clearUser() {
-  filters.value.userId = null;
-  userSearch.value = '';
-}
+watch(
+  () => filters.value.showWatching,
+  (val) => {
+    appliedFilters.value.showWatching = val;
+    currentPage.value = 1;
+  }
+);
 
 // 정렬
 const sortKey = ref(null);
@@ -108,7 +113,7 @@ const processedTasks = computed(() => {
   const { showMyTasks, showWatching } = appliedFilters.value;
   if (showMyTasks || showWatching) {
     list = list.filter((t) => {
-      const isMyTask = showMyTasks && t.userId === userId;
+      const isMyTask = showMyTasks && t.userId === userId.value;
       const isWatching = showWatching && t.isWatch === 1;
       return isMyTask || isWatching;
     });
@@ -120,8 +125,12 @@ const processedTasks = computed(() => {
   if (appliedFilters.value.category) list = list.filter((t) => t.category === appliedFilters.value.category);
   if (appliedFilters.value.priority) list = list.filter((t) => t.priority === appliedFilters.value.priority);
   if (appliedFilters.value.title) list = list.filter((t) => t.title.includes(appliedFilters.value.title));
-  if (appliedFilters.value.plannedStart) list = list.filter((t) => t.plannedEnd && t.plannedEnd >= appliedFilters.value.plannedStart);
-  if (appliedFilters.value.plannedEnd) list = list.filter((t) => t.plannedEnd && t.plannedEnd <= appliedFilters.value.plannedEnd);
+
+  // DatePicker가 Date 객체를 반환하므로 문자열로 변환 후 비교
+  const startStr = formatDate(appliedFilters.value.plannedStart);
+  const endStr = formatDate(appliedFilters.value.plannedEnd);
+  if (startStr) list = list.filter((t) => t.plannedEnd && t.plannedEnd >= startStr);
+  if (endStr) list = list.filter((t) => t.plannedEnd && t.plannedEnd <= endStr);
 
   if (sortKey.value) {
     const dir = sortDir.value === 'asc' ? 1 : -1;
@@ -201,8 +210,8 @@ const priorityClass = {
 onMounted(async () => {
   await taskStore.findCateList();
   await taskStore.findTypeList();
-  await taskStore.findMember(projectId);
-  await taskStore.findTaskList(projectId, userId);
+  await taskStore.findMember(project.value.id);
+  await taskStore.findTaskList(project.value.id, userId.value);
   await taskStore.findPriorityList();
   await taskStore.findWorkflowList();
 });
@@ -215,127 +224,85 @@ onMounted(async () => {
       <div>
         <h1 class="text-2xl font-bold tracking-tight text-stone-900">일감 목록</h1>
       </div>
-      <button
-        class="inline-flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-amber-50 font-semibold text-sm px-5 py-2.5 rounded-lg shadow-md shadow-amber-200 transition-all duration-150 hover:-translate-y-0.5 cursor-pointer border-none"
-        @click="router.push('/task/create')"
-      >
-        <span class="text-base leading-none font-bold">＋</span>
-        일감 추가
-      </button>
+      <Button icon="pi pi-plus" label="일감 추가" @click="router.push('/task/create')" />
     </div>
 
     <!-- 필터 카드 -->
-    <div class="bg-white border border-stone-200 rounded-xl shadow-sm px-7 pt-5 pb-5 mb-5">
+    <div class="bg-[#F2F0EB] border border-[#C7C7C2] rounded-xl shadow-sm px-7 pt-5 pb-5 mb-5">
       <p class="text-xl font-bold tracking-wider uppercase text-amber-700 mb-4"><i class="pi pi-search" style="font-size: 1rem"></i> 검색 필터</p>
 
       <div class="grid grid-cols-4 gap-x-5 gap-y-4">
         <!-- 진행 상태 -->
         <div class="flex flex-col gap-1.5">
           <label class="text-base font-semibold uppercase tracking-wider text-stone-400">진행 상태</label>
-          <select v-model="filters.workflow" class="h-9 px-3 bg-stone-50 border border-stone-200 rounded-md text-sm text-stone-700 outline-none focus:border-amber-400 focus:bg-amber-50 transition-colors cursor-pointer">
-            <option :value="null">전체</option>
-            <option v-for="w in workflowOptions" :key="w.id" :value="w.id">{{ w.name }}</option>
-          </select>
+          <Select v-model="filters.workflow" :options="workflowOptions" option-label="name" option-value="id" placeholder="전체" show-clear />
         </div>
 
-        <!-- 담당자 -->
+        <!-- 담당자: Select + filter 옵션 -->
         <div class="flex flex-col gap-1.5">
           <label class="text-base font-semibold uppercase tracking-wider text-stone-400">담당자</label>
-          <div class="relative">
-            <input
-              v-model="userSearch"
-              class="h-9 w-full px-3 pr-8 bg-stone-50 border border-stone-200 rounded-md text-sm text-stone-700 outline-none focus:border-amber-400 focus:bg-amber-50 transition-colors"
-              placeholder="이름으로 검색"
-              @focus="userDropdownOpen = true"
-              @blur="setTimeout(() => (userDropdownOpen = false), 150)"
-            />
-            <button v-if="filters.userId" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 text-xs cursor-pointer bg-transparent border-none leading-none p-0" @click="clearUser">✕</button>
-            <div v-if="userDropdownOpen" class="absolute top-full mt-1 left-0 right-0 bg-white border border-stone-200 rounded-lg shadow-lg z-50 overflow-hidden">
-              <div v-for="u in filteredUsers" :key="u.id" class="px-3 py-2 text-sm text-stone-700 hover:bg-amber-100 hover:text-amber-700 cursor-pointer transition-colors" @mousedown.prevent="selectUser(u)">
-                {{ u.name }}
-              </div>
-              <div v-if="filteredUsers.length === 0" class="px-3 py-2.5 text-sm text-stone-400">결과 없음</div>
-            </div>
-          </div>
+          <Select v-model="filters.userId" :options="userOptions" option-label="name" option-value="name" placeholder="이름 검색" filter filter-placeholder="이름 검색" show-clear />
         </div>
 
         <!-- 마감일 범위 -->
         <div class="flex flex-col gap-1.5 col-span-2">
           <label class="text-base font-semibold uppercase tracking-wider text-stone-400">마감일</label>
           <div class="flex items-center gap-2">
-            <input v-model="filters.plannedStart" type="date" class="h-9 flex-1 px-3 bg-stone-50 border border-stone-200 rounded-md text-sm text-stone-700 outline-none focus:border-amber-400 focus:bg-amber-50 transition-colors" />
+            <DatePicker v-model="filters.plannedStart" date-format="yy-mm-dd" placeholder="시작일" show-button-bar class="flex-1 min-w-0 w-full" input-class="w-full" />
             <span class="text-stone-400 text-sm shrink-0">~</span>
-            <input v-model="filters.plannedEnd" type="date" class="h-9 flex-1 px-3 bg-stone-50 border border-stone-200 rounded-md text-sm text-stone-700 outline-none focus:border-amber-400 focus:bg-amber-50 transition-colors" />
+            <DatePicker v-model="filters.plannedEnd" date-format="yy-mm-dd" placeholder="종료일" show-button-bar class="flex-1 min-w-0 w-full" input-class="w-full" />
           </div>
         </div>
 
         <!-- 일감 유형 -->
         <div class="flex flex-col gap-1.5">
           <label class="text-base font-semibold uppercase tracking-wider text-stone-400">일감 유형</label>
-          <select v-model="filters.type" class="h-9 px-3 bg-stone-50 border border-stone-200 rounded-md text-sm text-stone-700 outline-none focus:border-amber-400 focus:bg-amber-50 transition-colors cursor-pointer">
-            <option :value="null">전체</option>
-            <option v-for="t in typeOptions" :key="t.id" :value="t.id">{{ t.name }}</option>
-          </select>
+          <Select v-model="filters.type" :options="typeOptions" option-label="name" option-value="id" placeholder="전체" show-clear />
         </div>
 
         <!-- 일감 범주 -->
         <div class="flex flex-col gap-1.5">
           <label class="text-base font-semibold uppercase tracking-wider text-stone-400">일감 범주</label>
-          <select v-model="filters.category" class="h-9 px-3 bg-stone-50 border border-stone-200 rounded-md text-sm text-stone-700 outline-none focus:border-amber-400 focus:bg-amber-50 transition-colors cursor-pointer">
-            <option :value="null">전체</option>
-            <option v-for="c in categoryOptions" :key="c.id" :value="c.id">{{ c.name }}</option>
-          </select>
+          <Select v-model="filters.category" :options="categoryOptions" option-label="name" option-value="id" placeholder="전체" show-clear />
         </div>
 
         <!-- 우선순위 -->
         <div class="flex flex-col gap-1.5">
           <label class="text-base font-semibold uppercase tracking-wider text-stone-400">우선순위</label>
-          <select v-model="filters.priority" class="h-9 px-3 bg-stone-50 border border-stone-200 rounded-md text-sm text-stone-700 outline-none focus:border-amber-400 focus:bg-amber-50 transition-colors cursor-pointer">
-            <option :value="null">전체</option>
-            <option v-for="p in priorityOptions" :key="p.id" :value="p.id">{{ p.name }}</option>
-          </select>
+          <Select v-model="filters.priority" :options="priorityOptions" option-label="name" option-value="id" placeholder="전체" show-clear />
         </div>
 
         <!-- 제목 -->
         <div class="flex flex-col gap-1.5 col-span-2">
           <label class="text-base font-semibold uppercase tracking-wider text-stone-400">제목</label>
-          <input v-model="filters.title" class="h-9 w-full px-3 bg-stone-50 border border-stone-200 rounded-md text-sm text-stone-700 outline-none focus:border-amber-400 focus:bg-amber-50 transition-colors" placeholder="일감 제목 검색..." />
+          <InputText v-model="filters.title" placeholder="일감 제목 검색" class="w-full" />
         </div>
       </div>
 
-      <div class="flex items-center justify-between mt-5 pt-4 border-t border-stone-100">
+      <div class="flex items-center justify-between mt-5 pt-4 border-t border-[#C7C7C2]">
         <div class="flex items-center gap-5">
-          <!-- 내 일감 보기: 즉시 반영 -->
-          <label class="flex items-center gap-2 text-sm text-stone-500 cursor-pointer select-none" @click="toggleMyTasks">
-            <span class="w-4 h-4 rounded border flex items-center justify-center transition-colors shrink-0" :class="filters.showMyTasks ? 'bg-amber-600 border-amber-600' : 'border-stone-300 bg-stone-50'">
-              <svg v-if="filters.showMyTasks" class="w-2.5 h-2.5 text-amber-50" viewBox="0 0 10 10" fill="none">
-                <polyline points="1.5,5 4,7.5 8.5,2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-              </svg>
-            </span>
-            내 일감 보기
-          </label>
+          <!-- 내 일감 보기 -->
+          <div class="flex items-center gap-2">
+            <Checkbox v-model="filters.showMyTasks" :binary="true" inputId="showMyTasks" />
+            <label for="showMyTasks" class="text-sm text-stone-500 cursor-pointer select-none">내 일감 보기</label>
+          </div>
 
-          <!-- 관람 중인 일감 보기: 즉시 반영 -->
-          <label class="flex items-center gap-2 text-sm text-stone-500 cursor-pointer select-none" @click="toggleWatching">
-            <span class="w-4 h-4 rounded border flex items-center justify-center transition-colors shrink-0" :class="filters.showWatching ? 'bg-amber-600 border-amber-600' : 'border-stone-300 bg-stone-50'">
-              <svg v-if="filters.showWatching" class="w-2.5 h-2.5 text-amber-50" viewBox="0 0 10 10" fill="none">
-                <polyline points="1.5,5 4,7.5 8.5,2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-              </svg>
-            </span>
-            관람 중인 일감 보기
-          </label>
+          <!-- 관람 중인 일감 보기 -->
+          <div class="flex items-center gap-2">
+            <Checkbox v-model="filters.showWatching" :binary="true" inputId="showWatching" />
+            <label for="showWatching" class="text-sm text-stone-500 cursor-pointer select-none">관람 중인 일감 보기</label>
+          </div>
         </div>
 
         <div class="flex gap-2.5">
-          <button class="px-4 py-2 text-sm font-semibold text-stone-500 bg-stone-100 border border-stone-200 rounded-lg hover:bg-stone-200 transition-colors cursor-pointer" @click="resetFilters">초기화</button>
-          <button class="px-5 py-2 text-sm font-bold text-amber-50 bg-amber-400 hover:bg-amber-600 rounded-lg shadow shadow-amber-200 transition-colors cursor-pointer border-none" @click="applyFilters">조회</button>
+          <Button class="px-4 py-2" severity="secondary" raised @click="resetFilters">초기화</Button>
+          <Button class="px-5 py-2" raised @click="applyFilters">조회</Button>
         </div>
       </div>
     </div>
 
-    <!-- 테이블 카드 -->
-    <div class="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
-      <!-- 메타 -->
+    <!-- 테이블 카드 (변경 없음) -->
+    <div class="bg-white border border-[#C7C7C2] rounded-xl shadow-sm overflow-hidden">
       <div class="px-6 py-3.5 border-b border-stone-100">
         <span class="text-sm text-stone-400">
           총 <strong class="text-stone-700 font-bold">{{ processedTasks.length }}</strong
@@ -343,7 +310,6 @@ onMounted(async () => {
         </span>
       </div>
 
-      <!-- 표 -->
       <div class="overflow-x-auto">
         <table class="w-full border-collapse text-sm">
           <thead>
@@ -383,47 +349,26 @@ onMounted(async () => {
               :class="idx % 2 !== 0 ? 'bg-stone-50/60' : 'bg-white'"
               @click="goToTask(task.id)"
             >
-              <!-- 번호 -->
               <td class="px-4 py-3.5">
-                <span class="font-mono text-m font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded">
-                  {{ task.id }}
-                </span>
+                <span class="font-mono text-m font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded">{{ task.id }}</span>
               </td>
-
-              <!-- 유형 -->
-              <td class="px-4 py-3.5 text-base text-stone-600 text-center">
-                {{ taskTypeMap[task.type] ?? task.type }}
-              </td>
-
-              <!-- 상태 -->
+              <td class="px-4 py-3.5 text-base text-stone-600 text-center">{{ taskTypeMap[task.type] ?? task.type }}</td>
               <td class="px-4 py-3.5 text-center">
                 <span class="inline-block px-2.5 py-0.5 rounded-full text-sm font-semibold whitespace-nowrap" :class="workflowClass[task.workflow] ?? 'bg-stone-100 text-stone-500'">
                   {{ workflowMap[task.workflow] ?? task.workflow }}
                 </span>
               </td>
-
-              <!-- 우선순위 -->
               <td class="px-4 py-3.5 text-center">
                 <span class="inline-block px-2.5 py-0.5 rounded-full text-sm font-semibold" :class="priorityClass[task.priority] ?? 'bg-stone-100 text-stone-400'">
                   {{ priorityMap[task.priority] ?? task.priority }}
                 </span>
               </td>
-
-              <!-- 범주 -->
               <td class="px-4 py-3.5 text-center">
-                <span class="inline-block mt-1 text-sm text-stone-400 bg-stone-100 px-2 py-px rounded">
-                  {{ taskCateMap[task.category] ?? task.category }}
-                </span>
+                <span class="inline-block mt-1 text-sm text-stone-400 bg-stone-100 px-2 py-px rounded">{{ taskCateMap[task.category] ?? task.category }}</span>
               </td>
-
-              <!-- 제목 -->
               <td class="px-4 py-3.5">
-                <span class="block text-base font-medium text-stone-800 hover:text-amber-600 transition-colors leading-snug">
-                  {{ task.title }}
-                </span>
+                <span class="block text-base font-medium text-stone-800 hover:text-amber-600 transition-colors leading-snug">{{ task.title }}</span>
               </td>
-
-              <!-- 진척도 -->
               <td class="px-4 py-3.5">
                 <div class="flex items-center gap-2">
                   <div class="flex-1 h-1.5 bg-stone-200 rounded-full overflow-hidden">
@@ -432,15 +377,9 @@ onMounted(async () => {
                   <span class="text-base font-semibold text-stone-500 w-9 text-right shrink-0">{{ task.progress }}%</span>
                 </div>
               </td>
-
-              <!-- 담당자 -->
               <td class="px-4 py-3.5 text-base text-stone-600 text-center">{{ task.userName }}</td>
-
-              <!-- 마감일 -->
               <td class="px-4 py-3.5 text-base text-stone-500 tabular-nums text-center">{{ task.plannedEnd }}</td>
             </tr>
-
-            <!-- 빈 상태 -->
             <tr v-if="pagedTasks.length === 0">
               <td colspan="9" class="text-center py-16 text-sm text-stone-400">일감이 없습니다.</td>
             </tr>
@@ -457,7 +396,6 @@ onMounted(async () => {
         >
           ‹
         </button>
-
         <button
           v-for="p in pageNumbers"
           :key="p"
@@ -467,7 +405,6 @@ onMounted(async () => {
         >
           {{ p }}
         </button>
-
         <button
           class="w-8 h-8 flex items-center justify-center rounded-md border border-stone-200 bg-white text-stone-400 text-base hover:bg-amber-100 hover:border-amber-300 hover:text-amber-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
           :disabled="!hasNextBlock"
@@ -481,14 +418,6 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-select {
-  appearance: auto;
-}
-input[type='date']::-webkit-calendar-picker-indicator {
-  opacity: 0.5;
-  cursor: pointer;
-}
-
 /* ── 정렬 버튼 ── */
 .sort-btn {
   display: inline-flex;

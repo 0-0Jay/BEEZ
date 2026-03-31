@@ -23,4 +23,6 @@ public interface TaskMapper {
   void insertTask(TaskRequest task);
   
   void insertTaskWatcher(@Param("taskId") String taskId, @Param("watcherList") List<String> watcherList);
+  
+  
 }
