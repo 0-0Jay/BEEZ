@@ -5,7 +5,11 @@
   
   <insert id="insertWiki">
     INSERT INTO wiki (id, project_id, version_id)
-    VALUES (#{id}, #{projectId}, #{versionId})
+    VALUES (
+    'WIKI_' || LPAD(wiki_seq.NEXTVAL, 5, '0'),
+    #{projectId},
+    'VER_' || LPAD(wiki_version_seq.NEXTVAL, 5, '0')
+    )
   </insert>
   
   <insert id="insertWikiVersion">
@@ -23,7 +27,7 @@
     )
     VALUES
     (
-    #{versionId},
+    'VER_' || LPAD(wiki_version_seq.NEXTVAL, 5, '0'),
     #{content},
     #{userId},
     SYSTIMESTAMP,
@@ -98,6 +102,10 @@
     FROM project p
     LEFT JOIN users u ON p.user_id = u.id
     WHERE p.id = #{projectId}
+  </select>
+  
+  <select id="getVersionSeq" resultType="long">
+    SELECT wiki_version_seq.NEXTVAL FROM dual
   </select>
   
 </mapper>
