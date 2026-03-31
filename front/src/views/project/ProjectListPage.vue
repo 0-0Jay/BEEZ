@@ -85,7 +85,7 @@ const toggleMenu = (event, data) => {
 const goToDetail = (project) => {
   if (project.isLock === 'L1') return;
   projectStore.selectedProject = { title: project.title, id: project.id };
-  // router.push(`/project/detail/${project.id}`);
+  router.push(`/project/setting/${project.id}`);
 };
 
 // 날짜 포맷 변환 함수

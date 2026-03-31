@@ -1,72 +1,68 @@
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import UserFormModal from '@/components/users/UserFormModal.vue';
+import { useUsersStore } from '@/stores/users';
+import { computed, defineEmits, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
+const usersStore = useUsersStore();
 const router = useRouter();
 
-// --- 하드코딩 데이터 ---
-const allUsers = ref([
-  { id: 1, employeeId: 'EMP-2026-0001', name: '관리자', email: 'admin@test.com', isAdmin: true, createdAt: '2026-03-19', status: 'ACTIVE' },
-  { id: 2, employeeId: 'EMP-2026-0002', name: '곽현우', email: 'khw12@test.com', isAdmin: true, createdAt: '2026-03-19', status: 'ACTIVE' },
-  { id: 3, employeeId: 'EMP-2026-0003', name: '노정화', email: 'njh123@test.com', isAdmin: true, createdAt: '2026-03-19', status: 'ACTIVE' },
-  { id: 4, employeeId: 'EMP-2026-0004', name: '조영진', email: 'jyj123@test.com', isAdmin: true, createdAt: '2026-03-19', status: 'ACTIVE' },
-  { id: 5, employeeId: 'EMP-2026-0005', name: '한유민', email: 'hym12@test.com', isAdmin: true, createdAt: '2026-03-19', status: 'ACTIVE' },
-  { id: 6, employeeId: 'EMP-2026-0006', name: '이수진', email: 'lsj@test.com', isAdmin: false, createdAt: '2026-03-20', status: 'INACTIVE' },
-  { id: 7, employeeId: 'EMP-2026-0007', name: '박민준', email: 'pmj@test.com', isAdmin: false, createdAt: '2026-03-20', status: 'ACTIVE' },
-  { id: 8, employeeId: 'EMP-2026-0008', name: '김태희', email: 'kth@test.com', isAdmin: false, createdAt: '2026-03-21', status: 'ACTIVE' },
-  { id: 9, employeeId: 'EMP-2026-0009', name: '정우성', email: 'jws@test.com', isAdmin: false, createdAt: '2026-03-21', status: 'INACTIVE' },
-  { id: 10, employeeId: 'EMP-2026-0010', name: '최예린', email: 'cyr@test.com', isAdmin: false, createdAt: '2026-03-22', status: 'ACTIVE' },
-  { id: 11, employeeId: 'EMP-2026-0011', name: '윤서준', email: 'ysj@test.com', isAdmin: false, createdAt: '2026-03-22', status: 'ACTIVE' },
-  { id: 12, employeeId: 'EMP-2026-0012', name: '강다은', email: 'kde@test.com', isAdmin: false, createdAt: '2026-03-23', status: 'ACTIVE' }
-]);
-
 const loading = ref(false);
+const visible = ref(false);
+const emit = defineEmits(['selectProject']); // 자꾸 콘솔에 경고가 생겨서 넣음, 실제로는 사용 안함
 
-// --- 필터 상태 ---
-const filters = reactive({
+const search = reactive({
   name: '',
-  status: null,
+  status: '',
   startDate: null,
   endDate: null
 });
 
 const statusOptions = [
-  { label: '활성', value: 'ACTIVE' },
-  { label: '비활성', value: 'INACTIVE' }
+  { label: '활성', value: 'H1' },
+  { label: '비활성', value: 'H2' }
 ];
 
-// --- 페이지네이션 ---
 const currentPage = ref(1);
 const pageSize = 10;
 
-// --- 필터링된 전체 목록 ---
-const filteredUsers = computed(() => {
-  return allUsers.value.filter((u) => {
-    if (filters.name && !u.name.includes(filters.name)) return false;
-    if (filters.status && u.status !== filters.status) return false;
-    if (filters.startDate && u.createdAt < formatDate(filters.startDate)) return false;
-    if (filters.endDate && u.createdAt > formatDate(filters.endDate)) return false;
-    return true;
-  });
-});
+// 조회 / 초기화
+const fetchUsers = async () => {
+  loading.value = true;
 
-const totalCount = computed(() => filteredUsers.value.length);
-const totalPages = computed(() => Math.max(1, Math.ceil(totalCount.value / pageSize)));
+  try {
+    const searchParams = {
+      name: search.name,
+      status: search.status,
+      startDate: formatDate(search.startDate),
+      endDate: formatDate(search.endDate)
+    };
 
-// --- 현재 페이지 데이터 ---
-const pagedUsers = computed(() => {
-  const start = (currentPage.value - 1) * pageSize;
-  return filteredUsers.value.slice(start, start + pageSize);
-});
-
-// --- 조회 / 초기화 ---
-const fetchUsers = () => {
-  currentPage.value = 1;
+    await usersStore.fetchUsers(searchParams);
+    currentPage.value = 1; // 검색 시 1페이지로 이동
+  } finally {
+    loading.value = false;
+  }
 };
 
+// 페이지네이션
+const totalCount = computed(() => usersStore.userList.length);
+const totalPages = computed(() => Math.max(1, Math.ceil(totalCount.value / pageSize)));
+
+const pagedUsers = computed(() => {
+  const start = (currentPage.value - 1) * pageSize;
+  return usersStore.userList.slice(start, start + pageSize);
+});
+
+// 초기 로드
+onMounted(() => {
+  fetchUsers();
+});
+
 const resetFilters = () => {
-  Object.assign(filters, { name: '', status: null, startDate: null, endDate: null });
+  Object.assign(search, { name: '', status: '', startDate: null, endDate: null });
   currentPage.value = 1;
+  fetchUsers();
 };
 
 const goToPage = (page) => {
@@ -77,7 +73,14 @@ const goToPage = (page) => {
 const formatDate = (date) => {
   if (!date) return null;
   const d = new Date(date);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const openUserFormModal = () => {
+  visible.value = true;
 };
 </script>
 
@@ -89,16 +92,16 @@ const formatDate = (date) => {
       <div class="flex items-center flex-wrap gap-y-3">
         <div class="flex items-center mr-8">
           <label class="filter-label mr-3">사원 이름</label>
-          <InputText v-model="filters.name" placeholder="이름을 입력해 주세요." class="filter-input w-52" />
+          <InputText v-model="search.name" placeholder="이름을 입력해 주세요." class="filter-input w-52" @keyup.enter="fetchUsers" />
         </div>
 
         <label class="filter-label mr-3">상태</label>
-        <Select v-model="filters.status" :options="statusOptions" optionLabel="label" optionValue="value" placeholder="선택" class="filter-input w-36 mr-8" />
+        <Select v-model="search.status" :options="statusOptions" optionLabel="label" optionValue="value" placeholder="선택" class="filter-input w-36 mr-8" />
 
         <label class="filter-label mr-5">등록일</label>
-        <DatePicker v-model="filters.startDate" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" class="filter-input w-36 mr-15" />
+        <DatePicker v-model="search.startDate" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" class="filter-input w-36 mr-15" />
         <span class="text-sm text-[#6B6B63] px-4">~</span>
-        <DatePicker v-model="filters.endDate" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" class="filter-input w-36 mr-25" />
+        <DatePicker v-model="search.endDate" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" class="filter-input w-36 mr-25" />
       </div>
 
       <div class="flex gap-2 ml-auto">
@@ -110,34 +113,38 @@ const formatDate = (date) => {
     <!-- 전체 건수 + 사용자 추가 -->
     <div class="flex justify-between items-center mb-3">
       <span class="text-sm text-[#3A3B35] font-medium">전체 {{ totalCount }}명</span>
-      <Button label="사용자 추가" icon="pi pi-plus" class="btn-amber" @click="router.push('/user/create')" />
+      <Button label="사용자 추가" icon="pi pi-plus" class="btn-amber" @click="openUserFormModal" />
+      <!-- @click="router.push('/user/create')" -->
     </div>
 
     <!-- 테이블 -->
     <div class="bg-white rounded-xl shadow-sm border border-[#C7C7C2] overflow-hidden mb-6">
       <DataTable :value="pagedUsers" :loading="loading" dataKey="id" :rowHover="true">
         <template #empty>
-          <div class="text-center py-10 text-gray-400">조회된 데이터가 없습니다.</div>
+          <div class="flex flex-col items-center justify-center py-10">
+            <i class="pi pi-search text-4xl text-[#C7C7C2] mb-3"></i>
+            <p class="text-[#6B6B63]">조회된 사용자 데이터가 없습니다.</p>
+          </div>
         </template>
 
-        <Column header="번호" headerClass="table-header" style="width: 80px">
-          <template #body="slotProps">
-            {{ (currentPage - 1) * pageSize + slotProps.index + 1 }}
-          </template>
-        </Column>
-        <Column field="employeeId" header="사원번호" headerClass="table-header" style="width: 160px" />
+        <Column field="id" header="사원번호" headerClass="table-header" style="width: 160px" />
         <Column field="name" header="이름" headerClass="table-header" style="width: 120px" />
         <Column field="email" header="이메일" headerClass="table-header" style="width: 220px" />
+
         <Column header="관리자 여부" headerClass="table-header" style="width: 120px">
-          <template #body="{ data }">{{ data.isAdmin ? '예' : '아니오' }}</template>
+          <template #body="{ data }">
+            {{ data.role && data.role.includes('ADMIN') ? '예' : '아니오' }}
+          </template>
         </Column>
+
         <Column header="등록일" headerClass="table-header" style="width: 150px">
-          <template #body="{ data }">{{ data.createdAt }}</template>
+          <template #body="{ data }">{{ data.createdOn }}</template>
         </Column>
+
         <Column header="상태" headerClass="table-header" style="width: 100px">
           <template #body="{ data }">
-            <span :class="data.status === 'ACTIVE' ? 'text-[#E8920E] font-semibold' : 'text-[#9A9B90]'">
-              {{ data.status === 'ACTIVE' ? '활성' : '비활성' }}
+            <span :class="data.status === 'H1' ? 'text-[#E8920E] font-semibold' : 'text-[#9A9B90]'">
+              {{ data.status === 'H1' ? '활성' : '비활성' }}
             </span>
           </template>
         </Column>
@@ -157,6 +164,8 @@ const formatDate = (date) => {
       </button>
     </div>
   </div>
+
+  <UserFormModal v-model:visible="visible"></UserFormModal>
 </template>
 
 <style scoped>

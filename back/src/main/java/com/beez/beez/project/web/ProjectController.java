@@ -1,8 +1,6 @@
 package com.beez.beez.project.web;
 
-import com.beez.beez.project.dto.ProjectCreateRequest;
-import com.beez.beez.project.dto.ProjectFilterRequest;
-import com.beez.beez.project.dto.ProjectListResponse;
+import com.beez.beez.project.dto.*;
 import com.beez.beez.project.service.ProjectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -49,5 +47,21 @@ public class ProjectController {
     projectService.updateProjectStatus(id);
     return ResponseEntity.ok().build();
   }
+  
+  //프로젝트 단건 조회
+  @GetMapping("/{id}")
+  public ResponseEntity<ProjectInfoResponse> findById(@PathVariable String id) {
+    ProjectInfoResponse response = projectService.findById(id);
+    return ResponseEntity.ok(response);
+  }
+  
+  //프로젝트 수정
+  @PutMapping("/{id}")
+  public ResponseEntity<ProjectInfoResponse> updateProject(@PathVariable String id, @RequestBody ProjectUpdateRequest dto) {
+    ProjectInfoResponse response = projectService.updateProject(id, dto);
+    return ResponseEntity.ok(response);
+  }
+  
+  
   
 }
