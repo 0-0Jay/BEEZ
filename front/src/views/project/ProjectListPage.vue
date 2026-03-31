@@ -165,7 +165,7 @@ const unlockProject = async (id) => {
 
         <Column field="title" header="프로젝트명" headerClass="table-header" style="width: 250px">
           <template #body="{ data }">
-            <span class="font-semibold text-[#C97700] cursor-pointer hover:underline" @click="goToDetail(data)">
+            <span class="font-medium text-stone-800 hover:text-amber-600 transition-colors cursor-pointer" @click="goToDetail(data)">
               {{ data.title }}
             </span>
           </template>
@@ -241,6 +241,10 @@ const unlockProject = async (id) => {
 :deep(.btn-register-outline) {
   border-color: #e8920e !important;
   color: #e8920e !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  box-sizing: border-box !important;
+  padding: 18px;
 }
 :deep(.btn-register-outline:hover) {
   background-color: #fff8e8 !important;
@@ -249,6 +253,7 @@ const unlockProject = async (id) => {
 }
 :deep(.btn-reset) {
   color: #6b6b63 !important;
+  background-color: #ffffff !important;
   border: 1px solid #c7c7c2 !important;
   height: 36px !important;
   min-height: 36px !important;

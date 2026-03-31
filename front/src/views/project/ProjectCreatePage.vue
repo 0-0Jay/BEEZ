@@ -212,7 +212,7 @@ const handleCancel = () => {
 :deep(.form-input) {
   height: 38px !important;
   border-color: #c7c7c2 !important;
-  background-color: #fafaf8 !important;
+  background-color: #ffffff !important;
 }
 
 :deep(.p-select-label) {
