@@ -408,8 +408,8 @@ function applyFormat(command, value = null) {
   display: flex;
   align-items: flex-start;
   gap: 20px;
-  background: #e4e4e4;
-  border: 1px solid #ddd;
+  background: #f2f0eb;
+  border: 1px solid #c7c7c2;
   border-radius: 6px;
   padding: 16px 20px;
   position: relative;
@@ -504,7 +504,7 @@ function applyFormat(command, value = null) {
 }
 
 .btn-cancel {
-  background: #fff;
+  background: #ffffff;
   border: 1px solid #bbb;
   color: #555;
 }
@@ -515,7 +515,7 @@ function applyFormat(command, value = null) {
 
 .btn-edit {
   /* 선형 그라데이션: 위에서 아래로 옅은 오렌지 -> 진한 오렌지 */
-  background: linear-gradient(180deg, #ff8d4b 0%, #f5a623 100%);
+  background: #e8920e;
   color: #fff;
 }
 .btn-edit:hover {
@@ -523,8 +523,8 @@ function applyFormat(command, value = null) {
 }
 
 .btn-primary {
-  background: linear-gradient(180deg, #ff8d4b 0%, #f5a623 100%);
-  color: #fff;
+  background: #e8920e;
+  color: #f2f0eb;
 }
 
 .btn-primary:hover {
@@ -794,7 +794,7 @@ function applyFormat(command, value = null) {
   font-style: italic;
 }
 .toolbar-btn.callout {
-  color: #f5a623;
+  color: #e8920e;
 }
 .toolbar-btn.code {
   font-family: monospace;

@@ -4,6 +4,7 @@ import com.beez.beez.project.dto.ProjectCreateRequest;
 import com.beez.beez.wiki.dto.WikiProjectRequest;
 import com.beez.beez.wiki.dto.WikiRequest;
 import com.beez.beez.wiki.dto.WikiVersionRequest;
+import com.beez.beez.wiki.mapper.WikiMapper;
 
 import java.util.List;
 
@@ -28,4 +29,6 @@ public interface WikiService {
   
   //프로젝트 정보 조회 (위키 헤더용)
   WikiProjectRequest getProjectInfo(String projectId);
+  
+
 }
