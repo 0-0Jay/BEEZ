@@ -99,7 +99,8 @@ const handleSubmit = async () => {
     description: form.description,
     startDate: formatDate(form.startDate),
     endDate: formatDate(form.endDate),
-    isPublic: form.isPublic ? 'J1' : 'J0'
+    isPublic: form.isPublic ? 'J1' : 'J0',
+    parentId: form.parentId
   });
 
   router.push(`/project/setting/${id}`);

@@ -1,8 +1,6 @@
 package com.beez.beez.project.service;
 
-import com.beez.beez.project.dto.ProjectCreateRequest;
-import com.beez.beez.project.dto.ProjectFilterRequest;
-import com.beez.beez.project.dto.ProjectListResponse;
+import com.beez.beez.project.dto.*;
 
 import java.util.List;
 
@@ -23,4 +21,9 @@ public interface ProjectService {
   //프로젝트 삭제
   void updateProjectStatus(String id);
   
+  //프로젝트 단건 조회
+  ProjectInfoResponse findById(String id);
+  
+  //프로젝트 수정
+  ProjectInfoResponse updateProject(String id, ProjectUpdateRequest dto);
 }

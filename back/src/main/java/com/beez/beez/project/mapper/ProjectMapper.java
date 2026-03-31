@@ -1,8 +1,6 @@
 package com.beez.beez.project.mapper;
 
-import com.beez.beez.project.dto.ProjectCreateRequest;
-import com.beez.beez.project.dto.ProjectFilterRequest;
-import com.beez.beez.project.dto.ProjectListResponse;
+import com.beez.beez.project.dto.*;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -25,5 +23,9 @@ public interface ProjectMapper {
   //프로젝트 삭제
   void updateProjectStatus(String id);
   
+  //프로젝트 단건 조회
+  ProjectInfoResponse findById(String id);
 
+  //프로젝트 수정
+  void updateProject(ProjectUpdateRequest dto);
 }

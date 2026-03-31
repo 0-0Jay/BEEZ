@@ -5,7 +5,8 @@ export const useProjectStore = defineStore('project', {
   // state
   state: () => ({
     projects: [],
-    loading: false
+    loading: false,
+    projectInfo: null
   }),
   // getters
   // actions
@@ -42,7 +43,7 @@ export const useProjectStore = defineStore('project', {
     },
 
     async lockProject(id) {
-      const response = await axios.put(`/project/lock/${id}`);
+      await axios.put(`/project/lock/${id}`);
     },
 
     async unlockProject(id) {
@@ -50,13 +51,23 @@ export const useProjectStore = defineStore('project', {
     },
 
     async deleteProject(id) {
-      const response = await axios.put(`/project/delete/${id}`);
+      await axios.put(`/project/delete/${id}`);
     },
 
     async createProject(data) {
       const response = await axios.post('/project', data);
-      console.log(response.data);
       return response.data;
+    },
+
+    async findProject(id) {
+      const response = await axios.get(`/project/${id}`);
+      console.log(response.data);
+      this.projectInfo = response.data;
+    },
+
+    async updateProject(id, formData) {
+      const response = await axios.put(`/project/${id}`, formData);
+      this.projectInfo = response.data;
     }
   },
   persist: {
