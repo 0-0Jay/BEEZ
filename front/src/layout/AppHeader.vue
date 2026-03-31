@@ -1,6 +1,6 @@
 <script setup>
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
-import Notification from '@/components/notification/Notification.vue';
+import Notification from '@/components/notification/NotificationComponent.vue';
 import { useAuthStore } from '@/stores/auth';
 import { inject, ref } from 'vue';
 import { useRouter } from 'vue-router';

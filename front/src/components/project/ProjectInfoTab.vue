@@ -1,20 +1,38 @@
 <script setup>
 import { useProjectStore } from '@/stores/project';
+import { useToast } from 'primevue';
 import { onMounted, reactive, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
-const router = useRouter();
 const projectStore = useProjectStore();
+const router = useRouter();
+const route = useRoute();
+const toast = useToast();
 
 // 상위 프로젝트 옵션 - 기존 프로젝트 목록 활용
 const projectOptions = ref([]);
 
 onMounted(async () => {
+  await projectStore.findProject(route.params.id);
   await projectStore.fetchProjects({});
-  projectOptions.value = projectStore.projects.map((p) => ({
-    label: p.title,
-    value: p.id
-  }));
+  const info = projectStore.projectInfo;
+  form.title = info.title;
+  form.identifier = info.identifier;
+  form.description = info.description;
+  form.startDate = formatDate(info.startDate);
+  form.endDate = formatDate(info.endDate);
+  form.isPublic = info.isPublic === 'J1';
+  form.parentId = info.parentId;
+
+  projectOptions.value = [
+    { label: '없음', value: null },
+    ...projectStore.projects
+      .filter((p) => p.id !== route.params.id)
+      .map((p) => ({
+        label: p.title,
+        value: p.id
+      }))
+  ];
 });
 
 const form = reactive({
@@ -90,10 +108,19 @@ const formatDate = (date) => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-const handleSubmit = async () => {
-  if (!validate()) return;
+const visible = ref(false);
+const confirmMsg = ref('');
 
-  const id = await projectStore.createProject({
+const openUpdateConfirm = () => {
+  confirmMsg.value = '정말 수정하시겠습니까?';
+  visible.value = true;
+};
+
+const handleSubmit = async () => {
+  visible.value = false;
+
+  if (!validate()) return;
+  await projectStore.updateProject(route.params.id, {
     title: form.title,
     identifier: form.identifier,
     description: form.description,
@@ -102,8 +129,7 @@ const handleSubmit = async () => {
     isPublic: form.isPublic ? 'J1' : 'J0',
     parentId: form.parentId
   });
-
-  router.push(`/project/setting/${id}`);
+  toast.add({ severity: 'success', summary: '수정 완료', detail: '프로젝트가 수정되었습니다.', life: 2000 });
 };
 
 const handleCancel = () => {
@@ -112,13 +138,8 @@ const handleCancel = () => {
 </script>
 
 <template>
-  <div class="p-8 bg-[#FAFAF8] min-h-screen">
-    <!-- 타이틀 -->
-    <div class="mb-4">
-      <h1 class="text-2xl font-bold text-[#1A1816]">새 프로젝트 등록</h1>
-    </div>
-
-    <div class="bg-white rounded-lg shadow-sm border border-[#C7C7C2] overflow-hidden mb-6">
+  <div>
+    <div class="bg-white rounded-xl shadow-sm border border-[#C7C7C2] overflow-hidden">
       <!-- 기본 정보 섹션 -->
       <div class="bg-[#F2F0EB] px-8 py-3 border-b border-[#C7C7C2]">
         <span class="text-lg font-bold text-[#1A1816]">기본 정보</span>
@@ -181,7 +202,7 @@ const handleCancel = () => {
     </div>
 
     <!-- 상위 프로젝트 섹션 -->
-    <div class="bg-white rounded-lg shadow-sm border border-[#C7C7C2] overflow-hidden mb-6">
+    <div class="bg-white rounded-lg shadow-sm border border-[#C7C7C2] overflow-hidden mb-6 mt-6">
       <div class="bg-[#F2F0EB] px-8 py-3 border-b border-[#C7C7C2]">
         <span class="text-lg font-bold text-[#1A1816]">상위 프로젝트</span>
       </div>
@@ -196,9 +217,13 @@ const handleCancel = () => {
 
     <!-- 버튼 -->
     <div class="flex justify-center gap-3">
-      <Button label="저장" class="btn-amber px-8" @click="handleSubmit" />
+      <Button label="수정" class="btn-amber px-8" @click="openUpdateConfirm" />
       <Button label="취소" class="btn-cancel px-8" @click="handleCancel" />
     </div>
+
+    <ConfirmDialog v-model:visible="visible" confirmLabel="확인" @confirm="handleSubmit">
+      <span class="text-gray-700 font-medium">{{ confirmMsg }}</span>
+    </ConfirmDialog>
   </div>
 </template>
 

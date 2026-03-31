@@ -1,9 +1,7 @@
 package com.beez.beez.project.service.impl;
 
 import com.beez.beez.logs.service.LogsService;
-import com.beez.beez.project.dto.ProjectCreateRequest;
-import com.beez.beez.project.dto.ProjectFilterRequest;
-import com.beez.beez.project.dto.ProjectListResponse;
+import com.beez.beez.project.dto.*;
 import com.beez.beez.project.mapper.ProjectMapper;
 import com.beez.beez.project.service.ProjectService;
 import lombok.RequiredArgsConstructor;
@@ -55,6 +53,22 @@ public class ProjectServiceImpl implements ProjectService {
     projectMapper.updateProjectStatus(id);
     String link = "/project/list";
     logsService.insertLogs(id, "A3", "B0", "프로젝트 삭제", link);
+  }
+  
+  @Override
+  public ProjectInfoResponse findById(String id) {
+    return projectMapper.findById(id);
+  }
+  
+  @Override
+  public ProjectInfoResponse updateProject(String id, ProjectUpdateRequest dto) {
+    dto.setId(id);
+    
+    String link = "/project/" + dto.getId();
+    logsService.insertLogs(id, "A2", "B0", "프로젝트 수정", link);
+    
+    projectMapper.updateProject(dto);
+    return projectMapper.findById(id);
   }
   
 }

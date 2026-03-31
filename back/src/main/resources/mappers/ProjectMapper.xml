@@ -90,5 +90,31 @@
     SET status = 'K0'
     WHERE id = #{id}
   </update>
+  
+  <!-- 프로젝트 단건 조회 -->
+  <select id="findById" resultType="ProjectInfoResponse">
+    SELECT identifier,
+           title,
+           description,
+           is_public,
+           parent_id,
+           start_date,
+           end_date
+    FROM project
+    WHERE id = #{id}
+  </select>
+  
+<!-- 프로젝트 수정 -->
+  <update id="updateProject" parameterType="com.beez.beez.project.dto.ProjectUpdateRequest">
+    UPDATE project
+    SET identifier = #{identifier},
+        title = #{title},
+        description = #{description},
+        is_public = #{isPublic},
+        parent_id = #{parentId},
+        start_date = #{startDate},
+        end_date = #{endDate}
+    WHERE id = #{id}
+  </update>
 
 </mapper>
