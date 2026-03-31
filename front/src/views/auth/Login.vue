@@ -1,6 +1,6 @@
 <script setup>
 import { useAuthStore } from '@/stores/auth';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 const store = useAuthStore();
@@ -9,33 +9,35 @@ const router = useRouter();
 const id = ref('');
 const password = ref('');
 const rememberMe = ref(false);
+const submitted = ref(false);
+const loginErrorMsg = ref('');
 
-const idErrorMsg = ref('');
-const pwErrorMsg = ref('');
+onMounted(() => {
+  const savedId = localStorage.getItem('savedEmployeeId');
+  if (savedId) {
+    id.value = savedId;
+    rememberMe.value = true;
+  }
+});
 
 async function validateAndLogin() {
-  // 초기화
-  idErrorMsg.value = '';
-  pwErrorMsg.value = '';
+  submitted.value = true;
+  loginErrorMsg.value = '';
 
-  // 빈 값 검사
-  if (!id.value.trim()) {
-    idErrorMsg.value = '사원번호를 입력해 주세요.';
-  }
-  if (!password.value.trim()) {
-    pwErrorMsg.value = '비밀번호를 입력해 주세요.';
-  }
+  if (!id.value.trim() || !password.value.trim()) return;
 
-  // 로그인 실행
-  if (!idErrorMsg.value && !pwErrorMsg.value) {
-    try {
-      const success = await store.login(id.value, password.value);
-      if (success) {
-        router.push('/main');
+  try {
+    const success = await store.login(id.value, password.value);
+    if (success) {
+      if (rememberMe.value) {
+        localStorage.setItem('savedEmployeeId', id.value);
+      } else {
+        localStorage.removeItem('savedEmployeeId');
       }
-    } catch (err) {
-      idErrorMsg.value = '사원번호 또는 비밀번호가 일치하지 않습니다.';
+      router.push('/main');
     }
+  } catch (err) {
+    loginErrorMsg.value = '사원번호 또는 비밀번호가 일치하지 않습니다.';
   }
 }
 </script>
@@ -59,46 +61,62 @@ async function validateAndLogin() {
         </div>
 
         <form @submit.prevent="validateAndLogin">
+          <!-- 사원번호 -->
           <div class="mb-5">
             <label for="employee-id" class="block text-sm font-semibold mb-1.5 tracking-wide" style="color: #3a3835"> 사원번호 </label>
             <div class="relative">
               <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                <i class="pi pi-user text-sm" :style="idErrorMsg ? 'color: #E8920E' : 'color: #9A9690'"></i>
+                <i class="pi pi-user text-sm" :style="submitted && !id.trim() ? 'color: #E8920E' : 'color: #9A9690'"></i>
               </span>
               <input
                 id="employee-id"
                 v-model="id"
-                @input="idErrorMsg = ''"
+                @input="submitted = false"
                 type="text"
                 autocomplete="username"
                 placeholder="사원번호를 입력해 주세요."
+                autofocus
                 class="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm outline-none transition-all duration-200 border"
-                :class="idErrorMsg ? 'border-amber-err bg-amber-50-custom focus:ring-2 focus:ring-amber-300-custom' : 'border-stone-200-custom bg-stone-50-custom focus:border-amber-400-custom focus:ring-2 focus:ring-amber-100-custom'"
+                :class="submitted && !id.trim() ? 'border-amber-err bg-amber-50-custom' : 'border-stone-200-custom bg-stone-50-custom'"
               />
             </div>
-            <p v-if="idErrorMsg" class="text-xs font-medium" style="color: #ff0000; margin-top: 3px">{{ idErrorMsg }}</p>
+            <p v-if="submitted && !id.trim()" class="flex items-center gap-1 text-xs font-medium" style="color: #e8920e; margin-top: 3px">
+              <i class="pi pi-exclamation-circle text-xs" />
+              값을 입력해 주세요.
+            </p>
           </div>
 
-          <div class="mb-6">
+          <!-- 비밀번호 -->
+          <div class="mb-2">
             <label for="password" class="block text-sm font-semibold mb-1.5 tracking-wide" style="color: #3a3835"> 비밀번호 </label>
             <div class="relative">
               <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                <i class="pi pi-lock text-sm" :style="pwErrorMsg ? 'color: #E8920E' : 'color: #9A9690'"></i>
+                <i class="pi pi-lock text-sm" :style="submitted && !password.trim() ? 'color: #E8920E' : 'color: #9A9690'"></i>
               </span>
               <input
                 id="password"
                 v-model="password"
-                @input="pwErrorMsg = ''"
+                @input="submitted = false"
                 type="password"
                 autocomplete="current-password"
                 placeholder="비밀번호를 입력해 주세요."
                 class="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm outline-none transition-all duration-200 border"
-                :class="pwErrorMsg ? 'border-amber-err bg-amber-50-custom focus:ring-2 focus:ring-amber-300-custom' : 'border-stone-200-custom bg-stone-50-custom focus:border-amber-400-custom focus:ring-2 focus:ring-amber-100-custom'"
+                :class="submitted && !password.trim() ? 'border-amber-err bg-amber-50-custom' : 'border-stone-200-custom bg-stone-50-custom'"
               />
             </div>
-            <p v-if="pwErrorMsg" class="text-xs font-medium" style="color: #ff0000; margin-top: 3px">{{ pwErrorMsg }}</p>
+            <p v-if="submitted && !password.trim()" class="flex items-center gap-1 text-xs font-medium" style="color: #f44336; margin-top: 3px">
+              <i class="pi pi-exclamation-circle text-xs" />
+              값을 입력해 주세요.
+            </p>
           </div>
 
+          <!-- 로그인 실패 에러 -->
+          <p v-if="loginErrorMsg" class="flex items-center gap-1 text-xs font-medium" style="color: #f44336">
+            <i class="pi pi-exclamation-circle text-xs" />
+            {{ loginErrorMsg }}
+          </p>
+
+          <!-- 아이디 저장 / 비밀번호 재설정 -->
           <div class="flex items-center justify-between mb-7">
             <label class="flex items-center gap-2 cursor-pointer group select-none">
               <div class="relative">
@@ -111,7 +129,6 @@ async function validateAndLogin() {
               </div>
               <span class="text-sm" style="color: #6e6b65">아이디 저장</span>
             </label>
-
             <button type="button" class="text-sm font-medium transition-colors duration-150 hover:underline" style="color: #c97700">비밀번호 재설정</button>
           </div>
 
@@ -129,12 +146,10 @@ async function validateAndLogin() {
 </template>
 
 <style scoped>
-/* 배경 */
 .bg-page {
   background-color: #f2f0eb;
 }
 
-/* 배경 노이즈 텍스처 */
 .noise-overlay {
   position: absolute;
   inset: 0;
@@ -143,12 +158,11 @@ async function validateAndLogin() {
   pointer-events: none;
 }
 
-/* 카드 그림자 */
 .login-card {
   filter: drop-shadow(0 8px 40px rgba(61, 32, 0, 0.1)) drop-shadow(0 2px 8px rgba(61, 32, 0, 0.06));
+  animation: cardReveal 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* input 테두리 */
 .border-stone-200-custom {
   border-color: #e5e2d9;
 }
@@ -168,7 +182,6 @@ input:focus {
   border-color: #f5a623;
 }
 
-/* 버튼 그림자 */
 .shadow-btn {
   box-shadow:
     0 4px 16px rgba(245, 166, 35, 0.35),
@@ -180,10 +193,6 @@ input:focus {
     0 2px 8px rgba(245, 166, 35, 0.25);
 }
 
-/* 애니메이션 */
-.login-card {
-  animation: cardReveal 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
 @keyframes cardReveal {
   from {
     opacity: 0;

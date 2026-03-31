@@ -1,9 +1,6 @@
 package com.beez.beez.users.repository;
 
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,7 +14,9 @@ import java.util.stream.Collectors;
 
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class Users implements UserDetails {
 
 
@@ -29,6 +28,7 @@ public class Users implements UserDetails {
   private LocalDateTime createdOn;
 
   // 권한 리스트
+  @Builder.Default
   private List<String> roles = new ArrayList<>();
 
   // UserDetails 구현

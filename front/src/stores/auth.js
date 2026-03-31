@@ -5,8 +5,8 @@ import { defineStore } from 'pinia';
 export const useAuthStore = defineStore('auth', {
   // state
   state: () => ({
-    accessToken: localStorage.getItem('accessToken') || null, // 엑세스 토큰
-    user: JSON.parse(localStorage.getItem('user')) || null // 사용자 정보
+    accessToken: null, // 엑세스 토큰
+    user: null // 사용자 정보
   }),
 
   // getters
@@ -37,10 +37,10 @@ export const useAuthStore = defineStore('auth', {
             name: decoded.name
           };
 
-          localStorage.setItem('accessToken', token);
-          localStorage.setItem('user', JSON.stringify(this.user));
+          // console.log(token, this.user);
 
-          // console.log(this.user);
+          // localStorage.setItem('accessToken', token);
+          // localStorage.setItem('user', JSON.stringify(this.user));
           return true;
         }
       } catch (error) {
@@ -52,8 +52,8 @@ export const useAuthStore = defineStore('auth', {
     logout() {
       this.accessToken = null;
       this.user = null;
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('user');
+      // localStorage.removeItem('accessToken');
+      // localStorage.removeItem('user');
     }
   },
   persist: true

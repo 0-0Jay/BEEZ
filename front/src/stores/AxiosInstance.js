@@ -1,5 +1,6 @@
 import router from '@/router';
 import axios from 'axios';
+import { useAuthStore } from './auth';
 
 const axiosInstance = axios.create({
   baseURL: '/api',
@@ -10,7 +11,8 @@ const axiosInstance = axios.create({
 // 서버로 가기 전 LocalStorage에서 토큰을 꺼내서 붙여줌
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
+    const authStore = useAuthStore();
+    const token = authStore.accessToken;
 
     if (token) {
       // Authorization 헤더에 Bearer 토큰 추가
@@ -53,13 +55,16 @@ const ERROR_MESSAGES = {
 };
 
 function handleError(status, message) {
+  const authStore = useAuthStore();
+  const isLoginPage = window.location.pathname === '/';
+
   switch (status) {
     case 401:
-      alert('세션이 만료되었습니다. 다시 로그인해주세요.');
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('user');
-
-      window.location.href = '/';
+      if (!isLoginPage) {
+        alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+        authStore.logout();
+        window.location.href = '/';
+      }
       break;
 
     case 403:
