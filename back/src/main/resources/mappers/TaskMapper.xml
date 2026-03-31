@@ -57,7 +57,58 @@
     WHERE ROWNUM = 1
   </select>
   
-  <insert id="insertTask">
-    
+  <insert id="insertTask" parameterType="TaskRequest">
+    <selectKey keyProperty="id" resultType="String" order="BEFORE">
+      SELECT BEEZ.generate_pk_auto('task') FROM dual
+    </selectKey>
+    INSERT INTO task(id,
+                     project_id,
+                     version_id,
+                     title,
+                     description,
+                     user_id,
+                     type,
+                     category,
+                     workflow,
+                     priority,
+                     planned_start,
+                     planned_end,
+                     actual_start,
+                     actual_end,
+                     estimated_time,
+                     progress,
+                     status,
+                     parent_id,
+                     is_public,
+                     creator,
+                     file_id)
+    VALUES(#{id},
+           #{projectId},
+           #{version},
+           #{title},
+           #{description},
+           #{userId},
+           #{type},
+           #{category},
+           #{workflow},
+           #{priority},
+           #{plannedStart},
+           #{plannedEnd},
+           #{actualStart},
+           #{actualEnd},
+           #{estimatedTime},
+           #{progress},
+           'T1',
+           #{parentId},
+           #{isPublic},
+           #{creator},
+           #{fileId})
+  </insert>
+  
+  <insert id="insertTaskWatcher" statementType="CALLABLE">
+    { CALL proc_watcher_list(
+           #{taskId},
+           #{watcherList, typeHandler=com.beez.beez.config.OracleTypeHandler.WatcherTypeHandler}
+           )}
   </insert>
 </mapper>

@@ -10,7 +10,7 @@
 
       <!-- 페이지 -->
       <div class="p-4 bg-gray-100 flex-1 overflow-auto">
-        <router-view @selectProject="setProject" />
+        <router-view />
       </div>
     </div>
   </div>
@@ -27,15 +27,7 @@ const toggleMenu = () => {
   isOpen.value = !isOpen.value;
 };
 
-// 프로젝트 상태
-const selectedProject = ref(null);
-
-const setProject = (project) => {
-  selectedProject.value = project;
-};
-
 // provide로 전역 공유
 provide('menuState', isOpen);
 provide('toggleMenu', toggleMenu);
-provide('selectedProject', selectedProject);
 </script>

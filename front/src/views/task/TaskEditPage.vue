@@ -1,4 +1,6 @@
 <script setup>
+import { useAuthStore } from '@/stores/auth';
+import { useProjectStore } from '@/stores/project';
 import { useTaskStore } from '@/stores/task';
 import { computed, nextTick, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -6,8 +8,10 @@ import { useRoute, useRouter } from 'vue-router';
 const router = useRouter();
 const route = useRoute();
 const taskStore = useTaskStore();
-const projectId = 'PROJ2511001';
-const userId = '20261111';
+const projectStore = useProjectStore();
+const authStore = useAuthStore();
+const project = computed(() => projectStore.selectedProject);
+const userId = computed(() => authStore.user.id ?? '20261111');
 
 const pageTitle = computed(() => {
   if (route.path.includes('/task/edit')) return '일감 수정';
@@ -41,8 +45,8 @@ const removeWatcher = (id) => {
 };
 
 const form = reactive({
-  creator: userId,
-  projectId: projectId,
+  creator: userId.value,
+  projectId: project.value.id,
   isPublic: 'J1',
   title: '',
   type: null,
@@ -52,12 +56,12 @@ const form = reactive({
   parentId: null,
   category: null,
   userId: null,
-  targetVersion: null,
+  version: null,
   plannedStart: '',
   plannedEnd: '',
   actualStart: '',
   actualEnd: '',
-  estimatedtime: null,
+  estimatedTime: null,
   progress: null,
   attachments: [],
   watchers: [],
@@ -166,15 +170,17 @@ const handleSubmit = async () => {
   formData.append('parentId', form.parentId ?? '');
   formData.append('category', form.category);
   formData.append('userId', form.userId);
-  formData.append('targetVersion', form.targetVersion ?? '');
+  formData.append('version', form.version ?? '');
   formData.append('plannedStart', form.plannedStart);
   formData.append('plannedEnd', form.plannedEnd);
   formData.append('actualStart', form.actualStart ?? '');
   formData.append('actualEnd', form.actualEnd ?? '');
-  formData.append('estimatedtime', form.estimatedtime ?? '');
+  formData.append('estimatedTime', form.estimatedTime ?? '');
   formData.append('progress', form.progress ?? '');
   formData.append('linkCopied', form.linkCopied);
   formData.append('copySubTasks', form.copySubTasks);
+  formData.append('creator', form.creator);
+  formData.append('projectId', form.projectId);
 
   // 관람자 목록 (id만 추출)
   form.watchers.forEach((w) => {
@@ -199,9 +205,9 @@ onMounted(async () => {
   await taskStore.findPriorityList();
   await taskStore.findTypeList();
   await taskStore.findWorkflowList();
-  await taskStore.findMember(projectId);
-  await taskStore.findTaskList(projectId, userId);
-  await taskStore.findVersionList(projectId);
+  await taskStore.findMember(project.value.id);
+  await taskStore.findTaskList(project.value.id, userId.value);
+  await taskStore.findVersionList(project.value.id);
   validate();
 });
 </script>
@@ -231,7 +237,7 @@ onMounted(async () => {
             <td colspan="3" class="px-6 py-3 text-base text-[#1A1816] font-medium">
               <span class="inline-flex items-center gap-2">
                 <span class="w-2 h-2 rounded-full bg-[#E8920E] inline-block"></span>
-                ○○○○ 프로젝트
+                {{ project.title }}
               </span>
             </td>
           </tr>
@@ -302,7 +308,7 @@ onMounted(async () => {
             </td>
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">목표 버전</td>
             <td class="px-6 py-3">
-              <Select v-model="form.targetVersion" :options="versionOptions" optionLabel="name" optionValue="id" placeholder="선택" class="form-input w-full" />
+              <Select v-model="form.version" :options="versionOptions" optionLabel="name" optionValue="id" placeholder="선택" class="form-input w-full" />
             </td>
           </tr>
 

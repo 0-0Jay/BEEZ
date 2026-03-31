@@ -6,23 +6,28 @@ const Routes2 = [
   },
   {
     path: '/task/option',
-    name: 'taskoption',
+    name: 'taskOption',
     component: () => import('@/views/task/TaskOptionManagePage.vue')
   },
   {
     path: '/task/create',
-    name: 'taskcreate',
+    name: 'taskCreate',
     component: () => import('@/views/task/TaskEditPage.vue')
   },
   {
     path: '/task/edit',
-    name: 'taskedit',
+    name: 'taskEdit',
     component: () => import('@/views/task/TaskEditPage.vue')
   },
   {
     path: '/task/copy',
-    name: 'taskcopy',
+    name: 'taskCopy',
     component: () => import('@/views/task/TaskEditPage.vue')
+  },
+  {
+    path: '/task/:taskId',
+    name: 'taskDetail',
+    component: () => import('@/views/task/TaskDetailPage.vue')
   }
 ];
 export default Routes2;

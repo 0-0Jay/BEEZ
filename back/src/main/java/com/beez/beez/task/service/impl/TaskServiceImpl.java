@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -120,7 +121,14 @@ public class TaskServiceImpl implements TaskService {
 //      }
 //    }
     taskMapper.insertTask(task);
-    
+    if (task.getWatcherIds() != null && !task.getWatcherIds().isEmpty()) {
+      taskMapper.insertTaskWatcher(task.getId(), task.getWatcherIds());
+    }
   }
   
+  @Override
+  public TaskResponse findTaskDetail(String id) {
+    Optional<Task> task = taskRepository.findById(id);
+    return task.map(TaskResponse::toDto).orElse(null);
+  }
 }
