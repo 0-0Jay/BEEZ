@@ -60,6 +60,13 @@ export const useTaskStore = defineStore('task', {
     async findVersionList(projectId) {
       const res = await axios.get(`/task/version/${projectId}`);
       this.versionList = res.data;
+    },
+    async insertTask(data) {
+      const res = await axios.post(`/task`, data, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
     }
   },
   persist: true

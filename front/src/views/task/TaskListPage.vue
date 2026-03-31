@@ -53,6 +53,19 @@ function resetFilters() {
   currentPage.value = 1;
 }
 
+// ── 내 일감 / 관람 중인 일감: 즉시 반영 ──────────────────────────────────
+function toggleMyTasks() {
+  filters.value.showMyTasks = !filters.value.showMyTasks;
+  appliedFilters.value.showMyTasks = filters.value.showMyTasks;
+  currentPage.value = 1;
+}
+
+function toggleWatching() {
+  filters.value.showWatching = !filters.value.showWatching;
+  appliedFilters.value.showWatching = filters.value.showWatching;
+  currentPage.value = 1;
+}
+
 // 담당자 검색 드롭다운
 const userSearch = ref('');
 const userDropdownOpen = ref(false);
@@ -69,8 +82,8 @@ function clearUser() {
 }
 
 // 정렬
-const sortKey = ref(null); // 'id' | 'priority' | 'plannedEnd' | 'progress'
-const sortDir = ref('asc'); // 'asc' | 'desc'
+const sortKey = ref(null);
+const sortDir = ref('asc');
 
 const priorityWeight = { S3: 4, S2: 3, S1: 2, S0: 1 };
 
@@ -110,7 +123,6 @@ const processedTasks = computed(() => {
   if (appliedFilters.value.plannedStart) list = list.filter((t) => t.plannedEnd && t.plannedEnd >= appliedFilters.value.plannedStart);
   if (appliedFilters.value.plannedEnd) list = list.filter((t) => t.plannedEnd && t.plannedEnd <= appliedFilters.value.plannedEnd);
 
-  // 정렬
   if (sortKey.value) {
     const dir = sortDir.value === 'asc' ? 1 : -1;
     list.sort((a, b) => {
@@ -157,6 +169,11 @@ function nextBlock() {
   if (hasNextBlock.value) currentPage.value = blockEnd.value + 1;
 }
 
+// ── 일감 상세 이동 ────────────────────────────────────────────────────────
+function goToTask(taskId) {
+  router.push(`/task/${taskId}`);
+}
+
 // 유틸
 function progressBarColor(p) {
   if (p == 100) return '#22C55E';
@@ -193,7 +210,7 @@ onMounted(async () => {
 
 <template>
   <div class="min-h-screen bg-stone-50 px-10 py-8 text-stone-700">
-    <!-- 페이지 헤더  -->
+    <!-- 페이지 헤더 -->
     <div class="flex items-end justify-between mb-7">
       <div>
         <h1 class="text-2xl font-bold tracking-tight text-stone-900">일감 목록</h1>
@@ -288,8 +305,8 @@ onMounted(async () => {
 
       <div class="flex items-center justify-between mt-5 pt-4 border-t border-stone-100">
         <div class="flex items-center gap-5">
-          <!-- 내 일감 보기 -->
-          <label class="flex items-center gap-2 text-sm text-stone-500 cursor-pointer select-none" @click="filters.showMyTasks = !filters.showMyTasks">
+          <!-- 내 일감 보기: 즉시 반영 -->
+          <label class="flex items-center gap-2 text-sm text-stone-500 cursor-pointer select-none" @click="toggleMyTasks">
             <span class="w-4 h-4 rounded border flex items-center justify-center transition-colors shrink-0" :class="filters.showMyTasks ? 'bg-amber-600 border-amber-600' : 'border-stone-300 bg-stone-50'">
               <svg v-if="filters.showMyTasks" class="w-2.5 h-2.5 text-amber-50" viewBox="0 0 10 10" fill="none">
                 <polyline points="1.5,5 4,7.5 8.5,2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
@@ -298,8 +315,8 @@ onMounted(async () => {
             내 일감 보기
           </label>
 
-          <!-- 관람 중인 일감 보기 -->
-          <label class="flex items-center gap-2 text-sm text-stone-500 cursor-pointer select-none" @click="filters.showWatching = !filters.showWatching">
+          <!-- 관람 중인 일감 보기: 즉시 반영 -->
+          <label class="flex items-center gap-2 text-sm text-stone-500 cursor-pointer select-none" @click="toggleWatching">
             <span class="w-4 h-4 rounded border flex items-center justify-center transition-colors shrink-0" :class="filters.showWatching ? 'bg-amber-600 border-amber-600' : 'border-stone-300 bg-stone-50'">
               <svg v-if="filters.showWatching" class="w-2.5 h-2.5 text-amber-50" viewBox="0 0 10 10" fill="none">
                 <polyline points="1.5,5 4,7.5 8.5,2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
@@ -359,7 +376,13 @@ onMounted(async () => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(task, idx) in pagedTasks" :key="task.id" class="border-b border-stone-100 last:border-none hover:bg-amber-50 transition-colors duration-100" :class="idx % 2 !== 0 ? 'bg-stone-50/60' : 'bg-white'">
+            <tr
+              v-for="(task, idx) in pagedTasks"
+              :key="task.id"
+              class="border-b border-stone-100 last:border-none hover:bg-amber-50 transition-colors duration-100 cursor-pointer"
+              :class="idx % 2 !== 0 ? 'bg-stone-50/60' : 'bg-white'"
+              @click="goToTask(task.id)"
+            >
               <!-- 번호 -->
               <td class="px-4 py-3.5">
                 <span class="font-mono text-m font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded">
@@ -395,9 +418,9 @@ onMounted(async () => {
 
               <!-- 제목 -->
               <td class="px-4 py-3.5">
-                <a href="#" class="block text-base font-medium text-stone-800 hover:text-amber-600 transition-colors leading-snug">
+                <span class="block text-base font-medium text-stone-800 hover:text-amber-600 transition-colors leading-snug">
                   {{ task.title }}
-                </a>
+                </span>
               </td>
 
               <!-- 진척도 -->

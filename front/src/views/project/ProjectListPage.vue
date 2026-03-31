@@ -1,7 +1,7 @@
 <script setup>
 import { useProjectStore } from '@/stores/project';
 import { storeToRefs } from 'pinia';
-import { computed, inject, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 // 삭제할 id를 임시 저장
@@ -24,13 +24,10 @@ const handleDelConfirm = async () => {
   }
 };
 
-defineEmits(['selectProject']);
-
 // --- 1. 스토어 연결 ---
 const projectStore = useProjectStore();
 const { projects, loading } = storeToRefs(projectStore);
 
-const setProject = inject('selectedProject');
 const router = useRouter();
 const menu = ref();
 const selectedRow = ref(null);
@@ -87,7 +84,7 @@ const toggleMenu = (event, data) => {
 
 const goToDetail = (project) => {
   if (project.isLock === 'L1') return;
-  if (setProject) setProject.value = { title: project.title, id: project.id };
+  projectStore.selectedProject = { title: project.title, id: project.id };
   router.push(`/project/setting/${project.id}`);
 };
 

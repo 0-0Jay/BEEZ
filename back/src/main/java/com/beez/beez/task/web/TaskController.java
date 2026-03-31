@@ -98,4 +98,10 @@ public class TaskController {
   public void insertTask(@ModelAttribute TaskRequest task, @RequestPart(value = "attachments", required = false) List<MultipartFile> files) {
     taskService.insertTask(task, files);
   }
+  
+  // 일감 상세
+  @GetMapping("/{id}")
+  public TaskResponse findTaskDetail(@PathVariable String id) {
+    return taskService.findTaskDetail(id);
+  }
 }

@@ -1,15 +1,15 @@
 <script setup>
 import { useAuthStore } from '@/stores/auth';
-import { inject, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useProjectStore } from '@/stores/project';
+import { computed, inject, ref, watch } from 'vue';
 
 const isOpen = inject('menuState');
 const toggleMenu = inject('toggleMenu');
-const selectedProject = inject('selectedProject');
 
-const router = useRouter();
 const authStore = useAuthStore();
+const projectStore = useProjectStore();
 
+const selectedProject = computed(() => projectStore.selectedProject);
 const showContent = ref(isOpen.value);
 
 watch(isOpen, (val) => {

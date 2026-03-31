@@ -2,13 +2,15 @@
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import Notification from '@/components/notification/NotificationComponent.vue';
 import { useAuthStore } from '@/stores/auth';
-import { inject, ref } from 'vue';
+import { useProjectStore } from '@/stores/project';
+import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
+const projectStore = useProjectStore();
 const authStore = useAuthStore();
 const router = useRouter();
 
-const selectedProject = inject('selectedProject');
+const selectedProject = computed(() => projectStore.selectedProject);
 
 const userId = '20261111';
 
