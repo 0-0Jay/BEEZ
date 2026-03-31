@@ -5,17 +5,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TaskTimeResponse {
+public class FileDetailResponse {
   private String id;
-  private LocalDateTime taskStart;
-  private Integer spent;
-  private String description;
-  private Integer progress;
-  private String activityType;
+  private String fileId;
+  private String originalName;
+  private String storedName;
+  private String extension;
+  private long fileSize;
 }

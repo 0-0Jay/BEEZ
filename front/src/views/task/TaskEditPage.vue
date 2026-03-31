@@ -2,6 +2,7 @@
 import { useAuthStore } from '@/stores/auth';
 import { useProjectStore } from '@/stores/project';
 import { useTaskStore } from '@/stores/task';
+import DatePicker from 'primevue/datepicker';
 import { computed, nextTick, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -44,6 +45,16 @@ const removeWatcher = (id) => {
   form.watchers = form.watchers.filter((w) => w.id !== id);
 };
 
+// DatePicker Date 객체 → 'YYYY-MM-DD' 문자열 변환
+function formatDate(d) {
+  if (!d) return '';
+  if (typeof d === 'string') return d;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 const form = reactive({
   creator: userId.value,
   projectId: project.value.id,
@@ -57,10 +68,10 @@ const form = reactive({
   category: null,
   userId: null,
   version: null,
-  plannedStart: '',
-  plannedEnd: '',
-  actualStart: '',
-  actualEnd: '',
+  plannedStart: null,
+  plannedEnd: null,
+  actualStart: null,
+  actualEnd: null,
   estimatedTime: null,
   progress: null,
   attachments: [],
@@ -142,13 +153,11 @@ const isSaveDisabled = computed(() => {
   return !form.title.trim() || !form.type || !form.workflow || !form.priority || !form.category || !form.userId || !form.plannedStart || !form.plannedEnd;
 });
 
-const handleFileChange = (e) => {
-  const newFiles = Array.from(e.target.files);
-  newFiles.forEach((newFile) => {
+const handleFileChange = ({ files }) => {
+  files.forEach((newFile) => {
     const isDuplicate = form.attachments.some((f) => f.name === newFile.name && f.size === newFile.size);
     if (!isDuplicate) form.attachments.push(newFile);
   });
-  e.target.value = '';
 };
 
 const removeFile = (index) => {
@@ -160,7 +169,6 @@ const handleSubmit = async () => {
 
   const formData = new FormData();
 
-  // 일반 필드
   formData.append('isPublic', form.isPublic);
   formData.append('title', form.title);
   formData.append('type', form.type);
@@ -171,10 +179,10 @@ const handleSubmit = async () => {
   formData.append('category', form.category);
   formData.append('userId', form.userId);
   formData.append('version', form.version ?? '');
-  formData.append('plannedStart', form.plannedStart);
-  formData.append('plannedEnd', form.plannedEnd);
-  formData.append('actualStart', form.actualStart ?? '');
-  formData.append('actualEnd', form.actualEnd ?? '');
+  formData.append('plannedStart', formatDate(form.plannedStart));
+  formData.append('plannedEnd', formatDate(form.plannedEnd));
+  formData.append('actualStart', formatDate(form.actualStart));
+  formData.append('actualEnd', formatDate(form.actualEnd));
   formData.append('estimatedTime', form.estimatedTime ?? '');
   formData.append('progress', form.progress ?? '');
   formData.append('linkCopied', form.linkCopied);
@@ -182,12 +190,9 @@ const handleSubmit = async () => {
   formData.append('creator', form.creator);
   formData.append('projectId', form.projectId);
 
-  // 관람자 목록 (id만 추출)
   form.watchers.forEach((w) => {
     formData.append('watcherIds', w.id);
   });
-
-  // 첨부파일 (여러 개)
   form.attachments.forEach((file) => {
     formData.append('attachments', file);
   });
@@ -259,7 +264,7 @@ onMounted(async () => {
               <span class="flex items-center gap-1">일감명<span class="text-red-500 inline-block text-xl">*</span></span>
             </td>
             <td colspan="3" class="px-6 py-3">
-              <InputText v-model="form.title" placeholder="일감명을 입력해주세요." class="w-full form-input" @input="validate()" />
+              <InputText v-model="form.title" placeholder="일감명을 입력해주세요." class="w-full" @input="validate()" />
               <small v-if="touched.title && errors.title" class="text-red-500 mt-1 block text-xs">{{ errors.title }}</small>
             </td>
           </tr>
@@ -270,14 +275,14 @@ onMounted(async () => {
               <span class="flex items-center gap-1">일감유형<span class="text-red-500 inline-block text-xl">*</span></span>
             </td>
             <td class="px-6 py-3">
-              <Select v-model="form.type" :options="typeOptions" optionLabel="name" optionValue="id" placeholder="선택" class="form-input w-full" @change="nextTick(validate)" />
+              <Select v-model="form.type" :options="typeOptions" optionLabel="name" optionValue="id" placeholder="선택" class="w-full" @change="nextTick(validate)" />
               <small v-if="touched.type && errors.type" class="text-red-500 mt-1 block text-xs">{{ errors.type }}</small>
             </td>
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">
               <span class="flex items-center gap-1">일감상태<span class="text-red-500 inline-block text-xl">*</span></span>
             </td>
             <td class="px-6 py-3">
-              <Select v-model="form.workflow" :options="workflowOptions" optionLabel="name" optionValue="id" placeholder="선택" class="form-input w-full" @change="nextTick(validate)" />
+              <Select v-model="form.workflow" :options="workflowOptions" optionLabel="name" optionValue="id" placeholder="선택" class="w-full" @change="nextTick(validate)" />
               <small v-if="touched.workflow && errors.workflow" class="text-red-500 mt-1 block text-xs">{{ errors.workflow }}</small>
             </td>
           </tr>
@@ -288,14 +293,14 @@ onMounted(async () => {
               <span class="flex items-center gap-1">우선순위<span class="text-red-500 inline-block text-xl">*</span></span>
             </td>
             <td class="px-6 py-3">
-              <Select v-model="form.priority" :options="priorityOptions" optionLabel="name" optionValue="id" placeholder="선택" class="form-input w-full" @change="nextTick(validate)" />
+              <Select v-model="form.priority" :options="priorityOptions" optionLabel="name" optionValue="id" placeholder="선택" class="w-full" @change="nextTick(validate)" />
               <small v-if="touched.priority && errors.priority" class="text-red-500 mt-1 block text-xs">{{ errors.priority }}</small>
             </td>
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">
               <span class="flex items-center gap-1">일감 범주<span class="text-red-500 inline-block text-xl">*</span></span>
             </td>
             <td class="px-6 py-3">
-              <Select v-model="form.category" :options="categoryOptions" optionLabel="name" optionValue="id" placeholder="선택" class="form-input w-full" @change="nextTick(validate)" />
+              <Select v-model="form.category" :options="categoryOptions" optionLabel="name" optionValue="id" placeholder="선택" class="w-full" @change="nextTick(validate)" />
               <small v-if="touched.category && errors.category" class="text-red-500 mt-1 block text-xs">{{ errors.category }}</small>
             </td>
           </tr>
@@ -304,11 +309,11 @@ onMounted(async () => {
           <tr class="divide-x divide-[#F2F0EB]">
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">상위 일감</td>
             <td class="px-6 py-3">
-              <Select v-model="form.parentId" :options="parentTaskOptions" optionLabel="title" optionValue="id" placeholder="선택" class="form-input w-full" />
+              <Select v-model="form.parentId" :options="parentTaskOptions" optionLabel="title" optionValue="id" placeholder="선택" class="w-full" />
             </td>
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">목표 버전</td>
             <td class="px-6 py-3">
-              <Select v-model="form.version" :options="versionOptions" optionLabel="name" optionValue="id" placeholder="선택" class="form-input w-full" />
+              <Select v-model="form.version" :options="versionOptions" optionLabel="name" optionValue="id" placeholder="선택" class="w-full" />
             </td>
           </tr>
 
@@ -318,13 +323,13 @@ onMounted(async () => {
               <span class="flex items-center gap-1">담당자<span class="text-red-500 inline-block text-xl">*</span></span>
             </td>
             <td class="px-6 py-3">
-              <Select v-model="form.userId" :options="userOptions" optionLabel="name" optionValue="id" placeholder="검색 또는 선택" filter class="form-input w-full" @change="nextTick(validate)" />
+              <Select v-model="form.userId" :options="userOptions" optionLabel="name" optionValue="id" placeholder="검색 또는 선택" filter class="w-full" @change="nextTick(validate)" />
               <small v-if="touched.userId && errors.userId" class="text-red-500 mt-1 block text-xs">{{ errors.userId }}</small>
             </td>
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">진척도 (%)</td>
             <td class="px-6 py-3">
               <div class="flex items-center gap-4">
-                <InputNumber v-model="form.progress" :min="0" :max="100" placeholder="0" class="form-input w-28 shrink-0" suffix="%" />
+                <InputNumber v-model="form.progress" :min="0" :max="100" placeholder="0" class="w-28 shrink-0" suffix="%" />
               </div>
             </td>
           </tr>
@@ -335,19 +340,14 @@ onMounted(async () => {
               <span class="flex items-center gap-1">예상 시작일<span class="text-red-500 inline-block text-xl">*</span></span>
             </td>
             <td class="px-6 py-3">
-              <input
-                v-model="form.plannedStart"
-                type="date"
-                class="h-9 w-full px-3 bg-stone-50 border border-stone-200 rounded-md text-base text-stone-700 outline-none focus:border-amber-400 focus:bg-amber-50 transition-colors"
-                @change="validate()"
-              />
+              <DatePicker v-model="form.plannedStart" date-format="yy-mm-dd" placeholder="날짜 선택" show-button-bar class="w-full" input-class="w-full" @date-select="validate()" />
               <small v-if="touched.plannedStart && errors.plannedStart" class="text-red-500 mt-1 block text-xs">{{ errors.plannedStart }}</small>
             </td>
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">
               <span class="flex items-center gap-1">예상 마감일<span class="text-red-500 inline-block text-xl">*</span></span>
             </td>
             <td class="px-6 py-3">
-              <input v-model="form.plannedEnd" type="date" class="h-9 w-full px-3 bg-stone-50 border border-stone-200 rounded-md text-base text-stone-700 outline-none focus:border-amber-400 focus:bg-amber-50 transition-colors" @change="validate()" />
+              <DatePicker v-model="form.plannedEnd" date-format="yy-mm-dd" placeholder="날짜 선택" show-button-bar class="w-full" input-class="w-full" @date-select="validate()" />
               <small v-if="touched.plannedEnd && errors.plannedEnd" class="text-red-500 mt-1 block text-xs">{{ errors.plannedEnd }}</small>
             </td>
           </tr>
@@ -356,11 +356,11 @@ onMounted(async () => {
           <tr class="divide-x divide-[#F2F0EB]">
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">실제 시작일</td>
             <td class="px-6 py-3">
-              <input v-model="form.actualStart" type="date" class="h-9 w-full px-3 bg-stone-50 border border-stone-200 rounded-md text-base text-stone-700 outline-none focus:border-amber-400 focus:bg-amber-50 transition-colors" />
+              <DatePicker v-model="form.actualStart" date-format="yy-mm-dd" placeholder="날짜 선택" show-button-bar class="w-full" input-class="w-full" />
             </td>
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">실제 마감일</td>
             <td class="px-6 py-3">
-              <input v-model="form.actualEnd" type="date" class="h-9 w-full px-3 bg-stone-50 border border-stone-200 rounded-md text-base text-stone-700 outline-none focus:border-amber-400 focus:bg-amber-50 transition-colors" />
+              <DatePicker v-model="form.actualEnd" date-format="yy-mm-dd" placeholder="날짜 선택" show-button-bar class="w-full" input-class="w-full" />
             </td>
           </tr>
 
@@ -368,7 +368,7 @@ onMounted(async () => {
           <tr class="divide-x divide-[#F2F0EB]">
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">추정 시간 (분)</td>
             <td colspan="3" class="px-6 py-3">
-              <InputNumber v-model="form.estimatedtime" :min="0" placeholder="0" class="form-input w-36" />
+              <InputNumber v-model="form.estimatedtime" :min="0" placeholder="0" class="w-36" />
             </td>
           </tr>
 
@@ -384,13 +384,21 @@ onMounted(async () => {
           <tr class="divide-x divide-[#F2F0EB]">
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35] align-top pt-4">첨부파일</td>
             <td colspan="3" class="px-6 py-3">
-              <label class="inline-flex items-center gap-2 px-4 py-2 rounded border border-[#C7C7C2] bg-[#FAFAF8] text-base text-[#3A3B35] cursor-pointer hover:bg-[#F2F0EB] transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#6B6B63]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                </svg>
-                파일 추가
-                <input type="file" multiple class="hidden" @change="handleFileChange" />
-              </label>
+              <FileUpload
+                mode="basic"
+                :multiple="true"
+                :auto="false"
+                choose-label="파일 추가"
+                :pt="{
+                  root: { class: 'inline-flex' },
+                  chooseButton: { class: '!border-[#C7C7C2] !bg-[#FAFAF8] !text-[#3A3B35] hover:!bg-[#F2F0EB] !shadow-none !text-base' }
+                }"
+                @select="handleFileChange"
+              >
+                <template #chooseicon>
+                  <i class="pi pi-paperclip"></i>
+                </template>
+              </FileUpload>
               <div v-if="form.attachments.length > 0" class="mt-3 flex flex-col gap-1.5">
                 <div v-for="(file, index) in form.attachments" :key="index" class="inline-flex items-center gap-2 px-3 py-2 bg-[#F8F7F4] border border-[#E5E4DF] rounded-md text-base text-[#3A3B35] w-fit max-w-full">
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#9A9B90] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -413,7 +421,7 @@ onMounted(async () => {
           <tr class="divide-x divide-[#F2F0EB]">
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35] align-top pt-4">일감 관람자</td>
             <td colspan="3" class="px-6 py-3">
-              <Select v-model="watcherSelectValue" :options="watcherOptions" optionLabel="name" optionValue="id" placeholder="관람자 검색 또는 선택" filter filterPlaceholder="이름으로 검색" class="form-input w-64" @change="onWatcherSelect" />
+              <Select v-model="watcherSelectValue" :options="watcherOptions" optionLabel="name" optionValue="id" placeholder="관람자 검색 또는 선택" filter filterPlaceholder="이름으로 검색" class="w-64" @change="onWatcherSelect" />
               <div v-if="form.watchers.length > 0" class="flex flex-wrap gap-2 mt-3">
                 <span v-for="w in form.watchers" :key="w.id" class="inline-flex items-center gap-1.5 px-3 py-1 bg-[#FFF3E0] border border-[#E8920E] rounded-full text-base text-[#E8920E] font-medium">
                   {{ w.name }}
@@ -449,62 +457,8 @@ onMounted(async () => {
 
     <!-- 버튼 -->
     <div class="flex justify-center gap-3">
-      <Button label="저장" class="btn-amber px-8" :disabled="isSaveDisabled" @click="handleSubmit" />
-      <Button label="취소" class="btn-cancel px-8" @click="handleCancel" />
+      <Button label="저장" class="px-8" :disabled="isSaveDisabled" @click="handleSubmit" />
+      <Button label="취소" class="px-8" severity="secondary" @click="handleCancel" />
     </div>
   </div>
 </template>
-
-<style scoped>
-:deep(.form-input) {
-  height: 38px !important;
-  border-color: #c7c7c2 !important;
-  background-color: #fafaf8 !important;
-}
-:deep(.form-input:focus),
-:deep(.form-input.p-focus) {
-  border-color: #e8920e !important;
-  box-shadow: 0 0 0 2px rgba(232, 146, 14, 0.15) !important;
-}
-:deep(.p-textarea) {
-  border-color: #c7c7c2 !important;
-  background-color: #fafaf8 !important;
-}
-:deep(.p-textarea:focus) {
-  border-color: #e8920e !important;
-  box-shadow: 0 0 0 2px rgba(232, 146, 14, 0.15) !important;
-}
-:deep(.p-inputnumber-input) {
-  height: 38px !important;
-  border-color: #c7c7c2 !important;
-  background-color: #fafaf8 !important;
-}
-:deep(.btn-amber) {
-  background-color: #e8920e !important;
-  color: #ffffff !important;
-  border: 1px solid transparent !important;
-  box-shadow: none !important;
-  height: 36px !important;
-  min-height: 36px !important;
-  box-sizing: border-box !important;
-}
-:deep(.btn-amber:hover:not(:disabled)) {
-  background-color: #c97700 !important;
-}
-:deep(.btn-amber:disabled) {
-  background-color: #d4d2cc !important;
-  cursor: not-allowed !important;
-}
-:deep(.btn-cancel) {
-  color: #6b6b63 !important;
-  border: 1px solid #c7c7c2 !important;
-  height: 36px !important;
-  min-height: 36px !important;
-  box-sizing: border-box !important;
-  background-color: white !important;
-}
-:deep(.btn-cancel:hover) {
-  background-color: #e5e2d9 !important;
-  color: #1a1816 !important;
-}
-</style>

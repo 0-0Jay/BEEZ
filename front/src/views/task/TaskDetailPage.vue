@@ -211,7 +211,7 @@ const priorityClass = {
 
 <template>
   <div class="min-h-screen bg-[#FAFAF8] p-8">
-    <!-- ─── 헤더 ─────────────────────────────────────────────────────── -->
+    <!-- 헤더 -->
     <div class="mb-6 flex items-start justify-between gap-4 flex-wrap">
       <div class="flex flex-col gap-2 min-w-0">
         <div class="flex items-center gap-3 flex-wrap">
@@ -262,7 +262,7 @@ const priorityClass = {
       </div>
     </div>
 
-    <!-- ─── 일감 정보 테이블 ───────────────────────────────────────────── -->
+    <!-- 일감 정보 테이블 -->
     <div class="bg-white rounded-lg shadow-sm border border-[#C7C7C2] mb-6">
       <table class="w-full">
         <colgroup>
@@ -372,11 +372,37 @@ const priorityClass = {
               </div>
             </td>
           </tr>
+
+          <!-- 상위일감 -->
+          <tr class="divide-x divide-[#F2F0EB]">
+            <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">진척도</td>
+            <td colspan="3" class="px-6 py-3">
+              <div class="flex items-center gap-3">
+                <div class="flex-1 max-w-xs h-2 rounded-full bg-[#F2F0EB] overflow-hidden">
+                  <div class="h-full rounded-full transition-all duration-500" :class="progressColor(task.progress)" :style="{ width: task.progress + '%' }"></div>
+                </div>
+                <span class="text-base font-semibold text-[#1A1816] w-10 shrink-0">{{ task.progress }}%</span>
+              </div>
+            </td>
+          </tr>
+
+          <!-- 첨부파일 -->
+          <tr class="divide-x divide-[#F2F0EB]">
+            <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">진척도</td>
+            <td colspan="3" class="px-6 py-3">
+              <div class="flex items-center gap-3">
+                <div class="flex-1 max-w-xs h-2 rounded-full bg-[#F2F0EB] overflow-hidden">
+                  <div class="h-full rounded-full transition-all duration-500" :class="progressColor(task.progress)" :style="{ width: task.progress + '%' }"></div>
+                </div>
+                <span class="text-base font-semibold text-[#1A1816] w-10 shrink-0">{{ task.progress }}%</span>
+              </div>
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- ─── 하위 일감 ─────────────────────────────────────────────────── -->
+    <!-- 하위 일감 -->
     <div class="bg-white rounded-lg shadow-sm border border-[#C7C7C2] mb-6">
       <div class="px-6 py-3 border-b border-[#C7C7C2] bg-[#F2F0EB] rounded-t-lg flex items-center justify-between">
         <div class="flex items-center gap-3">
@@ -423,7 +449,7 @@ const priorityClass = {
       </table>
     </div>
 
-    <!-- ─── 연결된 일감 ───────────────────────────────────────────────── -->
+    <!-- 연결된 일감  -->
     <div class="bg-white rounded-lg shadow-sm border border-[#C7C7C2] mb-6">
       <div class="px-6 py-3 border-b border-[#C7C7C2] bg-[#F2F0EB] rounded-t-lg flex items-center justify-between">
         <div class="flex items-center gap-3">
