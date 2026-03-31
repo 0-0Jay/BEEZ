@@ -10,6 +10,13 @@ const route = useRoute();
 const userId = ref(''); //입력받을 작성자명
 const wikiInfo = ref(''); //작성창 한줄 설명
 
+//version id 별로,  wikiId별로 겹치지 않도록
+const generateId = (prefix) => {
+  const now = new Date();
+  const timestamp =
+    now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0') + String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0') + String(now.getSeconds()).padStart(2, '0');
+  return `${prefix}_${timestamp}`;
+};
 //스토어랑 연결
 const projectInfo = computed(() => wikiStore.projectInfo);
 
@@ -103,6 +110,17 @@ function closeEditModal() {
 async function confirmEdit() {
   if (!editReason.value.trim()) return;
 
+  //새버전 ID생성
+  const newVersionId = generateId('VER');
+
+  //신규 위키는ID생성하고, 기존위키면 기존ID 사용
+  const isNewWiki = !wikiStore.wikiDetail.id;
+  const currentWikiId = isNewWiki ? generateId('WIKI') : wikiStore.wikiDetail.id;
+
+  const commentRegex = new RegExp('<!--v-if-->', 'g'); // 에디터로 본문 작성하면 생기는 주석 삭제하고 DB에 저장하려함
+  const cleanContent = editorContent.value ? editorContent.value.replace(commentRegex, '') : '';
+  console.log('정제된 데이터 확인:', cleanContent);
+
   //유효한 링크만 필터링해서 JSON처리
   const validLinks = linkItems.value.filter((l) => l.title.trim() || l.url.trim());
   const linksJson = JSON.stringify(validLinks); // JSON문자열로 links를 변형하기 위함
@@ -110,22 +128,25 @@ async function confirmEdit() {
   // 백엔드 wikiSaveRequdst 구조에 맞도록 조립 (2개 받아서 하나로 묶어야 됨)
   const saveData = {
     wikiRequest: {
-      id: 'WIKI_007', //위키 ID (신규면 빈값 혹은 생성된 값)
+      id: currentWikiId, //위키 ID (신규면 빈값 혹은 생성된 값)
       projectId: route.params.projectId,
-      versionId: 'VER_001' //백엔드나 프론트에서 생성할 버전 ID
+      versionId: newVersionId //백엔드나 프론트에서 생성할 버전 ID
     },
     versionRequest: {
-      content: editorContent.value,
+      versionId: newVersionId,
+      content: cleanContent,
       userId: userId.value,
-      wikiId: 'WIKI_007',
+      wikiId: currentWikiId,
       description: editReason.value, //수정이유
       versionName: projectInfo.value.title,
-      links: linksJson //JSON 문자열로 전송할 예정
-      // wikiInfo: wikiStore.wikiDetail.wikiInfo //이건 back작업 마저 해야함
+      links: linksJson, //JSON 문자열로 전송할 예정
+      wikiInfo: wikiInfo.value //이건 back작업 마저 해야함
     }
   }; // saveData end
 
   const result = await wikiStore.saveWiki(saveData);
+
+  console.log('저장 결과:', result);
 
   if (result) {
     showEditModal.value = false;
@@ -351,14 +372,6 @@ function applyFormat(command, value = null) {
         <button class="toolbar-btn underline" title="밑줄" @click="applyFormat('underline')"><u>U</u></button>
         <button class="toolbar-btn strikethrough" title="취소선" @click="applyFormat('strikeThrough')"><s>S</s></button>
         <button class="toolbar-btn" title="글자색" @click="applyFormat('foreColor')">A</button>
-
-        <div class="toolbar-divider" />
-
-        <button class="toolbar-btn" title="링크" @click="applyFormat('link')">🔗</button>
-        <button class="toolbar-btn" title="이미지" @click="applyFormat('image')">🖼</button>
-        <button class="toolbar-btn" title="표" @click="applyFormat('table')">⊞</button>
-
-        <div class="toolbar-divider" />
 
         <button class="toolbar-btn" title="글머리 기호" @click="applyFormat('insertUnorderedList')">:=</button>
         <button class="toolbar-btn" title="번호 목록" @click="applyFormat('insertOrderedList')">1=</button>

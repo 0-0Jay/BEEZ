@@ -25,8 +25,10 @@ public class WikiServiceImpl implements WikiService {
   public void insertWiki(WikiRequest wikiRequest, WikiVersionRequest versionRequest){
     System.out.println(wikiRequest.getId());
     System.out.println(versionRequest.getVersionId());
-    wikiMapper.insertWiki(wikiRequest);
     wikiMapper.insertWikiVersion(versionRequest);
+    // 확인용 출력: 이게 null이면 무조건 에러 납니다.
+    System.out.println("DB에 넣을 버전 ID: " + wikiRequest.getVersionId());
+    wikiMapper.insertWiki(wikiRequest);
     wikiMapper.updateWiki(wikiRequest);
   }
   
