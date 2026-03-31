@@ -17,5 +17,4 @@ public class JournalResponse {
   private String userId;
   private String name;
   private LocalDateTime createdOn;
-  private List<JournalDetailResponse> journalDetailList;
 }

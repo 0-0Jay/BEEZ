@@ -130,6 +130,12 @@ public class TaskServiceImpl implements TaskService {
   public TaskResponse findTaskDetail(String id) {
     Optional<Task> task = taskRepository.findById(id);
     TaskResponse response = task.map(TaskResponse::toDto).orElse(null);
+    
+// get_task_detail 프로시저 만들어 놨음 -> https://claude.ai/chat/486434ea-f8b6-4072-af43-f14ff5ed177d 확인
+    // journalResponse의 id로 모달 클릭하면 JournalDetail 가져오게 할거임 << 뭔말인지 이해 못하겠으면 그냥 JournalResponse에 리스트 지운거로 생각
+    // 프론트에서 댓글 답글 처리 해야됨 클로드한테 부탁할 것
+    // 화이팅
+
 //    response.setJournalList();
 //    response.setTimeList();
 //    response.setFileList();
