@@ -1,7 +1,6 @@
 package com.beez.beez.task.service;
 
 import com.beez.beez.task.dto.*;
-import com.beez.beez.task.repository.Task;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -51,4 +50,13 @@ public interface TaskService {
   
   // 일감 상세
   TaskResponse findTaskDetail(String id);
+  
+  // 관계 목록
+  List<RelationResponse> findRelationList();
+  
+  // 작업분류 목록
+  List<ActivityResponse> findActivityList();
+  
+  // 일감 댓글 작성
+  void insertTaskReply(TaskReplyRequest taskReplyRequest);
 }

@@ -42,6 +42,20 @@
     WHERE group_value = '0Q'
   </select>
   
+  <select id="findRelationList" resultType="RelationResponse">
+    SELECT com_value AS id,
+           com_name AS name
+    FROM common_code
+    WHERE group_value = '0W'
+  </select>
+  
+  <select id="findActivityList" resultType="ActivityResponse">
+    SELECT com_value AS id,
+           com_name AS name
+    FROM common_code
+    WHERE group_value = '0U'
+  </select>
+  
   <select id="findVersionList" resultType="VersionResponse">
     SELECT *
     FROM version
@@ -106,9 +120,110 @@
   </insert>
   
   <insert id="insertTaskWatcher" statementType="CALLABLE">
-    { CALL proc_watcher_list(
-           #{taskId},
-           #{watcherList, typeHandler=com.beez.beez.config.OracleTypeHandler.WatcherTypeHandler}
-           )}
+    {
+      CALL proc_watcher_list(
+        #{taskId},
+        #{watcherList, typeHandler=com.beez.beez.config.OracleTypeHandler.WatcherTypeHandler}
+      )
+    }
+  </insert>
+  
+  <select id="findTaskDetail" statementType="CALLABLE">
+    {
+      CALL GET_TASK_DETAIL(
+        #{id,            mode=IN,  jdbcType=VARCHAR},
+        #{versionId,     mode=OUT, jdbcType=VARCHAR},
+        #{title,         mode=OUT, jdbcType=VARCHAR},
+        #{description,   mode=OUT, jdbcType=VARCHAR},
+        #{userId,        mode=OUT, jdbcType=VARCHAR},
+        #{name,          mode=OUT, jdbcType=VARCHAR},
+        #{type,          mode=OUT, jdbcType=VARCHAR},
+        #{category,      mode=OUT, jdbcType=VARCHAR},
+        #{workflow,      mode=OUT, jdbcType=VARCHAR},
+        #{priority,      mode=OUT, jdbcType=VARCHAR},
+        #{reject,        mode=OUT, jdbcType=VARCHAR},
+        #{plannedStart,  mode=OUT, jdbcType=TIMESTAMP},
+        #{plannedEnd,    mode=OUT, jdbcType=TIMESTAMP},
+        #{actualStart,   mode=OUT, jdbcType=TIMESTAMP},
+        #{actualEnd,     mode=OUT, jdbcType=TIMESTAMP},
+        #{estimatedTime, mode=OUT, jdbcType=NUMERIC},
+        #{progress,      mode=OUT, jdbcType=NUMERIC},
+        #{parentId,      mode=OUT, jdbcType=VARCHAR},
+        #{parentName,    mode=OUT, jdbcType=VARCHAR},
+        #{isPublic,      mode=OUT, jdbcType=VARCHAR},
+        #{creator,       mode=OUT, jdbcType=VARCHAR},
+        #{fileId,        mode=OUT, jdbcType=VARCHAR},
+        #{journalList,   mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=journalResultMap,  typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
+        #{timeList,      mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=timeResultMap,     typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
+        #{replyList,     mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=replyResultMap,    typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
+        #{fileList,      mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=fileResultMap,     typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
+        #{childTaskList, mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=childResultMap,    typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
+        #{linkedTaskList,mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=linkedResultMap,   typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
+        #{watcherList,   mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=watcherResultMap,  typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler}
+      )
+    }
+  </select>
+  
+  <resultMap id="journalResultMap" type="com.beez.beez.task.dto.JournalResponse">
+    <result property="id" column="id" />
+    <result property="userId" column="user_id" />
+    <result property="name" column="name" />
+    <result property="createdOn" column="created_on" />
+  </resultMap>
+  
+  <resultMap id="timeResultMap" type="com.beez.beez.task.dto.TaskTimeResponse">
+    <result property="id" column="id" />
+    <result property="taskStart" column="task_start" />
+    <result property="spent" column="spent" />
+    <result property="description" column="description" />
+    <result property="progress" column="progress" />
+    <result property="activityType" column="activity_type" />
+  </resultMap>
+  
+  <resultMap id="replyResultMap" type="com.beez.beez.task.dto.TaskReplyResponse">
+    <result property="id" column="id" />
+    <result property="userId" column="user_id" />
+    <result property="name" column="name" />
+    <result property="content" column="content" />
+    <result property="createdOn" column="created_on" />
+    <result property="editedOn" column="edited_on" />
+    <result property="parentId" column="parent_id" />
+  </resultMap>
+  
+  <resultMap id="fileResultMap" type="com.beez.beez.task.dto.FileDetailResponse">
+    <result property="id" column="id" />
+    <result property="fieldName" column="field_name" />
+    <result property="oldValue" column="old_value" />
+    <result property="newValue" column="new_value" />
+  </resultMap>
+  
+  <resultMap id="childResultMap" type="com.beez.beez.task.dto.TaskListResponse">
+    <result property="id" column="id" />
+    <result property="title" column="title" />
+    <result property="workflow" column="workflow" />
+    <result property="plannedEnd" column="planned_end" />
+    <result property="progress" column="progress" />
+  </resultMap>
+  
+  <resultMap id="linkedResultMap" type="com.beez.beez.task.dto.TaskRelationResponse">
+    <result property="id" column="id" />
+    <result property="title" column="title" />
+    <result property="workflow" column="workflow" />
+    <result property="plannedEnd" column="planned_end" />
+    <result property="progress" column="progress" />
+    <result property="relationType" column="relation_type" />
+  </resultMap>
+  
+  <resultMap id="watcherResultMap" type="com.beez.beez.task.dto.TaskWatcherResponse">
+    <result property="userId" column="user_id" />
+    <result property="name" column="name" />
+  </resultMap>
+  
+  <insert id="insertTaskReply" parameterType="TaskReplyRequest">
+    <selectKey keyProperty="id" resultType="String" order="BEFORE">
+      SELECT BEEZ.generate_pk_auto('task_reply') FROM dual
+    </selectKey>
+      INSERT INTO task_reply(id, task_id, user_id, content, created_on, parent_id)
+      VALUES(#{id}, #{taskId}, #{userId}, #{content}, SYSTIMESTAMP, #{parentId})
   </insert>
 </mapper>

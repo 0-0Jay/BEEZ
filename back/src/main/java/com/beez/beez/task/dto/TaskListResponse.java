@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 @Data
@@ -21,7 +22,7 @@ public class TaskListResponse {
   private String category;
   private String workflow;
   private String priority;
-  private LocalDateTime plannedEnd;
+  private Timestamp plannedEnd;
   private int progress;
   private int isWatch;
 }

@@ -104,4 +104,19 @@ public class TaskController {
   public TaskResponse findTaskDetail(@PathVariable String id) {
     return taskService.findTaskDetail(id);
   }
+  
+  @GetMapping("/relation")
+  public List<RelationResponse> findRelationList() {
+    return taskService.findRelationList();
+  }
+  
+  @GetMapping("/activity")
+  public List<ActivityResponse> findActivityList() {
+    return taskService.findActivityList();
+  }
+  
+  @PostMapping("/reply")
+  public void insertTaskReply(@RequestBody TaskReplyRequest taskReplyRequest) {
+    taskService.insertTaskReply(taskReplyRequest);
+  }
 }

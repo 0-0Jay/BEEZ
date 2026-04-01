@@ -39,6 +39,15 @@ function formatDate(d) {
   return `${y}-${m}-${day}`;
 }
 
+const formatListDate = (ts) => {
+  if (!ts) return '-';
+  return new Date(ts).toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+};
+
 // 필터 초기값
 const defaultFilters = () => ({
   workflow: null,
@@ -69,7 +78,7 @@ function resetFilters() {
   currentPage.value = 1;
 }
 
-// ── 내 일감 / 관람 중인 일감: 즉시 반영 ──────────────────────────────────
+// 내 일감 / 관람 중인 일감: 즉시 반영
 watch(
   () => filters.value.showMyTasks,
   (val) => {
@@ -178,7 +187,7 @@ function nextBlock() {
   if (hasNextBlock.value) currentPage.value = blockEnd.value + 1;
 }
 
-// ── 일감 상세 이동 ────────────────────────────────────────────────────────
+// 일감 상세 이동
 function goToTask(taskId) {
   router.push(`/task/${taskId}`);
 }
@@ -196,8 +205,8 @@ const workflowClass = {
   Q0: 'status-new',
   Q1: 'status-in-progress',
   Q2: 'status-resolved',
-  Q3: 'status-rejected',
-  Q4: 'status-done'
+  Q3: 'status-done',
+  Q4: 'status-rejected'
 };
 
 const priorityClass = {
@@ -301,7 +310,7 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- 테이블 카드 (변경 없음) -->
+    <!-- 테이블 카드 -->
     <div class="bg-white border border-[#C7C7C2] rounded-xl shadow-sm overflow-hidden">
       <div class="px-6 py-3.5 border-b border-stone-100">
         <span class="text-sm text-stone-400">
@@ -334,7 +343,7 @@ onMounted(async () => {
                 </button>
               </th>
               <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-28">담당자</th>
-              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-30">
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-36">
                 <button class="sort-btn" :class="{ active: sortKey === 'plannedEnd' }" @click="toggleSort('plannedEnd')">
                   마감일 <span class="sort-icon">{{ sortIcon('plannedEnd') }}</span>
                 </button>
@@ -378,7 +387,7 @@ onMounted(async () => {
                 </div>
               </td>
               <td class="px-4 py-3.5 text-base text-stone-600 text-center">{{ task.userName }}</td>
-              <td class="px-4 py-3.5 text-base text-stone-500 tabular-nums text-center">{{ task.plannedEnd }}</td>
+              <td class="px-4 py-3.5 text-base text-stone-500 tabular-nums text-center">{{ formatListDate(task.plannedEnd) }}</td>
             </tr>
             <tr v-if="pagedTasks.length === 0">
               <td colspan="9" class="text-center py-16 text-sm text-stone-400">일감이 없습니다.</td>
@@ -418,7 +427,7 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-/* ── 정렬 버튼 ── */
+/*  정렬 버튼  */
 .sort-btn {
   display: inline-flex;
   align-items: center;
@@ -454,7 +463,7 @@ onMounted(async () => {
   color: #d97706;
 }
 
-/* ── 우선순위 ── */
+/*  우선순위  */
 .priority-low {
   background-color: #eaf3de;
   color: #3b6d11;
@@ -472,7 +481,7 @@ onMounted(async () => {
   color: #791f1f;
 }
 
-/* ── 상태 ── */
+/*  상태  */
 .status-new {
   background-color: #f1efe8;
   color: #444441;

@@ -1,5 +1,6 @@
 import axios from '@/stores/AxiosInstance';
 import { defineStore } from 'pinia';
+import { ref } from 'vue';
 
 export const useTaskStore = defineStore('task', {
   // state
@@ -10,7 +11,10 @@ export const useTaskStore = defineStore('task', {
     taskList: [],
     priorityList: [],
     workflowList: [],
-    versionList: []
+    versionList: [],
+    relationList: [],
+    activityList: [],
+    task: ref(null)
   }),
   // getters
   // actions
@@ -67,6 +71,21 @@ export const useTaskStore = defineStore('task', {
           'Content-Type': 'multipart/form-data'
         }
       });
+    },
+    async findTaskDetail(taskId) {
+      const res = await axios.get(`/task/${taskId}`);
+      this.task = res.data;
+    },
+    async findRelationList() {
+      const res = await axios.get(`/task/relation`);
+      this.relationList = res.data;
+    },
+    async findActivityList() {
+      const res = await axios.get(`/task/activity`);
+      this.activityList = res.data;
+    },
+    async insertTaskReply(data) {
+      const res = await axios.post(`/task/reply`, data);
     }
   },
   persist: true

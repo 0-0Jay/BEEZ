@@ -91,11 +91,13 @@ public class TaskServiceImpl implements TaskService {
     return taskMapper.findWorkflowList();
   }
   
+  // 버전 목록
   @Override
   public List<VersionResponse> findVersionList(String projectId) {
     return taskMapper.findVersionList(projectId);
   }
   
+  // 일감 등록
   @Override
   @Transactional
   public void insertTask(TaskRequest task, List<MultipartFile> files) {
@@ -126,16 +128,30 @@ public class TaskServiceImpl implements TaskService {
     }
   }
   
+  // 일감 상세
   @Override
   public TaskResponse findTaskDetail(String id) {
-    Optional<Task> task = taskRepository.findById(id);
-    TaskResponse response = task.map(TaskResponse::toDto).orElse(null);
-//    response.setJournalList();
-//    response.setTimeList();
-//    response.setFileList();
-//    response.setChildTaskList();
-//    response.setLinkedTaskList();
-    
-    return response;
+    TaskResponse task = new TaskResponse();
+    task.setId(id);
+    taskMapper.findTaskDetail(task);
+    return task;
+  }
+  
+  // 관계 목록
+  @Override
+  public List<RelationResponse> findRelationList() {
+    return taskMapper.findRelationList();
+  }
+  
+  // 작업분류 목록
+  @Override
+  public List<ActivityResponse> findActivityList() {
+    return taskMapper.findActivityList();
+  }
+  
+  // 일감 댓글 작성
+  @Override
+  public void insertTaskReply(TaskReplyRequest taskReplyRequest) {
+    taskMapper.insertTaskReply(taskReplyRequest);
   }
 }
