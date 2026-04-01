@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 @Data
@@ -13,7 +14,7 @@ import java.time.LocalDateTime;
 @Builder
 public class TaskTimeResponse {
   private String id;
-  private LocalDateTime taskStart;
+  private Timestamp taskStart;
   private Integer spent;
   private String description;
   private Integer progress;

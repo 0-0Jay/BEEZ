@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 @Data
@@ -16,7 +17,7 @@ public class TaskReplyResponse {
   private String userId;
   private String name;
   private String content;
-  private LocalDateTime createdOn;
-  private LocalDateTime editedOn;
+  private Timestamp createdOn;
+  private Timestamp editedOn;
   private String parentId;
 }
