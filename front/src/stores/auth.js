@@ -54,6 +54,18 @@ export const useAuthStore = defineStore('auth', {
       this.user = null;
       // localStorage.removeItem('accessToken');
       // localStorage.removeItem('user');
+    },
+
+    async requestPasswordReset(payload) {
+      try {
+        const response = await axios.post('/auth/reset-request', payload);
+        console.log(response.data);
+
+        return { success: true, message: response.data };
+      } catch (err) {
+        const errorMsg = err.response?.data?.message || '서버 오류가 발생했습니다.';
+        return { success: false, message: errorMsg };
+      }
     }
   },
   persist: true

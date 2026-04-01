@@ -12,6 +12,17 @@ const router = createRouter({
     { path: '/', name: 'login', component: () => import('@/views/auth/Login.vue') },
 
     {
+      path: '/auth/pwRequest',
+      name: 'pwRequest',
+      component: () => import('@/views/auth/PasswordRequest.vue')
+    },
+    {
+      path: '/auth/pwReset',
+      name: 'pwReset',
+      component: () => import('@/views/auth/PasswordReset.vue')
+    },
+
+    {
       path: '/main',
       component: AppLayout,
       children: [

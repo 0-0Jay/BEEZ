@@ -58,11 +58,11 @@ const openUserFormModal = () => {
 </script>
 
 <template>
-  <div class="p-8 bg-[#FAFAF8]">
+  <div class="p-8 bg-[#f3f4f6]">
     <h1 class="text-2xl font-bold text-[#1A1816]">사용자 목록</h1>
 
     <!-- 검색 필터 -->
-    <div class="bg-[#F2F0EB] px-10 py-8 rounded-lg mb-4 shadow-sm border border-[#C7C7C2] flex items-center">
+    <div class="bg-[#DDE1EA] px-10 py-8 rounded-lg mb-4 shadow-sm border border-[#dde1ea] flex items-center">
       <div class="flex items-center flex-wrap gap-y-3">
         <div class="flex items-center mr-8">
           <label class="filter-label mr-3">사원 이름</label>
@@ -79,19 +79,19 @@ const openUserFormModal = () => {
       </div>
 
       <div class="flex gap-2 ml-auto">
-        <Button label="초기화" text class="btn-reset filter-btn mr-1" @click="resetFilters" />
-        <Button label="조회" icon="pi pi-search" class="btn-amber" @click="fetchUsers" />
+        <Button label="초기화" severity="secondary" raised @click="resetFilters" />
+        <Button label="조회" icon="pi pi-search" raised @click="fetchUsers" />
       </div>
     </div>
 
     <!-- 전체 건수 + 사용자 추가 -->
     <div class="flex justify-between items-center mb-3">
       <span class="text-sm text-[#3A3B35] font-medium">전체 {{ totalCount }}명</span>
-      <Button label="사용자 추가" icon="pi pi-plus" class="btn-register-outline" @click="openUserFormModal" />
+      <Button label="사용자 추가" icon="pi pi-plus" severity="contrast" outlined @click="openUserFormModal" />
     </div>
 
     <!-- 테이블 -->
-    <div class="bg-white rounded-xl shadow-sm border border-[#C7C7C2] overflow-hidden mb-6">
+    <div class="bg-white rounded-xl shadow-sm border border-[#dde1ea] overflow-hidden mb-6">
       <DataTable :value="usersStore.userList" :loading="loading" dataKey="id" :rowHover="true" paginator :rows="10" paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown">
         <template #empty>
           <div class="flex flex-col items-center justify-center py-10">
@@ -132,7 +132,7 @@ const openUserFormModal = () => {
 .filter-label {
   font-size: 1rem;
   font-weight: 600;
-  color: #3a3b35;
+  color: #000000c2;
   white-space: nowrap;
 }
 :deep(.filter-input) {
@@ -142,46 +142,10 @@ const openUserFormModal = () => {
   display: flex;
   align-items: center;
 }
-:deep(.btn-amber) {
-  background-color: #e8920e !important;
-  color: #ffffff !important;
-  border: 1px solid transparent !important;
-  box-shadow: none !important;
-  height: 36px !important;
-  min-height: 36px !important;
-  box-sizing: border-box !important;
-  padding: 8px 16px !important;
-}
-:deep(.btn-amber:hover) {
-  background-color: #c97700 !important;
-  border-color: #c97700 !important;
-}
-:deep(.btn-register-outline) {
-  background-color: #fafaf8 !important;
-  border-color: #e8920e !important;
-  color: #e8920e !important;
-}
-:deep(.btn-register-outline:hover) {
-  background-color: #fff8e8 !important;
-  border-color: #c97700 !important;
-  color: #c97700 !important;
-}
-:deep(.btn-reset) {
-  color: #6b6b63 !important;
-  border: 1px solid #c7c7c2 !important;
-  height: 36px !important;
-  min-height: 36px !important;
-  box-sizing: border-box !important;
-  padding: 8px 16px !important;
-  background-color: #ffffff !important;
-}
-:deep(.btn-reset:hover) {
-  background-color: #e5e2d9 !important;
-  color: #1a1816 !important;
-}
+
 :deep(.table-header) {
-  background-color: #f2f0eb !important;
-  color: #1a1816 !important;
+  background-color: #dde1ea !important;
+  color: #000000c2 !important;
   font-weight: 700 !important;
   text-align: center !important;
   padding: 1.25rem 0 !important;

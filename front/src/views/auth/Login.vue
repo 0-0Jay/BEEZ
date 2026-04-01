@@ -56,7 +56,7 @@ async function validateAndLogin() {
           <div class="inline-flex items-center justify-center w-16 h-16 mb-3 overflow-hidden">
             <img src="/demo/images/logo.png" alt="팀 로고" class="w-full h-full object-contain" />
           </div>
-          <h1 class="text-xl font-bold tracking-tight" style="color: #3a3835">로그인</h1>
+          <h2 class="font-bold tracking-tight" style="color: #3a3835">로그인</h2>
           <div class="mt-1 h-0.5 w-10 mx-auto rounded-full" style="background: #f5a623"></div>
         </div>
 
@@ -86,12 +86,11 @@ async function validateAndLogin() {
             </p>
           </div>
 
-          <!-- 비밀번호 -->
           <div class="mb-2">
             <label for="password" class="block text-sm font-semibold mb-1.5 tracking-wide" style="color: #3a3835"> 비밀번호 </label>
             <div class="relative">
               <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                <i class="pi pi-lock text-sm" :style="submitted && !password.trim() ? 'color: #E8920E' : 'color: #9A9690'"></i>
+                <i class="pi pi-lock text-sm text-[#9A9690]"></i>
               </span>
               <input
                 id="password"
@@ -110,13 +109,11 @@ async function validateAndLogin() {
             </p>
           </div>
 
-          <!-- 로그인 실패 에러 -->
           <p v-if="loginErrorMsg" class="flex items-center gap-1 text-xs font-medium" style="color: #f44336">
             <i class="pi pi-exclamation-circle text-xs" />
             {{ loginErrorMsg }}
           </p>
 
-          <!-- 아이디 저장 / 비밀번호 재설정 -->
           <div class="flex items-center justify-between mb-7">
             <label class="flex items-center gap-2 cursor-pointer group select-none">
               <div class="relative">
@@ -129,7 +126,7 @@ async function validateAndLogin() {
               </div>
               <span class="text-sm" style="color: #6e6b65">아이디 저장</span>
             </label>
-            <button type="button" class="text-sm font-medium transition-colors duration-150 hover:underline" style="color: #c97700">비밀번호 재설정</button>
+            <button type="button" class="text-sm font-medium transition-colors duration-150 hover:underline" style="color: #c97700" @click="$router.push('/auth/pwRequest')">비밀번호 재설정</button>
           </div>
 
           <button
@@ -179,7 +176,10 @@ async function validateAndLogin() {
 input:focus {
   outline: none;
   box-shadow: 0 0 0 3px #fff0c2;
-  border-color: #f5a623;
+}
+
+input::placeholder {
+  color: #736f68;
 }
 
 .shadow-btn {
