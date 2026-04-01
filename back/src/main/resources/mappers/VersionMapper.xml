@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.beez.beez.project.mapper.VersionMapper">
+  
+  <!-- 버전 생성 -->
+  <insert id="insertVersion" parameterType="com.beez.beez.project.dto.VersionCreateRequest">
+    <selectKey keyProperty="id" resultType="string" order="BEFORE">
+      SELECT BEEZ.generate_pk_auto('version') FROM dual
+    </selectKey>
+    
+    INSERT INTO version (
+    id,
+    project_id,
+    name,
+    description,
+    created_on,
+    start_date,
+    end_date,
+    status,
+    is_share
+    ) VALUES (
+    #{id},
+    #{projectId},
+    #{name},
+    #{description},
+    SYSDATE,
+    #{startDate},
+    #{endDate},
+    #{status},
+    #{isShare}
+    )
+  </insert>
+  
+  <!-- 버전 수정 -->
+  <update id="updateVersion" parameterType="com.beez.beez.project.dto.VersionCreateRequest">
+    UPDATE version
+    SET name = #{name},
+        description = #{description},
+        start_date = #{startDate},
+        end_date = #{endDate},
+        status = #{status},
+        is_share = #{isShare}
+    WHERE id = #{id}
+  </update>
+  
+  <!-- 버전 삭제 -->
+  <update id="deleteVersion">
+    UPDATE version
+    SET is_delete = 'F1'
+    WHERE id = #{id}
+    AND id NOT IN (
+        SELECT version_id
+        FROM task
+        WHERE version_id = #{id}
+        AND status = 'T1'
+      )
+  </update>
+  
+
+
+</mapper>

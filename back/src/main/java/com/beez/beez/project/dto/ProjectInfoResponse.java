@@ -13,4 +13,5 @@ public class ProjectInfoResponse {
   private String parentId;
   private Date startDate;
   private Date endDate;
+  private String defaultVersionId;
 }

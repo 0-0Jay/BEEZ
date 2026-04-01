@@ -14,4 +14,5 @@ public class ProjectUpdateRequest {
   private String parentId;
   private Date startDate;
   private Date endDate;
+  private String defaultVersionId;
 }
