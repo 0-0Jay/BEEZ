@@ -125,10 +125,10 @@ const unlockProject = async (id) => {
     <!-- 타이틀 + 등록 버튼 -->
     <div class="flex justify-between items-end mb-6">
       <h1 class="text-2xl font-bold text-[#1A1816]">프로젝트 목록</h1>
-      <Button label="프로젝트 등록" icon="pi pi-plus" outlined class="btn-register-outline" @click="router.push('/project/create')" />
+      <Button label="프로젝트 등록" icon="pi pi-plus" severity="contrast" outlined @click="router.push('/project/create')" />
     </div>
 
-    <div class="bg-[#F2F0EB] px-10 py-8 rounded-lg mb-8 shadow-sm border border-[#C7C7C2] flex">
+    <div class="bg-[#E8E5DC] px-10 py-8 rounded-lg mb-8 shadow-sm border border-[#C7C7C2] flex">
       <!-- 입력칸 + 체크박스 묶음 -->
       <div class="flex items-center">
         <label class="filter-label mr-5">프로젝트명</label>
@@ -146,8 +146,8 @@ const unlockProject = async (id) => {
 
       <!-- 버튼 묶음 — ml-auto로 오른쪽, items-end로 아래 -->
       <div class="flex gap-2 ml-auto">
-        <Button label="초기화" text class="btn-reset filter-btn mr-1" @click="resetFilters" />
-        <Button label="조회" icon="pi pi-search" class="btn-amber" @click="fetchProjects" />
+        <Button label="초기화" severity="secondary" raised @click="resetFilters" />
+        <Button label="조회" icon="pi pi-search" raised @click="fetchProjects" />
       </div>
     </div>
 
@@ -224,48 +224,8 @@ const unlockProject = async (id) => {
   display: flex;
   align-items: center;
 }
-:deep(.btn-amber) {
-  background-color: #e8920e !important;
-  color: #ffffff !important;
-  border: 1px solid transparent !important;
-  box-shadow: none !important;
-  height: 36px !important;
-  min-height: 36px !important;
-  box-sizing: border-box !important;
-  padding: 18px;
-}
-:deep(.btn-amber:hover) {
-  background-color: #c97700 !important;
-  border-color: #c97700 !important;
-}
-:deep(.btn-register-outline) {
-  border-color: #e8920e !important;
-  color: #e8920e !important;
-  height: 36px !important;
-  min-height: 36px !important;
-  box-sizing: border-box !important;
-  padding: 18px;
-}
-:deep(.btn-register-outline:hover) {
-  background-color: #fff8e8 !important;
-  border-color: #c97700 !important;
-  color: #c97700 !important;
-}
-:deep(.btn-reset) {
-  color: #6b6b63 !important;
-  background-color: #ffffff !important;
-  border: 1px solid #c7c7c2 !important;
-  height: 36px !important;
-  min-height: 36px !important;
-  box-sizing: border-box !important;
-  padding: 18px;
-}
-:deep(.btn-reset:hover) {
-  background-color: #e5e2d9 !important;
-  color: #1a1816 !important;
-}
 :deep(.table-header) {
-  background-color: #f2f0eb !important;
+  background-color: #e8e5dc !important;
   color: #1a1816 !important;
   font-weight: 700 !important;
   text-align: center !important;
