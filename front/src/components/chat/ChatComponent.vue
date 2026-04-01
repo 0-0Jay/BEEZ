@@ -1,5 +1,6 @@
 <script setup>
 import { useChatStore } from '@/stores/chat';
+import { useProjectStore } from '@/stores/project';
 import { Client } from '@stomp/stompjs';
 import { nextTick, onMounted, ref } from 'vue';
 
@@ -12,10 +13,11 @@ const messagesContainer = ref(null);
 const unreadCount = ref(0);
 const hasNewMessage = ref(false); // "새로운 채팅이 있습니다." 배너 표시 여부
 const chatStore = useChatStore();
-
-const projectId = 'PROJ260326001';
-const userId = '20261111';
-const userName = '김개발';
+const projectStore = useProjectStore();
+const authStore = useAuthStore();
+const project = computed(() => projectStore.selectedProject);
+const projectId = project.value.id;
+const userId = computed(() => authStore.user.id ?? '');
 
 let stompClient = null;
 

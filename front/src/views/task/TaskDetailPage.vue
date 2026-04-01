@@ -1,4 +1,5 @@
 <script setup>
+import TaskTimeModal from '@/components/task/TaskTimeModal.vue';
 import { useAuthStore } from '@/stores/auth';
 import { useTaskStore } from '@/stores/task';
 import Button from 'primevue/button';
@@ -9,6 +10,7 @@ const taskStore = useTaskStore();
 const authStore = useAuthStore();
 const router = useRouter();
 const route = useRoute();
+const timeLogVisible = ref(false);
 
 // 기본 정보
 const userId = computed(() => authStore.user?.id ?? null);
@@ -329,7 +331,7 @@ onMounted(async () => {
             <td class="px-6 py-3">
               <div class="flex items-center gap-3">
                 <span class="text-base text-[#1A1816]">{{ formatMinutes(spentTime) }}</span>
-                <Button label="소요 시간 기록" icon="pi pi-plus" severity="secondary" raised />
+                <Button label="소요 시간 기록" icon="pi pi-plus" severity="secondary" raised @click="timeLogVisible = true" />
               </div>
             </td>
           </tr>
@@ -613,7 +615,7 @@ onMounted(async () => {
               <div class="text-base text-[#9A9B90]">추정 시간</div>
             </div>
           </div>
-          <Button label="소요 시간 추가" icon="pi pi-plus" severity="secondary" raised />
+          <Button label="소요 시간 추가" icon="pi pi-plus" severity="secondary" raised @click="timeLogVisible = true" />
         </div>
         <table class="w-full text-base">
           <thead>
@@ -646,6 +648,18 @@ onMounted(async () => {
         </table>
       </div>
     </div>
+    <TaskTimeModal
+      v-model:visible="timeLogVisible"
+      :task="task"
+      :activityList="activity"
+      @confirm="
+        (data) => {
+          taskStore.insertTimeLog(data);
+          timeLogVisible = false;
+        }
+      "
+      @cancel="timeLogVisible = false"
+    />
   </div>
 </template>
 
