@@ -1,6 +1,10 @@
 package com.beez.beez.users.web;
 
+import com.beez.beez.users.dto.MailSendDto;
+import com.beez.beez.users.dto.PasswordResetRequest;
 import com.beez.beez.users.service.AuthService;
+import com.beez.beez.users.service.MailService;
+import com.beez.beez.users.service.PasswordService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,6 +21,8 @@ import java.util.Map;
 public class AuthController {
 
   private final AuthService authService;
+  private final PasswordService passwordService;
+  private final MailService mailService;
 
   @PostMapping("/login")
   public ResponseEntity<?> login(@RequestBody Map<String, String> loginData){
@@ -41,4 +47,13 @@ public class AuthController {
       return ResponseEntity.status(401).body(e.getMessage()); // 401 Unauthorized
     }
   }
+
+  // 비밀번호 재설정
+  @PostMapping("/reset-request")
+  public ResponseEntity<?> requestReset(@RequestBody PasswordResetRequest dto) {
+    MailSendDto mailDto = passwordService.sendResetPasswordEmail(dto);
+    mailService.sendPasswordResetMail(mailDto.getEmail(), mailDto.getName(), mailDto.getToken());
+    return ResponseEntity.ok().body("메일이 성공적으로 발송되었습니다.");
+  }
+
 }

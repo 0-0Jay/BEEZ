@@ -105,7 +105,7 @@ const handleRegister = async () => {
         <div class="flex justify-around">
           <div class="flex flex-col items-center gap-1 text-center">
             <span class="text-xs uppercase tracking-widest text-stone-400 font-medium">사원번호</span>
-            <span class="font-mono font-bold text-amber-600 tracking-wide">AUTO-GENERATED</span>
+            <span class="font-mono font-bold text-amber-600 tracking-wide">자동생성</span>
           </div>
           <div class="flex flex-col items-center gap-1 text-center">
             <span class="text-xs uppercase tracking-widest text-stone-400 font-medium">초기 비밀번호</span>
@@ -176,8 +176,8 @@ const handleRegister = async () => {
 
     <template #footer>
       <div class="flex justify-end gap-2 pt-1">
-        <Button label="취소" class="btn-cancel" @click="close" />
-        <Button label="등록" class="btn-confirm" @click="handleRegister" />
+        <Button label="취소" severity="secondary" raised @click="close" />
+        <Button label="등록" raised @click="handleRegister" />
       </div>
     </template>
   </Dialog>
@@ -204,28 +204,5 @@ const handleRegister = async () => {
 }
 :deep(.p-radiobutton .p-radiobutton-box:not(.p-highlight):hover) {
   border-color: #f5a623;
-}
-
-:deep(.btn-cancel) {
-  background-color: #ffffff !important;
-  color: #6b6b63 !important;
-  border: 1px solid #c7c7c2 !important;
-  box-shadow: none !important;
-  padding: 8px 16px !important;
-}
-:deep(.btn-cancel:hover) {
-  background-color: #e5e2d9 !important;
-  color: #1a1816 !important;
-}
-:deep(.btn-confirm) {
-  background-color: #e8920e !important;
-  color: #ffffff !important;
-  border: 1px solid transparent !important;
-  box-shadow: none !important;
-  padding: 8px 16px !important;
-}
-:deep(.btn-confirm:hover) {
-  background-color: #c97700 !important;
-  border-color: #c97700 !important;
 }
 </style>

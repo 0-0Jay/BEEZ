@@ -1,8 +1,10 @@
 package com.beez.beez.users.web;
 
+import com.beez.beez.users.dto.PasswordResetRequest;
 import com.beez.beez.users.dto.UserListResponse;
 import com.beez.beez.users.dto.UserRegisterRequest;
 import com.beez.beez.users.dto.UserSearchRequest;
+import com.beez.beez.users.service.PasswordService;
 import com.beez.beez.users.service.UsersService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -43,5 +45,4 @@ public class UsersController {
       return ResponseEntity.internalServerError().body("등록 실패: " + e.getMessage());
     }
   }
-
 }
