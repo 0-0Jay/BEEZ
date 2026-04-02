@@ -12,14 +12,20 @@
       <div class="p-4 bg-gray-100 flex-1 overflow-auto">
         <router-view />
       </div>
+      <ChatRoom v-if="project != null"></ChatRoom>
     </div>
   </div>
 </template>
 
 <script setup>
-import { provide, ref } from 'vue';
+import ChatRoom from '@/components/chat/ChatComponent.vue';
+import { useProjectStore } from '@/stores/project';
+import { computed, provide, ref } from 'vue';
 import AppHeader from './AppHeader.vue';
 import AppSidebar from './AppSidebar.vue';
+
+const projectStore = useProjectStore();
+const project = computed(() => projectStore.selectedProject);
 
 // 사이드바 상태
 const isOpen = ref(true);

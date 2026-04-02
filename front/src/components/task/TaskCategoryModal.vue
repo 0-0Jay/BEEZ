@@ -35,7 +35,6 @@ function handleCancel() {
 </script>
 
 <template>
-  <!-- pt로 Dialog 내부 header 영역 완전히 숨김 -->
   <Dialog
     :visible="visible"
     :modal="true"

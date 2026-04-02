@@ -1,13 +1,13 @@
 package com.beez.beez.task.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PriorityResponse {
+@Builder
+public class CommonCodeResponse {
+  private String cgroup;
   private String id;
   private String name;
 }

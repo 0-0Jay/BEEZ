@@ -83,9 +83,6 @@ function handleCancel() {
       <!-- 헤더 -->
       <div class="flex items-center justify-between px-7 py-5 border-b border-stone-100 bg-stone-50">
         <div class="flex items-center gap-3">
-          <span class="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
-            <i class="pi pi-clock text-orange-500 text-sm"></i>
-          </span>
           <h2 class="text-base font-bold text-stone-900 tracking-tight">소요 시간 기록</h2>
         </div>
         <button class="w-7 h-7 rounded-md flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-stone-200 transition-colors cursor-pointer bg-transparent border-none" @click="handleCancel">
@@ -120,6 +117,7 @@ function handleCancel() {
             dateFormat="yy-mm-dd"
             placeholder="작업 일시를 선택하세요"
             class="w-full"
+            input-class="w-full"
             :pt="{
               input: { class: 'w-full h-9 px-3 text-base border border-stone-200 rounded-lg outline-none focus:border-orange-400 bg-stone-50 text-stone-700 placeholder-stone-400' }
             }"

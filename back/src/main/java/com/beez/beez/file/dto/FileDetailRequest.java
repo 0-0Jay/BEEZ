@@ -1,4 +1,4 @@
-package com.beez.beez.task.dto;
+package com.beez.beez.file.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,11 +9,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class FileDetailResponse {
-  private String id;
-  private String fileId;
+public class FileDetailRequest {
   private String originalName;
-  private String storedName;
+  private String storedName;  // UUID 사용 예정
   private String extension;
   private long fileSize;
 }

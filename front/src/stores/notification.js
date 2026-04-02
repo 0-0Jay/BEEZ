@@ -36,5 +36,7 @@ export const useNotificationStore = defineStore('notification', {
       return res.data;
     }
   },
-  persist: true
+  persist: {
+    storage: sessionStorage
+  }
 });

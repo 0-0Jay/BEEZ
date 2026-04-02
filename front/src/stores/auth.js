@@ -54,6 +54,7 @@ export const useAuthStore = defineStore('auth', {
       this.user = null;
       // localStorage.removeItem('accessToken');
       // localStorage.removeItem('user');
+      sessionStorage.clear();
     },
 
     async requestPasswordReset(payload) {

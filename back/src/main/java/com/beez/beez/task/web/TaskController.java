@@ -75,18 +75,6 @@ public class TaskController {
     return taskService.findMemberList(projectId);
   }
   
-  // 우선순위 목록
-  @GetMapping("/priority")
-  public List<PriorityResponse> findPriorityList() {
-    return taskService.findPriorityList();
-  }
-  
-  // 진행상태 목록
-  @GetMapping("/workflow")
-  public List<WorkflowResponse> findWorkflowList() {
-    return taskService.findWorkflowList();
-  }
-  
   // 버전 목록
   @GetMapping("/version/{projectId}")
   public List<VersionResponse> findVersionList(@PathVariable String projectId) {
@@ -95,7 +83,7 @@ public class TaskController {
   
   // 일감 추가
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public void insertTask(@ModelAttribute TaskRequest task, @RequestPart(value = "attachments", required = false) List<MultipartFile> files) {
+  public void insertTask(@ModelAttribute TaskRequest task, @RequestParam(value = "attachments", required = false) List<MultipartFile> files) {
     taskService.insertTask(task, files);
   }
   
@@ -105,18 +93,15 @@ public class TaskController {
     return taskService.findTaskDetail(id);
   }
   
-  @GetMapping("/relation")
-  public List<RelationResponse> findRelationList() {
-    return taskService.findRelationList();
-  }
-  
-  @GetMapping("/activity")
-  public List<ActivityResponse> findActivityList() {
-    return taskService.findActivityList();
-  }
-  
+  // 댓글 삽입
   @PostMapping("/reply")
   public void insertTaskReply(@RequestBody TaskReplyRequest taskReplyRequest) {
     taskService.insertTaskReply(taskReplyRequest);
+  }
+  
+  // 공통코드 조회
+  @GetMapping("/common")
+  public List<CommonCodeResponse> findCommonCodeList() {
+    return taskService.findCommonCodeList();
   }
 }

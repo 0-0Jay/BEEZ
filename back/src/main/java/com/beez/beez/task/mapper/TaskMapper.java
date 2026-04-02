@@ -10,10 +10,6 @@ public interface TaskMapper {
   
   List<MemberResponse> findMemberList(String projectId);
   
-  List<PriorityResponse> findPriorityList();
-  
-  List<WorkflowResponse> findWorkflowList();
-  
   List<VersionResponse> findVersionList(String projectId);
   
   String findLastFileId();
@@ -22,13 +18,9 @@ public interface TaskMapper {
   
   void insertTask(TaskRequest task);
   
-  void insertTaskWatcher(@Param("taskId") String taskId, @Param("watcherList") List<String> watcherList);
-  
   void findTaskDetail(TaskResponse task);
   
-  List<RelationResponse> findRelationList();
-  
-  List<ActivityResponse> findActivityList();
-  
   void insertTaskReply(TaskReplyRequest taskReplyRequest);
+  
+  List<CommonCodeResponse> findCommonCodeList();
 }

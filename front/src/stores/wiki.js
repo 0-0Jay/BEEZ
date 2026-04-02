@@ -60,5 +60,7 @@ export const useWikiStore = defineStore('wiki', {
     }
   },
 
-  persist: true
+  persist: {
+    storage: sessionStorage
+  }
 });

@@ -79,6 +79,7 @@ export const useProjectStore = defineStore('project', {
     }
   },
   persist: {
-    omit: ['projects', 'loading']
+    omit: ['projects', 'loading'],
+    storage: sessionStorage
   }
 });

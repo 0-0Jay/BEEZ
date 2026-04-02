@@ -1,11 +1,14 @@
 package com.beez.beez.task.service.impl;
 
+import com.beez.beez.file.dto.FileDetailRequest;
+import com.beez.beez.file.service.FileService;
 import com.beez.beez.task.dto.*;
 import com.beez.beez.task.mapper.TaskMapper;
 import com.beez.beez.task.repository.*;
 import com.beez.beez.task.service.TaskService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,7 +21,7 @@ import java.util.UUID;
 public class TaskServiceImpl implements TaskService {
   private final TaskTypeRepository taskTypeRepository;
   private final TaskCategoryRepository taskCategoryRepository;
-  private final TaskRepository taskRepository;
+  private final FileService fileService;
   private final TaskMapper taskMapper;
   
   // 일감 유형 목록
@@ -78,19 +81,6 @@ public class TaskServiceImpl implements TaskService {
     return taskMapper.findMemberList(projectId);
   }
   
-  // 우선순위 목록
-  @Override
-  public List<PriorityResponse> findPriorityList() {
-    List<PriorityResponse> list = taskMapper.findPriorityList();
-    return taskMapper.findPriorityList();
-  }
-  
-  // 진행상태 목록
-  @Override
-  public List<WorkflowResponse> findWorkflowList() {
-    return taskMapper.findWorkflowList();
-  }
-  
   // 버전 목록
   @Override
   public List<VersionResponse> findVersionList(String projectId) {
@@ -99,32 +89,17 @@ public class TaskServiceImpl implements TaskService {
   
   // 일감 등록
   @Override
-  @Transactional
   public void insertTask(TaskRequest task, List<MultipartFile> files) {
-//    if (files != null && !files.isEmpty()) {
-//      taskRepository.insertFiles(task.getUserId());
-//      String fileId = taskMapper.findLastFileId();
-//
-//      for (MultipartFile file : files) {
-//        String originalName = file.getOriginalFilename();
-//        String extension = originalName.substring(originalName.lastIndexOf(".") + 1);
-//        String storedName = UUID.randomUUID().toString() + "." + extension;
-//        long fileSize = file.getSize();
-//
-//        FileDetailRequest fileDetail = FileDetailRequest.builder()
-//          .fileId(fileId)
-//          .originalName(originalName)
-//          .storedName(storedName)
-//          .extension(extension)
-//          .fileSize(fileSize)
-//          .build();
-//
-//        taskMapper.insertFileDetail(fileDetail);
-//      }
-//    }
+    List<FileDetailRequest> fileDetails = fileService.saveFile(files);
+    task.setFileDetails(fileDetails);
     taskMapper.insertTask(task);
-    if (task.getWatcherIds() != null && !task.getWatcherIds().isEmpty()) {
-      taskMapper.insertTaskWatcher(task.getId(), task.getWatcherIds());
+    
+    // 복사 후처리
+    if (Boolean.TRUE.equals(task.getLinkCopied())) {
+      // taskMapper.insertTaskRelation(task) 호출 위치
+    }
+    if (Boolean.TRUE.equals(task.getCopySubTasks())) {
+      // taskMapper.copySubTasks(task) 호출 위치
     }
   }
   
@@ -137,21 +112,15 @@ public class TaskServiceImpl implements TaskService {
     return task;
   }
   
-  // 관계 목록
-  @Override
-  public List<RelationResponse> findRelationList() {
-    return taskMapper.findRelationList();
-  }
-  
-  // 작업분류 목록
-  @Override
-  public List<ActivityResponse> findActivityList() {
-    return taskMapper.findActivityList();
-  }
-  
   // 일감 댓글 작성
   @Override
   public void insertTaskReply(TaskReplyRequest taskReplyRequest) {
     taskMapper.insertTaskReply(taskReplyRequest);
+  }
+  
+  // 공통코드 목록
+  @Override
+  public List<CommonCodeResponse> findCommonCodeList() {
+    return taskMapper.findCommonCodeList();
   }
 }

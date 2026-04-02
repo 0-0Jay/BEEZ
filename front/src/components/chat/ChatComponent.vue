@@ -1,7 +1,9 @@
 <script setup>
+import { useAuthStore } from '@/stores/auth';
 import { useChatStore } from '@/stores/chat';
+import { useProjectStore } from '@/stores/project';
 import { Client } from '@stomp/stompjs';
-import { nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 
 /* ---------------- 상태 ---------------- */
 const isOpen = ref(false);
@@ -12,10 +14,11 @@ const messagesContainer = ref(null);
 const unreadCount = ref(0);
 const hasNewMessage = ref(false); // "새로운 채팅이 있습니다." 배너 표시 여부
 const chatStore = useChatStore();
-
-const projectId = 'PROJ260326001';
-const userId = '20261111';
-const userName = '김개발';
+const projectStore = useProjectStore();
+const authStore = useAuthStore();
+const project = computed(() => projectStore.selectedProject);
+const projectId = project.value.id;
+const userId = computed(() => authStore.user.id ?? '');
 
 let stompClient = null;
 
@@ -85,7 +88,7 @@ const mapMessage = (chat) => ({
   userId: chat.userId,
   userName: chat.name || null,
   time: chat.createdOn ? new Date(chat.createdOn).toLocaleTimeString() : new Date().toLocaleTimeString(),
-  isMine: chat.userId === userId,
+  isMine: chat.userId === userId.value,
   parentId: chat.parentId,
   replyTo: null
 });
@@ -112,7 +115,7 @@ const sendMessage = () => {
   stompClient.publish({
     destination: `/send/chat/${projectId}`,
     body: JSON.stringify({
-      userId,
+      userId: userId.value,
       content: message.value,
       parentId: replyTarget.value ? replyTarget.value.id : null
     })
@@ -164,7 +167,7 @@ onMounted(() => {
       <div v-if="isOpen" class="chat-window fixed bottom-8 right-[90px] w-[340px] h-[480px] bg-white rounded-[20px] flex flex-col overflow-hidden">
         <!-- 헤더 -->
         <div class="flex items-center justify-between px-[18px] py-4 shrink-0 bg-[#f5a623]">
-          <p class="text-[15px] font-bold text-white m-0">프로젝트 이름</p>
+          <p class="text-[15px] font-bold text-white m-0">{{ project.title }}</p>
           <button class="close-btn w-[30px] h-[30px] rounded-full flex items-center justify-center border-none cursor-pointer text-white" @click="toggleChat">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M1 1L13 13M13 1L1 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" />

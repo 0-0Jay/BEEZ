@@ -13,5 +13,5 @@ public class JournalDetailResponse {
   private String id;
   private String fieldName;
   private String oldValue;
-  private String NewValue;
+  private String newValue;
 }

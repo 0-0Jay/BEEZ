@@ -1,4 +1,5 @@
 <script setup>
+import TaskTimeModal from '@/components/task/TaskTimeModal.vue';
 import { useAuthStore } from '@/stores/auth';
 import { useTaskStore } from '@/stores/task';
 import Button from 'primevue/button';
@@ -9,19 +10,21 @@ const taskStore = useTaskStore();
 const authStore = useAuthStore();
 const router = useRouter();
 const route = useRoute();
+const timeLogVisible = ref(false);
 
 // 기본 정보
 const userId = computed(() => authStore.user?.id ?? null);
 const taskId = computed(() => route.params.taskId);
+const task = computed(() => taskStore.task);
+
 watch(
   () => route.params.taskId,
   async (taskId) => {
     await taskStore.findTaskDetail(taskId);
-  }
+  },
+  { immediate: true }
 );
-const task = computed(() => taskStore.task);
-const watchers = computed(() => task.value?.watcherList ?? []);
-const isWatcher = computed(() => watchers.value.some((w) => w.userId === userId.value));
+
 const subTasks = computed(() => task.value?.childTaskList ?? []);
 const subTaskDone = computed(() => subTasks.value.filter((t) => t.progress === 100).length);
 const subTaskInProgress = computed(() => subTasks.value.filter((t) => t.progress !== 100).length);
@@ -34,10 +37,11 @@ const history = computed(() => task.value?.journalList ?? []);
 const timeLogs = computed(() => task.value?.timeList ?? []);
 const category = computed(() => taskStore.cateList);
 const type = computed(() => taskStore.typeList);
-const priority = computed(() => taskStore.priorityList);
-const workflow = computed(() => taskStore.workflowList);
-const relation = computed(() => taskStore.relationList);
-const activity = computed(() => taskStore.activityList);
+const commonCodes = computed(() => taskStore.commonCodeList);
+const priority = computed(() => commonCodes.value.filter((p) => p.cgroup === '0S'));
+const workflow = computed(() => commonCodes.value.filter((w) => w.cgroup === '0Q'));
+const relation = computed(() => commonCodes.value.filter((r) => r.cgroup === '0W'));
+const activity = computed(() => commonCodes.value.filter((a) => a.cgroup === '0U'));
 
 // value → name 맵핑
 const workflowMap = computed(() => Object.fromEntries(workflow.value.map((w) => [w.id, w.name])));
@@ -200,17 +204,12 @@ const goToCopy = () => router.push('/task/copy');
 onMounted(async () => {
   await taskStore.findCateList();
   await taskStore.findTypeList();
-  await taskStore.findTaskDetail(taskId.value);
-  await taskStore.findPriorityList();
-  await taskStore.findWorkflowList();
-  await taskStore.findRelationList();
-  await taskStore.findActivityList();
-  // console.log(task.value);
+  await taskStore.findCommonCodeList();
 });
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#FAFAF8] p-8">
+  <div v-if="task" class="min-h-screen bg-[#FAFAF8] p-8">
     <!-- 헤더 -->
     <div class="mb-6 flex items-start justify-between gap-4 flex-wrap">
       <div class="flex flex-col gap-2 min-w-0">
@@ -224,7 +223,6 @@ onMounted(async () => {
 
       <!-- 액션 버튼 -->
       <div class="flex items-center gap-2 shrink-0">
-        <Button :label="isWatcher ? '관람 끄기' : '관람 켜기'" :icon="isWatcher ? 'pi pi-eye-slash' : 'pi pi-eye'" severity="secondary" raised />
         <Button label="편집" icon="pi pi-pen-to-square" severity="secondary" raised @click="goToEdit" />
         <Button label="복사" icon="pi pi-clone" severity="secondary" raised @click="goToCopy" />
         <Button label="삭제" icon="pi pi-trash" severity="danger" raised />
@@ -329,7 +327,7 @@ onMounted(async () => {
             <td class="px-6 py-3">
               <div class="flex items-center gap-3">
                 <span class="text-base text-[#1A1816]">{{ formatMinutes(spentTime) }}</span>
-                <Button label="소요 시간 기록" icon="pi pi-plus" severity="secondary" raised />
+                <Button label="소요 시간 기록" icon="pi pi-plus" severity="secondary" raised @click="timeLogVisible = true" />
               </div>
             </td>
           </tr>
@@ -613,7 +611,7 @@ onMounted(async () => {
               <div class="text-base text-[#9A9B90]">추정 시간</div>
             </div>
           </div>
-          <Button label="소요 시간 추가" icon="pi pi-plus" severity="secondary" raised />
+          <Button label="소요 시간 기록" icon="pi pi-plus" severity="secondary" raised @click="timeLogVisible = true" />
         </div>
         <table class="w-full text-base">
           <thead>
@@ -646,6 +644,18 @@ onMounted(async () => {
         </table>
       </div>
     </div>
+    <TaskTimeModal
+      v-model:visible="timeLogVisible"
+      :task="task"
+      :activityList="activity"
+      @confirm="
+        (data) => {
+          taskStore.insertTimeLog(data);
+          timeLogVisible = false;
+        }
+      "
+      @cancel="timeLogVisible = false"
+    />
   </div>
 </template>
 
