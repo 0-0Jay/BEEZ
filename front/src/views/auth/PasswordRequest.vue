@@ -57,7 +57,8 @@ async function handleSubmit() {
         severity: 'success',
         summary: '전송 완료',
         detail: '메일함을 확인해 주세요!',
-        life: 3000
+        life: 3000,
+        closable: false
       });
       // 입력값 초기화
       id.value = '';
@@ -68,7 +69,8 @@ async function handleSubmit() {
         severity: 'error',
         summary: '확인 필요',
         detail: result.message,
-        life: 3000
+        life: 3000,
+        closable: false
       });
     }
   } catch (err) {
@@ -76,7 +78,8 @@ async function handleSubmit() {
       severity: 'error',
       summary: '오류',
       detail: '서버와 통신 중 오류가 발생했습니다.',
-      life: 3000
+      life: 3000,
+      closable: false
     });
   } finally {
     isLoading.value = false;
