@@ -11,6 +11,7 @@ export const useTaskStore = defineStore('task', {
     taskList: [],
     versionList: [],
     commonCodeList: [],
+    journalList: [],
     task: ref(null)
   }),
   // getters
@@ -78,7 +79,14 @@ export const useTaskStore = defineStore('task', {
     },
     async insertTaskReply(data) {
       const res = await axios.post(`/task/reply`, data);
+    },
+    async findJournalList(id) {
+      const res = await axios.get(`/task/journal/${id}`);
+      this.journalList = res.data;
     }
+    // async downloadFile(file) {
+    //   const res = await axios.get(`/api/file/${file.storedName}`);
+    // }
   },
   persist: false
 });

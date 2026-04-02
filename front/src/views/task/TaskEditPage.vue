@@ -69,7 +69,7 @@ const form = reactive({
   actualEnd: isPopulated ? parseDate(task.value?.actualEnd) : null,
   estimatedTime: isPopulated ? (task.value?.estimatedTime ?? 0) : 0,
   progress: isPopulated ? (task.value?.progress ?? 0) : 0,
-  attachments: isCopyMode ? [] : isPopulated ? (task.value?.attachments ?? []) : [],
+  attachments: isCopyMode ? [] : isPopulated ? (task.value?.fileList ?? []) : [],
   linkCopied: false,
   copySubTasks: false
 });
@@ -95,7 +95,8 @@ const originalValues = isEditMode
       actualStart: formatDate(task.value?.actualStart),
       actualEnd: formatDate(task.value?.actualEnd),
       estimatedTime: task.value?.estimatedTime ?? 0,
-      progress: task.value?.progress ?? 0
+      progress: task.value?.progress ?? 0,
+      attachments: task.value?.fileList ?? []
     }
   : null;
 
@@ -123,6 +124,17 @@ const buildChangeLog = () => {
       changeLog.push({ fieldName: field, oldValue, newValue });
     }
   });
+
+  // 첨부파일 변경 감지
+  const originalFileNames = originalValues.attachments.map((f) => f.originalName).join(', ') || '-';
+  const currentFileNames = form.attachments.map((f) => (f instanceof File ? f.name : f.originalName)).join(', ') || '-';
+  if (originalFileNames !== currentFileNames) {
+    changeLog.push({
+      fieldName: 'attachments',
+      oldValue: originalFileNames,
+      newValue: currentFileNames
+    });
+  }
 
   return changeLog;
 };
@@ -200,12 +212,22 @@ const isSaveDisabled = computed(() => !form.title.trim() || !form.type || !form.
 
 const handleFileChange = ({ files }) => {
   files.forEach((newFile) => {
-    const isDuplicate = form.attachments.some((f) => f.name === newFile.name && f.size === newFile.size);
+    // 기존 파일(서버)과 새 파일(File) 모두 중복 체크
+    const isDuplicate = form.attachments.some((f) => {
+      if (f instanceof File) return f.name === newFile.name && f.size === newFile.size;
+      return f.originalName === newFile.name && f.fileSize === newFile.size;
+    });
     if (!isDuplicate) form.attachments.push(newFile);
   });
 };
 
+const deletedFileIds = reactive([]);
 const removeFile = (index) => {
+  const file = form.attachments[index];
+  // 기존 파일(서버에서 온 객체)이면 삭제 id 추적
+  if (!(file instanceof File) && file.id) {
+    deletedFileIds.push(file.id);
+  }
   form.attachments.splice(index, 1);
 };
 
@@ -232,16 +254,20 @@ const handleSubmit = async () => {
   formData.append('progress', form.progress ?? 0);
   formData.append('creator', form.creator);
   formData.append('projectId', form.projectId);
+  formData.append('editor', userId.value);
 
   if (isEditMode) {
     formData.append('fileId', fileId);
-    formData.append('changeLog', JSON.stringify(buildChangeLog()));
-    taskStore.insertTask(formData);
+    formData.append('journals', JSON.stringify(buildChangeLog()));
+    formData.append('deletedFileIds', JSON.stringify(deletedFileIds));
+    form.attachments.filter((f) => f instanceof File).forEach((file) => formData.append('attachments', file));
+
+    taskStore.updateTask(formData);
   } else if (isCopyMode) {
     formData.append('linkCopied', form.linkCopied);
     formData.append('copySubTasks', form.copySubTasks);
     form.attachments.forEach((file) => formData.append('attachments', file));
-    // taskStore.copyTask(formData)
+    taskStore.insertTask(formData);
   } else {
     form.attachments.forEach((file) => formData.append('attachments', file));
     taskStore.insertTask(formData);
@@ -262,6 +288,7 @@ onMounted(async () => {
   await taskStore.findTaskList(project.value.id, userId.value);
   await taskStore.findVersionList(project.value.id);
   validate();
+  console.log(task.value);
 });
 </script>
 
@@ -452,8 +479,8 @@ onMounted(async () => {
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#9A9B90] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  <span class="truncate max-w-xs">{{ file.name }}</span>
-                  <span class="text-[#9A9B90] text-xs shrink-0">({{ (file.size / 1024).toFixed(1) }}KB)</span>
+                  <span class="truncate max-w-xs">{{ file.originalName }}</span>
+                  <span class="text-[#9A9B90] text-xs shrink-0">({{ (file.fileSize / 1024).toFixed(1) }}KB)</span>
                   <button type="button" class="ml-1 text-[#9A9B90] hover:text-red-500 transition-colors shrink-0" @click="removeFile(index)">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />

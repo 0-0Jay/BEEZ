@@ -87,6 +87,12 @@ public class TaskController {
     taskService.insertTask(task, files);
   }
   
+  // 일감 수정
+  @PutMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public void updateTask(@ModelAttribute TaskRequest task, @RequestParam(value = "attachments", required = false) List<MultipartFile> files) {
+    taskService.updateTask(task, files);
+  }
+  
   // 일감 상세
   @GetMapping("/{id}")
   public TaskResponse findTaskDetail(@PathVariable String id) {
@@ -104,4 +110,5 @@ public class TaskController {
   public List<CommonCodeResponse> findCommonCodeList() {
     return taskService.findCommonCodeList();
   }
+  
 }
