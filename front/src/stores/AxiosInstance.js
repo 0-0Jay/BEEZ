@@ -31,13 +31,15 @@ axiosInstance.interceptors.response.use(
 
   (error) => {
     const status = error.response?.status;
-    const message = ERROR_MESSAGES[status] ?? `알 수 없는 오류가 발생했습니다. (${status})`;
+    const serverMessage = error.response?.data;
+    const message = serverMessage || ERROR_MESSAGES[status] || `알 수 없는 오류가 발생했습니다. (${status})`;
 
     // 공통 에러 핸들링
     handleError(status, message);
     console.log(error);
 
     // 호출부에서 추가 처리가 필요하면 reject로 전달
+    error.message = message;
     return Promise.reject(error);
   }
 );
@@ -55,13 +57,13 @@ const ERROR_MESSAGES = {
 };
 
 function handleError(status, message) {
-  const authStore = useAuthStore();
   const isLoginPage = window.location.pathname === '/';
 
   switch (status) {
     case 401:
       if (!isLoginPage) {
         alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+        const authStore = useAuthStore();
         authStore.logout();
         window.location.href = '/';
       }

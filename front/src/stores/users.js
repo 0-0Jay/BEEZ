@@ -29,6 +29,6 @@ export const useUsersStore = defineStore('users', {
       await axios.post('/users/register', form);
       // console.log(response);
     }
-  },
-  persist: true
+  }
+  // persist: true
 });

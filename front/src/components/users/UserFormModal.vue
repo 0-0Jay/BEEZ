@@ -117,7 +117,7 @@ const handleRegister = async () => {
       <!-- 이름 -->
       <div class="flex flex-col gap-1.5">
         <label for="name" class="text-sm font-semibold text-stone-700"> 이름 <span class="text-amber-500">*</span> </label>
-        <InputText id="name" v-model="form.name" placeholder="이름을 입력해 주세요." class="w-full" :class="{ 'p-invalid': submitted && !form.name }" />
+        <InputText id="name" v-model="form.name" placeholder="이름을 입력해 주세요." class="w-full" :class="{ 'p-invalid': submitted && !form.name, '!border-[#E8920E]': submitted && !form.name }" />
         <small v-if="submitted && !form.name" class="flex items-center gap-1 text-red-500 text-xs">
           <i class="pi pi-exclamation-circle text-xs" />
           값을 입력해 주세요.
@@ -127,7 +127,13 @@ const handleRegister = async () => {
       <!-- 이메일 -->
       <div class="flex flex-col gap-1.5">
         <label for="email" class="text-sm font-semibold text-stone-700"> 이메일 <span class="text-amber-500">*</span> </label>
-        <InputText id="email" v-model="form.email" placeholder="example@example.com" class="w-full" :class="{ 'p-invalid': submitted && (!form.email || !form.email.includes('@')) }" />
+        <InputText
+          id="email"
+          v-model="form.email"
+          placeholder="example@example.com"
+          class="w-full"
+          :class="{ 'p-invalid': submitted && (!form.email || !form.email.includes('@')), '!border-[#E8920E]': submitted && (!form.email || !form.email.includes('@')) }"
+        />
         <small v-if="submitted && !form.email" class="flex items-center gap-1 text-red-500 text-xs">
           <i class="pi pi-exclamation-circle text-xs" />
           값을 입력해 주세요.
@@ -196,6 +202,10 @@ const handleRegister = async () => {
 :deep(.p-inputtext:focus) {
   border-color: #f5a623;
   box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.15);
+}
+
+:deep(.p-inputtext.p-invalid::placeholder) {
+  color: #736f68;
 }
 
 :deep(.p-radiobutton .p-radiobutton-box.p-highlight) {

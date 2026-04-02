@@ -41,8 +41,9 @@ async function handleSubmit() {
   if (!newPassword.value) {
     fieldErrors.value.newPassword = '값을 입력해 주세요.';
     hasError = true;
-  } else if (newPassword.value.length < 8) {
-    fieldErrors.value.newPassword = '비밀번호는 8자 이상이어야 합니다.';
+  } else if (newPassword.value.length < 4) {
+    // 나중에 수정하기 -> 영문+숫자+특수문자 조합 8자 이상
+    fieldErrors.value.newPassword = '비밀번호는 4자 이상이어야 합니다.';
     hasError = true;
   }
 
@@ -65,16 +66,12 @@ async function handleSubmit() {
 
 <template>
   <div class="h-[100dvh] flex items-center justify-center bg-[#f2f0eb] relative overflow-hidden">
-    <!-- 배경 노이즈 -->
     <div class="absolute inset-0 noise-overlay pointer-events-none"></div>
 
-    <!-- 카드 -->
     <div class="reset-card w-full max-w-md mx-4 relative z-10">
-      <!-- 상단 amber 바 -->
       <div class="h-1.5 bg-[#f5a623] rounded-t-2xl"></div>
 
       <div class="bg-white rounded-b-2xl px-10 py-10 shadow-[0_8px_40px_rgba(61,32,0,0.1),0_2px_8px_rgba(61,32,0,0.06)]">
-        <!-- ── 완료 상태 ── -->
         <template v-if="isDone">
           <div class="flex flex-col items-center text-center py-4 gap-4">
             <div class="w-16 h-16 rounded-full flex items-center justify-center bg-[#fff8ec]">
@@ -88,9 +85,7 @@ async function handleSubmit() {
           </div>
         </template>
 
-        <!-- ── 입력 폼 상태 ── -->
         <template v-else>
-          <!-- 헤더 -->
           <div class="text-center mb-8">
             <div class="w-16 h-16 mx-auto mb-3 overflow-hidden">
               <img src="/demo/images/logo.png" class="w-full h-full object-contain" alt="로고" />
@@ -100,14 +95,12 @@ async function handleSubmit() {
             <p class="text-sm text-[#9a9690] mb-0" style="margin-top: 15px">새로운 비밀번호를 입력해 주세요.</p>
           </div>
 
-          <!-- 폼 -->
           <form @submit.prevent="handleSubmit" class="flex flex-col gap-4">
-            <!-- 새 비밀번호 -->
             <div class="field-row">
               <label class="field-label">새 비밀번호</label>
               <div class="flex flex-col gap-1">
                 <div class="relative">
-                  <i class="pi pi-lock absolute left-3 top-1/2 -translate-y-1/2 text-sm z-10" :class="fieldErrors.newPassword ? 'text-[#E8920E]' : 'text-[#9A9690]'" />
+                  <i class="pi pi-lock absolute left-3 top-1/2 -translate-y-1/2 text-sm z-10 text-[#736f68]" />
                   <Password
                     v-model="newPassword"
                     :feedback="false"
@@ -115,12 +108,12 @@ async function handleSubmit() {
                     placeholder="새 비밀번호를 입력해 주세요."
                     autocomplete="new-password"
                     :invalid="!!fieldErrors.newPassword"
-                    inputClass="w-full !pl-9 !text-sm !bg-[#fafaf8] !border-[#e5e2d9]"
+                    :inputClass="`w-full !pl-9 !text-sm !bg-[#fafaf8] ${fieldErrors.newPassword ? '!border-[#E8920E]' : '!border-[#e5e2d9]'}`"
                     class="w-full"
                     @input="clearError('newPassword')"
                   />
                 </div>
-                <small v-if="fieldErrors.newPassword" class="flex items-center gap-1 text-[#e8920e]"> <i class="pi pi-exclamation-circle text-xs" />{{ fieldErrors.newPassword }} </small>
+                <small v-if="fieldErrors.newPassword" class="flex items-center gap-1 text-[#F44336]"> <i class="pi pi-exclamation-circle text-xs" />{{ fieldErrors.newPassword }} </small>
                 <template v-else-if="newPassword">
                   <div class="flex gap-1 mt-0.5">
                     <div v-for="i in 4" :key="i" class="h-1 flex-1 rounded-full transition-all duration-300" :style="{ background: i <= strengthScore ? strengthColor : '#e5e2d9' }" />
@@ -132,12 +125,11 @@ async function handleSubmit() {
               </div>
             </div>
 
-            <!-- 비밀번호 확인 -->
             <div class="field-row">
               <label class="field-label">비밀번호 확인</label>
               <div class="flex flex-col gap-1">
                 <div class="relative">
-                  <i class="pi pi-lock absolute left-3 top-1/2 -translate-y-1/2 text-sm z-10" :class="fieldErrors.confirmPassword ? 'text-[#E8920E]' : 'text-[#9A9690]'" />
+                  <i class="pi pi-lock absolute left-3 top-1/2 -translate-y-1/2 text-sm z-10 text-[#736f68]" />
                   <Password
                     v-model="confirmPassword"
                     :feedback="false"
@@ -145,17 +137,16 @@ async function handleSubmit() {
                     placeholder="비밀번호를 다시 입력해 주세요."
                     autocomplete="new-password"
                     :invalid="!!fieldErrors.confirmPassword"
-                    inputClass="w-full !pl-9 !text-sm !bg-[#fafaf8] !border-[#e5e2d9]"
+                    :inputClass="`w-full !pl-9 !text-sm !bg-[#fafaf8] ${fieldErrors.newPassword ? '!border-[#E8920E]' : '!border-[#e5e2d9]'}`"
                     class="w-full"
                     @input="clearError('confirmPassword')"
                   />
                 </div>
-                <small v-if="fieldErrors.confirmPassword" class="flex items-center gap-1 text-[#e8920e]"> <i class="pi pi-exclamation-circle text-xs" />{{ fieldErrors.confirmPassword }} </small>
+                <small v-if="fieldErrors.confirmPassword" class="flex items-center gap-1 text-[#F44336]"> <i class="pi pi-exclamation-circle text-xs" />{{ fieldErrors.confirmPassword }} </small>
                 <small v-else-if="confirmPassword && newPassword === confirmPassword" class="flex items-center gap-1 text-[#4caf50]"> <i class="pi pi-check-circle text-xs" />비밀번호가 일치합니다. </small>
               </div>
             </div>
 
-            <!-- 버튼 -->
             <div class="flex gap-3 pt-2">
               <Button type="button" label="돌아가기" severity="secondary" outlined class="flex-1" @click="router.push('/')" />
               <Button type="submit" :label="isLoading ? '변경 중...' : '비밀번호 변경'" :loading="isLoading" class="flex-1 !bg-[#e8920e] !border-[#e8920e] hover:!bg-[#d07c0a] hover:!border-[#d07c0a]" />

@@ -95,7 +95,7 @@
            name = #{name}
   </select>
 
-  <!-- 토큰 등록(비밀번호 재설정) -->
+  <!-- 토큰 등록(비밀번호 재설정 관련) -->
   <insert id="insertUserTokens" parameterType="com.beez.beez.users.dto.UserTokenDto">
     <selectKey keyProperty="tokenId" resultType="string" order="BEFORE">
       SELECT BEEZ.generate_pk_auto('user_tokens') FROM dual
@@ -118,4 +118,13 @@
       SYSTIMESTAMP
     )
   </insert>
+
+  <!-- 비밀번호 재설정 -->
+  <update id="updatePassword" parameterType="map" statementType="CALLABLE">
+    { CALL PROC_UPDATE_PASSWORD(
+        #{token, mode=IN, jdbcType=VARCHAR},
+        #{password, mode=IN, jdbcType=VARCHAR},
+        #{result, mode=OUT, jdbcType=VARCHAR})
+    }
+  </update>
 </mapper>
