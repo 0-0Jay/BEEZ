@@ -16,11 +16,11 @@ import java.util.List;
 public interface WikiMapper {
   //## 반환타입 메서드명 (매개변수타입 매개변수명)으로 작성
   
-  //위키 글 작성
-  void insertWiki(WikiRequest wikiRequest);
-  
   //새로운 위키 버전(내용) 등록 - 버전 추가되면 번호 추가
   void insertWikiVersion(WikiVersionRequest wikiVersionRequest);
+  
+  //위키 글 작성
+  void insertWiki(WikiRequest wikiRequest);
   
   //wiki 테이블에 최신 버전의 위키를 알려주기 위함/ 되돌리기 기능
   void updateWiki(WikiRequest wikiRequest);
@@ -34,7 +34,9 @@ public interface WikiMapper {
   //특정 위키(wikiId)의 최신 버전 상세 가져오기 - 프로젝트의 어떤 위키 / 화면에 뿌려주기 위함
   WikiVersionRequest findLatestVersion(String wikiId);
   
-  //위키 페이지에 프로젝트 관련 정보를 뿌려주기 위함
+  
+  //--------------------------------------------------------------------------
+  //위키 페이지 헤드부분에에 프로젝트 관련 정보를 뿌려주기 위함
   WikiProjectRequest findProjectById(String projectId);
   
   

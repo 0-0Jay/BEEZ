@@ -3,23 +3,11 @@
 
 <mapper namespace="com.beez.beez.wiki.mapper.WikiMapper">
   
-  <insert id="insertWiki">
+  <insert id="insertWikiVersion">
     <selectKey keyProperty="versionId" resultType="string" order="BEFORE">
-      SELECT
-        'VER_' || LPAD(wiki_version_seq.NEXTVAL, 5, '0') as versionId,
-        'WIKI_' || LPAD(wiki_seq.NEXTVAL, 5, '0') as id
-      FROM dual
+      SELECT BEEZ.generate_pk_auto('wiki_version') FROM dual
     </selectKey>
     
-    INSERT INTO wiki (id, project_id, version_id)
-    VALUES (
-    #{id},
-    #{projectId},
-    #{versionId}
-    )
-  </insert>
-  
-  <insert id="insertWikiVersion">
     INSERT INTO wiki_version
     (
     version_id,
@@ -32,6 +20,7 @@
     links,
     wiki_info
     )
+    
     VALUES
     (
     #{versionId},
@@ -45,13 +34,28 @@
     #{wikiInfo}
     )
   </insert>
-
+  
+  <insert id="insertWiki">
+    <selectKey keyProperty="id" resultType="string" order="BEFORE">
+      SELECT BEEZ.generate_pk_auto('wiki') FROM dual
+    </selectKey>
+    
+    INSERT INTO wiki (id, project_id, version_id)
+    VALUES (
+    #{id},
+    #{projectId},
+    #{versionId}
+    )
+  </insert>
+  
+  <!--wiki테이블 최신화-->
   <update id="updateWiki" >
     UPDATE WIKI
     SET VERSION_ID = #{versionId}
     WHERE ID = #{id}
   </update>
   
+  <!--히스토리 기능 : 프로젝트당 위키아이디 별로 버전 목록 조회 -->
   <select id="findWikiVersionList" >
     SELECT
         VERSION_ID,
@@ -68,15 +72,21 @@
     ORDER BY CREATED_ON DESC
   </select>
   
+  <!--화면에 출력하는 위키 내용-->
   <select id="findWikiByProjectId" >
     SELECT
-        ID,
-        PROJECT_ID,
-        VERSION_ID
-    FROM WIKI
+        W.ID,
+        W.PROJECT_ID,
+        W.VERSION_ID,
+        V.VERSION_NAME,
+        V.USER_ID,
+        V.CREATED_ON
+    FROM WIKI W
+    LEFT JOIN WIKI_VERSION V ON W.VERSION_ID = V.VERSION_ID
     WHERE PROJECT_ID = #{projectId}
   </select>
   
+  <!-- 위키 id에 따라 최신 버전을 가져옴 update있어서 이건 없어도 크게 상관은 없을것 같은데 일단 넣음-->
   <select id="findLatestVersion" >
     SELECT
         V.VERSION_ID,
@@ -93,6 +103,7 @@
     WHERE W.ID = #{wikiId}
   </select>
   
+  <!--이건 헤더 부분에 출력되는거사러 -->
   <!-- 위키 화면에 프로젝트 관련 정보를 뿌려주기 위함-->
   <select id="findProjectById" resultType="com.beez.beez.wiki.dto.WikiProjectRequest">
     SELECT
@@ -109,10 +120,6 @@
     FROM project p
     LEFT JOIN users u ON p.user_id = u.id
     WHERE p.id = #{projectId}
-  </select>
-  
-  <select id="getVersionSeq" resultType="long">
-    SELECT wiki_version_seq.NEXTVAL FROM dual
   </select>
   
 </mapper>
