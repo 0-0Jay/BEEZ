@@ -4,11 +4,18 @@
 <mapper namespace="com.beez.beez.wiki.mapper.WikiMapper">
   
   <insert id="insertWiki">
+    <selectKey keyProperty="versionId" resultType="string" order="BEFORE">
+      SELECT
+        'VER_' || LPAD(wiki_version_seq.NEXTVAL, 5, '0') as versionId,
+        'WIKI_' || LPAD(wiki_seq.NEXTVAL, 5, '0') as id
+      FROM dual
+    </selectKey>
+    
     INSERT INTO wiki (id, project_id, version_id)
     VALUES (
-    'WIKI_' || LPAD(wiki_seq.NEXTVAL, 5, '0'),
+    #{id},
     #{projectId},
-    'VER_' || LPAD(wiki_version_seq.NEXTVAL, 5, '0')
+    #{versionId}
     )
   </insert>
   
@@ -27,7 +34,7 @@
     )
     VALUES
     (
-    'VER_' || LPAD(wiki_version_seq.NEXTVAL, 5, '0'),
+    #{versionId},
     #{content},
     #{userId},
     SYSTIMESTAMP,
