@@ -37,7 +37,7 @@ async function validateAndLogin() {
       router.push('/main');
     }
   } catch (err) {
-    loginErrorMsg.value = '사원번호 또는 비밀번호가 일치하지 않습니다.';
+    loginErrorMsg.value = err.message || '로그인 중 오류가 발생했습니다.';
   }
 }
 </script>

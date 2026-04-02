@@ -54,12 +54,14 @@ public class Users implements UserDetails {
 
   @Override
   public boolean isAccountNonLocked() {
-    // 활성화 상태(H1)일 때만 true(잠기지 않음)를 반환
-    return "H1".equals(this.status);
+    return true;
   }
 
 //  @Override
 //  public boolean isCredentialsNonExpired() { return true; }
-//  @Override
-//  public boolean isEnabled() { return true; }
+  @Override
+  public boolean isEnabled() {
+    // 활성화 상태(H1)일 때만 true를 반환
+    return "H1".equals(this.status);
+  }
 }

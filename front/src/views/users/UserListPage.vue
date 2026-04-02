@@ -1,13 +1,13 @@
 <script setup>
 import UserFormModal from '@/components/users/UserFormModal.vue';
 import { useUsersStore } from '@/stores/users';
-import { computed, defineEmits, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 
 const usersStore = useUsersStore();
 
 const loading = ref(false);
 const visible = ref(false);
-const emit = defineEmits(['selectProject']);
+const emit = defineEmits(['selectProject']); // 콘솔창에 경고 떠서 넣음
 
 const search = reactive({
   name: '',
@@ -61,6 +61,11 @@ const openUserFormModal = () => {
   <div class="p-8 bg-[#f3f4f6]">
     <h1 class="text-2xl font-bold text-[#1A1816]">사용자 목록</h1>
 
+    <div class="flex justify-between items-center mb-3">
+      <span class="text-sm text-[#3A3B35] font-medium">전체 {{ totalCount }}명</span>
+      <Button label="사용자 추가" icon="pi pi-plus" severity="contrast" outlined @click="openUserFormModal" />
+    </div>
+
     <!-- 검색 필터 -->
     <div class="bg-[#DDE1EA] px-10 py-8 rounded-lg mb-4 shadow-sm border border-[#dde1ea] flex items-center">
       <div class="flex items-center flex-wrap gap-y-3">
@@ -82,12 +87,6 @@ const openUserFormModal = () => {
         <Button label="초기화" severity="secondary" raised @click="resetFilters" />
         <Button label="조회" icon="pi pi-search" raised @click="fetchUsers" />
       </div>
-    </div>
-
-    <!-- 전체 건수 + 사용자 추가 -->
-    <div class="flex justify-between items-center mb-3">
-      <span class="text-sm text-[#3A3B35] font-medium">전체 {{ totalCount }}명</span>
-      <Button label="사용자 추가" icon="pi pi-plus" severity="contrast" outlined @click="openUserFormModal" />
     </div>
 
     <!-- 테이블 -->

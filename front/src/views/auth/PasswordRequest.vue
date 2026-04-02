@@ -120,7 +120,7 @@ function clearError(field) {
                   :class="fieldErrors.id ? 'border-[#f5a623]' : 'border-[#e5e2d9]'"
                 />
               </div>
-              <small v-if="fieldErrors.id" class="flex items-center gap-1 text-[#e8920e]"> <i class="pi pi-exclamation-circle text-xs" />{{ fieldErrors.id }} </small>
+              <small v-if="fieldErrors.id" class="flex items-center gap-1 text-[#F44336]"> <i class="pi pi-exclamation-circle text-xs" />{{ fieldErrors.id }} </small>
             </div>
           </div>
 
@@ -138,7 +138,7 @@ function clearError(field) {
                   :class="fieldErrors.email ? 'border-[#f5a623]' : 'border-[#e5e2d9]'"
                 />
               </div>
-              <small v-if="fieldErrors.email" class="flex items-center gap-1 text-[#e8920e]"> <i class="pi pi-exclamation-circle text-xs" />{{ fieldErrors.email }} </small>
+              <small v-if="fieldErrors.email" class="flex items-center gap-1 text-[#F44336]"> <i class="pi pi-exclamation-circle text-xs" />{{ fieldErrors.email }} </small>
             </div>
           </div>
 
@@ -155,7 +155,7 @@ function clearError(field) {
                   :class="fieldErrors.name ? 'border-[#f5a623]' : 'border-[#e5e2d9]'"
                 />
               </div>
-              <small v-if="fieldErrors.name" class="flex items-center gap-1 text-[#e8920e]"> <i class="pi pi-exclamation-circle text-xs" />{{ fieldErrors.name }} </small>
+              <small v-if="fieldErrors.name" class="flex items-center gap-1 text-[#F44336]"> <i class="pi pi-exclamation-circle text-xs" />{{ fieldErrors.name }} </small>
             </div>
           </div>
 
