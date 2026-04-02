@@ -41,6 +41,9 @@ public class TaskRequest {
   private String creator;
   private String fileId;
   private List<FileDetailRequest> fileDetails;
+  private String editor;
+  private List<JournalRequest> journals;
+  private List<String> deletedFileIds;
   private Boolean linkCopied;
   private Boolean copySubTasks;
   

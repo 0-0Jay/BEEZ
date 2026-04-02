@@ -87,7 +87,7 @@ public class TaskServiceImpl implements TaskService {
     return taskMapper.findVersionList(projectId);
   }
   
-  // 일감 등록
+  // 일감 등록 / 복사
   @Override
   public void insertTask(TaskRequest task, List<MultipartFile> files) {
     List<FileDetailRequest> fileDetails = fileService.saveFile(files);
@@ -101,6 +101,14 @@ public class TaskServiceImpl implements TaskService {
     if (Boolean.TRUE.equals(task.getCopySubTasks())) {
       // taskMapper.copySubTasks(task) 호출 위치
     }
+  }
+  
+  // 일감 수정
+  @Override
+  public void updateTask(TaskRequest task, List<MultipartFile> files) {
+    List<FileDetailRequest> fileDetails = fileService.saveFile(files);
+    task.setFileDetails(fileDetails);
+    taskMapper.updateTask(task);
   }
   
   // 일감 상세

@@ -42,6 +42,8 @@ public interface TaskService {
   // 일감 추가
   void insertTask(TaskRequest task, List<MultipartFile> files);
   
+  void updateTask(TaskRequest task, List<MultipartFile> files);
+  
   // 일감 상세
   TaskResponse findTaskDetail(String id);
   

@@ -23,4 +23,6 @@ public interface TaskMapper {
   void insertTaskReply(TaskReplyRequest taskReplyRequest);
   
   List<CommonCodeResponse> findCommonCodeList();
+  
+  void updateTask(TaskRequest task);
 }

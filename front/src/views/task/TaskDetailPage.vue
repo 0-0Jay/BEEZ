@@ -11,6 +11,8 @@ const authStore = useAuthStore();
 const router = useRouter();
 const route = useRoute();
 const timeLogVisible = ref(false);
+const journalModalVisible = ref(false);
+const selectedJournalId = ref(null);
 
 // 기본 정보
 const userId = computed(() => authStore.user?.id ?? null);
@@ -51,17 +53,26 @@ const taskCateMap = computed(() => Object.fromEntries(category.value.map((c) => 
 const relationMap = computed(() => Object.fromEntries(relation.value.map((r) => [r.id, r.name])));
 const activityMap = computed(() => Object.fromEntries(activity.value.map((a) => [a.id, a.name])));
 
+// 최근 수정 정보
 const latestJournal = computed(() => {
   const list = task.value?.journalList;
   if (!list?.length) return null;
   return list.reduce((a, b) => (new Date(a.createdOn) > new Date(b.createdOn) ? a : b));
 });
+
 const modifiedBy = computed(() => latestJournal.value?.name ?? '-');
 const modifiedMinutesAgo = computed(() => {
   if (!latestJournal.value?.createdOn) return '-';
   const diff = Date.now() - new Date(latestJournal.value.createdOn).getTime();
   return Math.max(0, Math.floor(diff / 60_000));
 });
+
+// 수정 내역
+const openJournalDetail = async (journalId) => {
+  selectedJournalId.value = journalId;
+  journalModalVisible.value = true;
+  taskStore.findJournalDetail(journalId);
+};
 
 // 날짜 포맷
 const formatDate = (ts) => {
@@ -581,12 +592,14 @@ onMounted(async () => {
         <table class="w-full text-base">
           <thead>
             <tr class="border-b border-[#F2F0EB]">
+              <th class="pb-3 text-left font-semibold text-[#6B6B63] w-32">수정 번호</th>
               <th class="pb-3 text-left font-semibold text-[#6B6B63]">수정자</th>
-              <th class="pb-3 text-left font-semibold text-[#6B6B63]">수정시간</th>
+              <th class="pb-3 text-left font-semibold text-[#6B6B63] w-48">수정시간</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-[#F2F0EB]">
-            <tr v-for="h in history" :key="h.id" class="hover:bg-[#FAFAF8]">
+            <tr v-for="h in history" :key="h.id" class="hover:bg-[#FAFAF8] cursor-pointer transition-colors" @click="openJournalDetail(h.id)">
+              <td class="py-3 pr-4 font-mono text-base text-[#9A9B90]">{{ h.id }}</td>
               <td class="py-3 pr-4">
                 <span class="text-base font-semibold text-[#1A1816]">{{ h.name }}</span>
                 <span class="text-base text-[#9A9B90] ml-1">({{ h.userId }})</span>
@@ -616,6 +629,7 @@ onMounted(async () => {
         <table class="w-full text-base">
           <thead>
             <tr class="border-b border-[#F2F0EB]">
+              <th class="pb-3 text-left font-semibold text-[#6B6B63]">작업자</th>
               <th class="pb-3 text-left font-semibold text-[#6B6B63]">작업 일시</th>
               <th class="pb-3 text-left font-semibold text-[#6B6B63]">소요 시간</th>
               <th class="pb-3 text-left font-semibold text-[#6B6B63]">설명</th>
@@ -625,6 +639,7 @@ onMounted(async () => {
           </thead>
           <tbody class="divide-y divide-[#F2F0EB]">
             <tr v-for="log in timeLogs" :key="log.id" class="hover:bg-[#FAFAF8]">
+              <td class="py-3 pr-4 text-base text-[#1A1816] font-medium">{{ log.name || '-' }}</td>
               <td class="py-3 pr-4 text-base text-[#6B6B63]">{{ formatDateTime(log.taskStart) }}</td>
               <td class="py-3 pr-4 text-base font-semibold text-[#E8920E]">{{ formatMinutes(log.spent) }}</td>
               <td class="py-3 pr-4 text-base text-[#1A1816]">{{ log.description || '-' }}</td>
@@ -656,6 +671,7 @@ onMounted(async () => {
       "
       @cancel="timeLogVisible = false"
     />
+    <TaskJournalModal v-model:visible="journalModalVisible" :journalId="selectedJournalId" @close="journalModalVisible = false" />
   </div>
 </template>
 
