@@ -24,9 +24,15 @@ const filters = reactive({
 });
 
 // --- 3. 조회 로직 ---
-// onMounted(async () => {
-//   await versionStore.
-// })
+onMounted(async () => {
+  await versionStore.fetchVersions(filters);
+
+  // Select 옵션 구성
+  versionOptions.value = versionStore.versions.map((p) => ({
+    label: p.name,
+    value: p.id
+  }));
+});
 </script>
 
 <template>

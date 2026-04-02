@@ -12,30 +12,28 @@ export const useVersionStore = defineStore('version', {
   // getters
   // actions
   actions: {
-    // 프로젝트 목록 조회
+    // 버전 목록 조회
     async fetchVersions(filters = {}) {
       this.loading = true;
       try {
-        const response = await axios.get('/project/list', {
+        const response = await axios.get('/project/version/list', {
           params: {
+            projectId: filters.projectId ?? null,
             id: filters.id ?? null,
-            pmId: filters.pmId ?? null,
-            startDate: filters.startDate ?? null,
-            endDate: filters.endDate ?? null,
-            isLock: filters.isLock ?? false
+            status: filters.status ?? null
           }
         });
 
-        // 백엔드 데이터에 프론트용 하드코딩 데이터(일감 수, 진행률)를 합쳐서 저장
-        this.projects = response.data.map((p) => ({
+        this.versions = response.data.map((p) => ({
           id: p.id,
-          title: p.title,
-          pm: p.pmName,
-          pmId: p.pmId,
+          projectId: p.projectId,
+          name: p.name,
+          description: p.description,
+          startDate: p.startDate,
           endDate: p.endDate,
-          isLock: p.isLock,
-          issueCount: '0/0', // 아직 DB 연동 전이라 하드코딩
-          progress: 0 // 아직 로직 전이라 하드코딩
+          status: p.status,
+          isShare: p.isShare,
+          isDefault: p.isDefault
         }));
 
         return response.data;

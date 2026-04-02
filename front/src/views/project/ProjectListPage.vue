@@ -5,8 +5,7 @@ import { useToast } from 'primevue';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-// 삭제할 id를 임시 저장
-const pendingDeleteId = ref(null);
+const pendingDeleteId = ref(null); // 삭제할 id 임시 저장
 const visible = ref(false);
 const confirmMsg = ref('');
 const toast = useToast();
