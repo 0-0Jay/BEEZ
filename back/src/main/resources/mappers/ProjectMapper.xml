@@ -60,7 +60,8 @@
            is_public,
            parent_id,
            start_date,
-           end_date
+           end_date,
+           default_version_id
     FROM project
     WHERE id = #{id}
   </select>

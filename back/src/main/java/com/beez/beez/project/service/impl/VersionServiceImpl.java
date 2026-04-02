@@ -3,6 +3,8 @@ package com.beez.beez.project.service.impl;
 import com.beez.beez.logs.service.LogsService;
 import com.beez.beez.project.dto.ProjectInfoResponse;
 import com.beez.beez.project.dto.VersionCreateRequest;
+import com.beez.beez.project.dto.VersionFilterRequest;
+import com.beez.beez.project.dto.VersionListResponse;
 import com.beez.beez.project.mapper.ProjectMapper;
 import com.beez.beez.project.mapper.VersionMapper;
 import com.beez.beez.project.service.VersionService;
@@ -11,6 +13,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Transactional
 @RequiredArgsConstructor
@@ -66,6 +70,7 @@ public class VersionServiceImpl implements VersionService {
   public void deleteVersion(String id, String projectId, String versionName) {
     String userId = getCurrentUserId();
     int result = versionMapper.deleteVersion(id);
+    System.out.println("삭제 결과: " + result);
     
     if (result == 0) {
       throw new IllegalArgumentException("일감에서 사용 중인 버전은 삭제할 수 없습니다.");
@@ -76,9 +81,18 @@ public class VersionServiceImpl implements VersionService {
       projectMapper.updateDefaultVersion(projectId, null);
     }
     
+    System.out.println("삭제할 버전id: " + id);
+    System.out.println("기본버전id: " + project.getDefaultVersionId());
+    
     String link = "/project/setting/" + projectId + "?tab=version";
     String content = String.format("버전 삭제 (버전명 : %s)", versionName);
     logsService.insertLogs(projectId, "A3", "B1", content, link, userId);
+  }
+  
+  //버전 목록 조회(필터링)
+  @Override
+  public List<VersionListResponse> selectVersionList(VersionFilterRequest filter) {
+    return versionMapper.selectVersionList(filter);
   }
   
   
