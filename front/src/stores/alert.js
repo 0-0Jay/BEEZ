@@ -12,5 +12,7 @@ export const useAlertStore = defineStore('alert', {
       this.message = msg;
     }
   },
-  persist: true
+  persist: {
+    storage: sessionStorage
+  }
 });

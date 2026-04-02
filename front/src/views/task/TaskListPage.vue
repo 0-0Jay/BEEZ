@@ -17,11 +17,12 @@ const userId = computed(() => authStore.user.id ?? null);
 const tasks = computed(() => taskStore.taskList);
 
 // 드롭다운 옵션
-const workflowOptions = computed(() => taskStore.workflowList);
+const commonCodes = computed(() => taskStore.commonCodeList);
+const workflowOptions = computed(() => commonCodes.value.filter((w) => w.cgroup === '0Q'));
 const userOptions = computed(() => taskStore.memberList);
 const typeOptions = computed(() => taskStore.typeList);
 const categoryOptions = computed(() => taskStore.cateList);
-const priorityOptions = computed(() => taskStore.priorityList);
+const priorityOptions = computed(() => commonCodes.value.filter((p) => p.cgroup === '0S'));
 
 // value → name 맵핑
 const workflowMap = computed(() => Object.fromEntries(workflowOptions.value.map((w) => [w.id, w.name])));
@@ -58,8 +59,7 @@ const defaultFilters = () => ({
   category: null,
   priority: null,
   title: '',
-  showMyTasks: false,
-  showWatching: false
+  showMyTasks: false
 });
 
 const filters = ref(defaultFilters());
@@ -78,19 +78,11 @@ function resetFilters() {
   currentPage.value = 1;
 }
 
-// 내 일감 / 관람 중인 일감: 즉시 반영
+// 내 일감 보기 필터
 watch(
   () => filters.value.showMyTasks,
   (val) => {
     appliedFilters.value.showMyTasks = val;
-    currentPage.value = 1;
-  }
-);
-
-watch(
-  () => filters.value.showWatching,
-  (val) => {
-    appliedFilters.value.showWatching = val;
     currentPage.value = 1;
   }
 );
@@ -119,13 +111,8 @@ function sortIcon(key) {
 const processedTasks = computed(() => {
   let list = [...tasks.value];
 
-  const { showMyTasks, showWatching } = appliedFilters.value;
-  if (showMyTasks || showWatching) {
-    list = list.filter((t) => {
-      const isMyTask = showMyTasks && t.userId === userId.value;
-      const isWatching = showWatching && t.isWatch === 1;
-      return isMyTask || isWatching;
-    });
+  if (appliedFilters.value.showMyTasks) {
+    list = list.filter((t) => t.userId === userId.value);
   }
 
   if (appliedFilters.value.workflow) list = list.filter((t) => t.workflow === appliedFilters.value.workflow);
@@ -221,8 +208,7 @@ onMounted(async () => {
   await taskStore.findTypeList();
   await taskStore.findMember(project.value.id);
   await taskStore.findTaskList(project.value.id, userId.value);
-  await taskStore.findPriorityList();
-  await taskStore.findWorkflowList();
+  await taskStore.findCommonCodeList();
 });
 </script>
 
@@ -294,12 +280,6 @@ onMounted(async () => {
           <div class="flex items-center gap-2">
             <Checkbox v-model="filters.showMyTasks" :binary="true" inputId="showMyTasks" />
             <label for="showMyTasks" class="text-sm text-stone-500 cursor-pointer select-none">내 일감 보기</label>
-          </div>
-
-          <!-- 관람 중인 일감 보기 -->
-          <div class="flex items-center gap-2">
-            <Checkbox v-model="filters.showWatching" :binary="true" inputId="showWatching" />
-            <label for="showWatching" class="text-sm text-stone-500 cursor-pointer select-none">관람 중인 일감 보기</label>
           </div>
         </div>
 
@@ -398,29 +378,9 @@ onMounted(async () => {
 
       <!-- 페이징 -->
       <div class="flex items-center justify-center gap-1 px-6 py-5 border-t border-stone-100">
-        <button
-          class="w-8 h-8 flex items-center justify-center rounded-md border border-stone-200 bg-white text-stone-400 text-base hover:bg-amber-100 hover:border-amber-300 hover:text-amber-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
-          :disabled="!hasPrevBlock"
-          @click="prevBlock"
-        >
-          ‹
-        </button>
-        <button
-          v-for="p in pageNumbers"
-          :key="p"
-          class="w-8 h-8 flex items-center justify-center rounded-md border text-sm font-medium transition-colors cursor-pointer"
-          :class="p === currentPage ? 'bg-amber-600 border-amber-600 text-amber-50 font-bold shadow-sm shadow-amber-300' : 'border-stone-200 bg-white text-stone-500 hover:bg-amber-100 hover:border-amber-300 hover:text-amber-700'"
-          @click="goPage(p)"
-        >
-          {{ p }}
-        </button>
-        <button
-          class="w-8 h-8 flex items-center justify-center rounded-md border border-stone-200 bg-white text-stone-400 text-base hover:bg-amber-100 hover:border-amber-300 hover:text-amber-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
-          :disabled="!hasNextBlock"
-          @click="nextBlock"
-        >
-          ›
-        </button>
+        <Button icon="pi pi-chevron-left" text rounded :disabled="!hasPrevBlock" @click="prevBlock" />
+        <Button v-for="p in pageNumbers" :key="p" :label="String(p)" :severity="p === currentPage ? undefined : 'secondary'" :text="p !== currentPage" rounded @click="goPage(p)" />
+        <Button icon="pi pi-chevron-right" text rounded :disabled="!hasNextBlock" @click="nextBlock" />
       </div>
     </div>
   </div>

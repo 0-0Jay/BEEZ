@@ -28,32 +28,11 @@
     WHERE p.project_id = #{projectId}
   </select>
   
-  <select id="findPriorityList" resultType="PriorityResponse">
-    SELECT com_value AS id,
+  <select id="findCommonCodeList" resultType="CommonCodeResponse">
+    SELECT group_value AS cgroup,
+           com_value AS id,
            com_name AS name
     FROM common_code
-    WHERE group_value = '0S'
-  </select>
-  
-  <select id="findWorkflowList" resultType="WorkflowResponse">
-    SELECT com_value AS id,
-           com_name AS name
-    FROM common_code
-    WHERE group_value = '0Q'
-  </select>
-  
-  <select id="findRelationList" resultType="RelationResponse">
-    SELECT com_value AS id,
-           com_name AS name
-    FROM common_code
-    WHERE group_value = '0W'
-  </select>
-  
-  <select id="findActivityList" resultType="ActivityResponse">
-    SELECT com_value AS id,
-           com_name AS name
-    FROM common_code
-    WHERE group_value = '0U'
   </select>
   
   <select id="findVersionList" resultType="VersionResponse">
@@ -71,62 +50,32 @@
     WHERE ROWNUM = 1
   </select>
   
-  <insert id="insertTask" parameterType="TaskRequest">
-    <selectKey keyProperty="id" resultType="String" order="BEFORE">
-      SELECT BEEZ.generate_pk_auto('task') FROM dual
-    </selectKey>
-    INSERT INTO task(id,
-                     project_id,
-                     version_id,
-                     title,
-                     description,
-                     user_id,
-                     type,
-                     category,
-                     workflow,
-                     priority,
-                     planned_start,
-                     planned_end,
-                     actual_start,
-                     actual_end,
-                     estimated_time,
-                     progress,
-                     status,
-                     parent_id,
-                     is_public,
-                     creator,
-                     file_id)
-    VALUES(#{id},
-           #{projectId},
-           #{version},
-           #{title},
-           #{description},
-           #{userId},
-           #{type},
-           #{category},
-           #{workflow},
-           #{priority},
-           #{plannedStart},
-           #{plannedEnd},
-           #{actualStart},
-           #{actualEnd},
-           #{estimatedTime},
-           #{progress},
-           'T1',
-           #{parentId},
-           #{isPublic},
-           #{creator},
-           #{fileId})
-  </insert>
-  
-  <insert id="insertTaskWatcher" statementType="CALLABLE">
+  <select id="insertTask" parameterType="TaskRequest" statementType="CALLABLE">
     {
-      CALL proc_watcher_list(
-        #{taskId},
-        #{watcherList, typeHandler=com.beez.beez.config.OracleTypeHandler.WatcherTypeHandler}
+      CALL proc_insert_task(
+        #{projectId,     mode=IN,  jdbcType=VARCHAR},
+        #{versionId,     mode=IN,  jdbcType=VARCHAR},
+        #{title,         mode=IN,  jdbcType=VARCHAR},
+        #{description,   mode=IN,  jdbcType=VARCHAR},
+        #{userId,        mode=IN,  jdbcType=VARCHAR},
+        #{type,          mode=IN,  jdbcType=VARCHAR},
+        #{category,      mode=IN,  jdbcType=VARCHAR},
+        #{workflow,      mode=IN,  jdbcType=VARCHAR},
+        #{priority,      mode=IN,  jdbcType=VARCHAR},
+        #{plannedStart,  mode=IN,  jdbcType=DATE},
+        #{plannedEnd,    mode=IN,  jdbcType=DATE},
+        #{actualStart,   mode=IN,  jdbcType=DATE},
+        #{actualEnd,     mode=IN,  jdbcType=DATE},
+        #{estimatedTime, mode=IN,  jdbcType=NUMERIC},
+        #{progress,      mode=IN,  jdbcType=NUMERIC},
+        #{parentId,      mode=IN,  jdbcType=VARCHAR},
+        #{isPublic,      mode=IN,  jdbcType=VARCHAR},
+        #{creator,       mode=IN,  jdbcType=VARCHAR},
+        #{fileDetails,   mode=IN,  jdbcType=ARRAY,  typeHandler=com.beez.beez.config.OracleTypeHandler.FileDetailTypeHandler},
+        #{id,            mode=OUT, jdbcType=VARCHAR}
       )
     }
-  </insert>
+  </select>
   
   <select id="findTaskDetail" statementType="CALLABLE">
     {
@@ -158,8 +107,7 @@
         #{replyList,     mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=replyResultMap,    typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
         #{fileList,      mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=fileResultMap,     typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
         #{childTaskList, mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=childResultMap,    typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
-        #{linkedTaskList,mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=linkedResultMap,   typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
-        #{watcherList,   mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=watcherResultMap,  typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler}
+        #{linkedTaskList,mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=linkedResultMap,   typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler}
       )
     }
   </select>
@@ -173,6 +121,8 @@
   
   <resultMap id="timeResultMap" type="com.beez.beez.task.dto.TaskTimeResponse">
     <result property="id" column="id" />
+    <result property="userId" column="user_id"/>
+    <result property="name" column="name"/>
     <result property="taskStart" column="task_start" />
     <result property="spent" column="spent" />
     <result property="description" column="description" />
@@ -190,7 +140,7 @@
     <result property="parentId" column="parent_id" />
   </resultMap>
   
-  <resultMap id="fileResultMap" type="com.beez.beez.task.dto.FileDetailResponse">
+  <resultMap id="fileResultMap" type="com.beez.beez.file.dto.FileDetailResponse">
     <result property="id" column="id" />
     <result property="fieldName" column="field_name" />
     <result property="oldValue" column="old_value" />
@@ -213,12 +163,7 @@
     <result property="progress" column="progress" />
     <result property="relationType" column="relation_type" />
   </resultMap>
-  
-  <resultMap id="watcherResultMap" type="com.beez.beez.task.dto.TaskWatcherResponse">
-    <result property="userId" column="user_id" />
-    <result property="name" column="name" />
-  </resultMap>
-  
+
   <insert id="insertTaskReply" parameterType="TaskReplyRequest">
     <selectKey keyProperty="id" resultType="String" order="BEFORE">
       SELECT BEEZ.generate_pk_auto('task_reply') FROM dual

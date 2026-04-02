@@ -14,6 +14,8 @@ import java.time.LocalDateTime;
 @Builder
 public class TaskTimeResponse {
   private String id;
+  private String userId;
+  private String name;
   private Timestamp taskStart;
   private Integer spent;
   private String description;

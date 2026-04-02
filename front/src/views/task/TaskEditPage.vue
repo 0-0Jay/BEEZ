@@ -3,7 +3,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useProjectStore } from '@/stores/project';
 import { useTaskStore } from '@/stores/task';
 import DatePicker from 'primevue/datepicker';
-import { computed, nextTick, onMounted, reactive, ref } from 'vue';
+import { computed, nextTick, onMounted, reactive } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -14,38 +14,25 @@ const authStore = useAuthStore();
 const project = computed(() => projectStore.selectedProject);
 const userId = computed(() => authStore.user.id ?? '20261111');
 
+const isEditMode = route.path.includes('/task/edit');
+const isCopyMode = route.path.includes('/task/copy');
+const isPopulated = isEditMode || isCopyMode;
+
 const pageTitle = computed(() => {
-  if (route.path.includes('/task/edit')) return '일감 수정';
-  if (route.path.includes('/task/copy')) return '일감 복사';
+  if (isEditMode) return '일감 수정';
+  if (isCopyMode) return '일감 복사';
   return '새 일감 생성';
 });
 
-const isCopyPage = computed(() => route.path.includes('/task/copy'));
-
-const workflowOptions = computed(() => taskStore.workflowList);
+const commonCodes = computed(() => taskStore.commonCodeList);
+const workflowOptions = computed(() => commonCodes.value.filter((w) => w.cgroup === '0Q'));
 const userOptions = computed(() => taskStore.memberList);
 const typeOptions = computed(() => taskStore.typeList);
 const categoryOptions = computed(() => taskStore.cateList);
-const priorityOptions = computed(() => taskStore.priorityList);
+const priorityOptions = computed(() => commonCodes.value.filter((p) => p.cgroup === '0S'));
 const parentTaskOptions = computed(() => [{ id: null, title: '없음' }, ...taskStore.taskList]);
 const versionOptions = computed(() => taskStore.versionList);
 
-const watcherSelectValue = ref(null);
-const watcherOptions = computed(() => userOptions.value.filter((m) => !form.watchers.some((w) => w.id === m.id)));
-
-const onWatcherSelect = (e) => {
-  const selected = userOptions.value.find((m) => m.id === e.value);
-  if (selected && !form.watchers.some((w) => w.id === selected.id)) {
-    form.watchers.push(selected);
-  }
-  watcherSelectValue.value = null;
-};
-
-const removeWatcher = (id) => {
-  form.watchers = form.watchers.filter((w) => w.id !== id);
-};
-
-// DatePicker Date 객체 → 'YYYY-MM-DD' 문자열 변환
 function formatDate(d) {
   if (!d) return '';
   if (typeof d === 'string') return d;
@@ -55,30 +42,90 @@ function formatDate(d) {
   return `${y}-${m}-${day}`;
 }
 
+function parseDate(d) {
+  if (!d) return null;
+  if (d instanceof Date) return d;
+  return new Date(d);
+}
+
+const task = computed(() => taskStore.task);
+
 const form = reactive({
-  creator: userId.value,
-  projectId: project.value.id,
-  isPublic: 'J1',
-  title: '',
-  type: null,
-  workflow: null,
-  priority: null,
-  description: '',
-  parentId: null,
-  category: null,
-  userId: null,
-  version: null,
-  plannedStart: null,
-  plannedEnd: null,
-  actualStart: null,
-  actualEnd: null,
-  estimatedTime: null,
-  progress: null,
-  attachments: [],
-  watchers: [],
+  creator: isPopulated ? task.value?.creator : userId.value,
+  projectId: isPopulated ? task.value?.projectId : project.value?.id,
+  isPublic: isPopulated ? (task.value?.isPublic ?? 'J1') : 'J1',
+  title: isPopulated ? (task.value?.title ?? '') : '',
+  type: isPopulated ? (task.value?.type ?? null) : null,
+  workflow: isPopulated ? (task.value?.workflow ?? null) : null,
+  priority: isPopulated ? (task.value?.priority ?? null) : null,
+  description: isPopulated ? (task.value?.description ?? '') : '',
+  parentId: isPopulated ? (task.value?.parentId ?? null) : null,
+  category: isPopulated ? (task.value?.category ?? null) : null,
+  userId: isPopulated ? (task.value?.userId ?? null) : null,
+  versionId: isPopulated ? (task.value?.versionId ?? null) : null,
+  plannedStart: isPopulated ? parseDate(task.value?.plannedStart) : null,
+  plannedEnd: isPopulated ? parseDate(task.value?.plannedEnd) : null,
+  actualStart: isPopulated ? parseDate(task.value?.actualStart) : null,
+  actualEnd: isPopulated ? parseDate(task.value?.actualEnd) : null,
+  estimatedTime: isPopulated ? (task.value?.estimatedTime ?? 0) : 0,
+  progress: isPopulated ? (task.value?.progress ?? 0) : 0,
+  attachments: isCopyMode ? [] : isPopulated ? (task.value?.attachments ?? []) : [],
   linkCopied: false,
   copySubTasks: false
 });
+
+// 수정 모드에서만 task.id 사용, 생성·복사는 null
+const fileId = isEditMode ? (task.value?.id ?? null) : null;
+
+// 수정 모드 전용 원본값 스냅샷
+const originalValues = isEditMode
+  ? {
+      isPublic: task.value?.isPublic ?? 'J1',
+      title: task.value?.title ?? '',
+      type: task.value?.type ?? null,
+      workflow: task.value?.workflow ?? null,
+      priority: task.value?.priority ?? null,
+      description: task.value?.description ?? '',
+      parentId: task.value?.parentId ?? null,
+      category: task.value?.category ?? null,
+      userId: task.value?.userId ?? null,
+      versionId: task.value?.versionId ?? null,
+      plannedStart: formatDate(task.value?.plannedStart),
+      plannedEnd: formatDate(task.value?.plannedEnd),
+      actualStart: formatDate(task.value?.actualStart),
+      actualEnd: formatDate(task.value?.actualEnd),
+      estimatedTime: task.value?.estimatedTime ?? 0,
+      progress: task.value?.progress ?? 0
+    }
+  : null;
+
+// 수정 모드 전용: 변경된 필드만 추려 changeLog 반환
+const buildChangeLog = () => {
+  if (!isEditMode || !originalValues) return [];
+
+  const scalarFields = ['isPublic', 'title', 'type', 'workflow', 'priority', 'description', 'parentId', 'category', 'userId', 'versionId', 'estimatedTime', 'progress'];
+  const dateFields = ['plannedStart', 'plannedEnd', 'actualStart', 'actualEnd'];
+
+  const changeLog = [];
+
+  scalarFields.forEach((field) => {
+    const oldValue = originalValues[field] ?? '';
+    const newValue = form[field] ?? '';
+    if (String(oldValue) !== String(newValue)) {
+      changeLog.push({ fieldName: field, oldValue, newValue });
+    }
+  });
+
+  dateFields.forEach((field) => {
+    const oldValue = originalValues[field] ?? '';
+    const newValue = formatDate(form[field]) ?? '';
+    if (oldValue !== newValue) {
+      changeLog.push({ fieldName: field, oldValue, newValue });
+    }
+  });
+
+  return changeLog;
+};
 
 const errors = reactive({
   title: '',
@@ -149,9 +196,7 @@ const validate = () => {
   return valid;
 };
 
-const isSaveDisabled = computed(() => {
-  return !form.title.trim() || !form.type || !form.workflow || !form.priority || !form.category || !form.userId || !form.plannedStart || !form.plannedEnd;
-});
+const isSaveDisabled = computed(() => !form.title.trim() || !form.type || !form.workflow || !form.priority || !form.category || !form.userId || !form.plannedStart || !form.plannedEnd);
 
 const handleFileChange = ({ files }) => {
   files.forEach((newFile) => {
@@ -178,26 +223,30 @@ const handleSubmit = async () => {
   formData.append('parentId', form.parentId ?? '');
   formData.append('category', form.category);
   formData.append('userId', form.userId);
-  formData.append('version', form.version ?? '');
+  formData.append('versionId', form.versionId ?? '');
   formData.append('plannedStart', formatDate(form.plannedStart));
   formData.append('plannedEnd', formatDate(form.plannedEnd));
   formData.append('actualStart', formatDate(form.actualStart));
   formData.append('actualEnd', formatDate(form.actualEnd));
-  formData.append('estimatedTime', form.estimatedTime ?? '');
-  formData.append('progress', form.progress ?? '');
-  formData.append('linkCopied', form.linkCopied);
-  formData.append('copySubTasks', form.copySubTasks);
+  formData.append('estimatedTime', form.estimatedTime ?? 0);
+  formData.append('progress', form.progress ?? 0);
   formData.append('creator', form.creator);
   formData.append('projectId', form.projectId);
 
-  form.watchers.forEach((w) => {
-    formData.append('watcherIds', w.id);
-  });
-  form.attachments.forEach((file) => {
-    formData.append('attachments', file);
-  });
+  if (isEditMode) {
+    formData.append('fileId', fileId);
+    formData.append('changeLog', JSON.stringify(buildChangeLog()));
+    taskStore.insertTask(formData);
+  } else if (isCopyMode) {
+    formData.append('linkCopied', form.linkCopied);
+    formData.append('copySubTasks', form.copySubTasks);
+    form.attachments.forEach((file) => formData.append('attachments', file));
+    // taskStore.copyTask(formData)
+  } else {
+    form.attachments.forEach((file) => formData.append('attachments', file));
+    taskStore.insertTask(formData);
+  }
 
-  await taskStore.insertTask(formData);
   router.push('/tasks');
 };
 
@@ -207,9 +256,8 @@ const handleCancel = () => {
 
 onMounted(async () => {
   await taskStore.findCateList();
-  await taskStore.findPriorityList();
   await taskStore.findTypeList();
-  await taskStore.findWorkflowList();
+  await taskStore.findCommonCodeList();
   await taskStore.findMember(project.value.id);
   await taskStore.findTaskList(project.value.id, userId.value);
   await taskStore.findVersionList(project.value.id);
@@ -313,7 +361,7 @@ onMounted(async () => {
             </td>
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">목표 버전</td>
             <td class="px-6 py-3">
-              <Select v-model="form.version" :options="versionOptions" optionLabel="name" optionValue="id" placeholder="선택" class="w-full" />
+              <Select v-model="form.versionId" :options="versionOptions" optionLabel="name" optionValue="id" placeholder="선택" class="w-full" />
             </td>
           </tr>
 
@@ -368,7 +416,7 @@ onMounted(async () => {
           <tr class="divide-x divide-[#F2F0EB]">
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">추정 시간 (분)</td>
             <td colspan="3" class="px-6 py-3">
-              <InputNumber v-model="form.estimatedtime" :min="0" placeholder="0" class="w-36" />
+              <InputNumber v-model="form.estimatedTime" :min="0" placeholder="0" class="w-36" />
             </td>
           </tr>
 
@@ -417,26 +465,8 @@ onMounted(async () => {
             </td>
           </tr>
 
-          <!-- 일감 관람자 -->
-          <tr class="divide-x divide-[#F2F0EB]">
-            <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35] align-top pt-4">일감 관람자</td>
-            <td colspan="3" class="px-6 py-3">
-              <Select v-model="watcherSelectValue" :options="watcherOptions" optionLabel="name" optionValue="id" placeholder="관람자 검색 또는 선택" filter filterPlaceholder="이름으로 검색" class="w-64" @change="onWatcherSelect" />
-              <div v-if="form.watchers.length > 0" class="flex flex-wrap gap-2 mt-3">
-                <span v-for="w in form.watchers" :key="w.id" class="inline-flex items-center gap-1.5 px-3 py-1 bg-[#FFF3E0] border border-[#E8920E] rounded-full text-base text-[#E8920E] font-medium">
-                  {{ w.name }}
-                  <button type="button" class="hover:text-red-600 transition-colors leading-none" @click="removeWatcher(w.id)">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </span>
-              </div>
-            </td>
-          </tr>
-
           <!-- 복사 옵션 -->
-          <tr v-if="isCopyPage" class="divide-x divide-[#F2F0EB]">
+          <tr v-if="isCopyMode" class="divide-x divide-[#F2F0EB]">
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">복사 옵션</td>
             <td colspan="3" class="px-6 py-3">
               <div class="flex items-center gap-6">

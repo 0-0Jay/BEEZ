@@ -30,5 +30,7 @@ export const useUsersStore = defineStore('users', {
       // console.log(response);
     }
   },
-  persist: true
+  persist: {
+    storage: sessionStorage
+  }
 });

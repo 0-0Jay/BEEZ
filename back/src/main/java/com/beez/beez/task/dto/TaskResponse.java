@@ -1,6 +1,6 @@
 package com.beez.beez.task.dto;
 
-import com.beez.beez.task.repository.Task;
+import com.beez.beez.file.dto.FileDetailResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -44,5 +43,4 @@ public class TaskResponse {
   private List<FileDetailResponse> fileList;
   private List<TaskListResponse> childTaskList;
   private List<TaskRelationResponse> linkedTaskList;
-  private List<TaskWatcherResponse> watcherList;
 }

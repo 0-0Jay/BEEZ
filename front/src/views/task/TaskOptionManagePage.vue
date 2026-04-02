@@ -88,7 +88,6 @@ async function deleteCate(id) {
 onMounted(async () => {
   await taskStore.findTypeList();
   await taskStore.findCateList();
-  console.log(taskCategories);
 });
 </script>
 

@@ -9,11 +9,8 @@ export const useTaskStore = defineStore('task', {
     cateList: [],
     memberList: [],
     taskList: [],
-    priorityList: [],
-    workflowList: [],
     versionList: [],
-    relationList: [],
-    activityList: [],
+    commonCodeList: [],
     task: ref(null)
   }),
   // getters
@@ -53,13 +50,9 @@ export const useTaskStore = defineStore('task', {
       const res = await axios.get(`/task/${projectId}/${userId}`);
       this.taskList = res.data;
     },
-    async findPriorityList() {
-      const res = await axios.get(`/task/priority`);
-      this.priorityList = res.data;
-    },
-    async findWorkflowList() {
-      const res = await axios.get(`/task/workflow`);
-      this.workflowList = res.data;
+    async findCommonCodeList() {
+      const res = await axios.get(`/task/common`);
+      this.commonCodeList = res.data;
     },
     async findVersionList(projectId) {
       const res = await axios.get(`/task/version/${projectId}`);
@@ -72,21 +65,20 @@ export const useTaskStore = defineStore('task', {
         }
       });
     },
+    async updateTask(data) {
+      const res = await axios.put(`/task`, data, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+    },
     async findTaskDetail(taskId) {
       const res = await axios.get(`/task/${taskId}`);
       this.task = res.data;
-    },
-    async findRelationList() {
-      const res = await axios.get(`/task/relation`);
-      this.relationList = res.data;
-    },
-    async findActivityList() {
-      const res = await axios.get(`/task/activity`);
-      this.activityList = res.data;
     },
     async insertTaskReply(data) {
       const res = await axios.post(`/task/reply`, data);
     }
   },
-  persist: true
+  persist: false
 });

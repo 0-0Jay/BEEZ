@@ -15,5 +15,7 @@ export const useChatStore = defineStore('chat', {
       return this.chatlist;
     }
   },
-  persist: true
+  persist: {
+    storage: sessionStorage
+  }
 });

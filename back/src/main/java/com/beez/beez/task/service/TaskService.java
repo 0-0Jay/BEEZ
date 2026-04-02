@@ -36,12 +36,6 @@ public interface TaskService {
   // 담당자 목록
   List<MemberResponse> findMemberList(String projectId);
   
-  // 우선순위 목록
-  List<PriorityResponse> findPriorityList();
-  
-  // 진행상태 목록
-  List<WorkflowResponse> findWorkflowList();
-  
   // 버전 목록
   List<VersionResponse> findVersionList(String projectId);
   
@@ -51,12 +45,9 @@ public interface TaskService {
   // 일감 상세
   TaskResponse findTaskDetail(String id);
   
-  // 관계 목록
-  List<RelationResponse> findRelationList();
-  
-  // 작업분류 목록
-  List<ActivityResponse> findActivityList();
-  
   // 일감 댓글 작성
   void insertTaskReply(TaskReplyRequest taskReplyRequest);
+  
+  // 공통코드 목록
+  List<CommonCodeResponse> findCommonCodeList();
 }
