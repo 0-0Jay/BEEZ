@@ -37,4 +37,5 @@ public interface WikiMapper {
   //위키 페이지에 프로젝트 관련 정보를 뿌려주기 위함
   WikiProjectRequest findProjectById(String projectId);
   
+  
 }

@@ -1,19 +1,23 @@
 <script setup>
-import ProjectInfoTab from '@/components/project/ProjectInfoTab.vue';
-import ProjectMemberTab from '@/components/project/ProjectMemberTab.vue';
-import ProjectVersionTab from '@/components/project/ProjectVersionTab.vue';
-import { ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
 const route = useRoute();
+const router = useRouter();
 const projectId = route.params.id;
 
-const activeTab = ref(0);
 const tabs = [
-  { label: '프로젝트', icon: 'pi pi-folder' },
-  { label: '구성원', icon: 'pi pi-users' },
-  { label: '버전', icon: 'pi pi-tag' }
+  { label: '프로젝트', icon: 'pi pi-folder', name: 'ProjectSettingInfo' },
+  { label: '구성원', icon: 'pi pi-users', name: 'ProjectSettingMembers' },
+  { label: '버전', icon: 'pi pi-tag', name: 'ProjectSettingVersions' }
 ];
+
+const goToTab = (tabName) => {
+  router.push({ name: tabName, params: { id: projectId } });
+};
+
+const isActive = (tabName) => {
+  return route.name === tabName;
+};
 </script>
 
 <template>
@@ -24,16 +28,14 @@ const tabs = [
 
     <!-- 탭 버튼 -->
     <div class="flex gap-1 mb-6 border-b border-[#C7C7C2]">
-      <button v-for="(tab, index) in tabs" :key="index" class="tab-btn px-6 py-3 text-sm font-medium transition-all" :class="activeTab === index ? 'tab-active' : 'tab-inactive'" @click="activeTab = index">
-        <i :class="tab.icon" class="mr-2" />
+      <button v-for="tab in tabs" :key="tab.name" class="tab-btn px-6 py-3 text-sm font-medium transition-all" :class="isActive(tab.name) ? 'tab-active' : 'tab-inactive'" @click="goToTab(tab.name)">
+        <i :class="tab.icon" class="f mr-2" />
         {{ tab.label }}
       </button>
     </div>
 
     <!-- 탭 컨텐츠 -->
-    <ProjectInfoTab v-if="activeTab === 0" :project-id="projectId" />
-    <ProjectMemberTab v-if="activeTab === 1" :project-id="projectId" />
-    <ProjectVersionTab v-if="activeTab === 2" :project-id="projectId" />
+    <RouterView :project-id="projectId" />
   </div>
 </template>
 

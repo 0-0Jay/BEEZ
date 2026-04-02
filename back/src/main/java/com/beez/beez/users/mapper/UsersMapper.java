@@ -8,6 +8,7 @@ import com.beez.beez.users.repository.Users;
 import io.jsonwebtoken.security.Password;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface UsersMapper {
@@ -26,5 +27,8 @@ public interface UsersMapper {
 
   // 비밀번호 재설정 토큰 저장
   void insertUserTokens(UserTokenDto dto);
+
+  // 비밀번호 재설정
+  void updatePassword(Map<String, Object> map);
 
 }

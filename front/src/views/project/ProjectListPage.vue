@@ -1,6 +1,7 @@
 <script setup>
 import { useProjectStore } from '@/stores/project';
 import { storeToRefs } from 'pinia';
+import { useToast } from 'primevue';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -8,6 +9,7 @@ import { useRouter } from 'vue-router';
 const pendingDeleteId = ref(null);
 const visible = ref(false);
 const confirmMsg = ref('');
+const toast = useToast();
 
 const openDeleteConfirm = (id) => {
   pendingDeleteId.value = id;
@@ -21,6 +23,7 @@ const handleDelConfirm = async () => {
     await projectStore.deleteProject(pendingDeleteId.value);
     pendingDeleteId.value = null;
     fetchProjects();
+    toast.add({ severity: 'success', summary: '삭제 완료', detail: '프로젝트가 삭제되었습니다.', life: 2000 });
   }
 };
 
@@ -112,11 +115,13 @@ const rowClass = (data) => {
 const lockProject = async (id) => {
   await projectStore.lockProject(id);
   fetchProjects();
+  toast.add({ severity: 'success', summary: '프로젝트 잠금보관', detail: '프로젝트가 잠금보관되었습니다.', life: 2000 });
 };
 
 const unlockProject = async (id) => {
   await projectStore.unlockProject(id);
   fetchProjects();
+  toast.add({ severity: 'success', summary: '프로젝트 잠금보관 해제', detail: '프로젝트가 잠금보관 해제되었습니다.', life: 2000 });
 };
 </script>
 
@@ -130,10 +135,9 @@ const unlockProject = async (id) => {
 
     <div class="bg-[#E8E5DC] px-10 py-8 rounded-lg mb-8 shadow-sm border border-[#C7C7C2] flex">
       <!-- 입력칸 + 체크박스 묶음 -->
-      <div class="flex items-center">
+      <div class="flex items-center flex-1 flex-wrap gap-y-3">
         <label class="filter-label mr-5">프로젝트명</label>
         <Select v-model="filters.id" :options="projectOptions" optionLabel="label" optionValue="value" placeholder="선택" class="filter-input w-80 mr-10" />
-
         <label class="filter-label mr-5">PM/PL</label>
         <Select v-model="filters.pmId" :options="pmOptions" optionLabel="label" optionValue="value" placeholder="선택" class="filter-input w-42 mr-10" />
         <label class="filter-label mr-5">마감일</label>
@@ -144,26 +148,26 @@ const unlockProject = async (id) => {
         <label for="archived" class="text-sm font-medium text-[#1A1816] whitespace-nowrap cursor-pointer">잠금 보관 프로젝트 보기</label>
       </div>
 
-      <!-- 버튼 묶음 — ml-auto로 오른쪽, items-end로 아래 -->
-      <div class="flex gap-2 ml-auto">
+      <!-- 버튼 묶음 — ml-auto로 오른쪽 -->
+      <div class="flex gap-2 ml-auto shrink-0">
         <Button label="초기화" severity="secondary" raised @click="resetFilters" />
         <Button label="조회" icon="pi pi-search" raised @click="fetchProjects" />
       </div>
     </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-[#C7C7C2] overflow-hidden">
-      <DataTable :value="projects" :loading="loading" dataKey="id" :rowHover="true" :rowClass="rowClass">
+      <DataTable :value="projects" :loading="loading" dataKey="id" :rowHover="true" :rowClass="rowClass" tableStyle="width: 100%">
         <template #empty>
           <div class="text-center py-10 text-gray-400">조회된 데이터가 없습니다.</div>
         </template>
 
-        <Column header="No." headerClass="table-header" style="width: 80px">
+        <Column header="No." headerClass="table-header" style="width: 5%">
           <template #body="slotProps">
             {{ slotProps.index + 1 }}
           </template>
         </Column>
 
-        <Column field="title" header="프로젝트명" headerClass="table-header" style="width: 250px">
+        <Column field="title" header="프로젝트명" headerClass="table-header" style="width: 25%">
           <template #body="{ data }">
             <span class="font-medium text-stone-800 hover:text-amber-600 transition-colors cursor-pointer" @click="goToDetail(data)">
               {{ data.title }}
@@ -171,30 +175,30 @@ const unlockProject = async (id) => {
           </template>
         </Column>
 
-        <Column header="일감 수" headerClass="table-header" style="width: 120px">
+        <Column header="일감 수" headerClass="table-header" style="width: 10%">
           <template #body="{ data }">
             <span class="text-[#3A3B35]">{{ data.issueCount }}</span>
           </template>
         </Column>
 
-        <Column header="진행률" headerClass="table-header" style="width: 250px">
+        <Column header="진행률" headerClass="table-header" style="width: 30%">
           <template #body="{ data }">
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-5 px-10">
               <ProgressBar :value="data.progress" :showValue="false" class="progress-bar-custom flex-1" style="height: 8px" />
               <span class="text-xs text-[#9A9B90] whitespace-nowrap">{{ data.progress }}%</span>
             </div>
           </template>
         </Column>
 
-        <Column field="pm" header="PM/PL" headerClass="table-header" style="width: 120px" />
+        <Column field="pm" header="PM/PL" headerClass="table-header" style="width: 15%" />
 
-        <Column header="마감일" headerClass="table-header" style="width: 150px">
+        <Column header="마감일" headerClass="table-header" style="width: 10%">
           <template #body="{ data }">
             <span class="text-[#3A3B35]">{{ formatDate(data.endDate) }}</span>
           </template>
         </Column>
 
-        <Column headerClass="table-header" style="width: 60px">
+        <Column headerClass="table-header" style="width: 5%">
           <template #body="{ data }">
             <Button icon="pi pi-ellipsis-h" class="p-button-text p-button-rounded text-[#6B6B63] hover:bg-[#F2F0EB]" @click="toggleMenu($event, data)" />
           </template>
