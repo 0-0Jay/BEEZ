@@ -67,6 +67,18 @@ export const useAuthStore = defineStore('auth', {
         const errorMsg = err.response?.data?.message || '서버 오류가 발생했습니다.';
         return { success: false, message: errorMsg };
       }
+    },
+
+    async resetPassword(payload) {
+      try {
+        const response = await axios.post('/auth/reset-password', payload);
+        console.log(response.data);
+
+        return { success: true, message: response.data };
+      } catch (err) {
+        const errorMsg = err.response?.data?.message || '서버 오류가 발생했습니다.';
+        return { success: false, message: errorMsg };
+      }
     }
   },
   persist: true

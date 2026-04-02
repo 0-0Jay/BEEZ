@@ -1,20 +1,29 @@
 <script setup>
+import { useAuthStore } from '@/stores/auth';
+import { useToast } from 'primevue';
 import { computed, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
+const authStore = useAuthStore();
 const router = useRouter();
+const route = useRoute();
+const toast = useToast();
 
 const newPassword = ref('');
 const confirmPassword = ref('');
 const isLoading = ref(false);
 const isDone = ref(false);
+const isInvalid = ref(false);
 const fieldErrors = ref({ newPassword: '', confirmPassword: '' });
+const token = route.query.token;
 
+// 비밀번호 강도
 const strengthScore = computed(() => {
   const pw = newPassword.value;
   if (!pw) return 0;
   let score = 0;
-  if (pw.length >= 8) score++;
+  // 나중에 수정하기 -> 영문+숫자+특수문자 조합 8자 이상
+  if (pw.length >= 4) score++;
   if (/[A-Z]/.test(pw)) score++;
   if (/[0-9]/.test(pw)) score++;
   if (/[^A-Za-z0-9]/.test(pw)) score++;
@@ -58,9 +67,48 @@ async function handleSubmit() {
   if (hasError) return;
 
   isLoading.value = true;
-  await new Promise((r) => setTimeout(r, 800));
-  isLoading.value = false;
-  isDone.value = true;
+  try {
+    const result = await authStore.resetPassword({
+      newPassword: newPassword.value,
+      token
+    });
+
+    if (result.success) {
+      isDone.value = true;
+      toast.add({
+        severity: 'success',
+        summary: '재설정 완료',
+        detail: '비밀번호 재설정을 완료하였습니다.',
+        life: 3000,
+        closable: false
+      });
+      // 입력값 초기화
+      newPassword.value = '';
+      confirmPassword.value = '';
+    } else {
+      if (result.message.includes('유효시간') || result.message.includes('잘못된')) {
+        isInvalid.value = true;
+      } else {
+        toast.add({
+          severity: 'error',
+          summary: '변경 실패',
+          detail: result.message,
+          life: 3000,
+          closable: false
+        });
+      }
+    }
+  } catch (err) {
+    toast.add({
+      severity: 'error',
+      summary: '오류',
+      detail: '서버와 통신 중 오류가 발생했습니다.',
+      life: 3000,
+      closable: false
+    });
+  } finally {
+    isLoading.value = false;
+  }
 }
 </script>
 
@@ -81,10 +129,21 @@ async function handleSubmit() {
               <h2 class="text-xl font-bold text-[#3a3835] m-0">변경 완료</h2>
               <p class="mt-2 text-sm text-[#9a9690] mb-0">비밀번호가 성공적으로 변경되었습니다.</p>
             </div>
-            <Button label="로그인으로 돌아가기" class="w-full !bg-[#e8920e] !border-[#e8920e] hover:!bg-[#d07c0a] hover:!border-[#d07c0a] mt-2" @click="router.push('/login')" />
+            <Button label="로그인으로 돌아가기" class="w-full !bg-[#e8920e] !border-[#e8920e] hover:!bg-[#d07c0a] hover:!border-[#d07c0a] mt-2" @click="router.push('/')" />
           </div>
         </template>
-
+        <template v-else-if="isInvalid">
+          <div class="flex flex-col items-center text-center py-4 gap-4">
+            <div class="w-16 h-16 rounded-full flex items-center justify-center bg-[#fff8ec]">
+              <i class="pi pi-check text-2xl text-[#e8920e]" />
+            </div>
+            <div>
+              <h2 class="text-xl font-bold text-[#3a3835] m-0">유효하지 않은 요청</h2>
+              <p class="mt-2 text-sm text-[#9a9690] mb-0">링크가 만료되었거나 이미 사용되었습니다.<br />비밀번호 찾기를 다시 진행해 주세요.</p>
+            </div>
+            <Button label="다시 신청하기" class="w-full !bg-[#e8920e] !border-[#e8920e] mt-2" @click="router.push('/auth/pwRequest')" />
+          </div>
+        </template>
         <template v-else>
           <div class="text-center mb-8">
             <div class="w-16 h-16 mx-auto mb-3 overflow-hidden">
@@ -98,7 +157,7 @@ async function handleSubmit() {
           <form @submit.prevent="handleSubmit" class="flex flex-col gap-4">
             <div class="field-row">
               <label class="field-label">새 비밀번호</label>
-              <div class="flex flex-col gap-1">
+              <div class="flex flex-col gap-2">
                 <div class="relative">
                   <i class="pi pi-lock absolute left-3 top-1/2 -translate-y-1/2 text-sm z-10 text-[#736f68]" />
                   <Password
@@ -127,7 +186,7 @@ async function handleSubmit() {
 
             <div class="field-row">
               <label class="field-label">비밀번호 확인</label>
-              <div class="flex flex-col gap-1">
+              <div class="flex flex-col gap-2">
                 <div class="relative">
                   <i class="pi pi-lock absolute left-3 top-1/2 -translate-y-1/2 text-sm z-10 text-[#736f68]" />
                   <Password
@@ -137,7 +196,7 @@ async function handleSubmit() {
                     placeholder="비밀번호를 다시 입력해 주세요."
                     autocomplete="new-password"
                     :invalid="!!fieldErrors.confirmPassword"
-                    :inputClass="`w-full !pl-9 !text-sm !bg-[#fafaf8] ${fieldErrors.newPassword ? '!border-[#E8920E]' : '!border-[#e5e2d9]'}`"
+                    :inputClass="`w-full !pl-9 !text-sm !bg-[#fafaf8] ${fieldErrors.confirmPassword ? '!border-[#E8920E]' : '!border-[#e5e2d9]'}`"
                     class="w-full"
                     @input="clearError('confirmPassword')"
                   />
