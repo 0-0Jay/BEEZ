@@ -1,19 +1,19 @@
 import axios from '@/stores/AxiosInstance';
 import { defineStore } from 'pinia';
 
-export const useProjectStore = defineStore('project', {
+export const useVersionStore = defineStore('version', {
   // state
   state: () => ({
-    selectedProject: null,
-    projects: [],
+    selectedVersion: null,
+    versions: [],
     loading: false,
-    projectInfo: null
+    versionInfo: null
   }),
   // getters
   // actions
   actions: {
     // 프로젝트 목록 조회
-    async fetchProjects(filters = {}) {
+    async fetchVersions(filters = {}) {
       this.loading = true;
       try {
         const response = await axios.get('/project/list', {

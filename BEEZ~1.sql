@@ -75,3 +75,31 @@ LEFT JOIN users u ON u.id = p.user_id
 WHERE p.status = 'K1';
 
 ALTER TABLE logs ADD (user_id VARCHAR2(20) DEFAULT '' NOT NULL);
+
+DROP TABLE commom_code;
+
+-- 뒤에서부터 순서대로 밀기
+UPDATE BEEZ.COMMON_CODE SET COM_VALUE = 'B6' WHERE GROUP_VALUE = '0B' AND COM_VALUE = 'B5';
+UPDATE BEEZ.COMMON_CODE SET COM_VALUE = 'B5' WHERE GROUP_VALUE = '0B' AND COM_VALUE = 'B4';
+UPDATE BEEZ.COMMON_CODE SET COM_VALUE = 'B4' WHERE GROUP_VALUE = '0B' AND COM_VALUE = 'B3';
+UPDATE BEEZ.COMMON_CODE SET COM_VALUE = 'B3' WHERE GROUP_VALUE = '0B' AND COM_VALUE = 'B2';
+UPDATE BEEZ.COMMON_CODE SET COM_VALUE = 'B2' WHERE GROUP_VALUE = '0B' AND COM_VALUE = 'B1';
+
+-- B1 버전 신규 추가
+INSERT INTO BEEZ.COMMON_CODE (COM_VALUE, GROUP_VALUE, COM_NAME, IS_USE)
+VALUES ('B1', '0B', '버전', '1');
+
+ALTER TABLE version ADD (is_delete VARCHAR2(3) DEFAULT 'F0' NOT NULL);
+COMMENT ON COLUMN version.is_delete IS '삭제여부';
+COMMIT;
+
+    SELECT identifier,
+           title,
+           description,
+           is_public,
+           parent_id,
+           start_date,
+           end_date,
+           default_version_id
+    FROM project
+    WHERE id = 'PROJ2603007';

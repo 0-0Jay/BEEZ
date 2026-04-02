@@ -1,10 +1,12 @@
 <script setup>
 import { useProjectStore } from '@/stores/project';
+import { useToast } from 'primevue';
 import { onMounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
 const projectStore = useProjectStore();
+const toast = useToast();
 
 // 상위 프로젝트 옵션 - 기존 프로젝트 목록 활용
 const projectOptions = ref([]);
@@ -102,6 +104,7 @@ const handleSubmit = async () => {
     isPublic: form.isPublic ? 'J1' : 'J0',
     parentId: form.parentId
   });
+  toast.add({ severity: 'success', summary: '등록 완료', detail: '프로젝트가 등록되었습니다.', life: 2000 });
 
   router.push(`/project/setting/${id}`);
 };

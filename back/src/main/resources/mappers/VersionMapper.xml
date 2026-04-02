@@ -56,6 +56,38 @@
       )
   </update>
   
-
+  <!-- 버전 목록 조회 (필터 겸용) -->
+  <select id="selectVersionList"
+          parameterType="com.beez.beez.project.dto.VersionFilterRequest"
+          resultType="com.beez.beez.project.dto.VersionListResponse">
+    SELECT v.id,
+           v.name,
+           v.project_id,
+           v.description,
+           v.start_date,
+           v.end_date,
+           v.status,
+           v.is_share,
+           CASE WHEN p.default_version_id = v.id
+               THEN 1 ELSE 0
+           END AS is_default
+    FROM version v
+    LEFT JOIN project p ON v.project_id = p.id
+    WHERE v.is_delete = 'F0'
+      AND (
+        v.project_id = #{projectId}
+        OR (
+            v.project_id = (SELECT parent_id FROM project WHERE id = #{projectId})
+            AND v.is_share = 'O1'
+            )
+        )
+        <if test="id != null and id != ''">
+          AND v.id = #{id}
+        </if>
+        <if test="status != null and status != ''">
+          AND v.status = #{status}
+        </if>
+    ORDER BY v.id DESC
+  </select>
 
 </mapper>
