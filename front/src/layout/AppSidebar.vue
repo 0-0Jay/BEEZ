@@ -129,10 +129,10 @@ const toggleAdminMenu = () => {
             <router-link to="/users/list" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
               <span>사용자 관리</span>
             </router-link>
-            <!-- <router-link to="/admin/projects" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
-              <span>전체 프로젝트 관리</span>
+            <router-link to="/roles/list" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
+              <span>역할 관리</span>
             </router-link>
-            <router-link to="/admin/codes" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
+            <!-- <router-link to="/admin/codes" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
               <span>공통 코드 관리</span>
             </router-link> -->
           </div>

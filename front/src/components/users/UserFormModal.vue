@@ -116,7 +116,7 @@ const handleRegister = async () => {
 
       <!-- 이름 -->
       <div class="flex flex-col gap-1.5">
-        <label for="name" class="text-sm font-semibold text-stone-700"> 이름 <span class="text-amber-500">*</span> </label>
+        <label for="name" class="text-sm font-semibold text-stone-700"> 이름 <span class="text-lg text-red-500">*</span> </label>
         <InputText id="name" v-model="form.name" placeholder="이름을 입력해 주세요." class="w-full" :class="{ 'p-invalid': submitted && !form.name, '!border-[#E8920E]': submitted && !form.name }" />
         <small v-if="submitted && !form.name" class="flex items-center gap-1 text-red-500 text-xs">
           <i class="pi pi-exclamation-circle text-xs" />
@@ -126,7 +126,7 @@ const handleRegister = async () => {
 
       <!-- 이메일 -->
       <div class="flex flex-col gap-1.5">
-        <label for="email" class="text-sm font-semibold text-stone-700"> 이메일 <span class="text-amber-500">*</span> </label>
+        <label for="email" class="text-sm font-semibold text-stone-700"> 이메일 <span class="text-lg text-red-500">*</span> </label>
         <InputText
           id="email"
           v-model="form.email"

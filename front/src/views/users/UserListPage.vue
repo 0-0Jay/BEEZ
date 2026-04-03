@@ -58,16 +58,16 @@ const openUserFormModal = () => {
 </script>
 
 <template>
-  <div class="p-8 bg-[#f3f4f6]">
+  <div class="p-8 bg-[#ffffff] h-full">
     <h1 class="text-2xl font-bold text-[#1A1816]">사용자 목록</h1>
 
     <div class="flex justify-between items-center mb-3">
       <span class="text-sm text-[#3A3B35] font-medium">전체 {{ totalCount }}명</span>
-      <Button label="사용자 추가" icon="pi pi-plus" severity="contrast" outlined @click="openUserFormModal" />
+      <Button label="사용자 추가" icon="pi pi-plus" :style="{ background: '#2D8FAD', borderColor: '#2D8FAD' }" @click="openUserFormModal" />
     </div>
 
     <!-- 검색 필터 -->
-    <div class="bg-[#DDE1EA] px-10 py-8 rounded-lg mb-4 shadow-sm border border-[#dde1ea] flex items-center">
+    <div class="bg-[#F2F3F8] px-10 py-8 rounded-lg mb-4 shadow-sm border border-[#ECEEF4] flex items-center">
       <div class="flex items-center flex-wrap gap-y-3">
         <div class="flex items-center mr-8">
           <label class="filter-label mr-3">사원 이름</label>
@@ -90,7 +90,7 @@ const openUserFormModal = () => {
     </div>
 
     <!-- 테이블 -->
-    <div class="bg-white rounded-xl shadow-sm border border-[#dde1ea] overflow-hidden mb-6">
+    <div class="bg-white rounded-xl shadow-sm border border-[#5B6E96] overflow-hidden mb-6">
       <DataTable :value="usersStore.userList" :loading="loading" dataKey="id" :rowHover="true" paginator :rows="10" paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown">
         <template #empty>
           <div class="flex flex-col items-center justify-center py-10">
@@ -143,8 +143,8 @@ const openUserFormModal = () => {
 }
 
 :deep(.table-header) {
-  background-color: #dde1ea !important;
-  color: #000000c2 !important;
+  background-color: #5b6e96 !important;
+  color: #dde3f0 !important;
   font-weight: 700 !important;
   text-align: center !important;
   padding: 1.25rem 0 !important;
@@ -158,7 +158,6 @@ const openUserFormModal = () => {
   border-bottom: 1px solid #f2f0eb !important;
 }
 
-/* paginator 스타일 */
 :deep(.p-paginator) {
   background: transparent !important;
   border: none !important;
@@ -184,5 +183,14 @@ const openUserFormModal = () => {
   box-shadow: none !important;
   outline: none !important;
   border-color: #fd9e0f !important;
+}
+
+.btn-add {
+  --p-button-background: #2d8fad;
+  --p-button-border-color: #2d8fad;
+  --p-button-hover-background: #256e87;
+  --p-button-hover-border-color: #256e87;
+  --p-button-active-background: #1e5a6f;
+  --p-button-color: #ffffff;
 }
 </style>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.beez.beez.permission.mapper.PermissionMapper">
+
+  <!-- 역할별 권한 매핑 정보 일괄 등록 -->
+  <insert id="insertPermissionMapping">
+    INSERT ALL
+    <foreach collection="perIds" item="permId" separator=" ">
+      INTO PERMISSION_MAPPING (role_id, perm_id)
+      VALUES (#{roleId}, #{permId})
+    </foreach>
+    SELECT * FROM dual
+  </insert>
+</mapper>
