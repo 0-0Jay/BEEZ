@@ -24,14 +24,21 @@ public class WikiServiceImpl implements WikiService {
   @Transactional // 생성시 세가지 작업 모두 수행 -
   public void insertWiki(WikiRequest wikiRequest, WikiVersionRequest versionRequest){
     wikiMapper.insertWikiVersion(versionRequest);
+    wikiRequest.setVersionId(versionRequest.getVersionId());
+    
     wikiMapper.insertWiki(wikiRequest);
-    wikiMapper.updateWiki(wikiRequest);
+    System.out.println("생성된 위키 ID: " + wikiRequest.getId()); // 이게 null인지 확인!
+    versionRequest.setWikiId(wikiRequest.getId());
+    System.out.println("셋팅된 버전용 위키 ID: " + versionRequest.getWikiId()); // 이것도 확인!
+    wikiMapper.updateWikiIdInVersion(versionRequest);
   }
   
   @Override
   @Transactional // 수정시 본문 추가랑 wiki테이블 최신 버전 갱신
   public void updateWikiContent(WikiVersionRequest wikiVersionRequest, WikiRequest wikiRequest){
     wikiMapper.insertWikiVersion(wikiVersionRequest);
+    // 2. 새로 생성된 PK를 위키 마스터 테이블용 객체에 전달
+    wikiRequest.setVersionId(wikiVersionRequest.getVersionId());
     wikiMapper.updateWiki(wikiRequest);
   }
   
