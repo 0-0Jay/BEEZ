@@ -5,6 +5,7 @@ import com.beez.beez.wiki.dto.WikiProjectRequest;
 import com.beez.beez.wiki.dto.WikiRequest;
 import com.beez.beez.wiki.dto.WikiVersionRequest;
 import com.beez.beez.wiki.mapper.WikiMapper;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -13,6 +14,7 @@ import java.util.List;
 public interface WikiService {
   
   //신규 위키 등록
+  
   void insertWiki (WikiRequest wikiRequest, WikiVersionRequest wikiVersionRequest);
   
   //위키 수정 (새 버전 저장 + 포인터 갱신)

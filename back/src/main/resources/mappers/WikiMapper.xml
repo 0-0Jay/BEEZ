@@ -48,6 +48,12 @@
     )
   </insert>
   
+  <update id="updateWikiIdInVersion">
+    UPDATE WIKI_VERSION
+    SET WIKI_ID = #{wikiId}
+    WHERE VERSION_ID = #{versionId}
+  </update>
+  
   <!--wiki테이블 최신화-->
   <update id="updateWiki" >
     UPDATE WIKI

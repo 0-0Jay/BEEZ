@@ -110,12 +110,26 @@ function closeEditModal() {
 async function confirmEdit() {
   if (!editReason.value.trim()) return;
 
-  //새버전 ID생성
+  //1. 버전 번호 계산 로직
+  let nextVersion = '1.0'; //기본값 최초 생성시
+
+  //기존 버전 이름 있는지 확인
+  if (wikiStore.wikiDetail && wikiStore.wikiDetail.versionName) {
+    const currentName = wikiStore.wikiDetail.versionName;
+    const versionMatch = currentName.match(/v(\d+\.\d+)/); // 숫자 추출
+
+    if (versionMatch) {
+      const currentNum = parseFloat(versionMatch[1]);
+      nextVersion = (currentNum + 0.1).toFixed(1);
+    }
+  }
+
+  const finalVersionName = `${projectInfo.value.title} v${nextVersion}`;
   const newVersionId = generateId('VER');
 
   //신규 위키는ID생성하고, 기존위키면 기존ID 사용
   const isNewWiki = !wikiStore.wikiDetail.id;
-  const currentWikiId = isNewWiki ? generateId('WIKI') : wikiStore.wikiDetail.id;
+  const currentWikiId = isNewWiki ? null : wikiStore.wikiDetail.id;
 
   const commentRegex = new RegExp('<!--v-if-->', 'g'); // 에디터로 본문 작성하면 생기는 주석 삭제하고 DB에 저장하려함
   const cleanContent = editorContent.value ? editorContent.value.replace(commentRegex, '') : '';
@@ -129,8 +143,7 @@ async function confirmEdit() {
   const saveData = {
     wikiRequest: {
       id: currentWikiId, //위키 ID (신규면 빈값 혹은 생성된 값)
-      projectId: route.params.projectId,
-      versionId: newVersionId //백엔드나 프론트에서 생성할 버전 ID
+      projectId: route.params.projectId
     },
     versionRequest: {
       versionId: newVersionId,
@@ -138,7 +151,7 @@ async function confirmEdit() {
       userId: userId.value,
       wikiId: currentWikiId,
       description: editReason.value, //수정이유
-      versionName: projectInfo.value.title,
+      versionName: finalVersionName,
       links: linksJson, //JSON 문자열로 전송할 예정
       wikiInfo: wikiInfo.value //이건 back작업 마저 해야함
     }
