@@ -1,4 +1,5 @@
 <script setup>
+import TaskJournalModal from '@/components/task/TaskJournalModal.vue';
 import TaskTimeModal from '@/components/task/TaskTimeModal.vue';
 import { useAuthStore } from '@/stores/auth';
 import { useTaskStore } from '@/stores/task';
@@ -13,6 +14,7 @@ const route = useRoute();
 const timeLogVisible = ref(false);
 const journalModalVisible = ref(false);
 const selectedJournalId = ref(null);
+const linkModalVisible = ref(false);
 
 // 기본 정보
 const userId = computed(() => authStore.user?.id ?? null);
@@ -52,6 +54,21 @@ const taskTypeMap = computed(() => Object.fromEntries(type.value.map((t) => [t.i
 const taskCateMap = computed(() => Object.fromEntries(category.value.map((c) => [c.id, c.name])));
 const relationMap = computed(() => Object.fromEntries(relation.value.map((r) => [r.id, r.name])));
 const activityMap = computed(() => Object.fromEntries(activity.value.map((a) => [a.id, a.name])));
+
+// 편집/소요시간 권한
+const canEdit = computed(() => {
+  const uid = userId.value;
+  return task.value?.creator === uid || task.value?.userId === uid;
+
+  // TODO: role 기능 도입 시 아래 코드로 교체
+  // const role = authStore.user?.role;
+  // return (
+  //   task.value?.creator === uid ||
+  //   task.value?.userId === uid ||
+  //   role === 'PM' ||
+  //   role === 'ADMIN'
+  // );
+});
 
 // 최근 수정 정보
 const latestJournal = computed(() => {
@@ -211,6 +228,20 @@ const priorityClass = {
 const goToTask = (id) => router.push(`/task/${id}`);
 const goToEdit = () => router.push('/task/edit');
 const goToCopy = () => router.push('/task/copy');
+const goToAddSubTask = () => {
+  router.push({
+    path: '/task/create',
+    query: {
+      parentId: taskId.value,
+      parentName: task.value?.title
+    }
+  });
+};
+
+const deleteTask = () => {
+  taskStore.deleteTask(taskId.value);
+  router.push(`/tasks`);
+};
 
 onMounted(async () => {
   await taskStore.findCateList();
@@ -234,9 +265,9 @@ onMounted(async () => {
 
       <!-- 액션 버튼 -->
       <div class="flex items-center gap-2 shrink-0">
-        <Button label="편집" icon="pi pi-pen-to-square" severity="secondary" raised @click="goToEdit" />
+        <Button v-if="canEdit" label="편집" icon="pi pi-pen-to-square" severity="secondary" raised @click="goToEdit" />
         <Button label="복사" icon="pi pi-clone" severity="secondary" raised @click="goToCopy" />
-        <Button label="삭제" icon="pi pi-trash" severity="danger" raised />
+        <Button label="삭제" icon="pi pi-trash" severity="danger" raised @Click="deleteTask" />
       </div>
     </div>
 
@@ -338,7 +369,7 @@ onMounted(async () => {
             <td class="px-6 py-3">
               <div class="flex items-center gap-3">
                 <span class="text-base text-[#1A1816]">{{ formatMinutes(spentTime) }}</span>
-                <Button label="소요 시간 기록" icon="pi pi-plus" severity="secondary" raised @click="timeLogVisible = true" />
+                <Button v-if="canEdit" label="소요 시간 기록" icon="pi pi-plus" severity="secondary" raised @click="timeLogVisible = true" />
               </div>
             </td>
           </tr>
@@ -349,6 +380,16 @@ onMounted(async () => {
             <td colspan="3" class="px-6 py-3">
               <span v-if="task.parentId" class="inline-flex items-center gap-1.5 text-base text-[#E8920E] font-medium cursor-pointer hover:underline" @click="goToTask(task.parentId)"> {{ task.parentName }} ( {{ task.parentId }} ) </span>
               <span v-else class="text-base text-[#9A9B90]">-</span>
+            </td>
+          </tr>
+
+          <!-- 설명 -->
+          <tr class="divide-x divide-[#F2F0EB]">
+            <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">설명</td>
+            <td colspan="3" class="px-6 py-3">
+              <span class="inline-flex items-center gap-2">
+                <span class="text-base text-[#1A1816] font-medium">{{ task.description }}</span>
+              </span>
             </td>
           </tr>
 
@@ -367,8 +408,8 @@ onMounted(async () => {
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#9A9B90]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                   </svg>
-                  <span class="font-medium">{{ file.originalName }}</span>
-                  <span class="text-[#9A9B90]">({{ formatFileSize(file.fileSize) }})</span>
+                  <span class="font-medium">{{ file.name }}</span>
+                  <span class="text-[#9A9B90]">({{ formatFileSize(file.size) }})</span>
                 </a>
               </div>
               <span v-else class="text-base text-[#9A9B90]">-</span>
@@ -432,7 +473,7 @@ onMounted(async () => {
             완료 <span class="font-semibold text-emerald-600">{{ linkedTaskDone }}</span> · 진행중 <span class="font-semibold text-amber-600">{{ linkedTaskInProgress }}</span>
           </span>
         </div>
-        <Button label="연결된 일감 추가" icon="pi pi-plus" severity="secondary" raised />
+        <Button label="연결된 일감 추가" icon="pi pi-plus" severity="secondary" raised @click="linkModalVisible = true" />
       </div>
 
       <table class="w-full text-base">
@@ -624,7 +665,7 @@ onMounted(async () => {
               <div class="text-base text-[#9A9B90]">추정 시간</div>
             </div>
           </div>
-          <Button label="소요 시간 기록" icon="pi pi-plus" severity="secondary" raised @click="timeLogVisible = true" />
+          <Button v-if="canEdit" label="소요 시간 기록" icon="pi pi-plus" severity="secondary" raised @click="timeLogVisible = true" />
         </div>
         <table class="w-full text-base">
           <thead>
@@ -670,6 +711,17 @@ onMounted(async () => {
         }
       "
       @cancel="timeLogVisible = false"
+    />
+    <TaskLinkModal
+      v-model:visible="linkModalVisible"
+      :taskId="taskId"
+      @confirm="
+        (data) => {
+          taskStore.insertTaskLink(data);
+          linkModalVisible = false;
+        }
+      "
+      @cancel="linkModalVisible = false"
     />
     <TaskJournalModal v-model:visible="journalModalVisible" :journalId="selectedJournalId" @close="journalModalVisible = false" />
   </div>

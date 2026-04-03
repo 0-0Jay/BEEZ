@@ -12,8 +12,8 @@ import lombok.NoArgsConstructor;
 public class FileDetailResponse {
   private String id;
   private String fileId;
-  private String originalName;
+  private String name;
   private String storedName;
   private String extension;
-  private long fileSize;
+  private long size;
 }

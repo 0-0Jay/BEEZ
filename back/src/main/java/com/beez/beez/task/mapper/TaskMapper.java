@@ -12,10 +12,6 @@ public interface TaskMapper {
   
   List<VersionResponse> findVersionList(String projectId);
   
-  String findLastFileId();
-  
-  void insertFileDetail();
-  
   void insertTask(TaskRequest task);
   
   void findTaskDetail(TaskResponse task);
@@ -25,4 +21,6 @@ public interface TaskMapper {
   List<CommonCodeResponse> findCommonCodeList();
   
   void updateTask(TaskRequest task);
+  
+  List<JournalDetailResponse> findJournalDetailList(String id);
 }

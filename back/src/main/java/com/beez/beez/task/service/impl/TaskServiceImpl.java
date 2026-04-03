@@ -89,7 +89,7 @@ public class TaskServiceImpl implements TaskService {
   
   // 일감 등록 / 복사
   @Override
-  public void insertTask(TaskRequest task, List<MultipartFile> files) {
+  public String insertTask(TaskRequest task, List<MultipartFile> files) {
     List<FileDetailRequest> fileDetails = fileService.saveFile(files);
     task.setFileDetails(fileDetails);
     taskMapper.insertTask(task);
@@ -101,6 +101,7 @@ public class TaskServiceImpl implements TaskService {
     if (Boolean.TRUE.equals(task.getCopySubTasks())) {
       // taskMapper.copySubTasks(task) 호출 위치
     }
+    return task.getId();
   }
   
   // 일감 수정
@@ -130,5 +131,11 @@ public class TaskServiceImpl implements TaskService {
   @Override
   public List<CommonCodeResponse> findCommonCodeList() {
     return taskMapper.findCommonCodeList();
+  }
+  
+  // 변경사항 상세 목록
+  @Override
+  public List<JournalDetailResponse> findJournalDetailList(String id) {
+    return taskMapper.findJournalDetailList(id);
   }
 }

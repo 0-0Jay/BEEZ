@@ -83,8 +83,8 @@ public class TaskController {
   
   // 일감 추가
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public void insertTask(@ModelAttribute TaskRequest task, @RequestParam(value = "attachments", required = false) List<MultipartFile> files) {
-    taskService.insertTask(task, files);
+  public String insertTask(@ModelAttribute TaskRequest task, @RequestParam(value = "attachments", required = false) List<MultipartFile> files) {
+    return taskService.insertTask(task, files);
   }
   
   // 일감 수정
@@ -111,4 +111,9 @@ public class TaskController {
     return taskService.findCommonCodeList();
   }
   
+  // 변경사항 상세 조회
+  @GetMapping("/{id}/journal")
+  public List<JournalDetailResponse> findJournalDetailList(@PathVariable String id) {
+    return taskService.findJournalDetailList(id);
+  }
 }

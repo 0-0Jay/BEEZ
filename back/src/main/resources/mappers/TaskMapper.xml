@@ -41,15 +41,6 @@
     WHERE project_id = #{projectId}
   </select>
   
-  <select id="findLastfileId" resultType="String">
-    SELECT id
-    FROM
-      (SELECT *
-       FROM files
-       ORDER BY created_on DESC)
-    WHERE ROWNUM = 1
-  </select>
-  
   <select id="insertTask" parameterType="TaskRequest" statementType="CALLABLE">
     {
       CALL proc_insert_task(
@@ -142,9 +133,10 @@
   
   <resultMap id="fileResultMap" type="com.beez.beez.file.dto.FileDetailResponse">
     <result property="id" column="id" />
-    <result property="fieldName" column="field_name" />
-    <result property="oldValue" column="old_value" />
-    <result property="newValue" column="new_value" />
+    <result property="name" column="original_name" />
+    <result property="storedName" column="stored_name" />
+    <result property="extension" column="extension" />
+    <result property="size" column="file_size" />
   </resultMap>
   
   <resultMap id="childResultMap" type="com.beez.beez.task.dto.TaskListResponse">
@@ -171,4 +163,23 @@
       INSERT INTO task_reply(id, task_id, user_id, content, created_on, parent_id)
       VALUES(#{id}, #{taskId}, #{userId}, #{content}, SYSTIMESTAMP, #{parentId})
   </insert>
+  
+  <select id="updateTask" parameterType="TaskRequest" statementType="CALLABLE">
+    {
+      CALL proc_update_task(
+        #{id,             mode=IN, jdbcType=VARCHAR},
+        #{editor,         mode=IN, jdbcType=VARCHAR},
+        #{fileId,         mode=IN, jdbcType=VARCHAR},
+        #{fileDetails,    mode=IN, jdbcType=ARRAY, typeHandler=com.beez.beez.config.OracleTypeHandler.FileDetailTypeHandler},
+        #{deletedFileIds, mode=IN, jdbcType=ARRAY, typeHandler=com.beez.beez.config.OracleTypeHandler.VarcharTypeHandler},
+        #{journals,       mode=IN, jdbcType=ARRAY, typeHandler=com.beez.beez.config.OracleTypeHandler.JournalTypeHandler}
+      )
+    }
+  </select>
+  
+  <select id="findJournalDetailList" resultType="JournalDetailResponse">
+    SELECT id, field_name, old_value, new_value
+    FROM journal_details
+    WHERE journal_id = #{id}
+  </select>
 </mapper>

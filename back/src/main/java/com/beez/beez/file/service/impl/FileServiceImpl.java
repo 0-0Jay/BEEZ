@@ -33,7 +33,7 @@ public class FileServiceImpl implements FileService {
           ? originalName.substring(originalName.lastIndexOf(".") + 1) : "";
         String storedName = UUID.randomUUID().toString() + (extension.isEmpty() ? "" : "." + extension);
         
-        // 실제 파일 저장 부분
+        // 실제 파일 저장 부분 + 추후에 S3 전용 코드로 바꿔야 함!
         try {
           Path savePath = Paths.get(uploadPath, storedName);
           Files.createDirectories(savePath.getParent());
