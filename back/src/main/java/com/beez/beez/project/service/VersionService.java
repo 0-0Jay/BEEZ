@@ -3,6 +3,7 @@ package com.beez.beez.project.service;
 import com.beez.beez.project.dto.VersionCreateRequest;
 import com.beez.beez.project.dto.VersionFilterRequest;
 import com.beez.beez.project.dto.VersionListResponse;
+import com.beez.beez.task.dto.CommonCodeResponse;
 
 import java.util.List;
 
@@ -18,4 +19,7 @@ public interface VersionService {
   
   //버전 목록조회(필터링)
   List<VersionListResponse> selectVersionList(VersionFilterRequest filter);
+  
+  // 공통코드 목록
+  List<CommonCodeResponse> findCommonCodeList();
 }

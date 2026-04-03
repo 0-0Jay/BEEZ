@@ -91,5 +91,13 @@
         </if>
     ORDER BY v.id DESC
   </select>
-
+  
+  <!-- 공통코드 목록 -->
+  <select id="findCommonCodeList" resultType="CommonCodeResponse">
+    SELECT group_value AS cgroup,
+           com_value AS id,
+           com_name AS name
+    FROM common_code
+  </select>
+  
 </mapper>

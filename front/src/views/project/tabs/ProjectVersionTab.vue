@@ -15,6 +15,7 @@ const toast = useToast(); // 토스트메시지
 const versionOptions = ref([]); // 버전명 Select 옵션
 const statusOptions = ref([]); // 상태 Select 옵션
 const selectedRow = ref(null);
+const editRow = ref(null);
 
 // --- 1. 스토어 연결 ---
 const versionStore = useVersionStore();
@@ -55,6 +56,17 @@ const resetFilters = () => {
     status: null
   });
   fetchVersions(); // 초기화 후 재조회
+};
+
+const openEditModal = (row) => {
+  editRow.value = row;
+  modalVisible.value = true;
+};
+
+// 모달 닫힐 때 초기화
+const closeModal = () => {
+  editRow.value = null;
+  modalVisible.value = false;
 };
 
 //삭제
@@ -109,15 +121,20 @@ const formatDate = (date) => {
         </template>
         <!-- 버전명, 기본버전여부, 마감일, 설명, 상태, 공유여부 -->
         <Column field="name" header="버전명" headerClass="table-header" style="width: 15%" />
-        <Column field="description" header="설명" headerClass="table-header" style="width: 30%" />
-        <Column field="isDefault" header="기본버전" headerClass="table-header" style="width: 10%">
+        <Column field="description" header="설명" headerClass="table-header" style="width: 25%" />
+        <Column field="isDefault" header="기본버전" headerClass="table-header" style="width: 8%">
           <template #body="{ data }">
             <i v-if="data.isDefault" class="pi pi-check" style="color: #22c55e" />
           </template>
         </Column>
         <Column field="statusName" header="상태" headerClass="table-header" style="width: 10%" />
         <Column field="isShareName" header="공유" headerClass="table-header" style="width: 10%" />
-        <Column header="마감일" headerClass="table-header" style="width: 15%">
+        <Column header="시작일" headerClass="table-header" style="width: 11%">
+          <template #body="{ data }">
+            <span>{{ formatDate(data.startDate) }}</span>
+          </template>
+        </Column>
+        <Column header="마감일" headerClass="table-header" style="width: 11%">
           <template #body="{ data }">
             <span>{{ formatDate(data.endDate) }}</span>
           </template>
@@ -125,7 +142,7 @@ const formatDate = (date) => {
         <Column headerClass="table-header" style="width: 10%">
           <template #body="{ data }">
             <div class="flex gap-2">
-              <Button label="편집" icon="pi pi-pencil" text size="small" class="text-[#6B6B63]" />
+              <Button label="편집" icon="pi pi-pencil" text size="small" class="text-[#6B6B63]" @click="openEditModal(data)" />
               <Button label="삭제" icon="pi pi-trash" text size="small" class="text-red-400" @click="openDeleteConfirm(data)" />
             </div>
           </template>
@@ -136,7 +153,16 @@ const formatDate = (date) => {
   <ConfirmDialog v-model:visible="visible" confirmLabel="확인" @confirm="handleDelConfirm">
     <span class="text-gray-700 font-medium">{{ confirmMsg }}</span>
   </ConfirmDialog>
-  <VersionFormModal v-model:visible="modalVisible" @saved="fetchVersions" />
+  <VersionFormModal
+    v-model:visible="modalVisible"
+    :editData="editRow"
+    @saved="fetchVersions"
+    @update:visible="
+      (val) => {
+        if (!val) closeModal();
+      }
+    "
+  />
 </template>
 
 <style scoped>
