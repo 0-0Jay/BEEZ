@@ -46,7 +46,7 @@ public class SecurityConfig {
         .requestMatchers("/api/users/**").hasAuthority("ROLE0001")
         // 프로젝트 관련 기능
         // 특정 역할이 필요한 경로
-        // .requestMatchers("/projects/**").hasAnyAuthority("ROLE0001", "ROLE0002")
+//         .requestMatchers("/projects/**").hasAnyAuthority("ROLE0001", "ROLE0002")
         // 그 외 페이지
         .anyRequest().permitAll())
       // jwt 필터 추가

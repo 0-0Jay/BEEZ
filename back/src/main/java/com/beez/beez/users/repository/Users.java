@@ -27,14 +27,14 @@ public class Users implements UserDetails {
   private String status;
   private LocalDateTime createdOn;
 
-  // 권한 리스트
+  // 역할 리스트
   @Builder.Default
   private List<String> roles = new ArrayList<>();
 
   // UserDetails 구현
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
-    // 권한 리스트에 담긴 문자열들을 시큐리티 권한 객체로 변환
+    // 역할 리스트에 담긴 문자열들을 시큐리티 역할 객체로 변환
     if (this.roles == null || this.roles.isEmpty()) return Collections.emptyList();
 
     return this.roles.stream()

@@ -9,7 +9,7 @@
       <AppHeader />
 
       <!-- 페이지 -->
-      <div class="p-4 bg-gray-100 flex-1 overflow-auto">
+      <div class="p-4 bg-white flex-1 overflow-auto">
         <router-view />
       </div>
       <ChatRoom v-if="project != null"></ChatRoom>

@@ -5,7 +5,6 @@ import com.beez.beez.users.dto.UserListResponse;
 import com.beez.beez.users.dto.UserSearchRequest;
 import com.beez.beez.users.dto.UserTokenDto;
 import com.beez.beez.users.repository.Users;
-import io.jsonwebtoken.security.Password;
 
 import java.util.List;
 import java.util.Map;
