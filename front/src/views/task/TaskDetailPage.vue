@@ -172,7 +172,7 @@ const addComment = async () => {
   if (!commentData.value.content.trim()) return;
   await taskStore.insertTaskReply(commentData.value);
   commentData.value.content = '';
-  window.location.reload();
+  await taskStore.findTaskDetail(taskId.value);
 };
 
 const addReply = async (comment) => {
@@ -182,7 +182,7 @@ const addReply = async (comment) => {
   replyData.value.content = '';
   replyData.value.parentId = null;
   replyingTo.value = null;
-  window.location.reload();
+  await taskStore.findTaskDetail(taskId.value);
 };
 
 const startEdit = (item) => {
@@ -320,6 +320,16 @@ onMounted(async () => {
             </td>
           </tr>
 
+          <!-- 반려 사유 -->
+          <tr v-if="task.workflow == 'Q4'" class="divide-x divide-[#F2F0EB]">
+            <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">반려 사유</td>
+            <td colspan="3" class="px-6 py-3">
+              <span class="inline-flex items-center gap-2">
+                <span class="text-base text-[#1A1816] font-medium">{{ task.reject }}</span>
+              </span>
+            </td>
+          </tr>
+
           <!-- 담당자 / 목표버전 -->
           <tr class="divide-x divide-[#F2F0EB]">
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">담당자</td>
@@ -429,7 +439,7 @@ onMounted(async () => {
             완료 <span class="font-semibold text-emerald-600">{{ subTaskDone }}</span> · 진행중 <span class="font-semibold text-amber-600">{{ subTaskInProgress }}</span>
           </span>
         </div>
-        <Button label="하위 일감 추가" icon="pi pi-plus" severity="secondary" raised />
+        <Button label="하위 일감 추가" icon="pi pi-plus" severity="secondary" raised @click="goToAddSubTask()" />
       </div>
 
       <table class="w-full text-base">
@@ -715,10 +725,12 @@ onMounted(async () => {
     <TaskLinkModal
       v-model:visible="linkModalVisible"
       :taskId="taskId"
+      :relation="linkedTasks"
       @confirm="
-        (data) => {
+        async (data) => {
           taskStore.insertTaskLink(data);
           linkModalVisible = false;
+          await taskStore.findTaskDetail(taskId);
         }
       "
       @cancel="linkModalVisible = false"

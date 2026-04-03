@@ -23,4 +23,6 @@ public interface TaskMapper {
   void updateTask(TaskRequest task);
   
   List<JournalDetailResponse> findJournalDetailList(String id);
+  
+  void insertTaskRelation(TaskRelationRequest taskRelationRequest);
 }

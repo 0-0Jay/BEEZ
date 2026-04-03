@@ -33,7 +33,8 @@ const fieldMapper = {
   planned_end: '예상 마감일',
   actual_start: '실제 시작일',
   actual_end: '실제 마감일',
-  attachments: '첨부파일'
+  attachments: '첨부파일',
+  reject: '반려사유'
 };
 
 const formatDate = (ts) => {

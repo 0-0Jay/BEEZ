@@ -182,4 +182,15 @@
     FROM journal_details
     WHERE journal_id = #{id}
   </select>
+  
+  <select id="insertTaskRelation" parameterType="TaskRelationRequest" statementType="CALLABLE">
+    {
+      CALL proc_task_link(
+        #{taskId,          mode=IN, jdbcType=VARCHAR},
+        #{relatedTaskId,   mode=IN, jdbcType=VARCHAR},
+        #{relationType,    mode=IN, jdbcType=VARCHAR},
+        #{reverseType,     mode=IN, jdbcType=VARCHAR}
+      )
+    }
+  </select>
 </mapper>

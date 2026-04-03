@@ -7,7 +7,8 @@ import { computed, ref, watch } from 'vue';
 
 const props = defineProps({
   visible: Boolean,
-  taskId: { type: [String, Number], default: null }
+  taskId: { type: [String, Number], default: null },
+  relation: { type: Array, default: [] }
 });
 
 const emit = defineEmits(['update:visible', 'confirm', 'cancel']);
@@ -27,14 +28,14 @@ watch(
 );
 
 // 자기 자신 제외
-const taskOptions = computed(() => taskStore.taskList.filter((t) => t.id !== props.taskId));
+const taskOptions = computed(() => taskStore.taskList.filter((t) => t.id !== props.taskId && !props.relation.some((r) => t.id == r.id)));
 
 const relationOptions = computed(() => taskStore.commonCodeList.filter((r) => r.cgroup === '0W'));
 
 const isConfirmDisabled = computed(() => !selectedTaskId.value || !selectedRelation.value);
 
-const handleConfirm = () => {
-  emit('confirm', { linkedTaskId: selectedTaskId.value, relationType: selectedRelation.value });
+const handleConfirm = async () => {
+  emit('confirm', { taskId: props.taskId, relatedTaskId: selectedTaskId.value, relationType: selectedRelation.value });
   emit('update:visible', false);
 };
 
