@@ -4,7 +4,7 @@ import { ref } from 'vue';
 // 1. 상태 관리 (추후 API 데이터로 대체 가능)
 const wikiData = ref({
   title: 'YEDAM PMS TOOL 프로젝트',
-  version: 'v 3.0',
+  version: 'v 1.0',
   subtitle: '사용자 경험 개선을 목표로 한 PMS TOOL 프로젝트의 전반적인 배경, 목표, 범위, 프로세스를 정리한 공식 위키페이지 입니다',
   author: '000',
   updatedDate: '2026.03.20',
@@ -43,7 +43,7 @@ const handleHistory = () => console.log('히스토리 보기');
 </script>
 
 <template>
-  <div class="wiki-wrap">
+  <div class="wiki-editor-page p-10">
     <div class="section-marker header-margin">
       <div class="wiki-header-card">
         <div class="wiki-header-top">
@@ -69,7 +69,7 @@ const handleHistory = () => console.log('히스토리 보기');
       </div>
     </div>
 
-    <div class="grid3-container">
+    <div class="content-grid">
       <div class="section-marker">
         <div class="toc-card">
           <div class="toc-heading">목차</div>
@@ -103,6 +103,33 @@ const handleHistory = () => console.log('히스토리 보기');
             <span class="info-label">PM</span>
             <span>{{ wikiData.pm }}</span>
           </div>
+          <div class="info-row">
+            <span class="info-label">프로젝트번호 :</span>
+            <span class="info-value status-badge"></span>
+          </div>
+
+          <div class="info-row">
+            <span class="info-label">프로젝트 설명 :</span>
+            <span class="info-value status-badge"></span>
+          </div>
+
+          <div class="info-row">
+            <span class="info-label">프로젝트 생성자명 :</span>
+            <span class="info-value status-badge"></span>
+          </div>
+
+          <div class="info-row">
+            <span class="info-label">시작일 :</span>
+            <span class="info-value status-badge"></span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">종료일 :</span>
+            <span class="info-value status-badge"></span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">상태값 :</span>
+            <span class="info-value status-badge"></span>
+          </div>
         </div>
       </div>
 
@@ -133,6 +160,19 @@ const handleHistory = () => console.log('히스토리 보기');
 </template>
 
 <style scoped>
+.wiki-editor-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: #f5f5f5;
+  min-height: 100vh;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  color: #333;
+  box-sizing: border-box;
+}
+
 /* Reset & Base */
 .wiki-wrap {
   max-width: 920px;
@@ -166,11 +206,12 @@ const handleHistory = () => console.log('히스토리 보기');
 }
 .badge-wiki {
   font-size: 11px;
-  border: 1px solid #aaa;
-  border-radius: 4px;
-  padding: 2px 7px;
-  color: #555;
-  background: #f9f9f9;
+  background: #e8f0fe;
+  border: 1px solid #90b8f8;
+  border-radius: 20px;
+  padding: 2px 10px;
+  color: #1a56c4;
+  font-weight: bold;
 }
 .wiki-title {
   font-size: 20px;
@@ -179,11 +220,11 @@ const handleHistory = () => console.log('히스토리 보기');
 }
 .badge-version {
   font-size: 11px;
-  background: #e8f0fe;
-  border: 1px solid #90b8f8;
+  background: #c4780625;
+  border: 1px solid #f5a623;
   border-radius: 20px;
   padding: 2px 10px;
-  color: #1a56c4;
+  color: #e8920e;
   font-weight: bold;
 }
 .wiki-subtitle {
@@ -229,13 +270,200 @@ const handleHistory = () => console.log('히스토리 보기');
   color: #999;
 }
 
-/* Grid */
-.grid3-container {
+.content-grid {
   display: grid;
-  grid-template-columns: 185px 1fr 210px;
-  gap: 12px;
-  margin-bottom: 20px;
-  position: relative;
+  grid-template-columns: 450px 1fr 1fr;
+  gap: 16px;
+}
+
+.panel {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 16px;
+}
+
+.panel-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.panel-title.center {
+  text-align: center;
+}
+
+/* ② 목차 */
+.toc-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.toc-item a {
+  color: #3d7eff;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.toc-item a:hover {
+  text-decoration: underline;
+}
+
+.toc-item.empty {
+  color: #aaa;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+/* ③ 프로젝트 정보 */
+.info-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.info-label {
+  font-weight: 600;
+  min-width: 110px;
+  font-size: 13px;
+  white-space: nowrap; /* 라벨이 줄바꿈되지 않도록 설정 */
+}
+
+.info-value {
+  background: #f0f0f0;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 13px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis; /* 내용이 너무 길면 ...으로 표시 */
+  white-space: nowrap;
+}
+
+.status-badge {
+  color: #555;
+}
+
+/* ④ 링크 패널 */
+.link-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.link-item-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.link-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* 링크 아이템들을 감싸는 컨테이너 */
+.link-items-container {
+  max-height: 200px; /* 원하는 높이로 조절 (예: 아이템 2~3개 분량) */
+  overflow-y: auto; /* 내용이 넘치면 세로 스크롤 생성 */
+  padding-right: 4px; /* 스크롤바와 입력창 사이 간격 */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 스크롤바 디자인 (선택 사항: 더 깔끔하게 보이게 함) */
+.link-items-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.link-items-container::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 4px;
+}
+
+.link-items-container::-webkit-scrollbar-track {
+  background-color: #f1f1f1;
+}
+
+/* 기존 스타일 유지 및 보정 */
+.link-item-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  /* 여백이 너무 크면 스크롤이 금방 생기므로 적절히 조절 */
+}
+
+/* 편집 사유 모달 */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-box {
+  background: #fff;
+  border-radius: 8px;
+  min-width: 320px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #888;
+  line-height: 1;
+}
+
+.modal-body {
+  padding: 16px;
+}
+
+.modal-textarea {
+  width: 100%;
+  height: 80px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 13px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid #eee;
 }
 
 /* TOC */
@@ -243,7 +471,7 @@ const handleHistory = () => console.log('히스토리 보기');
   background: #fff;
   border: 1px solid #ddd;
   border-radius: 8px;
-  padding: 14px 16px;
+  padding: 14px 30px;
   min-height: 100%;
 }
 .toc-heading {
