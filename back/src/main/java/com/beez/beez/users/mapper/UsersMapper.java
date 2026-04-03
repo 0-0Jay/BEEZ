@@ -18,6 +18,9 @@ public interface UsersMapper {
   // 사용자 목록 조회
   List<UserListResponse> findAllUsers(UserSearchRequest search);
 
+  // 이메일 중복체크
+  int checkEmailExists(String email);
+
   // 사용자 등록
   void insertUser(Users user);
 

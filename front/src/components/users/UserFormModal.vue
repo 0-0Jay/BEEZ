@@ -27,6 +27,9 @@ const roleOptions = [
   { code: 'ROLE0002', name: 'PM / PL', desc: '프로젝트 관리' }
 ];
 
+const isEmailChecked = ref(false);
+const emailError = ref('');
+
 // 모달이 열릴 때마다 서버에서 사번/비번 가져오기
 watch(
   () => props.visible,
@@ -46,6 +49,15 @@ watch(
   }
 );
 
+// 이메일 바뀌면 중복 체크 초기화
+watch(
+  () => form.email,
+  () => {
+    isEmailChecked.value = false;
+    emailError.value = '';
+  }
+);
+
 const resetForm = () => {
   Object.assign(form, {
     id: null,
@@ -60,14 +72,38 @@ const resetForm = () => {
 const close = () => {
   Object.assign(form, initialState);
   submitted.value = false;
+  isEmailChecked.value = false;
+  emailError.value = '';
   emit('update:visible', false);
+};
+
+const verifyEmail = async () => {
+  if (!form.email || !form.email.includes('@')) {
+    emailError.value = '올바른 이메일 형식을 입력해 주세요.';
+    return;
+  }
+
+  try {
+    const isDuplicate = await usersStore.checkEmailExists(form.email);
+    if (isDuplicate) {
+      emailError.value = '이미 사용 중인 이메일입니다.';
+      isEmailChecked.value = false;
+    } else {
+      emailError.value = '';
+      isEmailChecked.value = true;
+    }
+  } catch (err) {
+    emailError.value = '중복 체크 중 오류가 발생했습니다.';
+  }
 };
 
 const handleRegister = async () => {
   submitted.value = true;
 
   // 유효성 검사
-  if (!form.name || !form.email || !form.email.includes('@')) return;
+  if (!form.name || !form.email || !form.email.includes('@') || !isEmailChecked.value) {
+    return;
+  }
 
   try {
     await usersStore.insertUser(form);
@@ -127,21 +163,27 @@ const handleRegister = async () => {
       <!-- 이메일 -->
       <div class="flex flex-col gap-1.5">
         <label for="email" class="text-sm font-semibold text-stone-700"> 이메일 <span class="text-lg text-red-500">*</span> </label>
-        <InputText
-          id="email"
-          v-model="form.email"
-          placeholder="example@example.com"
-          class="w-full"
-          :class="{ 'p-invalid': submitted && (!form.email || !form.email.includes('@')), '!border-[#E8920E]': submitted && (!form.email || !form.email.includes('@')) }"
-        />
-        <small v-if="submitted && !form.email" class="flex items-center gap-1 text-red-500 text-xs">
-          <i class="pi pi-exclamation-circle text-xs" />
-          값을 입력해 주세요.
-        </small>
-        <small v-else-if="submitted && !form.email.includes('@')" class="flex items-center gap-1 text-red-500 text-xs">
-          <i class="pi pi-exclamation-circle text-xs" />
-          XXX@XXX.XXX 형식으로 입력해 주세요.
-        </small>
+        <div class="flex gap-2">
+          <InputText
+            id="email"
+            v-model="form.email"
+            placeholder="example@example.com"
+            class="w-full"
+            :class="{ 'p-invalid': submitted && (!form.email || !form.email.includes('@')), '!border-[#E8920E]': submitted && (!form.email || !form.email.includes('@')) }"
+          />
+          <Button :label="isEmailChecked ? '확인됨' : '중복 확인'" :icon="isEmailChecked ? 'pi pi-check' : ''" :class="isEmailChecked ? 'p-button-success' : 'p-button-outlined'" class="text-xs whitespace-nowrap" @click="verifyEmail" />
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <small v-if="submitted && !form.email" class="flex items-center gap-1 text-red-500 text-xs"> <i class="pi pi-exclamation-circle" /> 값을 입력해 주세요. </small>
+
+          <small v-else-if="submitted && !form.email.includes('@')" class="flex items-center gap-1 text-red-500 text-xs"> <i class="pi pi-exclamation-circle" /> 이메일 형식이 올바르지 않습니다. </small>
+
+          <small v-else-if="submitted && !isEmailChecked && !emailError" class="flex items-center gap-1 text-amber-600 text-xs font-medium"> <i class="pi pi-info-circle" /> 이메일 중복 확인을 진행해 주세요. </small>
+
+          <small v-else-if="emailError" class="flex items-center gap-1 text-red-500 text-xs"> <i class="pi pi-times-circle" /> {{ emailError }} </small>
+
+          <small v-else-if="isEmailChecked" class="flex items-center gap-1 text-green-600 text-xs font-medium"> <i class="pi pi-check-circle" /> 사용 가능한 이메일입니다. </small>
+        </div>
       </div>
 
       <!-- 역할 -->
