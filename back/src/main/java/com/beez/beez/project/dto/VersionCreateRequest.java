@@ -15,5 +15,7 @@ public class VersionCreateRequest {
   private Date endDate; //마감일
   private String status; //버전상태값코드
   private String isShare; //버전 공유여부코드
+  private Boolean isShareYn;   // 프론트에서 받는 boolean
   private String isDefault; // 프론트에서 체크 여부만 받고 DB엔 안 넣음
+  private Boolean isDefaultYn;   // 프론트에서 받는 boolean
 }

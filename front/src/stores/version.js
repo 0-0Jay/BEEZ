@@ -32,7 +32,9 @@ export const useVersionStore = defineStore('version', {
           startDate: p.startDate,
           endDate: p.endDate,
           status: p.status,
+          statusName: p.statusName,
           isShare: p.isShare,
+          isShareName: p.isShareName,
           isDefault: p.isDefault
         }));
 
@@ -42,24 +44,19 @@ export const useVersionStore = defineStore('version', {
       }
     },
 
-    // 프로젝트 잠금보관
-    async lockProject(id) {
-      await axios.put(`/project/lock/${id}`);
-    },
-
-    // 프로젝트 잠금보관 해제
-    async unlockProject(id) {
-      await axios.put(`/project/unlock/${id}`);
-    },
-
     // 프로젝트 삭제
-    async deleteProject(id) {
-      await axios.put(`/project/delete/${id}`);
+    async deleteVersion(id, projectId, name) {
+      await axios.delete(`/project/version/delete/${id}`, {
+        data: {
+          projectId,
+          name
+        }
+      });
     },
 
     // 프로젝트 생성
-    async createProject(data) {
-      const response = await axios.post('/project', data);
+    async insertVersion(form) {
+      const response = await axios.post('/project/version', form);
       return response.data;
     },
 
@@ -77,6 +74,6 @@ export const useVersionStore = defineStore('version', {
     }
   },
   persist: {
-    omit: ['projects', 'loading']
+    omit: ['versions', 'loading']
   }
 });

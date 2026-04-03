@@ -36,6 +36,10 @@ public class VersionServiceImpl implements VersionService {
   public void insertVersion(VersionCreateRequest dto) {
     String userId = getCurrentUserId();
     
+    // 프론트 Boolean -> 코드값 변환
+    dto.setIsShare(Boolean.TRUE.equals(dto.getIsShareYn()) ? "O1" : "O0");
+    dto.setIsDefault(Boolean.TRUE.equals(dto.getIsDefaultYn()) ? "M1" : "M2");
+    
     versionMapper.insertVersion(dto);
     
     if(dto.getIsDefault().equals("M1")) {

@@ -13,6 +13,8 @@ public class VersionListResponse {
   private Date startDate; //시작일
   private Date endDate; //마감일
   private String status; //버전상태값코드
+  private String statusName;   // 상태 한글명
   private String isShare; //버전 공유여부코드
+  private String isShareName;  // 공유여부 한글명
   private Boolean isDefault; // 기본버전여부
 }

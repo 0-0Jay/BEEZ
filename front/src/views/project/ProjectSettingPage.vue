@@ -35,7 +35,7 @@ const isActive = (tabName) => {
     </div>
 
     <!-- 탭 컨텐츠 -->
-    <RouterView :project-id="projectId" />
+    <RouterView />
   </div>
 </template>
 
