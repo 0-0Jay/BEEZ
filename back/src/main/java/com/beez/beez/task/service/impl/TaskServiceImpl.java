@@ -6,15 +6,15 @@ import com.beez.beez.task.dto.*;
 import com.beez.beez.task.mapper.TaskMapper;
 import com.beez.beez.task.repository.*;
 import com.beez.beez.task.service.TaskService;
+import com.beez.beez.websocket.dto.NotificationRequest;
+import com.beez.beez.websocket.service.NotificationService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +23,7 @@ public class TaskServiceImpl implements TaskService {
   private final TaskCategoryRepository taskCategoryRepository;
   private final FileService fileService;
   private final TaskMapper taskMapper;
+  private final NotificationService notificationService;
   
   // 일감 유형 목록
   public List<TaskTypeResponse> findTaskType() {
@@ -101,6 +102,12 @@ public class TaskServiceImpl implements TaskService {
     if (Boolean.TRUE.equals(task.getCopySubTasks())) {
       // taskMapper.copySubTasks(task) 호출 위치
     }
+    
+    // 일감 생성자가 일감 담당자와 다를 경우 일감 담당자에게 일감 부여됨을 알림
+    if (!task.getCreator().equals(task.getUserId())) {
+    
+    }
+    
     return task.getId();
   }
   
@@ -110,6 +117,14 @@ public class TaskServiceImpl implements TaskService {
     List<FileDetailRequest> fileDetails = fileService.saveFile(files);
     task.setFileDetails(fileDetails);
     taskMapper.updateTask(task);
+    // 반려 또는 완료일경우 담당자에게 알림
+    if (task.getWorkflow().equals("Q3") || task.getWorkflow().equals("Q4")) {
+      notificationService.sendNotification(NotificationRequest.builder()
+          .userId(task.getUserId())
+          .content("일감의 진행 상태가 " + ((task.getWorkflow().equals("Q3")) ? "승인" : "반려") + " 되었습니다.")
+          .link("/task/" + task.getId())
+          .build());
+    }
   }
   
   // 일감 상세
@@ -137,5 +152,21 @@ public class TaskServiceImpl implements TaskService {
   @Override
   public List<JournalDetailResponse> findJournalDetailList(String id) {
     return taskMapper.findJournalDetailList(id);
+  }
+  
+  // 일감 연결
+  @Override
+  public void insertTaskRelation(TaskRelationRequest taskRelationRequest){
+    Map<String, String> typeMap = Map.of(
+      "W0", "W0",
+      "W1", "W1",
+      "W2", "W3",
+      "W3", "W2",
+      "W4", "W5",
+      "W5", "W4",
+      "W6", "W7"
+    );
+    taskRelationRequest.setReverseType(typeMap.get(taskRelationRequest.getRelationType()));
+    taskMapper.insertTaskRelation(taskRelationRequest);
   }
 }

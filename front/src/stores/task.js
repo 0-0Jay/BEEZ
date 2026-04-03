@@ -99,5 +99,7 @@ export const useTaskStore = defineStore('task', {
     //   const res = await axios.get(`/api/file/${file.storedName}`);
     // }
   },
-  persist: false
+  persist: {
+    storage: sessionStorage
+  }
 });

@@ -116,4 +116,10 @@ public class TaskController {
   public List<JournalDetailResponse> findJournalDetailList(@PathVariable String id) {
     return taskService.findJournalDetailList(id);
   }
+  
+  // 일감 연결
+  @PostMapping("/link")
+  public void insertTaskRelation(@RequestBody TaskRelationRequest taskRelationRequest) {
+    taskService.insertTaskRelation(taskRelationRequest);
+  }
 }

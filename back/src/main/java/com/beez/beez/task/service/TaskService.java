@@ -55,4 +55,7 @@ public interface TaskService {
   
   // 변경사항 상세 목록
   List<JournalDetailResponse> findJournalDetailList(String id);
+  
+  // 일감 연결
+  void insertTaskRelation(TaskRelationRequest taskRelationRequest);
 }
