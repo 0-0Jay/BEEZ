@@ -93,13 +93,30 @@ ALTER TABLE version ADD (is_delete VARCHAR2(3) DEFAULT 'F0' NOT NULL);
 COMMENT ON COLUMN version.is_delete IS '삭제여부';
 COMMIT;
 
-    SELECT identifier,
-           title,
-           description,
-           is_public,
-           parent_id,
-           start_date,
-           end_date,
-           default_version_id
-    FROM project
-    WHERE id = 'PROJ2603007';
+SELECT identifier,
+       title,
+       description,
+       is_public,
+       parent_id,
+       start_date,
+       end_date,
+       default_version_id
+FROM project
+WHERE id = 'PROJ2603007';
+    
+
+CREATE OR REPLACE FUNCTION alter_common_code
+    (p_com_value common_code.com_value%TYPE)
+    RETURN VARCHAR2
+IS
+    v_com_name VARCHAR2(30);
+BEGIN
+    SELECT com_name
+    INTO v_com_name
+    FROM common_code
+    WHERE com_value = p_com_value;
+RETURN v_com_name;
+END;
+/
+
+SELECT alter_common_code('D0') FROM DUAL;

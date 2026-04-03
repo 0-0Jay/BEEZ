@@ -66,6 +66,8 @@
            v.description,
            v.start_date,
            v.end_date,
+           alter_common_code(v.status) AS status_name,
+           alter_common_code(v.is_share) AS is_share_name,
            v.status,
            v.is_share,
            CASE WHEN p.default_version_id = v.id
