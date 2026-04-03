@@ -7,7 +7,8 @@ export const useVersionStore = defineStore('version', {
     selectedVersion: null,
     versions: [],
     loading: false,
-    versionInfo: null
+    versionInfo: null,
+    commonCodeList: []
   }),
   // getters
   // actions
@@ -54,7 +55,7 @@ export const useVersionStore = defineStore('version', {
       });
     },
 
-    // 프로젝트 생성
+    // 버전 생성
     async insertVersion(form) {
       const response = await axios.post('/project/version', form);
       return response.data;
@@ -67,10 +68,14 @@ export const useVersionStore = defineStore('version', {
       this.projectInfo = response.data;
     },
 
-    // 프로젝트 수정
-    async updateProject(id, formData) {
-      const response = await axios.put(`/project/${id}`, formData);
-      this.projectInfo = response.data;
+    // 버전 수정
+    async updateVersion(id, form) {
+      await axios.put(`/project/version/${id}`, form);
+    },
+
+    async findCommonCodeList() {
+      const res = await axios.get(`/task/common`);
+      this.commonCodeList = res.data;
     }
   },
   persist: {

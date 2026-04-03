@@ -8,6 +8,7 @@ import com.beez.beez.project.dto.VersionListResponse;
 import com.beez.beez.project.mapper.ProjectMapper;
 import com.beez.beez.project.mapper.VersionMapper;
 import com.beez.beez.project.service.VersionService;
+import com.beez.beez.task.dto.CommonCodeResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -97,6 +98,12 @@ public class VersionServiceImpl implements VersionService {
   @Override
   public List<VersionListResponse> selectVersionList(VersionFilterRequest filter) {
     return versionMapper.selectVersionList(filter);
+  }
+  
+  // 공통코드 목록
+  @Override
+  public List<CommonCodeResponse> findCommonCodeList() {
+    return versionMapper.findCommonCodeList();
   }
   
   

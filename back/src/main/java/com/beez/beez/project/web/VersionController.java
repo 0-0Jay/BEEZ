@@ -4,6 +4,7 @@ import com.beez.beez.project.dto.VersionCreateRequest;
 import com.beez.beez.project.dto.VersionFilterRequest;
 import com.beez.beez.project.dto.VersionListResponse;
 import com.beez.beez.project.service.VersionService;
+import com.beez.beez.task.dto.CommonCodeResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -42,5 +43,12 @@ public class VersionController {
   public ResponseEntity<List<VersionListResponse>> selectVersionList(@ModelAttribute VersionFilterRequest filter) {
     return ResponseEntity.ok(versionService.selectVersionList(filter));
   }
+  
+  // 공통코드 조회
+  @GetMapping("/common")
+  public List<CommonCodeResponse> findCommonCodeList() {
+    return versionService.findCommonCodeList();
+  }
+  
   
 }

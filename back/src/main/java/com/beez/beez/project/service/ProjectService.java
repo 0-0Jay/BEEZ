@@ -26,4 +26,5 @@ public interface ProjectService {
   
   //프로젝트 수정
   ProjectInfoResponse updateProject(String id, ProjectUpdateRequest dto);
+  
 }

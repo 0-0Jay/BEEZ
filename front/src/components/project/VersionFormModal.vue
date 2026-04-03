@@ -1,13 +1,16 @@
 <script setup>
 import { useVersionStore } from '@/stores/version';
 import { useToast } from 'primevue';
-import { reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 const props = defineProps({
-  visible: { type: Boolean, required: true }
+  visible: { type: Boolean, required: true },
+  editData: { type: Object, default: null }
 });
 
+const commonCodeList = computed(() => versionStore.commonCodeList);
+const isEdit = computed(() => !!props.editData);
 const emit = defineEmits(['update:visible', 'saved']);
 const versionStore = useVersionStore();
 const toast = useToast();
@@ -31,26 +34,61 @@ const form = reactive({
   isDefaultYn: false
 });
 
-const statusOptions = [
-  { code: 'N0', name: '닫힘', desc: '닫힌 버전' },
-  { code: 'N1', name: '진행', desc: '진행 중인 버전' }
-];
+const statusOptions = computed(() => commonCodeList.value.filter((c) => c.cgroup === '0N'));
+
+watch(
+  () => [props.visible, props.editData],
+  ([newVisible, newEditData]) => {
+    if (newVisible && newEditData) {
+      Object.assign(form, {
+        ...newEditData,
+        startDate: newEditData.startDate ? new Date(newEditData.startDate) : null,
+        endDate: newEditData.endDate ? new Date(newEditData.endDate) : null,
+        isShareYn: newEditData.isShare === 'O1',
+        isDefaultYn: newEditData.isDefault === 'M1'
+      });
+    } else if (newVisible) {
+      resetForm();
+    }
+  }
+);
+
+const resetForm = () => {
+  Object.assign(form, {
+    projectId: route.params.id,
+    name: '',
+    description: '',
+    startDate: null,
+    endDate: null,
+    status: null,
+    isShareYn: false,
+    isDefaultYn: false
+  });
+  submitted.value = false;
+};
 
 const handleRegister = async () => {
   submitted.value = true;
   if (!form.name) return;
 
   try {
-    await versionStore.insertVersion({
+    const payload = {
       ...form,
       startDate: formatDate(form.startDate),
       endDate: formatDate(form.endDate)
-    });
-    toast.add({ severity: 'success', summary: '등록 완료', detail: '버전이 등록되었습니다.', life: 2000 });
+    };
+
+    if (isEdit.value) {
+      await versionStore.updateVersion(props.editData.id, payload);
+      toast.add({ severity: 'success', summary: '수정 완료', detail: '버전이 수정되었습니다.', life: 2000 });
+    } else {
+      await versionStore.insertVersion(payload);
+      toast.add({ severity: 'success', summary: '등록 완료', detail: '버전이 등록되었습니다.', life: 2000 });
+    }
     emit('saved');
     close();
   } catch (error) {
-    toast.add({ severity: 'error', summary: '등록 실패', detail: '버전 등록 중 오류가 발생했습니다.', life: 2000 });
+    toast.add({ severity: 'error', summary: '실패', detail: '오류가 발생했습니다.', life: 2000 });
   }
 };
 
@@ -58,10 +96,14 @@ const close = () => {
   submitted.value = false;
   emit('update:visible', false);
 };
+
+onMounted(async () => {
+  await versionStore.findCommonCodeList();
+});
 </script>
 
 <template>
-  <Dialog :visible="visible" header="버전 추가" modal :style="{ width: '600px' }" @update:visible="close">
+  <Dialog :visible="visible" :header="isEdit ? '버전 수정' : '버전 추가'" modal :style="{ width: '600px' }" @update:visible="close">
     <div class="divide-y divide-[#F2F0EB]">
       <!-- 버전명 -->
       <div class="flex items-start px-8 py-4">
@@ -93,7 +135,7 @@ const close = () => {
       <!-- 상태 -->
       <div class="flex items-start px-8 py-4">
         <label class="form-label w-32 pt-2 shrink-0">상태 <span class="text-red-500">*</span></label>
-        <Select v-model="form.status" :options="statusOptions" optionLabel="name" optionValue="code" placeholder="선택" class="form-input w-50" />
+        <Select v-model="form.status" :options="statusOptions" optionLabel="name" optionValue="id" placeholder="선택" class="form-input w-50" />
       </div>
 
       <!-- 공유 여부 + 기본 버전 -->
@@ -115,7 +157,7 @@ const close = () => {
     <template #footer>
       <div class="flex justify-end gap-2 pt-2">
         <Button label="취소" severity="secondary" raised @click="close" />
-        <Button label="등록" raised @click="handleRegister" />
+        <Button :label="isEdit ? '수정' : '등록'" raised @click="handleRegister" />
       </div>
     </template>
   </Dialog>
