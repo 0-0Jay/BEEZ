@@ -24,6 +24,10 @@ const pageTitle = computed(() => {
   return '새 일감 생성';
 });
 
+// 하위 일감 추가로 진입 시
+const fixedParentId = route.query.parentId ?? null;
+const fixedParentName = route.query.parentName ? decodeURIComponent(route.query.parentName) : null;
+
 const commonCodes = computed(() => taskStore.commonCodeList);
 const workflowOptions = computed(() => commonCodes.value.filter((w) => w.cgroup === '0Q'));
 const userOptions = computed(() => taskStore.memberList);
@@ -35,17 +39,24 @@ const versionOptions = computed(() => taskStore.versionList);
 
 function formatDate(d) {
   if (!d) return '';
-  if (typeof d === 'string') return d;
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
+  // 문자열이면 앞 10자리(YYYY-MM-DD)만 사용
+  if (typeof d === 'string') return d.substring(0, 10);
+  // 숫자(타임스탬프)이면 Date로 변환
+  const date = typeof d === 'number' ? new Date(d) : d;
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
 }
 
 function parseDate(d) {
   if (!d) return null;
   if (d instanceof Date) return d;
-  return new Date(d);
+  if (typeof d === 'number') return new Date(d);
+  // "YYYY-MM-DD" 형태 문자열을 로컬 시간으로 파싱
+  const s = String(d).substring(0, 10);
+  const [y, mo, day] = s.split('-').map(Number);
+  return new Date(y, mo - 1, day);
 }
 
 const task = computed(() => taskStore.task);
@@ -59,7 +70,7 @@ const form = reactive({
   workflow: isPopulated ? (task.value?.workflow ?? null) : null,
   priority: isPopulated ? (task.value?.priority ?? null) : null,
   description: isPopulated ? (task.value?.description ?? '') : '',
-  parentId: isPopulated ? (task.value?.parentId ?? null) : null,
+  parentId: fixedParentId ?? (isPopulated ? (task.value?.parentId ?? null) : null),
   category: isPopulated ? (task.value?.category ?? null) : null,
   userId: isPopulated ? (task.value?.userId ?? null) : null,
   versionId: isPopulated ? (task.value?.versionId ?? null) : null,
@@ -69,13 +80,14 @@ const form = reactive({
   actualEnd: isPopulated ? parseDate(task.value?.actualEnd) : null,
   estimatedTime: isPopulated ? (task.value?.estimatedTime ?? 0) : 0,
   progress: isPopulated ? (task.value?.progress ?? 0) : 0,
+  reject: isPopulated ? (task.value?.reject ?? '') : '',
   attachments: isCopyMode ? [] : isPopulated ? (task.value?.fileList ?? []) : [],
   linkCopied: false,
   copySubTasks: false
 });
 
 // 수정 모드에서만 task.id 사용, 생성·복사는 null
-const fileId = isEditMode ? (task.value?.id ?? null) : null;
+const fileId = isEditMode ? (task.value?.fileId ?? null) : null;
 
 // 수정 모드 전용 원본값 스냅샷
 const originalValues = isEditMode
@@ -96,7 +108,7 @@ const originalValues = isEditMode
       actualEnd: formatDate(task.value?.actualEnd),
       estimatedTime: task.value?.estimatedTime ?? 0,
       progress: task.value?.progress ?? 0,
-      attachments: task.value?.fileList ?? []
+      attachments: (task.value?.fileList ?? []).map((f) => ({ ...f }))
     }
   : null;
 
@@ -104,8 +116,27 @@ const originalValues = isEditMode
 const buildChangeLog = () => {
   if (!isEditMode || !originalValues) return [];
 
-  const scalarFields = ['isPublic', 'title', 'type', 'workflow', 'priority', 'description', 'parentId', 'category', 'userId', 'versionId', 'estimatedTime', 'progress'];
+  const scalarFields = ['isPublic', 'title', 'type', 'workflow', 'priority', 'description', 'parentId', 'category', 'userId', 'versionId', 'estimatedTime', 'progress', 'reject'];
   const dateFields = ['plannedStart', 'plannedEnd', 'actualStart', 'actualEnd'];
+  const fieldMapper = {
+    isPublic: 'is_public',
+    title: 'title',
+    type: 'type',
+    workflow: 'workflow',
+    priority: 'priority',
+    description: 'description',
+    parentId: 'parent_id',
+    category: 'category',
+    userId: 'user_id',
+    versionId: 'version_id',
+    estimatedTime: 'estimated_time',
+    progress: 'progress',
+    reject: 'reject',
+    plannedStart: 'planned_start',
+    plannedEnd: 'planned_end',
+    actualStart: 'actual_start',
+    actualEnd: 'actual_end'
+  };
 
   const changeLog = [];
 
@@ -113,7 +144,7 @@ const buildChangeLog = () => {
     const oldValue = originalValues[field] ?? '';
     const newValue = form[field] ?? '';
     if (String(oldValue) !== String(newValue)) {
-      changeLog.push({ fieldName: field, oldValue, newValue });
+      changeLog.push({ fieldName: fieldMapper[field], oldValue, newValue });
     }
   });
 
@@ -121,19 +152,15 @@ const buildChangeLog = () => {
     const oldValue = originalValues[field] ?? '';
     const newValue = formatDate(form[field]) ?? '';
     if (oldValue !== newValue) {
-      changeLog.push({ fieldName: field, oldValue, newValue });
+      changeLog.push({ fieldName: fieldMapper[field], oldValue, newValue });
     }
   });
 
   // 첨부파일 변경 감지
-  const originalFileNames = originalValues.attachments.map((f) => f.originalName).join(', ') || '-';
-  const currentFileNames = form.attachments.map((f) => (f instanceof File ? f.name : f.originalName)).join(', ') || '-';
+  const originalFileNames = originalValues.attachments.map((f) => f.name).join(', ') || '-';
+  const currentFileNames = form.attachments.map((f) => f.name).join(', ') || '-';
   if (originalFileNames !== currentFileNames) {
-    changeLog.push({
-      fieldName: 'attachments',
-      oldValue: originalFileNames,
-      newValue: currentFileNames
-    });
+    changeLog.push({ fieldName: 'attachments', oldValue: originalFileNames, newValue: currentFileNames });
   }
 
   return changeLog;
@@ -147,7 +174,8 @@ const errors = reactive({
   category: '',
   userId: '',
   plannedStart: '',
-  plannedEnd: ''
+  plannedEnd: '',
+  reject: ''
 });
 
 const touched = reactive({
@@ -158,7 +186,8 @@ const touched = reactive({
   category: true,
   userId: true,
   plannedStart: true,
-  plannedEnd: true
+  plannedEnd: true,
+  reject: true
 });
 
 const validate = () => {
@@ -171,6 +200,7 @@ const validate = () => {
   errors.userId = '';
   errors.plannedStart = '';
   errors.plannedEnd = '';
+  errors.reject = '';
 
   if (!form.title.trim()) {
     errors.title = '일감명을 입력해주세요.';
@@ -204,11 +234,19 @@ const validate = () => {
     errors.plannedEnd = '예상 마감일을 선택해주세요.';
     valid = false;
   }
+  if (form.workflow === 'Q4' && !form.reject?.trim()) {
+    errors.reject = '반려사유를 입력해주세요.';
+    valid = false;
+  }
 
   return valid;
 };
 
-const isSaveDisabled = computed(() => !form.title.trim() || !form.type || !form.workflow || !form.priority || !form.category || !form.userId || !form.plannedStart || !form.plannedEnd);
+const isSaveDisabled = computed(() => {
+  const base = !form.title.trim() || !form.type || !form.workflow || !form.priority || !form.category || !form.userId || !form.plannedStart || !form.plannedEnd;
+  if (form.workflow === 'Q4') return base || !form.reject?.trim();
+  return base;
+});
 
 const handleFileChange = ({ files }) => {
   files.forEach((newFile) => {
@@ -254,30 +292,41 @@ const handleSubmit = async () => {
   formData.append('progress', form.progress ?? 0);
   formData.append('creator', form.creator);
   formData.append('projectId', form.projectId);
-  formData.append('editor', userId.value);
 
+  let nextId = '';
   if (isEditMode) {
+    formData.append('id', task.value?.id);
+    formData.append('editor', userId.value);
     formData.append('fileId', fileId);
-    formData.append('journals', JSON.stringify(buildChangeLog()));
-    formData.append('deletedFileIds', JSON.stringify(deletedFileIds));
+    const changeLog = buildChangeLog();
+    changeLog.forEach((entry, i) => {
+      formData.append(`journals[${i}].fieldName`, entry.fieldName);
+      formData.append(`journals[${i}].oldValue`, entry.oldValue ?? '');
+      formData.append(`journals[${i}].newValue`, entry.newValue ?? '');
+    });
+    deletedFileIds.forEach((id) => formData.append('deletedFileIds', id));
     form.attachments.filter((f) => f instanceof File).forEach((file) => formData.append('attachments', file));
-
-    taskStore.updateTask(formData);
+    await taskStore.updateTask(formData);
+    nextId = task.value?.id;
   } else if (isCopyMode) {
     formData.append('linkCopied', form.linkCopied);
     formData.append('copySubTasks', form.copySubTasks);
     form.attachments.forEach((file) => formData.append('attachments', file));
-    taskStore.insertTask(formData);
+    nextId = await taskStore.insertTask(formData);
   } else {
     form.attachments.forEach((file) => formData.append('attachments', file));
-    taskStore.insertTask(formData);
+    nextId = await taskStore.insertTask(formData);
   }
-
-  router.push('/tasks');
+  await taskStore.findTaskDetail(nextId);
+  router.push(`/task/${nextId}`);
 };
 
 const handleCancel = () => {
-  router.push('/tasks');
+  if (isPopulated) {
+    router.push(`/task/${task.value?.id}`);
+  } else {
+    router.push('/tasks');
+  }
 };
 
 onMounted(async () => {
@@ -288,7 +337,6 @@ onMounted(async () => {
   await taskStore.findTaskList(project.value.id, userId.value);
   await taskStore.findVersionList(project.value.id);
   validate();
-  console.log(task.value);
 });
 </script>
 
@@ -384,7 +432,8 @@ onMounted(async () => {
           <tr class="divide-x divide-[#F2F0EB]">
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">상위 일감</td>
             <td class="px-6 py-3">
-              <Select v-model="form.parentId" :options="parentTaskOptions" optionLabel="title" optionValue="id" placeholder="선택" class="w-full" />
+              <span v-if="fixedParentId" class="inline-flex items-center gap-1.5 text-base text-[#E8920E] font-medium"> {{ fixedParentName }} </span>
+              <Select v-else v-model="form.parentId" :options="parentTaskOptions" optionLabel="title" optionValue="id" placeholder="선택" class="w-full" />
             </td>
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">목표 버전</td>
             <td class="px-6 py-3">
@@ -447,6 +496,17 @@ onMounted(async () => {
             </td>
           </tr>
 
+          <!-- 반려 사유 -->
+          <tr v-if="form.workflow === 'Q4'" class="divide-x divide-[#F2F0EB]">
+            <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35] align-top pt-4">
+              <span class="flex items-center gap-1">반려사유<span class="text-red-500 inline-block text-xl">*</span></span>
+            </td>
+            <td colspan="3" class="px-6 py-3">
+              <Textarea v-model="form.reject" placeholder="반려사유를 입력해주세요." class="w-full" rows="3" autoResize @input="validate()" />
+              <small v-if="touched.reject && errors.reject" class="text-red-500 mt-1 block text-xs">{{ errors.reject }}</small>
+            </td>
+          </tr>
+
           <!-- 설명 -->
           <tr class="divide-x divide-[#F2F0EB]">
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35] align-top pt-4">설명</td>
@@ -479,8 +539,8 @@ onMounted(async () => {
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#9A9B90] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  <span class="truncate max-w-xs">{{ file.originalName }}</span>
-                  <span class="text-[#9A9B90] text-xs shrink-0">({{ (file.fileSize / 1024).toFixed(1) }}KB)</span>
+                  <span class="truncate max-w-xs">{{ file.name }}</span>
+                  <span class="text-[#9A9B90] text-xs shrink-0">({{ (file.size / 1024).toFixed(1) }}KB)</span>
                   <button type="button" class="ml-1 text-[#9A9B90] hover:text-red-500 transition-colors shrink-0" @click="removeFile(index)">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />

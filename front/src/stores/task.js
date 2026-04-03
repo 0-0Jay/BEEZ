@@ -65,6 +65,7 @@ export const useTaskStore = defineStore('task', {
           'Content-Type': 'multipart/form-data'
         }
       });
+      return res.data;
     },
     async updateTask(data) {
       const res = await axios.put(`/task`, data, {
@@ -80,9 +81,19 @@ export const useTaskStore = defineStore('task', {
     async insertTaskReply(data) {
       const res = await axios.post(`/task/reply`, data);
     },
-    async findJournalList(id) {
-      const res = await axios.get(`/task/journal/${id}`);
+    async findJournalDetail(id) {
+      const res = await axios.get(`/task/${id}/journal`);
       this.journalList = res.data;
+    },
+    async deleteTask(id) {
+      const res = await axios.delete(`/task/${id}`);
+      this.task = ref(null);
+    },
+    async insertTaskTime(data) {
+      const res = await axios.post(`/task/time`, data);
+    },
+    async insertTaskLink(data) {
+      const res = await axios.post(`/task/link`, data);
     }
     // async downloadFile(file) {
     //   const res = await axios.get(`/api/file/${file.storedName}`);

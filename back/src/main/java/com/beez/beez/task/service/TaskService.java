@@ -40,7 +40,7 @@ public interface TaskService {
   List<VersionResponse> findVersionList(String projectId);
   
   // 일감 추가
-  void insertTask(TaskRequest task, List<MultipartFile> files);
+  String insertTask(TaskRequest task, List<MultipartFile> files);
   
   void updateTask(TaskRequest task, List<MultipartFile> files);
   
@@ -52,4 +52,7 @@ public interface TaskService {
   
   // 공통코드 목록
   List<CommonCodeResponse> findCommonCodeList();
+  
+  // 변경사항 상세 목록
+  List<JournalDetailResponse> findJournalDetailList(String id);
 }
