@@ -252,22 +252,18 @@ function applyFormat(command, value = null) {
 <template>
   <div class="wiki-editor-page">
     <!-- ① 상단 헤더 영역 -->
-    <div class="header-section">
-      <div class="header-left">
-        <h1 class="project-title">{{ projectInfo.title || '프로젝트 제목 출력 부분' }}</h1>
-        <input v-model="wikiStore.wikiDetail.wikiInfo" type="text" class="project-desc-input" placeholder="위키 관련 한 줄 설명을 입력하세요" />
-      </div>
+    <div class="flex justify-between items-end">
+      <!-- <div class="header-left"> -->
+      <h1 class="text-2xl font-bold text-[#1A1816]">WIKI</h1>
+      <!-- <input v-model="wikiStore.wikiDetail.wikiInfo" type="text" class="project-desc-input" placeholder="위키 관련 한 줄 설명을 입력하세요" /> -->
+      <!-- </div> -->
 
-      <div class="header-fields">
-        <!-- 작성자명 -->
-        <div class="field-group">
-          <label class="field-label required">작성자명</label>
-          <input v-model="userId" type="text" class="field-input" :class="{ 'is-error': errors.userId }" placeholder="성함을 입력해 주세요." />
-          <span v-if="errors.userId" class="error-msg">성함입력은 필수 입니다.</span>
-        </div>
-
-        <!-- 작성일 -->
-      </div>
+      <!-- 작성자명 -->
+      <!-- <div class="field-group">
+        <label class="field-label required">작성자명</label>
+        <input v-model="userId" type="text" class="field-input" :class="{ 'is-error': errors.userId }" placeholder="성함을 입력해 주세요." />
+        <span v-if="errors.userId" class="error-msg">성함입력은 필수 입니다.</span>
+      </div> -->
 
       <div class="header-actions">
         <!-- 저장 성공 토스트 -->
@@ -435,7 +431,6 @@ function applyFormat(command, value = null) {
 .project-title {
   font-size: 22px;
   font-weight: 700;
-  margin: 0 0 8px;
 }
 
 .project-desc-input {
@@ -501,7 +496,6 @@ function applyFormat(command, value = null) {
   padding: 8px 14px;
   border-radius: 6px;
   font-size: 12px;
-  line-height: 1.5;
   text-align: center;
   white-space: nowrap;
 }
@@ -568,7 +562,7 @@ function applyFormat(command, value = null) {
 .panel-title {
   font-size: 14px;
   font-weight: 700;
-  margin: 0 0 12px;
+  margin-bottom: 10px;
 }
 
 .panel-title.center {
@@ -647,14 +641,12 @@ function applyFormat(command, value = null) {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin-bottom: 4px;
 }
 
 .link-form-actions {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  margin-top: 8px;
 }
 
 /* 링크 아이템들을 감싸는 컨테이너 */
@@ -687,7 +679,6 @@ function applyFormat(command, value = null) {
   flex-direction: column;
   gap: 4px;
   /* 여백이 너무 크면 스크롤이 금방 생기므로 적절히 조절 */
-  margin-bottom: 4px;
 }
 
 /* 편집 사유 모달 */
@@ -861,5 +852,21 @@ function applyFormat(command, value = null) {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+/* 제목 태그들의 기본 마진을 0으로 초기화 */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0 !important;
+}
+
+/* 만약 위키 타이틀(WIKI)만 딱 붙이고 싶다면 h1만 타겟팅 하세요 */
+h1 {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
 }
 </style>
