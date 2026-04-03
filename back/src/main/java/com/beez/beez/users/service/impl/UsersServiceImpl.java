@@ -5,6 +5,7 @@ import com.beez.beez.users.dto.UserRegisterRequest;
 import com.beez.beez.users.dto.UserSearchRequest;
 import com.beez.beez.users.mapper.UsersMapper;
 import com.beez.beez.users.repository.Users;
+import com.beez.beez.users.service.MailService;
 import com.beez.beez.users.service.UsersService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,6 +23,7 @@ import java.util.Map;
 public class UsersServiceImpl implements UsersService {
 
   private final UsersMapper usersMapper;
+  private final MailService mailService;
   private final PasswordEncoder passwordEncoder;
 
   // 초기 비밀번호 관련
@@ -51,9 +53,23 @@ public class UsersServiceImpl implements UsersService {
     return result;
   }
 
+  // 이메일 중복체크
+  @Override
+  public boolean checkEmailExists(String email) {
+    return usersMapper.checkEmailExists(email) > 0;
+  }
+
   // 사용자 등록
   @Override
   public void insertUser(UserRegisterRequest dto){
+    // 이메일 중복 체크
+    if (usersMapper.checkEmailExists(dto.getEmail()) > 0) {
+      throw new RuntimeException("이미 사용 중인 이메일입니다: " + dto.getEmail());
+    }
+
+    // 암호화 전 비밀번호
+    String rawPassword = dto.getPassword();
+
     // dto -> entity 변환
     Users user = dto.toEntity();
 
@@ -62,6 +78,9 @@ public class UsersServiceImpl implements UsersService {
     user.setPassword(encodedPw);
 
     usersMapper.insertUser(user);
+
+    // 메일 발송
+    mailService.sendWelcomeEmail(user.getEmail(), dto.getName(), rawPassword);
   }
 
 }

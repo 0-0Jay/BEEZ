@@ -58,6 +58,13 @@
     ORDER BY created_on DESC
   </select>
 
+  <!-- 이메일 중복체크 -->
+  <select id="checkEmailExists" parameterType="string" resultType="int">
+    SELECT COUNT(*)
+    FROM users
+    WHERE email = #{email}
+  </select>
+
   <!-- 사용자 등록 -->
   <insert id="insertUser" parameterType="com.beez.beez.users.repository.Users">
     <selectKey keyProperty="id" resultType="string" order="BEFORE">

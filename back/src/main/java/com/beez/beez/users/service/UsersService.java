@@ -16,6 +16,9 @@ public interface UsersService {
   // 초기 비밀번호 생성
   Map<String, String> getInitPw();
 
+  // 이메일 중복체크
+  boolean checkEmailExists(String email);
+
   // 사용자 등록
   void insertUser(UserRegisterRequest userRegisterRequest);
 }

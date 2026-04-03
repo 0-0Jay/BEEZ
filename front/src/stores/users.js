@@ -24,6 +24,12 @@ export const useUsersStore = defineStore('users', {
       // console.log(this.initPw);
     },
 
+    // 이메일 중복체크
+    async checkEmailExists(email) {
+      const response = await axios.get('/users/register/check-email', { params: { email } });
+      return response.data;
+    },
+
     // 사용자 등록
     async insertUser(form) {
       await axios.post('/users/register', form);

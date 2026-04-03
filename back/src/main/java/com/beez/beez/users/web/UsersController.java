@@ -7,6 +7,7 @@ import com.beez.beez.users.dto.UserSearchRequest;
 import com.beez.beez.users.service.PasswordService;
 import com.beez.beez.users.service.UsersService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,6 +33,12 @@ public class UsersController {
     return ResponseEntity.ok(usersService.getInitPw());
   }
 
+  // 이메일 중복체크
+  @GetMapping("/register/check-email")
+  public ResponseEntity<Boolean> checkEmailExists(@RequestParam("email") String email) {
+    return  ResponseEntity.ok(usersService.checkEmailExists(email));
+  }
+
   // 사용자 등록
   @PostMapping("/register")
   public ResponseEntity<String> insertUser(@RequestBody UserRegisterRequest dto) {
@@ -41,8 +48,12 @@ public class UsersController {
 //      System.out.println("========================================");
       usersService.insertUser(dto);
       return ResponseEntity.ok("사용자 등록이 완료되었습니다.");
-    }catch(Exception e){
-      return ResponseEntity.internalServerError().body("등록 실패: " + e.getMessage());
+    }catch (RuntimeException e) {
+      // 중복 체크 등 에러 (사용자 입력 오류)
+      return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+    } catch (Exception e) {
+      // 그 외 서버 내부 에러 (DB 연결 끊김 등)
+      return ResponseEntity.internalServerError().body("서버 오류가 발생했습니다. 관리자에게 문의하세요.");
     }
   }
 }
