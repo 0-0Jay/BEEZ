@@ -1,16 +1,35 @@
 <script setup>
-import { ref } from 'vue';
+import { useWikiStore } from '@/stores/wiki';
+import { computed, onMounted, ref } from 'vue';
+import { useRoute } from 'vue-router';
 
 // 1. 상태 관리 (추후 API 데이터로 대체 가능)
 const wikiData = ref({
   title: 'YEDAM PMS TOOL 프로젝트',
   version: 'v 1.0',
   subtitle: '사용자 경험 개선을 목표로 한 PMS TOOL 프로젝트의 전반적인 배경, 목표, 범위, 프로세스를 정리한 공식 위키페이지 입니다',
-  author: '000',
+  author: '홍길동',
   updatedDate: '2026.03.20',
   status: '진행중',
-  endDate: '2026.04.27',
-  pm: '000'
+  endDate: '2026.04.27'
+});
+
+const wikiStore = useWikiStore(); //스토어 연결
+
+const saveSuccess = ref(false); // 저장여부
+const route = useRoute();
+const userId = ref(''); //입력받을 작성자명
+const wikiInfo = ref(''); //작성창 한줄 설명
+
+//스토어랑 연결
+const projectInfo = computed(() => wikiStore.projectInfo);
+
+//페이지 로드 될 때 실행
+onMounted(async () => {
+  const projectId = route.params.projectId;
+  if (projectId) {
+    await wikiStore.fetchProjectData(projectId);
+  }
 });
 
 // 2. 목차 데이터
@@ -92,43 +111,36 @@ const handleHistory = () => console.log('히스토리 보기');
         <div class="info-card">
           <div class="info-card-title">{{ wikiData.title }}</div>
           <div class="info-row">
-            <span class="info-label">상태</span>
+            <span class="info-label">상태 - 이거 지울예정임</span>
             <span class="badge-status">{{ wikiData.status }}</span>
           </div>
-          <div class="info-row">
-            <span class="info-label">종료일</span>
-            <span>{{ wikiData.endDate }}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">PM</span>
-            <span>{{ wikiData.pm }}</span>
-          </div>
+
           <div class="info-row">
             <span class="info-label">프로젝트번호 :</span>
-            <span class="info-value status-badge"></span>
+            <span class="info-value status-badge">{{ projectInfo.id }}</span>
           </div>
 
           <div class="info-row">
             <span class="info-label">프로젝트 설명 :</span>
-            <span class="info-value status-badge"></span>
+            <span class="info-value status-badge">{{ projectInfo.description }}</span>
           </div>
 
           <div class="info-row">
             <span class="info-label">프로젝트 생성자명 :</span>
-            <span class="info-value status-badge"></span>
+            <span class="info-value status-badge">{{ projectInfo.userName }}</span>
           </div>
 
           <div class="info-row">
             <span class="info-label">시작일 :</span>
-            <span class="info-value status-badge"></span>
+            <span class="info-value status-badge">{{ projectInfo.startDate ? projectInfo.startDate.replace('T', ' ').substring(0, 10) : '-' }}</span>
           </div>
           <div class="info-row">
             <span class="info-label">종료일 :</span>
-            <span class="info-value status-badge"></span>
+            <span class="info-value status-badge">{{ projectInfo.endDate ? projectInfo.endDate.replace('T', ' ').substring(0, 10) : '-' }}</span>
           </div>
           <div class="info-row">
             <span class="info-label">상태값 :</span>
-            <span class="info-value status-badge"></span>
+            <span class="info-value status-badge">{{ projectInfo.status }}</span>
           </div>
         </div>
       </div>
