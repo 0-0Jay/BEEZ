@@ -22,7 +22,7 @@ const form = ref({
   taskStart: null,
   spent: null,
   activityType: null,
-  progress: null,
+  progress: props.task?.progress,
   description: ''
 });
 
@@ -34,7 +34,7 @@ watch(
         taskStart: null,
         spent: null,
         activityType: null,
-        progress: null,
+        progress: props.task?.progress,
         description: ''
       };
     }
@@ -85,9 +85,7 @@ function handleCancel() {
         <div class="flex items-center gap-3">
           <h2 class="text-base font-bold text-stone-900 tracking-tight">소요 시간 기록</h2>
         </div>
-        <button class="w-7 h-7 rounded-md flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-stone-200 transition-colors cursor-pointer bg-transparent border-none" @click="handleCancel">
-          <i class="pi pi-times text-sm"></i>
-        </button>
+        <Button icon="pi pi-times" severity="secondary" text rounded @click="handleCancel" />
       </div>
 
       <!-- 본문 -->

@@ -18,30 +18,30 @@ export const useTaskStore = defineStore('task', {
   // actions
   actions: {
     async findTypeList() {
-      const res = await axios.get(`/task/type`);
+      const res = await axios.get(`/type`);
       this.typeList = res.data;
     },
     async insertType(data) {
-      const res = await axios.post(`/task/type`, data);
+      const res = await axios.post(`/type`, data);
     },
     async updateType(data) {
-      const res = await axios.put(`/task/type`, data);
+      const res = await axios.put(`/type`, data);
     },
     async deleteType(id) {
-      const res = await axios.delete(`/task/type/${id}`);
+      const res = await axios.delete(`/type/${id}`);
     },
     async findCateList() {
-      const res = await axios.get(`/task/category`);
+      const res = await axios.get(`/category`);
       this.cateList = res.data;
     },
     async insertCate(data) {
-      const res = await axios.post(`/task/category`, data);
+      const res = await axios.post(`/category`, data);
     },
     async updateCate(data) {
-      const res = await axios.put(`/task/category`, data);
+      const res = await axios.put(`/category`, data);
     },
     async deleteCate(id) {
-      const res = await axios.delete(`/task/category/${id}`);
+      const res = await axios.delete(`/category/${id}`);
     },
     async findMember(projectId) {
       const res = await axios.get(`/task/member/${projectId}`);
@@ -94,6 +94,9 @@ export const useTaskStore = defineStore('task', {
     },
     async insertTaskLink(data) {
       const res = await axios.post(`/task/link`, data);
+    },
+    async deleteTaskLink(id) {
+      const res = await axios.delete(`/task/link/${id}`);
     }
     // async downloadFile(file) {
     //   const res = await axios.get(`/api/file/${file.storedName}`);

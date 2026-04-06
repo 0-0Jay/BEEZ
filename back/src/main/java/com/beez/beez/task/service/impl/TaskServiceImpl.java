@@ -91,21 +91,32 @@ public class TaskServiceImpl implements TaskService {
   // 일감 등록 / 복사
   @Override
   public String insertTask(TaskRequest task, List<MultipartFile> files) {
+    System.out.println(task.getProjectId());
     List<FileDetailRequest> fileDetails = fileService.saveFile(files);
     task.setFileDetails(fileDetails);
     taskMapper.insertTask(task);
     
-    // 복사 후처리
+    // 복사관계 연결
     if (Boolean.TRUE.equals(task.getLinkCopied())) {
-      // taskMapper.insertTaskRelation(task) 호출 위치
+       insertTaskRelation(TaskRelationRequest.builder()
+         .taskId(task.getId())
+         .relatedTaskId(task.getOriginTask())
+         .relationType("W7")
+         .reverseType("W6")
+         .build());
     }
+    // 하위 일감 복사
     if (Boolean.TRUE.equals(task.getCopySubTasks())) {
-      // taskMapper.copySubTasks(task) 호출 위치
+       taskMapper.copySubTasks(task.getId(), task.getOriginTask());
     }
     
     // 일감 생성자가 일감 담당자와 다를 경우 일감 담당자에게 일감 부여됨을 알림
     if (!task.getCreator().equals(task.getUserId())) {
-    
+      notificationService.sendNotification(NotificationRequest.builder()
+        .userId(task.getUserId())
+        .content("새로운 일감이 할당되었습니다.")
+        .link("/task/" + task.getId())
+        .build());
     }
     
     return task.getId();
@@ -164,9 +175,28 @@ public class TaskServiceImpl implements TaskService {
       "W3", "W2",
       "W4", "W5",
       "W5", "W4",
-      "W6", "W7"
+      "W6", "W7",
+      "W7", "W6"
     );
     taskRelationRequest.setReverseType(typeMap.get(taskRelationRequest.getRelationType()));
     taskMapper.insertTaskRelation(taskRelationRequest);
+  }
+  
+  // 일감 삭제
+  @Override
+  public void deleteTask(String id) {
+    taskMapper.deleteTask(id);
+  }
+  
+  // 소요시간 기록
+  @Override
+  public void insertTaskTime(TaskTimeRequest taskTimeRequest) {
+    taskMapper.insertTaskTime(taskTimeRequest);
+  }
+  
+  // 일감 연결 끊기
+  @Override
+  public void deleteTaskLink(String id) {
+    taskMapper.deleteTaskLink(id);
   }
 }

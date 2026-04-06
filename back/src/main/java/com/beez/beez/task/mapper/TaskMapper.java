@@ -25,4 +25,12 @@ public interface TaskMapper {
   List<JournalDetailResponse> findJournalDetailList(String id);
   
   void insertTaskRelation(TaskRelationRequest taskRelationRequest);
+  
+  void deleteTask(String id);
+  
+  void copySubTasks(@Param("taskId") String taskId, @Param("copiedTaskId") String copiedTaskId);
+  
+  void insertTaskTime(TaskTimeRequest taskTimeRequest);
+  
+  void deleteTaskLink(String id);
 }

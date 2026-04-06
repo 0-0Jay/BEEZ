@@ -46,5 +46,5 @@ public class TaskRequest {
   private List<String> deletedFileIds;
   private Boolean linkCopied;
   private Boolean copySubTasks;
-  
+  private String originTask;
 }
