@@ -118,13 +118,19 @@
     WHERE id = #{id}
   </update>
   
+<!-- 프로젝트 기본버전 조회 -->
+  <select id="findDefaultVersionId" resultType="string">
+    SELECT default_version_id
+    FROM project
+    WHERE id = #{projectId}
+  </select>
+  
 <!-- 프로젝트 기본버전 업데이트 -->
   <update id="updateDefaultVersion">
     UPDATE project
     SET default_version_id = #{versionId}
     WHERE id = #{projectId}
   </update>
-  
   
 
 </mapper>

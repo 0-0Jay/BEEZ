@@ -120,3 +120,11 @@ END;
 /
 
 SELECT alter_common_code('D0') FROM DUAL;
+
+-- 프로젝트 구성원 추가 프로시저
+CREATE OR REPLACE PROCEDURE get_project_member (
+    p_project_id IN VARCHAR2,
+    p_users OUT SYS_REFCURSOR,
+    p_groups OUT SYS_REFCURSOR,
+    p_group_members OUT SYS_REFCURSOR,
+    )

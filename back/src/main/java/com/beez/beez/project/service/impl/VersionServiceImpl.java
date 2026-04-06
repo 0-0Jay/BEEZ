@@ -39,7 +39,7 @@ public class VersionServiceImpl implements VersionService {
     
     // 프론트 Boolean -> 코드값 변환
     dto.setIsShare(Boolean.TRUE.equals(dto.getIsShareYn()) ? "O1" : "O0");
-    dto.setIsDefault(Boolean.TRUE.equals(dto.getIsDefaultYn()) ? "M1" : "M2");
+    dto.setIsDefault(Boolean.TRUE.equals(dto.getIsDefaultYn()) ? "M1" : "M0");
     
     versionMapper.insertVersion(dto);
     
@@ -57,12 +57,21 @@ public class VersionServiceImpl implements VersionService {
   public void updateVersion(VersionCreateRequest dto) {
     String userId = getCurrentUserId();
     
+    // 프론트 Boolean -> 코드값 변환
+    dto.setIsShare(Boolean.TRUE.equals(dto.getIsShareYn()) ? "O1" : "O0");
+    dto.setIsDefault(Boolean.TRUE.equals(dto.getIsDefaultYn()) ? "M1" : "M0");
+    
     versionMapper.updateVersion(dto);
     
     if(dto.getIsDefault().equals("M1")) {
       projectMapper.updateDefaultVersion(dto.getProjectId(), dto.getId());
-    } else if (dto.getIsDefault().equals("M0")) {
-      projectMapper.updateDefaultVersion(dto.getProjectId(), null);
+    } else {
+      // 기본 버전 체크 해제 시 → 현재 프로젝트 기본 버전이 이 버전일 때만 해제
+      String currentDefaultVersionId = projectMapper.findDefaultVersionId(dto.getProjectId());
+      
+      if (dto.getId().equals(currentDefaultVersionId)) {
+        projectMapper.updateDefaultVersion(dto.getProjectId(), null);
+      }
     }
     
     String link = "/project/setting/" + dto.getProjectId() + "?tab=version";
