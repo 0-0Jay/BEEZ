@@ -31,8 +31,8 @@ export const useUsersStore = defineStore('users', {
     },
 
     // 사용자 등록
-    async insertUser(form) {
-      await axios.post('/users/register', form);
+    async insertUser(payload) {
+      await axios.post('/users/register', payload);
       // console.log(response);
     }
   }

@@ -4,6 +4,18 @@ const Routes1 = [
     name: 'userList',
     component: () => import('@/views/users/UserListPage.vue'),
     meta: { requiresAuth: true, role: 'ROLE0001' }
+  },
+  {
+    path: '/roles/list',
+    name: 'roleList',
+    component: () => import('@/views/roles/RoleListPage.vue'),
+    meta: { requiresAuth: true, role: 'ROLE0001' }
+  },
+  {
+    path: '/roles/add',
+    name: 'roldAdd',
+    component: () => import('@/views/roles/RoleAddPage.vue'),
+    meta: { requiresAuth: true, role: 'ROLE0001' }
   }
 ];
 export default Routes1;
