@@ -88,8 +88,8 @@ watch(
 );
 
 // 정렬
-const sortKey = ref(null);
-const sortDir = ref('asc');
+const sortKey = ref('plannedEnd');
+const sortDir = ref('desc');
 
 const priorityWeight = { S3: 4, S2: 3, S1: 2, S0: 1 };
 

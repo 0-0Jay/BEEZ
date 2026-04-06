@@ -11,13 +11,10 @@
            t.workflow,
            t.priority,
            t.planned_end,
-           t.progress,
-           (SELECT COUNT(*)
-            FROM task_watcher w
-            WHERE w.task_id = t.id AND w.user_id = #{userId}) AS isWatch
+           t.progress
     FROM task t
     JOIN users u ON t.user_id = u.id
-    WHERE t.project_id = #{projectId}
+    WHERE t.project_id = #{projectId} AND t.status = 'T1'
   </select>
   
   <select id="findMemberList" resultType="MemberResponse">
@@ -154,6 +151,7 @@
     <result property="plannedEnd" column="planned_end" />
     <result property="progress" column="progress" />
     <result property="relationType" column="relation_type" />
+    <result property="relationId" column="relation_id"/>
   </resultMap>
 
   <insert id="insertTaskReply" parameterType="TaskReplyRequest">
@@ -190,6 +188,43 @@
         #{relatedTaskId,   mode=IN, jdbcType=VARCHAR},
         #{relationType,    mode=IN, jdbcType=VARCHAR},
         #{reverseType,     mode=IN, jdbcType=VARCHAR}
+      )
+    }
+  </select>
+  
+  <update id="deleteTask">
+    UPDATE task
+    SET status = 'T0'
+    WHERE id = #{id}
+  </update>
+  
+  <select id="copySubTasks" statementType="CALLABLE">
+    {
+      CALL proc_copy_sub(
+        #{taskId,         mode=IN, jdbcType=VARCHAR},
+        #{copiedTaskId,   mode=IN, jdbcType=VARCHAR}
+      )
+    }
+  </select>
+  
+  <select id="insertTaskTime" parameterType="TaskTimeRequest" statementType="CALLABLE">
+    {
+      CALL proc_insert_time(
+        #{taskId,         mode=IN, jdbcType=VARCHAR},
+        #{taskStart,      mode=IN, jdbcType=TIMESTAMP},
+        #{spent,          mode=IN, jdbcType=NUMERIC},
+        #{description,    mode=IN, jdbcType=VARCHAR},
+        #{progress,       mode=IN, jdbcType=NUMERIC},
+        #{activityType,   mode=IN, jdbcType=VARCHAR},
+        #{userId,         mode=IN, jdbcType=VARCHAR}
+      )
+    }
+  </select>
+  
+  <select id="deleteTaskLink" statementType="CALLABLE">
+    {
+      CALL proc_delete_link(
+        #{id,         mode=IN, jdbcType=VARCHAR}
       )
     }
   </select>

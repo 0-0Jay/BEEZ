@@ -12,7 +12,7 @@ const taskStore = useTaskStore();
 const projectStore = useProjectStore();
 const authStore = useAuthStore();
 const project = computed(() => projectStore.selectedProject);
-const userId = computed(() => authStore.user.id ?? '20261111');
+const userId = computed(() => authStore.user.id);
 
 const isEditMode = route.path.includes('/task/edit');
 const isCopyMode = route.path.includes('/task/copy');
@@ -291,7 +291,7 @@ const handleSubmit = async () => {
   formData.append('estimatedTime', form.estimatedTime ?? 0);
   formData.append('progress', form.progress ?? 0);
   formData.append('creator', form.creator);
-  formData.append('projectId', form.projectId);
+  formData.append('projectId', project.value.id);
 
   let nextId = '';
   if (isEditMode) {
@@ -311,6 +311,7 @@ const handleSubmit = async () => {
   } else if (isCopyMode) {
     formData.append('linkCopied', form.linkCopied);
     formData.append('copySubTasks', form.copySubTasks);
+    formData.append('originTask', task.value?.id);
     form.attachments.forEach((file) => formData.append('attachments', file));
     nextId = await taskStore.insertTask(formData);
   } else {
@@ -574,8 +575,8 @@ onMounted(async () => {
 
     <!-- 버튼 -->
     <div class="flex justify-center gap-3">
-      <Button label="저장" class="px-8" :disabled="isSaveDisabled" @click="handleSubmit" />
-      <Button label="취소" class="px-8" severity="secondary" @click="handleCancel" />
+      <Button label="저장" class="px-8" raised :disabled="isSaveDisabled" @click="handleSubmit" />
+      <Button label="취소" class="px-8" raised severity="secondary" @click="handleCancel" />
     </div>
   </div>
 </template>

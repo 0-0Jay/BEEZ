@@ -18,4 +18,5 @@ public class TaskRelationResponse {
   private Timestamp plannedEnd;
   private String progress;
   private String relationType;
+  private String relationId;
 }

@@ -1,6 +1,7 @@
 <script setup>
 import TaskJournalModal from '@/components/task/TaskJournalModal.vue';
 import TaskTimeModal from '@/components/task/TaskTimeModal.vue';
+import TaskUnlinkModal from '@/components/task/TaskUnlinkModal.vue';
 import { useAuthStore } from '@/stores/auth';
 import { useTaskStore } from '@/stores/task';
 import Button from 'primevue/button';
@@ -13,8 +14,18 @@ const router = useRouter();
 const route = useRoute();
 const timeLogVisible = ref(false);
 const journalModalVisible = ref(false);
+const deleteModalVisible = ref(false);
 const selectedJournalId = ref(null);
 const linkModalVisible = ref(false);
+
+// 연결 끊기 모달
+const unlinkModalVisible = ref(false);
+const selectedLinkedTask = ref(null);
+
+const openUnlinkModal = (linked) => {
+  selectedLinkedTask.value = linked;
+  unlinkModalVisible.value = true;
+};
 
 // 기본 정보
 const userId = computed(() => authStore.user?.id ?? null);
@@ -238,11 +249,6 @@ const goToAddSubTask = () => {
   });
 };
 
-const deleteTask = () => {
-  taskStore.deleteTask(taskId.value);
-  router.push(`/tasks`);
-};
-
 onMounted(async () => {
   await taskStore.findCateList();
   await taskStore.findTypeList();
@@ -267,7 +273,7 @@ onMounted(async () => {
       <div class="flex items-center gap-2 shrink-0">
         <Button v-if="canEdit" label="편집" icon="pi pi-pen-to-square" severity="secondary" raised @click="goToEdit" />
         <Button label="복사" icon="pi pi-clone" severity="secondary" raised @click="goToCopy" />
-        <Button label="삭제" icon="pi pi-trash" severity="danger" raised @Click="deleteTask" />
+        <Button v-if="canEdit" label="삭제" icon="pi pi-trash" severity="danger" raised @Click="deleteModalVisible = true" />
       </div>
     </div>
 
@@ -379,7 +385,7 @@ onMounted(async () => {
             <td class="px-6 py-3">
               <div class="flex items-center gap-3">
                 <span class="text-base text-[#1A1816]">{{ formatMinutes(spentTime) }}</span>
-                <Button v-if="canEdit" label="소요 시간 기록" icon="pi pi-plus" severity="secondary" raised @click="timeLogVisible = true" />
+                <Button v-if="canEdit && subTasks.length == 0" label="소요 시간 기록" icon="pi pi-plus" severity="secondary" raised @click="timeLogVisible = true" />
               </div>
             </td>
           </tr>
@@ -495,17 +501,18 @@ onMounted(async () => {
             <th class="px-6 py-2.5 text-center font-semibold text-[#6B6B63] w-60">진척도</th>
             <th class="px-6 py-2.5 text-center font-semibold text-[#6B6B63] w-28">상태</th>
             <th class="px-6 py-2.5 text-center font-semibold text-[#6B6B63] w-36">마감일</th>
+            <th class="px-6 py-2.5 w-12"></th>
           </tr>
         </thead>
         <tbody class="divide-y divide-[#F2F0EB]">
-          <tr v-for="linked in linkedTasks" :key="linked.id" class="hover:bg-[#FAFAF8] cursor-pointer transition-colors" @click="goToTask(linked.id)">
-            <td class="px-6 py-3 font-mono text-base text-[#9A9B90]">{{ linked.id }}</td>
-            <td class="px-6 py-3 text-[#1A1816] font-medium hover:text-[#E8920E] transition-colors">{{ linked.title }}</td>
-            <td class="px-6 py-3 text-center">
+          <tr v-for="linked in linkedTasks" :key="linked.id" class="hover:bg-[#FAFAF8] transition-colors">
+            <td class="px-6 py-3 font-mono text-base text-[#9A9B90] cursor-pointer" @click="goToTask(linked.id)">{{ linked.id }}</td>
+            <td class="px-6 py-3 text-[#1A1816] font-medium hover:text-[#E8920E] transition-colors cursor-pointer" @click="goToTask(linked.id)">{{ linked.title }}</td>
+            <td class="px-6 py-3 text-center cursor-pointer" @click="goToTask(linked.id)">
               <span v-if="linked.relationType" class="px-2 py-0.5 bg-[#F2F0EB] rounded text-base font-semibold text-[#3A3B35] border border-[#E5E4DF]">{{ relationMap[linked.relationType] }}</span>
               <span v-else class="text-[#9A9B90]">-</span>
             </td>
-            <td class="px-6 py-3 text-center">
+            <td class="px-6 py-3 text-center cursor-pointer" @click="goToTask(linked.id)">
               <div class="flex items-center gap-2">
                 <div class="flex-1 h-1.5 rounded-full bg-[#F2F0EB] overflow-hidden">
                   <div class="h-full rounded-full" :style="{ width: parseInt(linked.progress || 0) + '%', backgroundColor: progressColor(parseInt(linked.progress || 0)) }"></div>
@@ -513,10 +520,18 @@ onMounted(async () => {
                 <span class="text-base text-[#6B6B63] w-10 text-right shrink-0">{{ linked.progress || 0 }}%</span>
               </div>
             </td>
-            <td class="px-6 py-3 text-center">
+            <td class="px-6 py-3 text-center cursor-pointer" @click="goToTask(linked.id)">
               <span class="text-base font-semibold px-2 py-0.5 rounded-full" :class="workflowClass[linked.workflow]">{{ workflowMap[linked.workflow] }}</span>
             </td>
-            <td class="px-6 py-3 text-[#6B6B63] text-center">{{ formatDate(linked.plannedEnd) || '-' }}</td>
+            <td class="px-6 py-3 text-[#6B6B63] text-center cursor-pointer" @click="goToTask(linked.id)">{{ formatDate(linked.plannedEnd) || '-' }}</td>
+            <!-- 연결 끊기 버튼 -->
+            <td class="px-3 py-3 text-center">
+              <button class="flex items-center justify-center w-7 h-7 rounded-md text-[#9A9B90] hover:text-red-500 hover:bg-red-50 transition-colors" title="연결 끊기" @click.stop="openUnlinkModal(linked)">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -675,7 +690,7 @@ onMounted(async () => {
               <div class="text-base text-[#9A9B90]">추정 시간</div>
             </div>
           </div>
-          <Button v-if="canEdit" label="소요 시간 기록" icon="pi pi-plus" severity="secondary" raised @click="timeLogVisible = true" />
+          <Button v-if="canEdit && subTasks.length == 0" label="소요 시간 기록" icon="pi pi-plus" severity="secondary" raised @click="timeLogVisible = true" />
         </div>
         <table class="w-full text-base">
           <thead>
@@ -710,14 +725,17 @@ onMounted(async () => {
         </table>
       </div>
     </div>
+
+    <!-- 모달 모음 -->
     <TaskTimeModal
       v-model:visible="timeLogVisible"
       :task="task"
       :activityList="activity"
       @confirm="
-        (data) => {
-          taskStore.insertTimeLog(data);
+        async (data) => {
+          taskStore.insertTaskTime(data);
           timeLogVisible = false;
+          await taskStore.findTaskDetail(taskId);
         }
       "
       @cancel="timeLogVisible = false"
@@ -728,7 +746,7 @@ onMounted(async () => {
       :relation="linkedTasks"
       @confirm="
         async (data) => {
-          taskStore.insertTaskLink(data);
+          await taskStore.insertTaskLink(data);
           linkModalVisible = false;
           await taskStore.findTaskDetail(taskId);
         }
@@ -736,6 +754,33 @@ onMounted(async () => {
       @cancel="linkModalVisible = false"
     />
     <TaskJournalModal v-model:visible="journalModalVisible" :journalId="selectedJournalId" @close="journalModalVisible = false" />
+    <DeleteModal
+      v-model:visible="deleteModalVisible"
+      :taskId="taskId"
+      :title="task.title"
+      @confirm="
+        async (data) => {
+          await taskStore.deleteTask(data);
+          deleteModalVisible = false;
+          router.push(`/tasks`);
+        }
+      "
+      @cancel="deleteModalVisible = false"
+    />
+    <TaskUnlinkModal
+      v-model:visible="unlinkModalVisible"
+      :currentTask="task"
+      :linkedTask="selectedLinkedTask"
+      :relationLabel="selectedLinkedTask?.relationType ? relationMap[selectedLinkedTask.relationType] : '-'"
+      @confirm="
+        async (data) => {
+          await taskStore.deleteTaskLink(data);
+          unlinkModalVisible = false;
+          await taskStore.findTaskDetail(taskId);
+        }
+      "
+      @cancel="unlinkModalVisible = false"
+    />
   </div>
 </template>
 

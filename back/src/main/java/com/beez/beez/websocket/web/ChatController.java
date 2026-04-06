@@ -4,6 +4,7 @@ import com.beez.beez.websocket.dto.ChatSendRequest;
 import com.beez.beez.websocket.dto.ChatVo;
 import com.beez.beez.websocket.service.ChatService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
@@ -21,14 +22,14 @@ public class ChatController {
   // 채팅 전송
   @MessageMapping("/chat/{projectId}")
   @SendTo("/chat/{projectId}")
-  public ChatSendRequest sendChat(@DestinationVariable String projectId, ChatSendRequest chat) {
+  public ResponseEntity<ChatSendRequest> sendChat(@DestinationVariable String projectId, ChatSendRequest chat) {
     chatService.sendChat(projectId, chat);
-    return chat;
+    return ResponseEntity.ok(chat);
   }
   
   // 채팅 목록
   @GetMapping("/api/chat/{projectId}")
-  public List<ChatVo> getChats(@PathVariable String projectId) {
-    return chatService.findChatList(projectId);
+  public ResponseEntity<List<ChatVo>> getChats(@PathVariable String projectId) {
+    return ResponseEntity.ok(chatService.findChatList(projectId));
   }
 }

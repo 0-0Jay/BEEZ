@@ -58,4 +58,12 @@ public interface TaskService {
   
   // 일감 연결
   void insertTaskRelation(TaskRelationRequest taskRelationRequest);
+  
+  // 일감 삭제
+  void deleteTask(String id);
+  
+  // 소요시간 기록
+  void insertTaskTime(TaskTimeRequest taskTimeRequest);
+  
+  void deleteTaskLink(String id);
 }

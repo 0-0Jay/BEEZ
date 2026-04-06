@@ -68,7 +68,7 @@ const handleCancel = () => {
 
     <template #footer>
       <div class="flex justify-end gap-2 pt-2">
-        <Button label="확인" :disabled="isConfirmDisabled" @click="handleConfirm" />
+        <Button label="확인" :disabled="isConfirmDisabled" raised @click="handleConfirm" />
         <Button label="취소" severity="secondary" raised @click="handleCancel" />
       </div>
     </template>
