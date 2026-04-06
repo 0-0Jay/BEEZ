@@ -121,10 +121,103 @@ END;
 
 SELECT alter_common_code('D0') FROM DUAL;
 
--- 프로젝트 구성원 추가 프로시저
+-- 프로젝트 구성원 조회 프로시저
 CREATE OR REPLACE PROCEDURE get_project_member (
     p_project_id IN VARCHAR2,
     p_users OUT SYS_REFCURSOR,
     p_groups OUT SYS_REFCURSOR,
-    p_group_members OUT SYS_REFCURSOR,
-    )
+    p_group_members OUT SYS_REFCURSOR
+)
+AS 
+BEGIN
+    OPEN p_users FOR
+        SELECT pm.id AS project_member_id,
+               pm.user_id,
+               u.name AS user_name,
+               rm.role_id,
+               r.name AS role_name
+        FROM project_member pm
+        LEFT JOIN users u ON u.id = pm.user_id
+        LEFT JOIN role_mapping rm ON rm.member_id = pm.id
+        LEFT JOIN roles r ON r.id = rm.role_id
+        WHERE pm.project_id = p_project_id
+        AND pm.group_id IS NULL
+        ORDER BY pm.id;
+        
+    OPEN p_groups FOR
+        SELECT pm.id AS project_member_id,
+               pm.group_id,
+               g.name AS group_name,
+               rm.role_id,
+               r.name AS role_name
+        FROM project_member pm
+        LEFT JOIN groups g ON g.id = pm.group_id
+        LEFT JOIN role_mapping rm ON rm.member_id = pm.id
+        LEFT JOIN roles r ON r.id = rm.role_id
+        WHERE pm.project_id = p_project_id
+        AND pm.user_id IS NULL
+        ORDER BY pm.id;
+    
+    OPEN p_group_members FOR
+    SELECT pm.id AS project_member_id,
+           pm.user_id,
+           pm.group_id,
+           u.name AS user_name,
+           rm.role_id,
+           r.name AS role_name,
+           rm.is_inherited
+    FROM project_member pm 
+    LEFT JOIN users u ON u.id = pm.user_id
+    LEFT JOIN role_mapping rm ON rm.member_id = pm.id
+    LEFT JOIN roles r ON r.id = rm.role_id
+    WHERE pm.project_id = p_project_id
+    AND pm.user_id IS NOT NULL
+    AND pm.group_id IS NOT NULL
+    ORDER BY pm.id;
+END;
+/
+
+SET SERVEROUTPUT ON;
+
+DECLARE
+    v_users         SYS_REFCURSOR;
+    v_groups        SYS_REFCURSOR;
+    v_group_members SYS_REFCURSOR;
+    
+    v_id        VARCHAR2(100);
+    v_group_id  VARCHAR2(100);
+    v_user_id   VARCHAR2(100);
+    v_name      VARCHAR2(100);
+    v_role_id   VARCHAR2(100);
+    v_role_name VARCHAR2(100);
+    v_inherited VARCHAR2(10);
+BEGIN
+    get_project_member('PROJ2603007', v_users, v_groups, v_group_members);
+    
+    DBMS_OUTPUT.PUT_LINE('=== 개별 사용자 ===');
+    LOOP
+        FETCH v_users INTO v_id, v_user_id, v_name, v_role_id, v_role_name;
+        EXIT WHEN v_users%NOTFOUND;
+        DBMS_OUTPUT.PUT_LINE(v_id || ' | ' || v_name || ' | ' || v_role_name);
+    END LOOP;
+    CLOSE v_users;
+    
+    DBMS_OUTPUT.PUT_LINE('=== 그룹 ===');
+    LOOP
+        FETCH v_groups INTO v_id, v_group_id, v_name, v_role_id, v_role_name;
+        EXIT WHEN v_groups%NOTFOUND;
+        DBMS_OUTPUT.PUT_LINE(v_id || ' | ' || v_name || ' | ' || v_role_name);
+    END LOOP;
+    CLOSE v_groups;
+    
+    DBMS_OUTPUT.PUT_LINE('=== 그룹 멤버 ===');
+    LOOP
+        FETCH v_group_members INTO v_id, v_group_id, v_user_id, v_name, v_role_id, v_role_name, v_inherited;
+        EXIT WHEN v_group_members%NOTFOUND;
+        DBMS_OUTPUT.PUT_LINE(v_id || ' | ' || v_name || ' | ' || v_role_name || ' | 상속: ' || v_inherited);
+    END LOOP;
+    CLOSE v_group_members;
+END;
+/
+
+SELECT * FROM project_member WHERE project_id = 'PROJ2603007';

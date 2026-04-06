@@ -1,11 +1,15 @@
 <script setup>
-import { ref } from 'vue';
+import { useProjectStore } from '@/stores/project';
+import { onMounted, ref } from 'vue';
+import { useRoute } from 'vue-router';
 
-const props = defineProps({
-  projectId: {
-    type: String,
-    required: true
-  }
+const projectStore = useProjectStore();
+const route = useRoute();
+const projectId = route.params.id;
+
+onMounted(async () => {
+  await projectStore.fetchProjectMembers(projectId);
+  console.log(projectStore.members);
 });
 
 // ── Mock 데이터 (백엔드 연결 전) ──────────────────────────────

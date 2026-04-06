@@ -102,5 +102,14 @@ public class ProjectServiceImpl implements ProjectService {
     projectMapper.updateProject(dto);
     return projectMapper.findById(id);
   }
+  
+  // 프로젝트 구성원 조회
+  @Override
+  public ProjectMemberResponse findProjectMember(String projectId) {
+    ProjectMemberResponse member = new ProjectMemberResponse();
+    member.setProjectId(projectId);;
+    projectMapper.findProjectMember(member);
+    return member;
+  }
 
 }

@@ -1,4 +1,5 @@
 import axios from '@/stores/AxiosInstance';
+import { groupByUserId } from '@/utils/memberUtils';
 import { defineStore } from 'pinia';
 
 export const useProjectStore = defineStore('project', {
@@ -7,7 +8,12 @@ export const useProjectStore = defineStore('project', {
     selectedProject: null,
     projects: [],
     loading: false,
-    projectInfo: null
+    projectInfo: null,
+    members: {
+      userList: [],
+      groupList: [],
+      groupMemberList: []
+    }
   }),
   // getters
   // actions
@@ -76,6 +82,19 @@ export const useProjectStore = defineStore('project', {
     async updateProject(id, formData) {
       const response = await axios.put(`/project/${id}`, formData);
       this.projectInfo = response.data;
+    },
+
+    // 프로젝트 구성원 조회
+    async fetchProjectMembers(projectId) {
+      const response = await axios.get(`/project/${projectId}/members`);
+
+      this.members = {
+        userList: groupByUserId(response.data.userList, 'userId'),
+        groupList: groupByUserId(response.data.groupList, 'groupId'),
+        groupMemberList: groupByUserId(response.data.groupMemberList, 'userId')
+      };
+
+      console.log(this.members);
     }
   },
   persist: {
