@@ -1,4 +1,4 @@
-package com.beez.beez.permission.repository;
+package com.beez.beez.permission.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,11 +9,14 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Permission {
+public class PermissionListResponse {
 
   private String id;
   private String name;
   private String method;
   private String url;
 
+  // 가공용 필드
+  private String group;  // "프로젝트"
+  private String type;   // "조회
 }
