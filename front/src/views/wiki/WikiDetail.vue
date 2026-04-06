@@ -1,6 +1,6 @@
 <script setup>
 import { useWikiStore } from '@/stores/wiki';
-import { computed, onMounted } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 const wikiStore = useWikiStore(); //스토어 연결
@@ -8,19 +8,75 @@ const route = useRoute();
 //스토어랑 연결
 const projectInfo = computed(() => wikiStore.projectInfo);
 const wikiDetail = computed(() => wikiStore.wikiDetail);
+const relatedLinks = computed(() => {
+  if (!wikiDetail.value || !wikiDetail.value.links) return [];
+  const rawLinks = wikiDetail.value.links;
 
-//페이지 로드 될 때 실행
-onMounted(async () => {
-  const projectId = route.params.projectId;
-  if (projectId) {
-    await wikiStore.fetchProjectData(projectId);
-    await wikiStore.fetchWikiDetail(wikiId);
+  try {
+    // 문자열이면 파싱하고, 이미 배열이면 그대로 반환
+    return typeof rawLinks === 'string' ? JSON.parse(rawLinks) : rawLinks;
+  } catch (e) {
+    console.error('링크 데이터 파싱 실패:', e);
+    return [];
   }
 });
 
 // 버튼 핸들러
 const handleEdit = () => console.log('편집 페이지로 이동');
 const handleHistory = () => console.log('히스토리 보기');
+
+//목차 데이터를 담을 상태
+const tocList = ref([]);
+
+//본문에서 제목을 추출하여 목차 리스트를 만드는 함수
+const generateTOC = () => {
+  const contentEL = document.createElement('div');
+  contentEL.innerHTML = wikiDetail.value.content;
+
+  //h2, h3 태그 추출
+  const heading = contentEL.querySelectorAll('h3, h4');
+  const newToc = [];
+
+  heading.forEach((heading, index) => {
+    const id = heading.id || `section-${index}`;
+
+    if (heading.tagName === 'H3') {
+      newToc.push({ id, title: heading.innerText, sub: [] });
+    } else if (heading.tagName === 'H4' && newToc.length > 0) {
+      //h3는 h2하위로 삽입되도록
+      newToc[newToc.length - 1].sub.push({ id, title: heading.innerText });
+    }
+  });
+
+  tocList.value = newToc;
+};
+
+//페이지 로드 될 때 실행
+onMounted(async () => {
+  const projectId = route.params.projectId;
+  if (projectId) {
+    await wikiStore.fetchProjectData(projectId);
+    await wikiStore.fetchWikiDetail(projectId);
+    //데이터 로드 후 목차 생성
+    generateTOC();
+  }
+});
+
+// 3. 데이터가 나중에 로드되거나 변경될 때를 대비한 감시 (핵심)
+watch(
+  () => wikiDetail.value.content,
+  (newVal) => {
+    if (newVal) {
+      // DOM 업데이트 이후에 실행되도록 nextTick 사용
+      nextTick(() => {
+        generateTOC();
+      });
+    }
+  },
+  { immediate: true }
+);
+
+// 링크 화면에 출력하게 하기
 </script>
 
 <template>
@@ -56,18 +112,19 @@ const handleHistory = () => console.log('히스토리 보기');
       <div class="section-marker">
         <div class="toc-card">
           <div class="toc-heading">목차</div>
-          <ul class="toc-list">
+          <ul class="toc-list" v-if="tocList.length > 0">
             <template v-for="item in tocList" :key="item.id">
               <li>
                 <a :href="`#${item.id}`">{{ item.title }}</a>
               </li>
-              <ul v-if="item.sub" class="toc-list toc-sub">
+              <ul v-if="item.sub && item.sub.length > 0" class="toc-list toc-sub">
                 <li v-for="sub in item.sub" :key="sub.id">
                   <a :href="`#${sub.id}`">{{ sub.title }}</a>
                 </li>
               </ul>
             </template>
           </ul>
+          <p v-else class="related-placeholder" style="font-size: 12px">제목을 추가하면 목차가 생성됩니다.</p>
         </div>
       </div>
 
@@ -105,25 +162,23 @@ const handleHistory = () => console.log('히스토리 보기');
 
       <div class="section-marker">
         <div class="related-card">
-          <span class="related-placeholder">관련 문서 링크</span>
+          <div v-if="relatedLinks.length > 0" class="link-list-container">
+            <div class="toc-heading" style="margin-bottom: 12px">관련 문서 링크</div>
+            <ul class="related-link-list">
+              <li v-for="(link, index) in relatedLinks" :key="index" class="link-item">
+                <i class="link-icon">🔗</i>
+                <a :href="link.url" target="_blank" rel="noopener noreferrer" class="link-text"> {{ link.title }} </a>
+              </li>
+            </ul>
+          </div>
+          <span v-else class="related-placeholder">관련 문서 링크가 없습니다.</span>
         </div>
       </div>
     </div>
 
     <div class="section-marker">
       <div class="section" id="section1">
-        <div class="section-title">1. 프로젝트 개요</div>
-        <p class="body-text">
-          앱 리디자인 프로젝트는 기존 모바일 앱의 사용자 경험(UX)을 전면 재설계하고 핵심 기능을 개선하기 위해 2025년 5월부터 시작된 프로젝트입니다. 낮은 온보딩 완료율과 사용자 이탈 문제를 해결하고, 월간 활성 사용자(MAU) 30% 증대를 목표로 합니다.
-        </p>
-
-        <div class="subsection-title" id="section1-1">1.1 사전배경</div>
-        <p class="body-text">
-          2024년 4분기 사용자 조사 결과, 기존 앱의 온보딩 완료율이 52%에 불과하고 앱스토어 평점이 3.8점으로 경쟁사 대비 낮은 수치를 기록했습니다. 주요 이탈 원인은 복잡한 초기 설정 플로우, 직관성이 낮은 홈 화면, 그리고 알림 과부하로 분석되었습니다.
-        </p>
-
-        <div class="subsection-title" id="section1-2">1.2 목표</div>
-        <p class="body-text">이번 리디자인의 핵심 목표는 온보딩 완료율을 현재 52%에서 80% 이상으로 개선하고, 앱스토어 평점을 3.8점에서 4.5점 이상으로 높이며, MAU를 6개월 내 30% 증가시키는 것입니다.</p>
+        <div class="body-text" v-html="wikiDetail.content"></div>
       </div>
     </div>
   </div>
@@ -561,5 +616,37 @@ const handleHistory = () => console.log('히스토리 보기');
 /* Number Bubbles */
 .section-marker {
   position: relative;
+}
+
+/* 관련 문서 링크 스타일 */
+.link-list-container {
+  width: 100%;
+}
+.related-link-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.link-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+.link-icon {
+  font-size: 12px;
+}
+.link-text {
+  font-size: 13px;
+  color: #1a56c4;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.link-text:hover {
+  text-decoration: underline;
+  color: #0d3da3;
 }
 </style>

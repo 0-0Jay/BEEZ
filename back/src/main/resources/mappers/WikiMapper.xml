@@ -62,7 +62,7 @@
   </update>
   
   <!--히스토리 기능 : 프로젝트당 위키아이디 별로 버전 목록 조회 -->
-  <select id="findWikiVersionList" >
+  <select id="findWikiVersionList" resultType="com.beez.beez.wiki.dto.WikiVersionRequest">
     SELECT
         VERSION_ID,
         CONTENT,
@@ -79,7 +79,7 @@
   </select>
   
   <!--화면에 출력하는 위키 내용-->
-  <select id="findWikiByProjectId" >
+  <select id="findWikiByProjectId" resultType="com.beez.beez.wiki.dto.WikiVersionRequest">
     SELECT
         W.ID,
         W.PROJECT_ID,
@@ -93,7 +93,7 @@
   </select>
   
   <!-- 위키 id에 따라 최신 버전을 가져옴 update있어서 이건 없어도 크게 상관은 없을것 같은데 일단 넣음-->
-  <select id="findLatestVersion" >
+  <select id="findLatestVersion" resultType="com.beez.beez.wiki.dto.WikiVersionRequest">
     SELECT
         V.VERSION_ID,
         V.CONTENT,

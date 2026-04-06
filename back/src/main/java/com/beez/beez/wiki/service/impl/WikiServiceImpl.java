@@ -48,9 +48,11 @@ public class WikiServiceImpl implements WikiService {
     return wikiMapper.findWikiByProjectId(projectId);
   }
   
-  @Override // wikiId별로 최신 본문 조회
+  @Override
   public WikiVersionRequest findLatestVersion(String wikiId){
-    return wikiMapper.findLatestVersion(wikiId);
+    WikiVersionRequest result = wikiMapper.findLatestVersion(wikiId);
+    System.out.println("★ DB에서 가져온 Links: " + (result != null ? result.getLinks() : "결과없음"));
+    return result;
   }
   
   @Override //wikiId별로 히스토리 조회

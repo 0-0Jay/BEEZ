@@ -22,7 +22,8 @@ export const useWikiStore = defineStore('wiki', {
       content: '',
       userId: '',
       createdOn: '',
-      wikiInfo: '' // back작업 안되어있음 확인해야함
+      wikiInfo: '', // back작업 안되어있음 확인해야함
+      links: ''
     },
     loading: false
   }),
@@ -52,14 +53,40 @@ export const useWikiStore = defineStore('wiki', {
       return response.data;
     },
 
-    //특정 위키의 본문 내용 가져오기
+    // 특정 위키의 본문 내용 가져오기
     async fetchWikiDetail(wikiId) {
-      const response = await axios.get(`/wiki/detail/${wikiId}`);
-      this.wikiDetail = response.data;
-      return response.data;
+      this.loading = true;
+      try {
+        const response = await axios.get(`/wiki/detail/${wikiId}`);
+
+        // 백엔드 응답 데이터를 가공하기 위해 변수에 담음
+        const data = response.data;
+
+        // links가 문자열(JSON string)로 넘어올 경우 객체 배열로 변환
+        if (data.links && typeof data.links === 'string') {
+          try {
+            data.links = JSON.parse(data.links);
+          } catch (e) {
+            console.error('링크 데이터 파싱 에러:', e);
+            data.links = []; // 파싱 실패 시 빈 배열 처리
+          }
+        } else if (!data.links) {
+          data.links = []; // 데이터가 없을 경우 빈 배열 처리
+        }
+
+        // ⭐ 파싱된 'data'를 상태에 할당 (기존 response.data 사용 시 파싱 전 데이터가 들어감)
+        this.wikiDetail = data;
+        return data;
+      } catch (error) {
+        console.error('위키 상세 조회 실패:', error);
+        throw error;
+      } finally {
+        this.loading = false;
+      }
     }
   },
 
+  // 새로고침 시 데이터 유지를 위한 persist 설정
   persist: {
     storage: sessionStorage
   }
