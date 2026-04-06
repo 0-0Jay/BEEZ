@@ -142,6 +142,7 @@ BEGIN
         LEFT JOIN roles r ON r.id = rm.role_id
         WHERE pm.project_id = p_project_id
         AND pm.group_id IS NULL
+        AND pm.is_delete = 'F0'
         ORDER BY pm.id;
         
     OPEN p_groups FOR
@@ -156,6 +157,7 @@ BEGIN
         LEFT JOIN roles r ON r.id = rm.role_id
         WHERE pm.project_id = p_project_id
         AND pm.user_id IS NULL
+        AND pm.is_delete = 'F0'
         ORDER BY pm.id;
     
     OPEN p_group_members FOR
@@ -173,6 +175,7 @@ BEGIN
     WHERE pm.project_id = p_project_id
     AND pm.user_id IS NOT NULL
     AND pm.group_id IS NOT NULL
+    AND pm.is_delete = 'F0'
     ORDER BY pm.id;
 END;
 /
@@ -220,4 +223,54 @@ BEGIN
 END;
 /
 
-SELECT * FROM project_member WHERE project_id = 'PROJ2603007';
+ALTER TABLE project_member ADD (is_delete VARCHAR2(3) DEFAULT 'F0' NOT NULL);
+COMMENT ON COLUMN project_member.is_delete IS '삭제여부';
+COMMIT;
+
+CREATE OR REPLACE PROCEDURE delete_project_member (
+    p_project_member_id IN VARCHAR2
+)
+AS 
+    v_group_id project_member.group_id%TYPE;
+    v_project_id project_member.project_id%TYPE;
+BEGIN
+    -- group_id, project_id 조회
+    SELECT group_id, project_id
+    INTO v_group_id, v_project_id
+    FROM project_member
+    WHERE id = p_project_member_id;
+    
+    IF v_group_id IS NULL THEN
+        -- 개별 사용자 소프트 딜리트
+        UPDATE project_member
+        SET is_delete = 'F1'
+        WHERE id = p_project_member_id;
+    ELSE
+        -- 그룹 소프트 딜리트
+        UPDATE project_member
+        SET is_delete = 'F1'
+        WHERE id = p_project_member_id;
+        
+        -- 개별 역할 있는 멤버 -> 개별 사용자로 전환
+        UPDATE project_member
+        SET group_id = NULL
+        WHERE group_id = v_group_id
+        AND project_id = v_project_id
+        AND id IN (
+            SELECT member_id FROM role_mapping
+            WHERE is_inherited = 'P0'
+        );
+        
+        -- 나머지 그룹 멤버 소프트 딜리트
+        UPDATE project_member
+        SET is_delete = 'F1'
+        WHERE group_id = v_group_id
+        AND project_id = v_project_id
+        AND is_delete = 'F0';
+    END IF;
+    
+    COMMIT;
+END;
+/
+
+COMMIT;

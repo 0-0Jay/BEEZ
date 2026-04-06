@@ -68,4 +68,10 @@ public class ProjectController {
     return ResponseEntity.ok(projectService.findProjectMember(projectId));
   }
   
+  //프로젝트 구성원 삭제
+  @DeleteMapping("/member/{projectMemberId}")
+  public ResponseEntity<Void> deleteProjectMember(@PathVariable String projectMemberId) {
+    projectService.deleteProjectMember(projectMemberId);
+    return ResponseEntity.ok().build();
+  }
 }

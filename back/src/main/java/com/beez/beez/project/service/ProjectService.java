@@ -29,4 +29,7 @@ public interface ProjectService {
   
   //프로젝트 구성원 조회
   ProjectMemberResponse findProjectMember(String projectId);
+  
+  //프로젝트 구성원 삭제
+  void deleteProjectMember(String projectMemberId);
 }

@@ -93,8 +93,6 @@ export const useProjectStore = defineStore('project', {
         groupList: groupByUserId(response.data.groupList, 'groupId'),
         groupMemberList: groupByUserId(response.data.groupMemberList, 'userId')
       };
-
-      console.log(this.members);
     }
   },
   persist: {

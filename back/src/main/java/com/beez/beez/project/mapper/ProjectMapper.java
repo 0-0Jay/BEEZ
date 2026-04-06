@@ -39,4 +39,6 @@ public interface ProjectMapper {
   //프로젝트 구성원 조회
   void findProjectMember(ProjectMemberResponse projectMember);
   
+  //프로젝트 구성원 삭제
+  void deleteProjectMember(String projectMemberId);
 }
