@@ -36,11 +36,6 @@ const router = createRouter({
           name: 'projectList',
           component: () => import('@/views/project/ProjectListPage.vue')
         },
-        {
-          path: '/test',
-          name: 'test',
-          component: () => import('@/views/TestPage.vue')
-        },
         // 권한 테스트용
         {
           path: '/test/auth',
