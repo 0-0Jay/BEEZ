@@ -30,7 +30,13 @@ public interface ProjectMapper {
   //프로젝트 수정
   void updateProject(ProjectUpdateRequest dto);
   
-  //프로젝트 기본버전
+  //프로젝트 기본버전 조회
+  String findDefaultVersionId(String projectId);
+  
+  //프로젝트 기본버전 수정
   void updateDefaultVersion(@Param("projectId") String projectId, @Param("versionId") String versionId);
+  
+  //프로젝트 구성원 조회
+  void findProjectMember(ProjectMemberResponse projectMember);
   
 }

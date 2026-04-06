@@ -1,54 +1,483 @@
 <script setup>
-import { ref } from 'vue';
+import { useProjectStore } from '@/stores/project';
+import { onMounted, ref } from 'vue';
+import { useRoute } from 'vue-router';
 
-const props = defineProps({
-  projectId: {
-    type: String,
-    required: true
-  }
+const projectStore = useProjectStore();
+const route = useRoute();
+const projectId = route.params.id;
+
+onMounted(async () => {
+  await projectStore.fetchProjectMembers(projectId);
+  console.log(projectStore.members);
 });
 
-// TODO: 백엔드 연결
-const members = ref([]);
+// ── Mock 데이터 (백엔드 연결 전) ──────────────────────────────
+const availableRoles = ref([
+  { id: 1, name: '관리자' },
+  { id: 2, name: '개발자' },
+  { id: 3, name: '보고자' }
+]);
+
+// type: 'group' | 'user'
+// members: 그룹에 속한 사용자 목록 (group일 때만)
+// inheritedRoleIds: 그룹으로부터 상속받은 역할 id 목록 (user일 때)
+// roleIds: 직접 부여된 역할 id 목록
+const entries = ref([
+  {
+    id: 'user-1',
+    type: 'user',
+    name: '노정화',
+    roleIds: [2]
+  },
+  {
+    id: 'group-1',
+    type: 'group',
+    name: '개발자',
+    roleIds: [2],
+    members: [{ id: 'user-2', name: '곽현우', inheritedRoleIds: [2], roleIds: [1] }]
+  }
+]);
+
+// ── 아코디언 상태 ─────────────────────────────────────────────
+// expandedEditId: 현재 편집 아코디언이 열린 항목 id
+const expandedEditId = ref(null);
+
+// 편집 중인 역할 임시 상태 { [id]: Set<roleId> }
+const editingRoles = ref({});
+
+function getRoleLabel(entry) {
+  const ids = [...(entry.inheritedRoleIds ?? []), ...(entry.roleIds ?? [])];
+  const unique = [...new Set(ids)];
+  if (!unique.length) return '-';
+  return unique
+    .map((id) => {
+      const role = availableRoles.value.find((r) => r.id === id);
+      return role ? role.name : '';
+    })
+    .filter(Boolean)
+    .join(', ');
+}
+
+function getGroupRoleLabel(group) {
+  if (!group.roleIds.length) return '-';
+  return group.roleIds
+    .map((id) => {
+      const role = availableRoles.value.find((r) => r.id === id);
+      return role ? role.name : '';
+    })
+    .filter(Boolean)
+    .join(', ');
+}
+
+function openEdit(id, currentRoleIds) {
+  if (expandedEditId.value === id) {
+    expandedEditId.value = null;
+    return;
+  }
+  expandedEditId.value = id;
+  editingRoles.value[id] = new Set(currentRoleIds ?? []);
+}
+
+function closeEdit() {
+  expandedEditId.value = null;
+}
+
+function isRoleChecked(id, roleId) {
+  return editingRoles.value[id]?.has(roleId) ?? false;
+}
+
+function toggleRole(id, roleId) {
+  if (!editingRoles.value[id]) editingRoles.value[id] = new Set();
+  const s = editingRoles.value[id];
+  if (s.has(roleId)) s.delete(roleId);
+  else s.add(roleId);
+}
+
+function saveEdit(entry, isGroupMember = false, group = null) {
+  const newRoles = [...(editingRoles.value[entry.id] ?? [])];
+  if (isGroupMember) {
+    // 그룹 멤버: inheritedRoleIds 제외하고 직접 부여 역할만 저장
+    entry.roleIds = newRoles.filter((id) => !entry.inheritedRoleIds.includes(id));
+  } else {
+    entry.roleIds = newRoles;
+  }
+  closeEdit();
+  // TODO: 백엔드 API 호출
+}
+
+function deleteEntry(id) {
+  const idx = entries.value.findIndex((e) => e.id === id);
+  if (idx !== -1) entries.value.splice(idx, 1);
+  // TODO: 백엔드 API 호출
+}
+
+// ── 편집 아코디언용 역할 목록 계산 ──────────────────────────────
+function getEditableRoles(entry, inheritedRoleIds = []) {
+  return availableRoles.value.map((role) => ({
+    ...role,
+    inherited: inheritedRoleIds.includes(role.id)
+  }));
+}
 </script>
 
 <template>
   <div>
-    <div class="flex justify-end mb-4">
-      <Button label="구성원 추가" icon="pi pi-plus" outlined class="btn-register-outline" />
+    <!-- 상단 버튼 영역 -->
+    <div class="flex justify-end gap-2 mb-4">
+      <Button label="구성원 추가" icon="pi pi-user-plus" outlined class="btn-outline" />
+      <Button label="사용자 관리" icon="pi pi-users" class="btn-solid" />
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm border border-[#C7C7C2] overflow-hidden">
-      <DataTable :value="members" dataKey="id" :rowHover="true">
-        <template #empty>
-          <div class="text-center py-10 text-gray-400">등록된 구성원이 없습니다.</div>
+    <!-- 테이블 -->
+    <div class="members-table">
+      <!-- 헤더 -->
+      <div class="table-header-row">
+        <div class="col-name">그룹 / 사용자</div>
+        <div class="col-role">역할</div>
+        <div class="col-actions"></div>
+      </div>
+
+      <!-- 항목 목록 -->
+      <template v-for="entry in entries" :key="entry.id">
+        <!-- ── 개별 사용자 (단층) ── -->
+        <template v-if="entry.type === 'user'">
+          <div class="table-row">
+            <div class="col-name">
+              <span class="link-text">{{ entry.name }}</span>
+            </div>
+            <div class="col-role text-gray">{{ getGroupRoleLabel(entry) }}</div>
+            <div class="col-actions">
+              <button class="action-btn edit-btn" @click="openEdit(entry.id, entry.roleIds)"><i class="pi pi-pencil" /> 편집</button>
+              <button class="action-btn delete-btn" @click="deleteEntry(entry.id)"><i class="pi pi-trash" /> 삭제</button>
+            </div>
+          </div>
+          <Transition name="accordion">
+            <div v-if="expandedEditId === entry.id" class="accordion-row">
+              <div class="col-name"></div>
+              <div class="col-role">
+                <div class="role-checklist">
+                  <label v-for="role in getEditableRoles(entry)" :key="role.id" class="role-item">
+                    <input type="checkbox" :checked="isRoleChecked(entry.id, role.id)" @change="toggleRole(entry.id, role.id)" />
+                    <span>{{ role.name }}</span>
+                  </label>
+                </div>
+              </div>
+              <div class="col-actions accordion-actions">
+                <button class="btn-save" @click="saveEdit(entry)">저장</button>
+                <button class="btn-cancel" @click="closeEdit">취소</button>
+              </div>
+            </div>
+          </Transition>
         </template>
 
-        <Column field="name" header="그룹/사용자" headerClass="table-header" />
-        <Column field="role" header="역할" headerClass="table-header" />
-        <Column headerClass="table-header" style="width: 160px">
-          <template #body>
-            <div class="flex gap-2">
-              <Button label="편집" icon="pi pi-pencil" text size="small" class="text-[#6B6B63]" />
-              <Button label="삭제" icon="pi pi-trash" text size="small" class="text-red-400" />
+        <!-- ── 그룹 ── -->
+        <template v-else>
+          <!-- 그룹 행 -->
+          <div class="table-row">
+            <div class="col-name">
+              <span class="link-text">{{ entry.name }}</span>
             </div>
+            <div class="col-role text-gray">{{ getGroupRoleLabel(entry) }}</div>
+            <div class="col-actions">
+              <button class="action-btn edit-btn" @click="openEdit(entry.id, entry.roleIds)"><i class="pi pi-pencil" /> 편집</button>
+              <button class="action-btn delete-btn" @click="deleteEntry(entry.id)"><i class="pi pi-trash" /> 삭제</button>
+            </div>
+          </div>
+          <!-- 그룹 편집 아코디언 (멤버 목록 위) -->
+          <Transition name="accordion">
+            <div v-if="expandedEditId === entry.id" class="accordion-row">
+              <div class="col-name"></div>
+              <div class="col-role">
+                <div class="role-checklist">
+                  <label v-for="role in getEditableRoles(entry)" :key="role.id" class="role-item">
+                    <input type="checkbox" :checked="isRoleChecked(entry.id, role.id)" @change="toggleRole(entry.id, role.id)" />
+                    <span>{{ role.name }}</span>
+                  </label>
+                </div>
+              </div>
+              <div class="col-actions accordion-actions">
+                <button class="btn-save" @click="saveEdit(entry)">저장</button>
+                <button class="btn-cancel" @click="closeEdit">취소</button>
+              </div>
+            </div>
+          </Transition>
+
+          <!-- 그룹 멤버 행들 -->
+          <template v-for="member in entry.members" :key="member.id">
+            <div class="table-row member-row">
+              <div class="col-name">
+                <span class="member-indent">└ </span>
+                <span class="link-text">{{ member.name }}</span>
+              </div>
+              <div class="col-role text-gray">{{ getRoleLabel(member) }}</div>
+              <div class="col-actions">
+                <button class="action-btn edit-btn" @click="openEdit(member.id, [...member.inheritedRoleIds, ...member.roleIds])"><i class="pi pi-pencil" /> 편집</button>
+              </div>
+            </div>
+            <!-- 멤버 편집 아코디언 -->
+            <Transition name="accordion">
+              <div v-if="expandedEditId === member.id" class="accordion-row">
+                <div class="col-name"></div>
+                <div class="col-role">
+                  <div class="role-checklist">
+                    <label v-for="role in getEditableRoles(member, member.inheritedRoleIds)" :key="role.id" class="role-item" :class="{ 'role-inherited': role.inherited }">
+                      <input type="checkbox" :checked="isRoleChecked(member.id, role.id)" :disabled="role.inherited" @change="!role.inherited && toggleRole(member.id, role.id)" />
+                      <span>
+                        {{ role.name }}
+                        <span v-if="role.inherited" class="inherited-label"> ({{ entry.name }} 그룹으로부터 상속) </span>
+                      </span>
+                    </label>
+                  </div>
+                </div>
+                <div class="col-actions accordion-actions">
+                  <button class="btn-save" @click="saveEdit(member, true, entry)">저장</button>
+                  <button class="btn-cancel" @click="closeEdit">취소</button>
+                </div>
+              </div>
+            </Transition>
           </template>
-        </Column>
-      </DataTable>
+        </template>
+      </template>
+
+      <!-- 빈 상태 -->
+      <div v-if="entries.length === 0" class="empty-state">등록된 구성원이 없습니다.</div>
     </div>
   </div>
 </template>
 
 <style scoped>
-:deep(.table-header) {
-  background-color: #f2f0eb !important;
-  color: #3a3b35 !important;
-  font-weight: 600 !important;
+/* ── 공통 변수 ── */
+:root {
+  --color-bg: #f2f0eb;
+  --color-border: #c7c7c2;
+  --color-text: #3a3b35;
+  --color-link: #4a7fc1;
+  --color-gray: #6b6b63;
+  --color-accordion: #e8e6e0;
+  --color-red: #e57373;
 }
 
-:deep(.btn-register-outline) {
-  border-color: #c7c7c2 !important;
-  color: #3a3b35 !important;
+/* ── 버튼 ── */
+.btn-outline {
+  border: 1px solid var(--color-border) !important;
+  color: var(--color-text) !important;
+  background: white !important;
   height: 36px !important;
+  font-size: 13px !important;
+}
+
+.btn-solid {
+  background: #c0392b !important;
+  border-color: #c0392b !important;
+  color: white !important;
+  height: 36px !important;
+  font-size: 13px !important;
+}
+
+/* ── 테이블 전체 ── */
+.members-table {
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  overflow: hidden;
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+/* ── 헤더 ── */
+.table-header-row {
+  display: grid;
+  grid-template-columns: 1fr 220px 180px;
+  background: var(--color-bg);
+  padding: 10px 16px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+/* ── 일반 행 ── */
+.table-row {
+  display: grid;
+  grid-template-columns: 1fr 220px 180px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #ebebeb;
+  align-items: center;
+  transition: background 0.15s;
+}
+.table-row:hover {
+  background: #fafaf8;
+}
+.table-row:last-child {
+  border-bottom: none;
+}
+
+.member-row {
+  background: #f9f8f5;
+}
+.member-row:hover {
+  background: #f2f0eb;
+}
+
+/* ── 칸 ── */
+.col-name {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.col-role {
+  display: flex;
+  align-items: center;
+}
+.col-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.link-text {
+  color: var(--color-link);
+  cursor: pointer;
+  text-decoration: none;
+}
+.link-text:hover {
+  text-decoration: underline;
+}
+
+.text-gray {
+  color: var(--color-gray);
+}
+
+.member-indent {
+  color: var(--color-gray);
+  margin-right: 2px;
+  font-size: 12px;
+}
+
+/* ── 액션 버튼 ── */
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.12s;
+}
+.edit-btn {
+  color: var(--color-gray);
+}
+.edit-btn:hover {
+  background: #f0eeea;
+}
+.delete-btn {
+  color: var(--color-red);
+}
+.delete-btn:hover {
+  background: #fdf0f0;
+}
+
+/* ── 아코디언 행 ── */
+.accordion-row {
+  display: grid;
+  grid-template-columns: 1fr 220px 180px;
+  padding: 12px 16px;
+  background: var(--color-accordion);
+  border-bottom: 1px solid var(--color-border);
+  align-items: start;
+}
+
+.role-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.role-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--color-text);
+}
+.role-item input[type='checkbox'] {
+  accent-color: #c0392b;
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+.role-inherited {
+  opacity: 0.65;
+  cursor: default;
+}
+.role-inherited input {
+  cursor: not-allowed;
+}
+
+.inherited-label {
+  font-size: 11px;
+  color: var(--color-gray);
+}
+
+.accordion-actions {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+
+.btn-save,
+.btn-cancel {
+  padding: 4px 14px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  border: 1px solid var(--color-border);
+}
+.btn-save {
+  background: white;
+  color: var(--color-text);
+}
+.btn-save:hover {
+  background: #f0eeea;
+}
+.btn-cancel {
+  background: white;
+  color: var(--color-gray);
+}
+.btn-cancel:hover {
+  background: #f0eeea;
+}
+
+/* ── 빈 상태 ── */
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: #aaa;
+  font-size: 13px;
+}
+
+/* ── 아코디언 트랜지션 ── */
+.accordion-enter-active,
+.accordion-leave-active {
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+.accordion-enter-from,
+.accordion-leave-to {
+  opacity: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.accordion-enter-to,
+.accordion-leave-from {
+  opacity: 1;
+  max-height: 200px;
 }
 </style>

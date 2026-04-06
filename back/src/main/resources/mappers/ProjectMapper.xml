@@ -118,6 +118,13 @@
     WHERE id = #{id}
   </update>
   
+<!-- 프로젝트 기본버전 조회 -->
+  <select id="findDefaultVersionId" resultType="string">
+    SELECT default_version_id
+    FROM project
+    WHERE id = #{projectId}
+  </select>
+  
 <!-- 프로젝트 기본버전 업데이트 -->
   <update id="updateDefaultVersion">
     UPDATE project
@@ -125,6 +132,43 @@
     WHERE id = #{projectId}
   </update>
   
+<!-- 프로젝트 구성원 조회 -->
+  <select id="findProjectMember" statementType="CALLABLE">
+    {
+      CALL GET_PROJECT_MEMBER(
+        #{projectId,       mode=IN,  jdbcType=VARCHAR},
+        #{userList,        mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=usersResultMap, typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
+        #{groupList,       mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=groupsResultMap, typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
+        #{groupMemberList, mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=groupMembersResultMap, typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler}
+      )
+    }
+  </select>
   
-
+  <resultMap id="usersResultMap" type="com.beez.beez.project.dto.MemberUserResponse">
+    <result property="projectMemberId" column="project_member_id" />
+    <result property="userId" column="user_id" />
+    <result property="userName" column="user_name" />
+    <result property="roleId" column="role_id" />
+    <result property="roleName" column="role_name" />
+  </resultMap>
+  
+  <resultMap id="groupsResultMap" type="com.beez.beez.project.dto.MemberGroupResponse">
+    <result property="projectMemberId" column="project_member_id" />
+    <result property="groupId" column="group_id" />
+    <result property="groupName" column="group_name" />
+    <result property="roleId" column="role_id" />
+    <result property="roleName" column="role_name" />
+  </resultMap>
+  
+  <resultMap id="groupMembersResultMap" type="com.beez.beez.project.dto.MemberGroupMemberResponse">
+    <result property="projectMemberId" column="project_member_id" />
+    <result property="userId" column="user_id" />
+    <result property="groupId" column="group_id" />
+    <result property="userName" column="user_name" />
+    <result property="roleId" column="role_id" />
+    <result property="roleName" column="role_name" />
+    <result property="isInherited" column="is_inherited" />
+  </resultMap>
+  
+  
 </mapper>

@@ -2,7 +2,7 @@
 import { useProjectStore } from '@/stores/project';
 import { storeToRefs } from 'pinia';
 import { useToast } from 'primevue';
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
 const pendingDeleteId = ref(null); // 삭제할 id 임시 저장
@@ -60,6 +60,8 @@ onMounted(async () => {
 });
 
 const fetchProjects = () => {
+  if (!validate()) return;
+
   projectStore.fetchProjects({
     ...filters,
     startDate: formatDate(filters.startDate),
@@ -89,6 +91,21 @@ const goToDetail = (project) => {
   projectStore.selectedProject = { title: project.title, id: project.id };
   router.push(`/project/setting/${project.id}`);
 };
+
+const dateError = ref('');
+
+watch(
+  () => [filters.startDate, filters.endDate],
+  () => {
+    if (filters.startDate && filters.endDate) {
+      dateError.value = new Date(filters.startDate) > new Date(filters.endDate) ? '시작일이 마감일 이후일 수 없습니다.' : '';
+    } else {
+      dateError.value = '';
+    }
+  }
+);
+
+const validate = () => !dateError.value;
 
 // 날짜 포맷 변환 함수
 const formatDate = (date) => {
@@ -135,20 +152,26 @@ const unlockProject = async (id) => {
     <div class="bg-[#E8E5DC] px-10 py-8 rounded-lg mb-8 shadow-sm border border-[#C7C7C2] flex">
       <!-- 입력칸 + 체크박스 묶음 -->
       <div class="flex items-center flex-1 flex-wrap gap-y-3">
-        <label class="filter-label mr-5">프로젝트명</label>
-        <Select v-model="filters.id" :options="projectOptions" optionLabel="label" optionValue="value" placeholder="선택" class="filter-input w-80 mr-10" />
-        <label class="filter-label mr-5">PM/PL</label>
-        <Select v-model="filters.pmId" :options="pmOptions" optionLabel="label" optionValue="value" placeholder="선택" class="filter-input w-42 mr-10" />
-        <label class="filter-label mr-5">마감일</label>
-        <DatePicker v-model="filters.startDate" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" class="filter-input w-36 mr-15" />
-        <span class="text-sm text-[#6B6B63] px-4">~</span>
-        <DatePicker v-model="filters.endDate" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" class="filter-input w-36 mr-25" />
-        <Checkbox v-model="filters.isLock" :binary="true" inputId="archived" class="mr-3" />
-        <label for="archived" class="text-sm font-medium text-[#1A1816] whitespace-nowrap cursor-pointer">잠금 보관 프로젝트 보기</label>
+        <label class="filter-label mr-5 self-start mt-3">프로젝트명</label>
+        <Select v-model="filters.id" :options="projectOptions" optionLabel="label" optionValue="value" placeholder="선택" class="filter-input w-80 mr-10 self-start" />
+        <label class="filter-label mr-5 self-start mt-3">PM/PL</label>
+        <Select v-model="filters.pmId" :options="pmOptions" optionLabel="label" optionValue="value" placeholder="선택" class="filter-input w-42 mr-10 self-start" />
+        <label class="filter-label mr-5 self-start mt-3">마감일</label>
+        <div class="flex flex-col self-start">
+          <div class="flex items-center">
+            <DatePicker v-model="filters.startDate" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" class="filter-input w-36 mr-15" />
+            <span class="text-sm text-[#6B6B63] px-4">~</span>
+            <DatePicker v-model="filters.endDate" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" class="filter-input w-36 mr-25" />
+          </div>
+          <small v-if="dateError" class="text-red-500 mt-1">{{ dateError }}</small>
+        </div>
+
+        <Checkbox v-model="filters.isLock" :binary="true" inputId="archived" class="mr-3 self-start mt-3" />
+        <label for="archived" class="text-sm font-medium text-[#1A1816] whitespace-nowrap cursor-pointer self-start mt-3">잠금 보관 프로젝트 보기</label>
       </div>
 
       <!-- 버튼 묶음 — ml-auto로 오른쪽 -->
-      <div class="flex gap-2 ml-auto shrink-0">
+      <div class="flex gap-2 ml-auto shrink-0 self-start">
         <Button label="초기화" severity="secondary" raised @click="resetFilters" />
         <Button label="조회" icon="pi pi-search" raised @click="fetchProjects" />
       </div>

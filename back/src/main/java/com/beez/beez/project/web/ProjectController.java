@@ -62,6 +62,10 @@ public class ProjectController {
     return ResponseEntity.ok(response);
   }
   
-  
+  // 프로젝트 구성원 조회
+  @GetMapping("/{projectId}/members")
+  public ResponseEntity<ProjectMemberResponse> findProjectMember(@PathVariable String projectId) {
+    return ResponseEntity.ok(projectService.findProjectMember(projectId));
+  }
   
 }

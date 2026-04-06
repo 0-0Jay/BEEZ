@@ -27,4 +27,6 @@ public interface ProjectService {
   //프로젝트 수정
   ProjectInfoResponse updateProject(String id, ProjectUpdateRequest dto);
   
+  //프로젝트 구성원 조회
+  ProjectMemberResponse findProjectMember(String projectId);
 }
