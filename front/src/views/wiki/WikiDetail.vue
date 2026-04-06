@@ -1,59 +1,97 @@
 <script setup>
-import { ref } from 'vue';
+import { useWikiStore } from '@/stores/wiki';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 
-// 1. 상태 관리 (추후 API 데이터로 대체 가능)
-const wikiData = ref({
-  title: 'YEDAM PMS TOOL 프로젝트',
-  version: 'v 3.0',
-  subtitle: '사용자 경험 개선을 목표로 한 PMS TOOL 프로젝트의 전반적인 배경, 목표, 범위, 프로세스를 정리한 공식 위키페이지 입니다',
-  author: '000',
-  updatedDate: '2026.03.20',
-  status: '진행중',
-  endDate: '2026.04.27',
-  pm: '000'
+const wikiStore = useWikiStore(); //스토어 연결
+const route = useRoute();
+//스토어랑 연결
+const projectInfo = computed(() => wikiStore.projectInfo);
+const wikiDetail = computed(() => wikiStore.wikiDetail);
+const relatedLinks = computed(() => {
+  if (!wikiDetail.value || !wikiDetail.value.links) return [];
+  const rawLinks = wikiDetail.value.links;
+
+  try {
+    // 문자열이면 파싱하고, 이미 배열이면 그대로 반환
+    return typeof rawLinks === 'string' ? JSON.parse(rawLinks) : rawLinks;
+  } catch (e) {
+    console.error('링크 데이터 파싱 실패:', e);
+    return [];
+  }
 });
-
-// 2. 목차 데이터
-const tocList = ref([
-  {
-    id: 'section1',
-    title: '1. 프로젝트 개요',
-    sub: [
-      { id: 'section1-1', title: '1.1 사전 배경' },
-      { id: 'section1-2', title: '1.2 목표' }
-    ]
-  },
-  { id: 'section2', title: '2. 팀구성', sub: [{ id: 'section2-1', title: '2.1 역할 및 담당자' }] },
-  { id: 'section3', title: '3. 프로젝트 범위' },
-  { id: 'section4', title: '4. 일정 및 마일스톤' },
-  {
-    id: 'section5',
-    title: '5. 기술스택',
-    sub: [
-      { id: 'section5-1', title: '5.1 프론트엔드' },
-      { id: 'section5-2', title: '5.2 백엔드' }
-    ]
-  },
-  { id: 'section6', title: '6. 관련문서 링크' }
-]);
 
 // 버튼 핸들러
 const handleEdit = () => console.log('편집 페이지로 이동');
 const handleHistory = () => console.log('히스토리 보기');
+
+//목차 데이터를 담을 상태
+const tocList = ref([]);
+
+//본문에서 제목을 추출하여 목차 리스트를 만드는 함수
+const generateTOC = () => {
+  const contentEL = document.createElement('div');
+  contentEL.innerHTML = wikiDetail.value.content;
+
+  //h2, h3 태그 추출
+  const heading = contentEL.querySelectorAll('h3, h4');
+  const newToc = [];
+
+  heading.forEach((heading, index) => {
+    const id = heading.id || `section-${index}`;
+
+    if (heading.tagName === 'H3') {
+      newToc.push({ id, title: heading.innerText, sub: [] });
+    } else if (heading.tagName === 'H4' && newToc.length > 0) {
+      //h3는 h2하위로 삽입되도록
+      newToc[newToc.length - 1].sub.push({ id, title: heading.innerText });
+    }
+  });
+
+  tocList.value = newToc;
+};
+
+//페이지 로드 될 때 실행
+onMounted(async () => {
+  const projectId = route.params.projectId;
+  if (projectId) {
+    await wikiStore.fetchProjectData(projectId);
+    await wikiStore.fetchWikiDetail(projectId);
+    //데이터 로드 후 목차 생성
+    generateTOC();
+  }
+});
+
+// 3. 데이터가 나중에 로드되거나 변경될 때를 대비한 감시 (핵심)
+watch(
+  () => wikiDetail.value.content,
+  (newVal) => {
+    if (newVal) {
+      // DOM 업데이트 이후에 실행되도록 nextTick 사용
+      nextTick(() => {
+        generateTOC();
+      });
+    }
+  },
+  { immediate: true }
+);
+
+// 링크 화면에 출력하게 하기
 </script>
 
 <template>
-  <div class="wiki-wrap">
+  <div class="wiki-editor-page p-10">
     <div class="section-marker header-margin">
       <div class="wiki-header-card">
         <div class="wiki-header-top">
           <div>
             <div class="wiki-header-left">
               <span class="badge-wiki">wiki</span>
-              <span class="wiki-title">{{ wikiData.title }}</span>
-              <span class="badge-version">{{ wikiData.version }}</span>
+              <span class="wiki-title">{{ projectInfo.title }}</span>
+              <!-- 이거 백처리랑 wiki.js파일 작업 안되어 있음-->
+              <!-- <span class="badge-version">{{ projectInfo. }}</span> -->
             </div>
-            <p class="wiki-subtitle">{{ wikiData.subtitle }}</p>
+            <p class="wiki-subtitle">{{ projectInfo.description }}</p>
           </div>
           <div class="wiki-header-right">
             <div class="btn-group">
@@ -61,78 +99,105 @@ const handleHistory = () => console.log('히스토리 보기');
               <button class="btn btn-secondary" @click="handleHistory">히스토리</button>
             </div>
             <div class="wiki-meta">
-              <span>👤 {{ wikiData.author }} 작성</span>
-              <span>📅 {{ wikiData.updatedDate }} 수정</span>
+              <span>👤 작성자 {{ projectInfo.userId }} </span>
+              <!-- 수정일 관련 데이터 처리 안해놓음-->
+              <!-- <span>📅 {{ wikiData.updatedDate }} 수정</span> -->
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="grid3-container">
+    <div class="content-grid">
       <div class="section-marker">
         <div class="toc-card">
           <div class="toc-heading">목차</div>
-          <ul class="toc-list">
+          <ul class="toc-list" v-if="tocList.length > 0">
             <template v-for="item in tocList" :key="item.id">
               <li>
                 <a :href="`#${item.id}`">{{ item.title }}</a>
               </li>
-              <ul v-if="item.sub" class="toc-list toc-sub">
+              <ul v-if="item.sub && item.sub.length > 0" class="toc-list toc-sub">
                 <li v-for="sub in item.sub" :key="sub.id">
                   <a :href="`#${sub.id}`">{{ sub.title }}</a>
                 </li>
               </ul>
             </template>
           </ul>
+          <p v-else class="related-placeholder" style="font-size: 12px">제목을 추가하면 목차가 생성됩니다.</p>
         </div>
       </div>
 
-      <div class="section-marker">
-        <div class="info-card">
-          <div class="info-card-title">{{ wikiData.title }}</div>
-          <div class="info-row">
-            <span class="info-label">상태</span>
-            <span class="badge-status">{{ wikiData.status }}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">종료일</span>
-            <span>{{ wikiData.endDate }}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">PM</span>
-            <span>{{ wikiData.pm }}</span>
-          </div>
+      <div class="info-card">
+        <div class="info-card-title">{{ projectInfo.title }}</div>
+        <div class="info-row">
+          <span class="info-label">상태 : </span>
+          <span class="badge-status">{{ projectInfo.status }}</span>
+        </div>
+
+        <div class="info-row">
+          <span class="info-label">프로젝트번호 :</span>
+          <span class="info-value status-badge">{{ projectInfo.id }}</span>
+        </div>
+
+        <div class="info-row">
+          <span class="info-label">프로젝트 설명 :</span>
+          <span class="info-value status-badge">{{ projectInfo.description }}</span>
+        </div>
+
+        <div class="info-row">
+          <span class="info-label">프로젝트 생성자명 :</span>
+          <span class="info-value status-badge">{{ projectInfo.userName }}</span>
+        </div>
+
+        <div class="info-row">
+          <span class="info-label">시작일 :</span>
+          <span class="info-value status-badge">{{ projectInfo.startDate ? projectInfo.startDate.replace('T', ' ').substring(0, 10) : '-' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">종료일 :</span>
+          <span class="info-value status-badge">{{ projectInfo.endDate ? projectInfo.endDate.replace('T', ' ').substring(0, 10) : '-' }}</span>
         </div>
       </div>
 
       <div class="section-marker">
         <div class="related-card">
-          <span class="related-placeholder">관련 문서 링크</span>
+          <div v-if="relatedLinks.length > 0" class="link-list-container">
+            <div class="toc-heading" style="margin-bottom: 12px">관련 문서 링크</div>
+            <ul class="related-link-list">
+              <li v-for="(link, index) in relatedLinks" :key="index" class="link-item">
+                <i class="link-icon">🔗</i>
+                <a :href="link.url" target="_blank" rel="noopener noreferrer" class="link-text"> {{ link.title }} </a>
+              </li>
+            </ul>
+          </div>
+          <span v-else class="related-placeholder">관련 문서 링크가 없습니다.</span>
         </div>
       </div>
     </div>
 
     <div class="section-marker">
       <div class="section" id="section1">
-        <div class="section-title">1. 프로젝트 개요</div>
-        <p class="body-text">
-          앱 리디자인 프로젝트는 기존 모바일 앱의 사용자 경험(UX)을 전면 재설계하고 핵심 기능을 개선하기 위해 2025년 5월부터 시작된 프로젝트입니다. 낮은 온보딩 완료율과 사용자 이탈 문제를 해결하고, 월간 활성 사용자(MAU) 30% 증대를 목표로 합니다.
-        </p>
-
-        <div class="subsection-title" id="section1-1">1.1 사전배경</div>
-        <p class="body-text">
-          2024년 4분기 사용자 조사 결과, 기존 앱의 온보딩 완료율이 52%에 불과하고 앱스토어 평점이 3.8점으로 경쟁사 대비 낮은 수치를 기록했습니다. 주요 이탈 원인은 복잡한 초기 설정 플로우, 직관성이 낮은 홈 화면, 그리고 알림 과부하로 분석되었습니다.
-        </p>
-
-        <div class="subsection-title" id="section1-2">1.2 목표</div>
-        <p class="body-text">이번 리디자인의 핵심 목표는 온보딩 완료율을 현재 52%에서 80% 이상으로 개선하고, 앱스토어 평점을 3.8점에서 4.5점 이상으로 높이며, MAU를 6개월 내 30% 증가시키는 것입니다.</p>
+        <div class="body-text" v-html="wikiDetail.content"></div>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+.wiki-editor-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: #f5f5f5;
+  min-height: 100vh;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  color: #333;
+  box-sizing: border-box;
+}
+
 /* Reset & Base */
 .wiki-wrap {
   max-width: 920px;
@@ -166,11 +231,12 @@ const handleHistory = () => console.log('히스토리 보기');
 }
 .badge-wiki {
   font-size: 11px;
-  border: 1px solid #aaa;
-  border-radius: 4px;
-  padding: 2px 7px;
-  color: #555;
-  background: #f9f9f9;
+  background: #e8f0fe;
+  border: 1px solid #90b8f8;
+  border-radius: 20px;
+  padding: 2px 10px;
+  color: #1a56c4;
+  font-weight: bold;
 }
 .wiki-title {
   font-size: 20px;
@@ -179,11 +245,11 @@ const handleHistory = () => console.log('히스토리 보기');
 }
 .badge-version {
   font-size: 11px;
-  background: #e8f0fe;
-  border: 1px solid #90b8f8;
+  background: #c4780625;
+  border: 1px solid #f5a623;
   border-radius: 20px;
   padding: 2px 10px;
-  color: #1a56c4;
+  color: #e8920e;
   font-weight: bold;
 }
 .wiki-subtitle {
@@ -229,13 +295,208 @@ const handleHistory = () => console.log('히스토리 보기');
   color: #999;
 }
 
-/* Grid */
-.grid3-container {
+.content-grid {
   display: grid;
-  grid-template-columns: 185px 1fr 210px;
-  gap: 12px;
-  margin-bottom: 20px;
-  position: relative;
+  grid-template-columns: 450px 1fr 1fr;
+  gap: 16px;
+}
+
+.panel {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 16px;
+}
+
+.panel-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.panel-title.center {
+  text-align: center;
+}
+
+/* ② 목차 */
+.toc-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.toc-item a {
+  color: #3d7eff;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.toc-item a:hover {
+  text-decoration: underline;
+}
+
+.toc-item.empty {
+  color: #aaa;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+/* ③ 프로젝트 정보 */
+.info-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.info-label {
+  font-weight: 600;
+  min-width: 110px;
+  font-size: 13px;
+  white-space: nowrap; /* 라벨이 줄바꿈되지 않도록 설정 */
+}
+
+.info-value {
+  background: #f0f0f0;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 13px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis; /* 내용이 너무 길면 ...으로 표시 */
+  white-space: nowrap;
+}
+
+.status-badge {
+  color: #555;
+  flex: 1;
+  background: #f0f0f0;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 13px;
+  color: #555;
+  /* 텍스트 정렬이 필요하다면 추가 */
+  text-align: left;
+}
+
+/* ④ 링크 패널 */
+.link-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.link-item-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.link-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* 링크 아이템들을 감싸는 컨테이너 */
+.link-items-container {
+  max-height: 200px; /* 원하는 높이로 조절 (예: 아이템 2~3개 분량) */
+  overflow-y: auto; /* 내용이 넘치면 세로 스크롤 생성 */
+  padding-right: 4px; /* 스크롤바와 입력창 사이 간격 */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 스크롤바 디자인 (선택 사항: 더 깔끔하게 보이게 함) */
+.link-items-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.link-items-container::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 4px;
+}
+
+.link-items-container::-webkit-scrollbar-track {
+  background-color: #f1f1f1;
+}
+
+/* 기존 스타일 유지 및 보정 */
+.link-item-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  /* 여백이 너무 크면 스크롤이 금방 생기므로 적절히 조절 */
+}
+
+/* 편집 사유 모달 */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-box {
+  background: #fff;
+  border-radius: 8px;
+  min-width: 320px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #888;
+  line-height: 1;
+}
+
+.modal-body {
+  padding: 16px;
+}
+
+.modal-textarea {
+  width: 100%;
+  height: 80px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 13px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid #eee;
 }
 
 /* TOC */
@@ -243,7 +504,7 @@ const handleHistory = () => console.log('히스토리 보기');
   background: #fff;
   border: 1px solid #ddd;
   border-radius: 8px;
-  padding: 14px 16px;
+  padding: 14px 30px;
   min-height: 100%;
 }
 .toc-heading {
@@ -288,13 +549,16 @@ const handleHistory = () => console.log('히스토리 보기');
 .info-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 12px;
+  margin-bottom: 8px;
   font-size: 13px;
 }
 .info-label {
   color: #888;
   min-width: 52px;
+  min-width: 120px;
+  font-size: 13px;
+  white-space: nowrap;
 }
 .badge-status {
   font-size: 11px;
@@ -352,5 +616,37 @@ const handleHistory = () => console.log('히스토리 보기');
 /* Number Bubbles */
 .section-marker {
   position: relative;
+}
+
+/* 관련 문서 링크 스타일 */
+.link-list-container {
+  width: 100%;
+}
+.related-link-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.link-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+.link-icon {
+  font-size: 12px;
+}
+.link-text {
+  font-size: 13px;
+  color: #1a56c4;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.link-text:hover {
+  text-decoration: underline;
+  color: #0d3da3;
 }
 </style>

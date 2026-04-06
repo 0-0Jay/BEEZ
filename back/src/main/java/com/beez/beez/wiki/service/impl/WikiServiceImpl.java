@@ -21,13 +21,14 @@ public class WikiServiceImpl implements WikiService {
   private final WikiMapper wikiMapper;
   
   @Override
-  @Transactional // 생성시 세가지 작업 모두 수행 -
+  @Transactional // 프로시저 처리 하면 성능 향상 가능 - TaskMapper 파일 제일 밑에 형태 참고
   public void insertWiki(WikiRequest wikiRequest, WikiVersionRequest versionRequest){
     wikiMapper.insertWikiVersion(versionRequest);
     wikiRequest.setVersionId(versionRequest.getVersionId());
     
     wikiMapper.insertWiki(wikiRequest);
     System.out.println("생성된 위키 ID: " + wikiRequest.getId()); // 이게 null인지 확인!
+    //builder처리 하면 set작업 여러번 할필요 없음 -TaskServiceImpl 파일에 예시 있음
     versionRequest.setWikiId(wikiRequest.getId());
     System.out.println("셋팅된 버전용 위키 ID: " + versionRequest.getWikiId()); // 이것도 확인!
     wikiMapper.updateWikiIdInVersion(versionRequest);
@@ -47,9 +48,11 @@ public class WikiServiceImpl implements WikiService {
     return wikiMapper.findWikiByProjectId(projectId);
   }
   
-  @Override // wikiId별로 최신 본문 조회
+  @Override
   public WikiVersionRequest findLatestVersion(String wikiId){
-    return wikiMapper.findLatestVersion(wikiId);
+    WikiVersionRequest result = wikiMapper.findLatestVersion(wikiId);
+    System.out.println("★ DB에서 가져온 Links: " + (result != null ? result.getLinks() : "결과없음"));
+    return result;
   }
   
   @Override //wikiId별로 히스토리 조회
