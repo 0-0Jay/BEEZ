@@ -11,12 +11,14 @@ const userId = ref(''); //입력받을 작성자명
 const wikiInfo = ref(''); //작성창 한줄 설명
 
 //version id 별로,  wikiId별로 겹치지 않도록
+//###### 필요 없는 코드
 const generateId = (prefix) => {
   const now = new Date();
   const timestamp =
     now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0') + String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0') + String(now.getSeconds()).padStart(2, '0');
   return `${prefix}_${timestamp}`;
 };
+
 //스토어랑 연결
 const projectInfo = computed(() => wikiStore.projectInfo);
 
@@ -110,10 +112,11 @@ function closeEditModal() {
 async function confirmEdit() {
   if (!editReason.value.trim()) return;
 
+  //## 필요 없는 코드
   //1. 버전 번호 계산 로직
   let nextVersion = '1.0'; //기본값 최초 생성시
 
-  //기존 버전 이름 있는지 확인
+  // 기존 버전 이름 있는지 확인
   if (wikiStore.wikiDetail && wikiStore.wikiDetail.versionName) {
     const currentName = wikiStore.wikiDetail.versionName;
     const versionMatch = currentName.match(/v(\d+\.\d+)/); // 숫자 추출
@@ -123,7 +126,7 @@ async function confirmEdit() {
       nextVersion = (currentNum + 0.1).toFixed(1);
     }
   }
-
+  //## 필요 없는 코드
   const finalVersionName = `${projectInfo.value.title} v${nextVersion}`;
   const newVersionId = generateId('VER');
 
@@ -173,9 +176,9 @@ async function confirmEdit() {
       saveSuccess.value = false;
     }, 3000);
   }
-  //------------------------------------------------------------
 }
 
+//------------------------------------------------------------
 // 에디터
 const editorRef = ref(null);
 const editorContent = ref('');
@@ -197,7 +200,7 @@ function onEditorKeydown(e) {
   // TODO: 단축키 처리
 }
 
-//에디터 함수
+//에디터 함수 - API 쓸거면 필요없음
 function applyFormat(command, value = null) {
   editorRef.value.focus();
   const selection = window.getSelection();
@@ -253,17 +256,17 @@ function applyFormat(command, value = null) {
   <div class="wiki-editor-page">
     <!-- ① 상단 헤더 영역 -->
     <div class="flex justify-between items-end">
-      <!-- <div class="header-left"> -->
-      <h1 class="text-2xl font-bold text-[#1A1816]">WIKI</h1>
-      <!-- <input v-model="wikiStore.wikiDetail.wikiInfo" type="text" class="project-desc-input" placeholder="위키 관련 한 줄 설명을 입력하세요" /> -->
-      <!-- </div> -->
+      <div class="header-left">
+        <h1 class="text-2xl font-bold text-[#1A1816]">WIKI</h1>
+        <input v-model="wikiStore.wikiDetail.wikiInfo" type="text" class="project-desc-input" placeholder="위키 관련 한 줄 설명을 입력하세요" />
+      </div>
 
       <!-- 작성자명 -->
-      <!-- <div class="field-group">
+      <div class="field-group">
         <label class="field-label required">작성자명</label>
         <input v-model="userId" type="text" class="field-input" :class="{ 'is-error': errors.userId }" placeholder="성함을 입력해 주세요." />
         <span v-if="errors.userId" class="error-msg">성함입력은 필수 입니다.</span>
-      </div> -->
+      </div>
 
       <div class="header-actions">
         <!-- 저장 성공 토스트 -->
@@ -434,13 +437,14 @@ function applyFormat(command, value = null) {
 }
 
 .project-desc-input {
-  width: 100%;
-  border: 1px solid #ffffff;
+  width: 100%; /* 부모 너비에 맞게 꽉 채움 */
+  max-width: 1100px; /* 너무 길어지는 것이 싫다면 최대 너비 제한 */
+  border: 1px solid #ddd;
   background-color: #ffffff;
   border-radius: 4px;
-  padding: 6px 10px;
-  font-size: 13px;
-  box-sizing: border-box;
+  padding: 8px 12px;
+  font-size: 14px;
+  margin-top: 8px; /* WIKI 글자와의 간격 */
 }
 
 .header-fields {

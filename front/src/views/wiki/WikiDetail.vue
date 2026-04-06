@@ -1,60 +1,22 @@
 <script setup>
 import { useWikiStore } from '@/stores/wiki';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 
-// 1. 상태 관리 (추후 API 데이터로 대체 가능)
-const wikiData = ref({
-  title: 'YEDAM PMS TOOL 프로젝트',
-  version: 'v 1.0',
-  subtitle: '사용자 경험 개선을 목표로 한 PMS TOOL 프로젝트의 전반적인 배경, 목표, 범위, 프로세스를 정리한 공식 위키페이지 입니다',
-  author: '홍길동',
-  updatedDate: '2026.03.20',
-  status: '진행중',
-  endDate: '2026.04.27'
-});
-
 const wikiStore = useWikiStore(); //스토어 연결
-
-const saveSuccess = ref(false); // 저장여부
 const route = useRoute();
-const userId = ref(''); //입력받을 작성자명
-const wikiInfo = ref(''); //작성창 한줄 설명
-
 //스토어랑 연결
 const projectInfo = computed(() => wikiStore.projectInfo);
+const wikiDetail = computed(() => wikiStore.wikiDetail);
 
 //페이지 로드 될 때 실행
 onMounted(async () => {
   const projectId = route.params.projectId;
   if (projectId) {
     await wikiStore.fetchProjectData(projectId);
+    await wikiStore.fetchWikiDetail(wikiId);
   }
 });
-
-// 2. 목차 데이터
-const tocList = ref([
-  {
-    id: 'section1',
-    title: '1. 프로젝트 개요',
-    sub: [
-      { id: 'section1-1', title: '1.1 사전 배경' },
-      { id: 'section1-2', title: '1.2 목표' }
-    ]
-  },
-  { id: 'section2', title: '2. 팀구성', sub: [{ id: 'section2-1', title: '2.1 역할 및 담당자' }] },
-  { id: 'section3', title: '3. 프로젝트 범위' },
-  { id: 'section4', title: '4. 일정 및 마일스톤' },
-  {
-    id: 'section5',
-    title: '5. 기술스택',
-    sub: [
-      { id: 'section5-1', title: '5.1 프론트엔드' },
-      { id: 'section5-2', title: '5.2 백엔드' }
-    ]
-  },
-  { id: 'section6', title: '6. 관련문서 링크' }
-]);
 
 // 버튼 핸들러
 const handleEdit = () => console.log('편집 페이지로 이동');
@@ -69,10 +31,11 @@ const handleHistory = () => console.log('히스토리 보기');
           <div>
             <div class="wiki-header-left">
               <span class="badge-wiki">wiki</span>
-              <span class="wiki-title">{{ wikiData.title }}</span>
-              <span class="badge-version">{{ wikiData.version }}</span>
+              <span class="wiki-title">{{ projectInfo.title }}</span>
+              <!-- 이거 백처리랑 wiki.js파일 작업 안되어 있음-->
+              <!-- <span class="badge-version">{{ projectInfo. }}</span> -->
             </div>
-            <p class="wiki-subtitle">{{ wikiData.subtitle }}</p>
+            <p class="wiki-subtitle">{{ projectInfo.description }}</p>
           </div>
           <div class="wiki-header-right">
             <div class="btn-group">
@@ -80,8 +43,9 @@ const handleHistory = () => console.log('히스토리 보기');
               <button class="btn btn-secondary" @click="handleHistory">히스토리</button>
             </div>
             <div class="wiki-meta">
-              <span>👤 {{ wikiData.author }} 작성</span>
-              <span>📅 {{ wikiData.updatedDate }} 수정</span>
+              <span>👤 작성자 {{ projectInfo.userId }} </span>
+              <!-- 수정일 관련 데이터 처리 안해놓음-->
+              <!-- <span>📅 {{ wikiData.updatedDate }} 수정</span> -->
             </div>
           </div>
         </div>
@@ -107,41 +71,35 @@ const handleHistory = () => console.log('히스토리 보기');
         </div>
       </div>
 
-      <div class="section-marker">
-        <div class="info-card">
-          <div class="info-card-title">{{ wikiData.title }}</div>
-          <div class="info-row">
-            <span class="info-label">상태 - 이거 지울예정임</span>
-            <span class="badge-status">{{ wikiData.status }}</span>
-          </div>
+      <div class="info-card">
+        <div class="info-card-title">{{ projectInfo.title }}</div>
+        <div class="info-row">
+          <span class="info-label">상태 : </span>
+          <span class="badge-status">{{ projectInfo.status }}</span>
+        </div>
 
-          <div class="info-row">
-            <span class="info-label">프로젝트번호 :</span>
-            <span class="info-value status-badge">{{ projectInfo.id }}</span>
-          </div>
+        <div class="info-row">
+          <span class="info-label">프로젝트번호 :</span>
+          <span class="info-value status-badge">{{ projectInfo.id }}</span>
+        </div>
 
-          <div class="info-row">
-            <span class="info-label">프로젝트 설명 :</span>
-            <span class="info-value status-badge">{{ projectInfo.description }}</span>
-          </div>
+        <div class="info-row">
+          <span class="info-label">프로젝트 설명 :</span>
+          <span class="info-value status-badge">{{ projectInfo.description }}</span>
+        </div>
 
-          <div class="info-row">
-            <span class="info-label">프로젝트 생성자명 :</span>
-            <span class="info-value status-badge">{{ projectInfo.userName }}</span>
-          </div>
+        <div class="info-row">
+          <span class="info-label">프로젝트 생성자명 :</span>
+          <span class="info-value status-badge">{{ projectInfo.userName }}</span>
+        </div>
 
-          <div class="info-row">
-            <span class="info-label">시작일 :</span>
-            <span class="info-value status-badge">{{ projectInfo.startDate ? projectInfo.startDate.replace('T', ' ').substring(0, 10) : '-' }}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">종료일 :</span>
-            <span class="info-value status-badge">{{ projectInfo.endDate ? projectInfo.endDate.replace('T', ' ').substring(0, 10) : '-' }}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">상태값 :</span>
-            <span class="info-value status-badge">{{ projectInfo.status }}</span>
-          </div>
+        <div class="info-row">
+          <span class="info-label">시작일 :</span>
+          <span class="info-value status-badge">{{ projectInfo.startDate ? projectInfo.startDate.replace('T', ' ').substring(0, 10) : '-' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">종료일 :</span>
+          <span class="info-value status-badge">{{ projectInfo.endDate ? projectInfo.endDate.replace('T', ' ').substring(0, 10) : '-' }}</span>
         </div>
       </div>
 
@@ -364,6 +322,14 @@ const handleHistory = () => console.log('히스토리 보기');
 
 .status-badge {
   color: #555;
+  flex: 1;
+  background: #f0f0f0;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 13px;
+  color: #555;
+  /* 텍스트 정렬이 필요하다면 추가 */
+  text-align: left;
 }
 
 /* ④ 링크 패널 */
@@ -528,13 +494,16 @@ const handleHistory = () => console.log('히스토리 보기');
 .info-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 12px;
+  margin-bottom: 8px;
   font-size: 13px;
 }
 .info-label {
   color: #888;
   min-width: 52px;
+  min-width: 120px;
+  font-size: 13px;
+  white-space: nowrap;
 }
 .badge-status {
   font-size: 11px;
