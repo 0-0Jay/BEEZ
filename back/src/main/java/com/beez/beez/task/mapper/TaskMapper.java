@@ -33,4 +33,8 @@ public interface TaskMapper {
   void insertTaskTime(TaskTimeRequest taskTimeRequest);
   
   void deleteTaskLink(String id);
+  
+  void calcSubProgress(@Param("taskId") String taskId,@Param("progress") int progress);
+  
+  List<TaskOverviewResponse> findTaskOverview(String id);
 }

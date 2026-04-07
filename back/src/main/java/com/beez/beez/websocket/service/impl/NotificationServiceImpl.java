@@ -24,7 +24,7 @@ public class NotificationServiceImpl implements NotificationService {
   @Override
   @Transactional
   public void sendNotification(NotificationRequest dto) {
-    notificationRepository.insertNotification(dto.getUserId(), dto.getContent(), dto.getLink());
+    notificationRepository.insertNotification(dto.getUserId(), dto.getContent(), dto.getLink(), dto.getProjectId());
     NotificationResponse notificationResponse = notificationMapper.findNotification(dto.getUserId());
     messagingTemplate.convertAndSend("/notification/" + dto.getUserId(), notificationResponse);
   }
@@ -32,7 +32,7 @@ public class NotificationServiceImpl implements NotificationService {
   // 알림 목록
   @Override
   public List<NotificationResponse> findNotificationList(String userId) {
-    return notificationRepository.findAllByUserIdOrderByIdDesc(userId).stream().map(NotificationResponse::toDto).toList();
+    return notificationMapper.findAllNotification(userId);
   }
   
   // 알림 읽음

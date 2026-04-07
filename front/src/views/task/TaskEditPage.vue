@@ -453,9 +453,15 @@ onMounted(async () => {
             </td>
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">진척도 (%)</td>
             <td class="px-6 py-3">
-              <div class="flex items-center gap-4">
-                <InputNumber v-model="form.progress" :min="0" :max="100" placeholder="0" class="w-28 shrink-0" suffix="%" />
-              </div>
+              <template v-if="isEditMode && task?.childTaskList?.length > 0">
+                <span class="text-base font-semibold text-[#1A1816]">{{ task?.subProgress ?? 0 }}%</span>
+                <p class="text-xs text-[#9A9B90] mt-1">하위 일감이 있는 경우 진척도는 자동으로 계산됩니다.</p>
+              </template>
+              <template v-else>
+                <div class="flex items-center gap-4">
+                  <InputNumber v-model="form.progress" :min="0" :max="100" placeholder="0" class="w-28 shrink-0" suffix="%" />
+                </div>
+              </template>
             </td>
           </tr>
 

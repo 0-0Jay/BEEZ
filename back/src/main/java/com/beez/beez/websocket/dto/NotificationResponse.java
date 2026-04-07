@@ -18,14 +18,6 @@ public class NotificationResponse {
   private LocalDateTime createdOn;
   private String status;
   private String link;
-  
-  public static NotificationResponse toDto(Notifications entity) {
-    return NotificationResponse.builder()
-      .id(entity.getId())
-      .content(entity.getContent())
-      .createdOn(entity.getCreatedOn())
-      .status(entity.getStatus())
-      .link(entity.getLink())
-      .build();
-  }
+  private String projectId;
+  private String title;
 }
