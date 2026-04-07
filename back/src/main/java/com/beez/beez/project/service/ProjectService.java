@@ -33,10 +33,12 @@ public interface ProjectService {
   //프로젝트 구성원 삭제
   void deleteProjectMember(String projectMemberId);
   
+  //프로젝트 구성원 수정
+  void updateProjectMember(String projectMemberId, ProjectMemberUpdateRequest dto);
+  
   //역할 조회
   List<RolesResponse> findRoles();
   
-  //프로젝트 구성원 수정
-  void updateProjectMember(String projectMemberId, ProjectMemberUpdateRequest dto);
-
+  // 사용자 + 그룹 검색 (합쳐서 반환)
+  MemberSearchResponseDto searchMembers(String keyword);
 }

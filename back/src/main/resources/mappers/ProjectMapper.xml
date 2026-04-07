@@ -201,7 +201,7 @@
     WHERE status = 'H1'
     AND role = 'ROLE0003'
       <if test="keyword != null and keyword != ''">
-        name LIKE '%' || #{keyword} || '%'
+        AND name LIKE '%' || #{keyword} || '%'
       </if>
   </select>
   
@@ -212,7 +212,7 @@
     FROM groups
     <where>
       <if test="keyword != null and keyword != ''">
-        name LIKE '%' || #{keyword} || '%'
+        AND name LIKE '%' || #{keyword} || '%'
       </if>
     </where>
   </select>

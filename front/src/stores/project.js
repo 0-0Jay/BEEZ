@@ -14,7 +14,9 @@ export const useProjectStore = defineStore('project', {
       groupList: [],
       groupMemberList: []
     },
-    roles: []
+    roles: [],
+    users: [],
+    groups: []
   }),
   // getters
   // actions
@@ -63,7 +65,7 @@ export const useProjectStore = defineStore('project', {
 
     // 프로젝트 삭제
     async deleteProject(id) {
-      await axios.put(`/project/delete/${id}`);
+      await axios.delete(`/project/delete/${id}`);
     },
 
     // 프로젝트 생성
@@ -101,15 +103,24 @@ export const useProjectStore = defineStore('project', {
       await axios.delete(`/project/member/${projectMemberId}`);
     },
 
+    // 프로젝트 구성원 수정
+    async updateProjectMember(projectMemberId, roleIds) {
+      await axios.put(`/project/member/${projectMemberId}`, { roleIds });
+    },
+
     // 역할 조회
     async fetchRoles() {
       const response = await axios.get(`/project/roles`);
       this.roles = response.data;
     },
 
-    // 프로젝트 구성원 수정
-    async updateProjectMember(projectMemberId, roleIds) {
-      await axios.put(`/project/member/${projectMemberId}`, { roleIds });
+    // 사용자 + 그룹 (검색)
+    async fetchSearchMembers(keyword = null) {
+      const response = await axios.get(`/project/members/search`, {
+        params: { keyword }
+      });
+      this.users = response.data.users;
+      this.groups = response.data.groups;
     }
   },
   persist: {

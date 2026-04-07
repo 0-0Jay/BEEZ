@@ -1,4 +1,5 @@
 <script setup>
+import ProjectMemberModal from '@/components/project/ProjectMemberModal.vue';
 import { useProjectStore } from '@/stores/project';
 import { useToast } from 'primevue';
 import { computed, onMounted, ref } from 'vue';
@@ -11,6 +12,7 @@ const pendingDeleteId = ref(null); // 삭제할 id 임시 저장
 const visible = ref(false);
 const confirmMsg = ref('');
 const toast = useToast();
+const modalVisible = ref(false); // 추가 모달
 
 onMounted(async () => {
   await projectStore.fetchProjectMembers(projectId);
@@ -92,13 +94,22 @@ const handleDelConfirm = async () => {
     toast.add({ severity: 'success', summary: '삭제 완료', detail: '구성원이 삭제되었습니다.', life: 2000 });
   }
 };
+
+// 구성원 추가 모달
+const openAddModal = () => {
+  modalVisible.value = true;
+};
+
+const closeAddModal = () => {
+  modalVisible.value = false;
+};
 </script>
 
 <template>
   <div>
     <!-- 상단 버튼 영역 -->
     <div class="flex justify-end gap-2 mb-4">
-      <Button label="구성원 추가" icon="pi pi-user-plus" outlined class="btn-outline" />
+      <Button label="구성원 추가" icon="pi pi-user-plus" outlined class="btn-outline" @click="openAddModal" />
       <Button label="사용자 관리" icon="pi pi-users" class="btn-solid" />
     </div>
 
@@ -246,6 +257,15 @@ const handleDelConfirm = async () => {
   <ConfirmDialog v-model:visible="visible" confirmLabel="확인" @confirm="handleDelConfirm">
     <span class="text-gray-700 font-medium">{{ confirmMsg }}</span>
   </ConfirmDialog>
+  <ProjectMemberModal
+    v-model:visible="modalVisible"
+    @saved=""
+    @update:visible="
+      (val) => {
+        if (!val) closeAddModal();
+      }
+    "
+  />
 </template>
 
 <style scoped>

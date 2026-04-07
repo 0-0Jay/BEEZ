@@ -42,7 +42,7 @@ public class ProjectController {
   }
   
   //프로젝트 삭제
-  @PutMapping("/delete/{id}")
+  @DeleteMapping("/delete/{id}")
   public ResponseEntity<Void> updateProjectStatus(@PathVariable String id) {
     projectService.updateProjectStatus(id);
     return ResponseEntity.ok().build();
@@ -75,16 +75,25 @@ public class ProjectController {
     return ResponseEntity.ok().build();
   }
   
-  //역할 조회
-  @GetMapping("/roles")
-  public ResponseEntity<List<RolesResponse>> findRoles() {
-    return ResponseEntity.ok(projectService.findRoles());
-  }
-  
   //프로젝트 구성원 수정
   @PutMapping("/member/{projectMemberId}")
   public ResponseEntity<Void> updateProjectMember(@PathVariable String projectMemberId, @RequestBody ProjectMemberUpdateRequest dto) {
     projectService.updateProjectMember(projectMemberId, dto);
     return ResponseEntity.ok().build();
   }
+  
+  //역할 조회
+  @GetMapping("/roles")
+  public ResponseEntity<List<RolesResponse>> findRoles() {
+    return ResponseEntity.ok(projectService.findRoles());
+  }
+  
+  //사용자 + 그룹 검색
+  @GetMapping("/members/search")
+  public ResponseEntity<MemberSearchResponseDto> searchMembers(
+    @RequestParam(required = false) String keyword) {
+      return ResponseEntity.ok(projectService.searchMembers(keyword));
+  }
+  
+  
 }
