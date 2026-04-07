@@ -13,4 +13,5 @@ public class NotificationRequest {
   private String userId;
   private String content;
   private String link;
+  private String projectId;
 }

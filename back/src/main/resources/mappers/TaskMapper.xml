@@ -11,9 +11,16 @@
            t.workflow,
            t.priority,
            t.planned_end,
-           t.progress
+           CASE
+             WHEN EXISTS (
+               SELECT 1 FROM task ch
+               WHERE ch.parent_id = t.id AND ch.status = 'T1'
+             )
+               THEN t.sub_progress
+             ELSE t.progress
+             END AS progress
     FROM task t
-    JOIN users u ON t.user_id = u.id
+           JOIN users u ON t.user_id = u.id
     WHERE t.project_id = #{projectId} AND t.status = 'T1'
   </select>
   
@@ -69,6 +76,7 @@
     {
       CALL GET_TASK_DETAIL(
         #{id,            mode=IN,  jdbcType=VARCHAR},
+        #{status,        mode=OUT, jdbcType=VARCHAR},
         #{versionId,     mode=OUT, jdbcType=VARCHAR},
         #{title,         mode=OUT, jdbcType=VARCHAR},
         #{description,   mode=OUT, jdbcType=VARCHAR},
@@ -85,6 +93,7 @@
         #{actualEnd,     mode=OUT, jdbcType=TIMESTAMP},
         #{estimatedTime, mode=OUT, jdbcType=NUMERIC},
         #{progress,      mode=OUT, jdbcType=NUMERIC},
+        #{subProgress,   mode=OUT, jdbcType=NUMERIC},
         #{parentId,      mode=OUT, jdbcType=VARCHAR},
         #{parentName,    mode=OUT, jdbcType=VARCHAR},
         #{isPublic,      mode=OUT, jdbcType=VARCHAR},
@@ -105,6 +114,9 @@
     <result property="userId" column="user_id" />
     <result property="name" column="name" />
     <result property="createdOn" column="created_on" />
+    <result property="fieldName" column="field_name" />
+    <result property="oldValue" column="old_value" />
+    <result property="newValue" column="new_value" />
   </resultMap>
   
   <resultMap id="timeResultMap" type="com.beez.beez.task.dto.TaskTimeResponse">
@@ -227,5 +239,19 @@
         #{id,         mode=IN, jdbcType=VARCHAR}
       )
     }
+  </select>
+  
+  <select id="calcSubProgress" statementType="CALLABLE">
+    {
+      CALL proc_calc_progress(
+        #{taskId,     mode=IN, jdbcType=VARCHAR}
+      )
+    }
+  </select>
+  
+  <select id="findTaskOverview" resultType="TaskOverviewResponse">
+    SELECT type, category, priority, user_id, creator, version_id
+    FROM task
+    WHERE project_id = #{id}
   </select>
 </mapper>

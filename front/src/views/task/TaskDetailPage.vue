@@ -1,5 +1,5 @@
 <script setup>
-import TaskJournalModal from '@/components/task/TaskJournalModal.vue';
+import SubTaskAlertModal from '@/components/task/SubTaskAlertModal.vue';
 import TaskTimeModal from '@/components/task/TaskTimeModal.vue';
 import TaskUnlinkModal from '@/components/task/TaskUnlinkModal.vue';
 import { useAuthStore } from '@/stores/auth';
@@ -13,9 +13,7 @@ const authStore = useAuthStore();
 const router = useRouter();
 const route = useRoute();
 const timeLogVisible = ref(false);
-const journalModalVisible = ref(false);
 const deleteModalVisible = ref(false);
-const selectedJournalId = ref(null);
 const linkModalVisible = ref(false);
 
 // 연결 끊기 모달
@@ -36,6 +34,9 @@ watch(
   () => route.params.taskId,
   async (taskId) => {
     await taskStore.findTaskDetail(taskId);
+    if (task.value?.status == 'T0') {
+      router.replace('/error');
+    }
   },
   { immediate: true }
 );
@@ -66,7 +67,7 @@ const taskCateMap = computed(() => Object.fromEntries(category.value.map((c) => 
 const relationMap = computed(() => Object.fromEntries(relation.value.map((r) => [r.id, r.name])));
 const activityMap = computed(() => Object.fromEntries(activity.value.map((a) => [a.id, a.name])));
 
-// 편집/소요시간 권한
+// 수정/소요시간 권한
 const canEdit = computed(() => {
   const uid = userId.value;
   return task.value?.creator === uid || task.value?.userId === uid;
@@ -95,11 +96,36 @@ const modifiedMinutesAgo = computed(() => {
   return Math.max(0, Math.floor(diff / 60_000));
 });
 
-// 수정 내역
-const openJournalDetail = async (journalId) => {
-  selectedJournalId.value = journalId;
-  journalModalVisible.value = true;
-  taskStore.findJournalDetail(journalId);
+const fieldMapper = {
+  is_public: '비공개',
+  title: '일감명',
+  type: '일감유형',
+  workflow: '진행상태',
+  priority: '우선순위',
+  description: '설명',
+  parent_id: '상위 일감',
+  category: '일감 범주',
+  user_id: '담당자',
+  version_id: '목표 버전',
+  estimated_time: '추정 시간',
+  progress: '진척도',
+  planned_start: '예상 시작일',
+  planned_end: '예상 마감일',
+  actual_start: '실제 시작일',
+  actual_end: '실제 마감일',
+  attachments: '첨부파일',
+  reject: '반려사유'
+};
+const DATE_FIELDS = new Set(['planned_start', 'planned_end', 'actual_start', 'actual_end']);
+const COMMON_CODE_FIELDS = new Set(['priority', 'is_public', 'workflow']);
+
+const resolveValue = (fieldName, value) => {
+  if (!value) return '-';
+  if (DATE_FIELDS.has(fieldName)) return formatDate(value);
+  if (COMMON_CODE_FIELDS.has(fieldName)) return commonCodes.value.find((c) => c.id == value)?.name ?? value;
+  if (fieldName === 'category') return category.value.find((c) => c.id == value)?.name ?? value;
+  if (fieldName === 'type') return type.value.find((t) => t.id == value)?.name ?? value;
+  return value;
 };
 
 // 날짜 포맷
@@ -249,15 +275,29 @@ const goToAddSubTask = () => {
   });
 };
 
+// 하위 일감 최초 생성 경고 모달
+const subTaskWarningVisible = ref(false);
+
+const displayProgress = computed(() => (subTasks.value.length > 0 ? (task.value?.subProgress ?? 0) : (task.value?.progress ?? 0)));
+
+const handleAddSubTask = () => {
+  if (subTasks.value.length === 0 && task.value?.progress > 0) {
+    subTaskWarningVisible.value = true;
+  } else {
+    goToAddSubTask();
+  }
+};
+
 onMounted(async () => {
   await taskStore.findCateList();
   await taskStore.findTypeList();
   await taskStore.findCommonCodeList();
+  console.log(task.value);
 });
 </script>
 
 <template>
-  <div v-if="task" class="min-h-screen bg-[#FAFAF8] p-8">
+  <div v-if="task && task.status == 'T1'" class="min-h-screen bg-[#FAFAF8] p-8">
     <!-- 헤더 -->
     <div class="mb-6 flex items-start justify-between gap-4 flex-wrap">
       <div class="flex flex-col gap-2 min-w-0">
@@ -271,7 +311,7 @@ onMounted(async () => {
 
       <!-- 액션 버튼 -->
       <div class="flex items-center gap-2 shrink-0">
-        <Button v-if="canEdit" label="편집" icon="pi pi-pen-to-square" severity="secondary" raised @click="goToEdit" />
+        <Button v-if="canEdit" label="수정" icon="pi pi-pen-to-square" severity="secondary" raised @click="goToEdit" />
         <Button label="복사" icon="pi pi-clone" severity="secondary" raised @click="goToCopy" />
         <Button v-if="canEdit" label="삭제" icon="pi pi-trash" severity="danger" raised @Click="deleteModalVisible = true" />
       </div>
@@ -354,9 +394,9 @@ onMounted(async () => {
             <td colspan="3" class="px-6 py-3">
               <div class="flex items-center gap-3">
                 <div class="flex-1 max-w-xs h-2 rounded-full bg-[#F2F0EB] overflow-hidden">
-                  <div class="h-full rounded-full transition-all duration-500" :style="{ width: task.progress + '%', backgroundColor: progressColor(task.progress) }"></div>
+                  <div class="h-full rounded-full transition-all duration-500" :style="{ width: displayProgress + '%', backgroundColor: progressColor(displayProgress) }"></div>
                 </div>
-                <span class="text-base font-semibold text-[#1A1816] w-10 shrink-0">{{ task.progress }}%</span>
+                <span class="text-base font-semibold text-[#1A1816] w-10 shrink-0">{{ displayProgress }}%</span>
               </div>
             </td>
           </tr>
@@ -445,7 +485,7 @@ onMounted(async () => {
             완료 <span class="font-semibold text-emerald-600">{{ subTaskDone }}</span> · 진행중 <span class="font-semibold text-amber-600">{{ subTaskInProgress }}</span>
           </span>
         </div>
-        <Button label="하위 일감 추가" icon="pi pi-plus" severity="secondary" raised @click="goToAddSubTask()" />
+        <Button label="하위 일감 추가" icon="pi pi-plus" severity="secondary" raised @click="handleAddSubTask" />
       </div>
 
       <table class="w-full text-base">
@@ -544,7 +584,7 @@ onMounted(async () => {
         <button
           v-for="tab in [
             { key: 'comments', label: '댓글' },
-            { key: 'history', label: '변경 이력' },
+            { key: 'history', label: '수정 이력' },
             { key: 'timelog', label: '소요 시간' }
           ]"
           :key="tab.key"
@@ -653,27 +693,36 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!--  변경 이력 탭  -->
+      <!-- 수정 이력 -->
       <div v-if="activeTab === 'history'" class="p-6">
-        <table class="w-full text-base">
-          <thead>
-            <tr class="border-b border-[#F2F0EB]">
-              <th class="pb-3 text-left font-semibold text-[#6B6B63] w-32">수정 번호</th>
-              <th class="pb-3 text-left font-semibold text-[#6B6B63]">수정자</th>
-              <th class="pb-3 text-left font-semibold text-[#6B6B63] w-48">수정시간</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-[#F2F0EB]">
-            <tr v-for="h in history" :key="h.id" class="hover:bg-[#FAFAF8] cursor-pointer transition-colors" @click="openJournalDetail(h.id)">
-              <td class="py-3 pr-4 font-mono text-base text-[#9A9B90]">{{ h.id }}</td>
-              <td class="py-3 pr-4">
-                <span class="text-base font-semibold text-[#1A1816]">{{ h.name }}</span>
-                <span class="text-base text-[#9A9B90] ml-1">({{ h.userId }})</span>
-              </td>
-              <td class="py-3 pr-4 text-base text-[#6B6B63]">{{ formatDateTime(h.createdOn) }}</td>
-            </tr>
-          </tbody>
-        </table>
+        <DataTable :value="history" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20]" paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown" stripedRows class="text-base">
+          <Column field="userId" header="수정자" :style="{ width: '160px' }">
+            <template #body="{ data }">
+              <span class="font-semibold text-[#1A1816]">{{ data.name }}</span>
+              <span class="text-[#9A9B90] ml-1">({{ data.userId }})</span>
+            </template>
+          </Column>
+          <Column field="fieldName" header="수정 항목" :style="{ width: '140px' }">
+            <template #body="{ data }">
+              <span class="font-semibold text-[#3A3B35]">{{ fieldMapper[data.fieldName] ?? data.fieldName }}</span>
+            </template>
+          </Column>
+          <Column field="oldValue" header="수정 전" :style="{ width: '200px' }">
+            <template #body="{ data }">
+              <span class="text-[#9A9B90] line-through">{{ resolveValue(data.fieldName, data.oldValue) }}</span>
+            </template>
+          </Column>
+          <Column field="newValue" header="수정 후" :style="{ width: '200px' }">
+            <template #body="{ data }">
+              <span class="font-medium text-[#1A1816]">{{ resolveValue(data.fieldName, data.newValue) }}</span>
+            </template>
+          </Column>
+          <Column field="createdOn" header="수정일" :style="{ width: '160px' }">
+            <template #body="{ data }">
+              <span class="text-[#6B6B63]">{{ formatDateTime(data.createdOn) }}</span>
+            </template>
+          </Column>
+        </DataTable>
       </div>
 
       <!--  소요 시간 탭  -->
@@ -733,7 +782,7 @@ onMounted(async () => {
       :activityList="activity"
       @confirm="
         async (data) => {
-          taskStore.insertTaskTime(data);
+          await taskStore.insertTaskTime(data);
           timeLogVisible = false;
           await taskStore.findTaskDetail(taskId);
         }
@@ -753,7 +802,6 @@ onMounted(async () => {
       "
       @cancel="linkModalVisible = false"
     />
-    <TaskJournalModal v-model:visible="journalModalVisible" :journalId="selectedJournalId" @close="journalModalVisible = false" />
     <DeleteModal
       v-model:visible="deleteModalVisible"
       :taskId="taskId"
@@ -766,6 +814,16 @@ onMounted(async () => {
         }
       "
       @cancel="deleteModalVisible = false"
+    />
+    <SubTaskAlertModal
+      v-model:visible="subTaskWarningVisible"
+      @confirm="
+        () => {
+          subTaskWarningVisible = false;
+          goToAddSubTask();
+        }
+      "
+      @cancel="subTaskWarningVisible = false"
     />
     <TaskUnlinkModal
       v-model:visible="unlinkModalVisible"

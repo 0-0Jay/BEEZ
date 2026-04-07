@@ -1,16 +1,22 @@
 <script setup>
+import { useAuthStore } from '@/stores/auth';
 import { useNotificationStore } from '@/stores/notification';
+import { useProjectStore } from '@/stores/project';
 import { Client } from '@stomp/stompjs';
 import Button from 'primevue/button';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
-const userId = '20261111';
+const authStore = useAuthStore();
+const projectStore = useProjectStore();
+const userId = computed(() => authStore.user?.id);
 const isOpen = ref(false);
 const panelRef = ref(null);
 const btnRef = ref(null);
 const notificationStore = useNotificationStore();
 const notifications = ref([]);
-const unreadCount = computed(() => notifications.value.filter((n) => n.status == 'G0').length);
+const unreadCount = computed(() => notifications.value.filter((n) => n.status == 'G1').length);
+const router = useRouter();
 
 let stompClient = null;
 
@@ -20,7 +26,7 @@ const connect = () => {
     brokerURL: 'ws://localhost:8888/ws/chat',
     reconnectDelay: 5000,
     onConnect: () => {
-      stompClient.subscribe(`/notification/${userId}`, (msg) => {
+      stompClient.subscribe(`/notification/${userId.value}`, (msg) => {
         const data = JSON.parse(msg.body);
         notifications.value.unshift(data);
       });
@@ -70,23 +76,26 @@ function formatTime(createdOn) {
 
 // 알림 목록
 async function loadNotifications() {
-  notifications.value = (await notificationStore.findNotificationList(userId)) ?? [];
+  notifications.value = (await notificationStore.findNotificationList(userId.value)) ?? [];
 }
 
 function togglePanel() {
   if (!isOpen.value) loadNotifications(); // 열 때마다 최신화
+  console.log(notifications.value);
   isOpen.value = !isOpen.value;
 }
 
 function markAsRead(n) {
-  if (n.status == 'G1') return;
-  n.status = 'G1';
+  projectStore.selectedProject = { id: n.projectId, title: n.title };
+  router.push(`${n.link}`);
+  if (n.status == 'G0') return;
+  n.status = 'G0';
   notificationStore.readNotification(n.id);
 }
 
 function markAllAsRead() {
-  notifications.value.forEach((n) => (n.status = 'G1'));
-  notificationStore.readAllNotification(userId);
+  notifications.value.forEach((n) => (n.status = 'G0'));
+  notificationStore.readAllNotification(userId.value);
 }
 
 async function deleteNotification(id, e) {
@@ -152,7 +161,7 @@ onUnmounted(() => {
             v-for="n in notifications"
             :key="n.id"
             class="group flex items-start gap-3.5 px-5 py-4 transition-colors duration-100"
-            :class="[n.status == 'G1' ? 'bg-white hover:bg-stone-50' : 'bg-amber-50/60 hover:bg-amber-50', n.link ? 'cursor-pointer' : 'cursor-default']"
+            :class="[n.status == 'G0' ? 'bg-white hover:bg-stone-50' : 'bg-amber-50/60 hover:bg-amber-50', n.link ? 'cursor-pointer' : 'cursor-default']"
             @click="markAsRead(n)"
           >
             <!-- 타입 아이콘 -->
@@ -164,7 +173,7 @@ onUnmounted(() => {
             <div class="flex-1 min-w-0">
               <p class="text-sm text-stone-700 leading-relaxed line-clamp-2" :class="n.status == 'G1' ? 'font-normal' : 'font-semibold'">
                 {{ n.content }}
-                <span v-if="n.status == 'G0'" class="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 ml-1 mb-px align-middle"></span>
+                <span v-if="n.status == 'G1'" class="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 ml-1 mb-px align-middle"></span>
               </p>
               <div class="flex items-center gap-2 mt-1.5">
                 <p class="text-[11px] text-stone-400 font-medium">{{ formatTime(n.createdOn) }}</p>

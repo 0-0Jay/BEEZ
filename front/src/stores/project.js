@@ -13,7 +13,8 @@ export const useProjectStore = defineStore('project', {
       userList: [],
       groupList: [],
       groupMemberList: []
-    }
+    },
+    roles: []
   }),
   // getters
   // actions
@@ -93,8 +94,22 @@ export const useProjectStore = defineStore('project', {
         groupList: groupByUserId(response.data.groupList, 'groupId'),
         groupMemberList: groupByUserId(response.data.groupMemberList, 'userId')
       };
+    },
 
-      console.log(this.members);
+    // 프로젝트 구성원 삭제
+    async deleteProjectMember(projectMemberId) {
+      await axios.delete(`/project/member/${projectMemberId}`);
+    },
+
+    // 역할 조회
+    async fetchRoles() {
+      const response = await axios.get(`/project/roles`);
+      this.roles = response.data;
+    },
+
+    // 프로젝트 구성원 수정
+    async updateProjectMember(projectMemberId, roleIds) {
+      await axios.put(`/project/member/${projectMemberId}`, { roleIds });
     }
   },
   persist: {

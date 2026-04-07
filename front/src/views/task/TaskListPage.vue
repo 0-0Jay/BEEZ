@@ -219,7 +219,7 @@ onMounted(async () => {
       <div>
         <h1 class="text-2xl font-bold tracking-tight text-stone-900">일감 목록</h1>
       </div>
-      <Button icon="pi pi-plus" label="일감 추가" @click="router.push('/task/create')" />
+      <Button icon="pi pi-plus" label="일감 추가" raised @click="router.push('/task/create')" />
     </div>
 
     <!-- 필터 카드 -->

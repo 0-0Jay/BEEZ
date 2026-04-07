@@ -3,7 +3,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useChatStore } from '@/stores/chat';
 import { useProjectStore } from '@/stores/project';
 import { Client } from '@stomp/stompjs';
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 
 /* ---------------- 상태 ---------------- */
 const isOpen = ref(false);
@@ -17,10 +17,11 @@ const chatStore = useChatStore();
 const projectStore = useProjectStore();
 const authStore = useAuthStore();
 const project = computed(() => projectStore.selectedProject);
-const projectId = project.value.id;
+const projectId = computed(() => project.value?.id);
 const userId = computed(() => authStore.user.id ?? '');
 
 let stompClient = null;
+let currentSubscription = null;
 
 /* ---------------- 채팅창 토글 ---------------- */
 const toggleChat = () => {
@@ -113,7 +114,7 @@ const sendMessage = () => {
   if (!message.value.trim()) return;
 
   stompClient.publish({
-    destination: `/send/chat/${projectId}`,
+    destination: `/send/chat/${projectId.value}`,
     body: JSON.stringify({
       userId: userId.value,
       content: message.value,
@@ -125,17 +126,30 @@ const sendMessage = () => {
   replyTarget.value = null;
 };
 
+// 웹소캣 구독
+const subscribeToProject = (id) => {
+  // 기존 구독 해제
+  if (currentSubscription) {
+    currentSubscription.unsubscribe();
+    currentSubscription = null;
+  }
+
+  if (!id || !stompClient?.connected) return;
+
+  currentSubscription = stompClient.subscribe(`/chat/${id}`, (msg) => {
+    const data = JSON.parse(msg.body).body;
+    const mapped = mapMessage({ ...data, userName: data.userName || data.userId });
+    handleNewMessage(mapped);
+  });
+};
+
 /* ---------------- 웹소켓 연결 ---------------- */
 const connect = () => {
   stompClient = new Client({
     brokerURL: 'ws://localhost:8888/ws/chat',
     reconnectDelay: 5000,
     onConnect: () => {
-      stompClient.subscribe(`/chat/${projectId}`, (msg) => {
-        const data = JSON.parse(msg.body);
-        const mapped = mapMessage({ ...data, userName: data.userName || data.userId });
-        handleNewMessage(mapped);
-      });
+      subscribeToProject(projectId.value);
     }
   });
   stompClient.activate();
@@ -144,7 +158,7 @@ const connect = () => {
 /* ---------------- 초기 메시지 조회 ---------------- */
 const loadMessages = async () => {
   try {
-    const res = await chatStore.findChatList(projectId);
+    const res = await chatStore.findChatList(projectId.value);
     messages.value = res.map(mapMessage);
     linkReplies();
     scrollToBottom();
@@ -153,10 +167,29 @@ const loadMessages = async () => {
   }
 };
 
+// 프로젝트 변경
+watch(
+  () => projectId.value,
+  async (projectId) => {
+    messages.value = null;
+    hasNewMessage.value = false;
+    unreadCount.value = 0;
+
+    subscribeToProject(projectId);
+    await loadMessages();
+  },
+  { immediate: true }
+);
+
 /* ---------------- lifecycle ---------------- */
 onMounted(() => {
   loadMessages();
   connect();
+});
+
+onUnmounted(() => {
+  currentSubscription?.unsubscribe();
+  stompClient?.deactivate();
 });
 </script>
 
@@ -209,7 +242,9 @@ onMounted(() => {
                   </div>
                 </div>
 
-                <span class="text-[11px] text-[#bbb]">{{ msg.userName }}({{ msg.userId }}) · {{ msg.time }}</span>
+                <span class="text-[11px] text-[#bbb]">
+                  {{ msg.isMine ? `나 · ${msg.time}` : `${msg.userName ?? msg.userId} · ${msg.time}` }}
+                </span>
               </div>
             </div>
           </div>

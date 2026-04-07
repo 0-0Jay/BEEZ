@@ -19,6 +19,7 @@ public class ProjectServiceImpl implements ProjectService {
   
   private final ProjectMapper projectMapper;
   private final LogsService logsService;
+  private ProjectService projectService;
   
   //  세션에서 아이디 받아오기
   private String getCurrentUserId() {
@@ -111,5 +112,24 @@ public class ProjectServiceImpl implements ProjectService {
     projectMapper.findProjectMember(member);
     return member;
   }
+  
+  //프로젝트 구성원 삭제
+  @Override
+  public void deleteProjectMember(String projectMemberId) {
+    projectMapper.deleteProjectMember(projectMemberId);
+  }
 
+  //역할 조회
+  @Override
+  public List<RolesResponse> findRoles() {
+    return projectMapper.findRoles();
+  }
+  
+  //프로젝트 구성원 수정
+  @Override
+  public void updateProjectMember(String projectMemberId, ProjectMemberUpdateRequest dto) {
+    dto.setMemberId(projectMemberId);
+    projectMapper.updateProjectMember(dto);
+  }
+  
 }

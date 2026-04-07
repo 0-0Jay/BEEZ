@@ -1,43 +1,33 @@
 <script setup>
 import { useProjectStore } from '@/stores/project';
-import { onMounted, ref } from 'vue';
+import { useToast } from 'primevue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 const projectStore = useProjectStore();
 const route = useRoute();
 const projectId = route.params.id;
+const pendingDeleteId = ref(null); // 삭제할 id 임시 저장
+const visible = ref(false);
+const confirmMsg = ref('');
+const toast = useToast();
 
 onMounted(async () => {
   await projectStore.fetchProjectMembers(projectId);
-  console.log(projectStore.members);
+  await projectStore.fetchRoles();
 });
 
-// ── Mock 데이터 (백엔드 연결 전) ──────────────────────────────
-const availableRoles = ref([
-  { id: 1, name: '관리자' },
-  { id: 2, name: '개발자' },
-  { id: 3, name: '보고자' }
-]);
+const availableRoles = computed(() => projectStore.roles);
+const userList = computed(() => projectStore.members.userList);
+const groupList = computed(() => projectStore.members.groupList);
+const getGroupMembers = (groupId) => {
+  return projectStore.members.groupMemberList.filter((m) => m.groupId === groupId);
+};
 
-// type: 'group' | 'user'
-// members: 그룹에 속한 사용자 목록 (group일 때만)
-// inheritedRoleIds: 그룹으로부터 상속받은 역할 id 목록 (user일 때)
-// roleIds: 직접 부여된 역할 id 목록
-const entries = ref([
-  {
-    id: 'user-1',
-    type: 'user',
-    name: '노정화',
-    roleIds: [2]
-  },
-  {
-    id: 'group-1',
-    type: 'group',
-    name: '개발자',
-    roleIds: [2],
-    members: [{ id: 'user-2', name: '곽현우', inheritedRoleIds: [2], roleIds: [1] }]
-  }
-]);
+//상속 받은 역할 함수
+function isInherited(member, roleId) {
+  return member.roles?.some((r) => r.roleId === roleId && r.isInherited === 'P1') ?? false;
+}
 
 // ── 아코디언 상태 ─────────────────────────────────────────────
 // expandedEditId: 현재 편집 아코디언이 열린 항목 id
@@ -45,30 +35,6 @@ const expandedEditId = ref(null);
 
 // 편집 중인 역할 임시 상태 { [id]: Set<roleId> }
 const editingRoles = ref({});
-
-function getRoleLabel(entry) {
-  const ids = [...(entry.inheritedRoleIds ?? []), ...(entry.roleIds ?? [])];
-  const unique = [...new Set(ids)];
-  if (!unique.length) return '-';
-  return unique
-    .map((id) => {
-      const role = availableRoles.value.find((r) => r.id === id);
-      return role ? role.name : '';
-    })
-    .filter(Boolean)
-    .join(', ');
-}
-
-function getGroupRoleLabel(group) {
-  if (!group.roleIds.length) return '-';
-  return group.roleIds
-    .map((id) => {
-      const role = availableRoles.value.find((r) => r.id === id);
-      return role ? role.name : '';
-    })
-    .filter(Boolean)
-    .join(', ');
-}
 
 function openEdit(id, currentRoleIds) {
   if (expandedEditId.value === id) {
@@ -94,31 +60,38 @@ function toggleRole(id, roleId) {
   else s.add(roleId);
 }
 
-function saveEdit(entry, isGroupMember = false, group = null) {
-  const newRoles = [...(editingRoles.value[entry.id] ?? [])];
+async function saveEdit(member, isGroupMember = false) {
+  const newRoles = [...(editingRoles.value[member.projectMemberId] ?? [])];
+
+  let roleIds;
   if (isGroupMember) {
-    // 그룹 멤버: inheritedRoleIds 제외하고 직접 부여 역할만 저장
-    entry.roleIds = newRoles.filter((id) => !entry.inheritedRoleIds.includes(id));
+    // 그룹 멤버: 상속받은 역할 제외하고 직접 부여 역할만 저장
+    roleIds = newRoles.filter((roleId) => !isInherited(member, roleId));
   } else {
-    entry.roleIds = newRoles;
+    roleIds = newRoles;
   }
+
+  await projectStore.updateProjectMember(member.projectMemberId, roleIds);
   closeEdit();
-  // TODO: 백엔드 API 호출
+  await projectStore.fetchProjectMembers(projectId);
 }
 
-function deleteEntry(id) {
-  const idx = entries.value.findIndex((e) => e.id === id);
-  if (idx !== -1) entries.value.splice(idx, 1);
-  // TODO: 백엔드 API 호출
-}
+// 프로젝트 구성원 삭제
+const openDeleteConfirm = (projectMemberId) => {
+  pendingDeleteId.value = projectMemberId;
+  confirmMsg.value = '정말 삭제하시겠습니까?';
+  visible.value = true;
+};
 
-// ── 편집 아코디언용 역할 목록 계산 ──────────────────────────────
-function getEditableRoles(entry, inheritedRoleIds = []) {
-  return availableRoles.value.map((role) => ({
-    ...role,
-    inherited: inheritedRoleIds.includes(role.id)
-  }));
-}
+const handleDelConfirm = async () => {
+  visible.value = false;
+  if (pendingDeleteId.value !== null) {
+    await projectStore.deleteProjectMember(pendingDeleteId.value);
+    pendingDeleteId.value = null;
+    await projectStore.fetchProjectMembers(projectId);
+    toast.add({ severity: 'success', summary: '삭제 완료', detail: '구성원이 삭제되었습니다.', life: 2000 });
+  }
+};
 </script>
 
 <template>
@@ -138,112 +111,141 @@ function getEditableRoles(entry, inheritedRoleIds = []) {
         <div class="col-actions"></div>
       </div>
 
-      <!-- 항목 목록 -->
-      <template v-for="entry in entries" :key="entry.id">
-        <!-- ── 개별 사용자 (단층) ── -->
-        <template v-if="entry.type === 'user'">
-          <div class="table-row">
-            <div class="col-name">
-              <span class="link-text">{{ entry.name }}</span>
+      <!-- 개별 사용자 -->
+      <template v-for="user in userList" :key="user.projectMemberId">
+        <div class="table-row">
+          <div class="col-name">
+            <span class="link-text">{{ user.userName }}</span>
+          </div>
+          <div class="col-role text-gray">{{ user.roles?.map((r) => r.roleName).join(', ') || '-' }}</div>
+          <div class="col-actions">
+            <button
+              class="action-btn edit-btn"
+              @click="
+                openEdit(
+                  user.projectMemberId,
+                  user.roles?.map((r) => r.roleId)
+                )
+              "
+            >
+              <i class="pi pi-pencil" /> 편집
+            </button>
+            <button class="action-btn delete-btn" @click="openDeleteConfirm(user.projectMemberId)"><i class="pi pi-trash" /> 삭제</button>
+          </div>
+        </div>
+        <Transition name="accordion">
+          <div v-if="expandedEditId === user.projectMemberId" class="accordion-row">
+            <div class="col-name"></div>
+            <div class="col-role">
+              <div class="role-checklist">
+                <label v-for="role in availableRoles" :key="role.roleId" class="role-item">
+                  <input type="checkbox" :checked="isRoleChecked(user.projectMemberId, role.roleId)" @change="toggleRole(user.projectMemberId, role.roleId)" />
+                  <span>{{ role.roleName }}</span>
+                </label>
+              </div>
             </div>
-            <div class="col-role text-gray">{{ getGroupRoleLabel(entry) }}</div>
-            <div class="col-actions">
-              <button class="action-btn edit-btn" @click="openEdit(entry.id, entry.roleIds)"><i class="pi pi-pencil" /> 편집</button>
-              <button class="action-btn delete-btn" @click="deleteEntry(entry.id)"><i class="pi pi-trash" /> 삭제</button>
+            <div class="col-actions accordion-actions">
+              <button class="btn-save" @click="saveEdit(user)">저장</button>
+              <button class="btn-cancel" @click="closeEdit">취소</button>
             </div>
           </div>
+        </Transition>
+      </template>
+
+      <!-- 그룹 -->
+      <template v-for="group in groupList" :key="group.projectMemberId">
+        <div class="table-row">
+          <div class="col-name">
+            <span class="link-text">{{ group.groupName }}</span>
+          </div>
+          <div class="col-role text-gray">{{ group.roles?.map((r) => r.roleName).join(', ') || '-' }}</div>
+          <div class="col-actions">
+            <button
+              class="action-btn edit-btn"
+              @click="
+                openEdit(
+                  group.projectMemberId,
+                  group.roles?.map((r) => r.roleId)
+                )
+              "
+            >
+              <i class="pi pi-pencil" /> 편집
+            </button>
+            <button class="action-btn delete-btn" @click="openDeleteConfirm(group.projectMemberId)"><i class="pi pi-trash" /> 삭제</button>
+          </div>
+        </div>
+        <!-- 그룹 편집 아코디언 (멤버 목록 위) -->
+        <Transition name="accordion">
+          <div v-if="expandedEditId === group.projectMemberId" class="accordion-row">
+            <div class="col-name"></div>
+            <div class="col-role">
+              <div class="role-checklist">
+                <label v-for="role in availableRoles" :key="role.roleId" class="role-item">
+                  <input type="checkbox" :checked="isRoleChecked(group.projectMemberId, role.roleId)" @change="toggleRole(group.projectMemberId, role.roleId)" />
+                  <span>{{ role.roleName }}</span>
+                </label>
+              </div>
+            </div>
+            <div class="col-actions accordion-actions">
+              <button class="btn-save" @click="saveEdit(group)">저장</button>
+              <button class="btn-cancel" @click="closeEdit">취소</button>
+            </div>
+          </div>
+        </Transition>
+
+        <!-- 그룹 멤버 행들 -->
+        <template v-for="member in getGroupMembers(group.groupId)" :key="member.projectMemberId">
+          <div class="table-row member-row">
+            <div class="col-name">
+              <span class="member-indent">└ </span>
+              <span class="link-text">{{ member.userName }}</span>
+            </div>
+            <div class="col-role text-gray">{{ member.roles?.map((r) => r.roleName).join(', ') || '-' }}</div>
+            <div class="col-actions">
+              <button
+                class="action-btn edit-btn"
+                @click="
+                  openEdit(
+                    member.projectMemberId,
+                    member.roles?.map((r) => r.roleId)
+                  )
+                "
+              >
+                <i class="pi pi-pencil" /> 편집
+              </button>
+            </div>
+          </div>
+          <!-- 멤버 편집 아코디언 -->
           <Transition name="accordion">
-            <div v-if="expandedEditId === entry.id" class="accordion-row">
+            <div v-if="expandedEditId === member.projectMemberId" class="accordion-row">
               <div class="col-name"></div>
               <div class="col-role">
                 <div class="role-checklist">
-                  <label v-for="role in getEditableRoles(entry)" :key="role.id" class="role-item">
-                    <input type="checkbox" :checked="isRoleChecked(entry.id, role.id)" @change="toggleRole(entry.id, role.id)" />
-                    <span>{{ role.name }}</span>
+                  <label v-for="role in availableRoles" :key="role.roleId" class="role-item" :class="{ 'role-inherited': isInherited(member, role.roleId) }">
+                    <input type="checkbox" :checked="isRoleChecked(member.projectMemberId, role.roleId)" :disabled="isInherited(member, role.roleId)" @change="!isInherited(member, role.roleId) && toggleRole(member.projectMemberId, role.roleId)" />
+                    <span>
+                      {{ role.roleName }}
+                      <span v-if="isInherited(member, role.roleId)" class="inherited-label"> ({{ group.groupName }} 그룹으로부터 상속) </span>
+                    </span>
                   </label>
                 </div>
               </div>
               <div class="col-actions accordion-actions">
-                <button class="btn-save" @click="saveEdit(entry)">저장</button>
+                <button class="btn-save" @click="saveEdit(member, true, entry)">저장</button>
                 <button class="btn-cancel" @click="closeEdit">취소</button>
               </div>
             </div>
           </Transition>
-        </template>
-
-        <!-- ── 그룹 ── -->
-        <template v-else>
-          <!-- 그룹 행 -->
-          <div class="table-row">
-            <div class="col-name">
-              <span class="link-text">{{ entry.name }}</span>
-            </div>
-            <div class="col-role text-gray">{{ getGroupRoleLabel(entry) }}</div>
-            <div class="col-actions">
-              <button class="action-btn edit-btn" @click="openEdit(entry.id, entry.roleIds)"><i class="pi pi-pencil" /> 편집</button>
-              <button class="action-btn delete-btn" @click="deleteEntry(entry.id)"><i class="pi pi-trash" /> 삭제</button>
-            </div>
-          </div>
-          <!-- 그룹 편집 아코디언 (멤버 목록 위) -->
-          <Transition name="accordion">
-            <div v-if="expandedEditId === entry.id" class="accordion-row">
-              <div class="col-name"></div>
-              <div class="col-role">
-                <div class="role-checklist">
-                  <label v-for="role in getEditableRoles(entry)" :key="role.id" class="role-item">
-                    <input type="checkbox" :checked="isRoleChecked(entry.id, role.id)" @change="toggleRole(entry.id, role.id)" />
-                    <span>{{ role.name }}</span>
-                  </label>
-                </div>
-              </div>
-              <div class="col-actions accordion-actions">
-                <button class="btn-save" @click="saveEdit(entry)">저장</button>
-                <button class="btn-cancel" @click="closeEdit">취소</button>
-              </div>
-            </div>
-          </Transition>
-
-          <!-- 그룹 멤버 행들 -->
-          <template v-for="member in entry.members" :key="member.id">
-            <div class="table-row member-row">
-              <div class="col-name">
-                <span class="member-indent">└ </span>
-                <span class="link-text">{{ member.name }}</span>
-              </div>
-              <div class="col-role text-gray">{{ getRoleLabel(member) }}</div>
-              <div class="col-actions">
-                <button class="action-btn edit-btn" @click="openEdit(member.id, [...member.inheritedRoleIds, ...member.roleIds])"><i class="pi pi-pencil" /> 편집</button>
-              </div>
-            </div>
-            <!-- 멤버 편집 아코디언 -->
-            <Transition name="accordion">
-              <div v-if="expandedEditId === member.id" class="accordion-row">
-                <div class="col-name"></div>
-                <div class="col-role">
-                  <div class="role-checklist">
-                    <label v-for="role in getEditableRoles(member, member.inheritedRoleIds)" :key="role.id" class="role-item" :class="{ 'role-inherited': role.inherited }">
-                      <input type="checkbox" :checked="isRoleChecked(member.id, role.id)" :disabled="role.inherited" @change="!role.inherited && toggleRole(member.id, role.id)" />
-                      <span>
-                        {{ role.name }}
-                        <span v-if="role.inherited" class="inherited-label"> ({{ entry.name }} 그룹으로부터 상속) </span>
-                      </span>
-                    </label>
-                  </div>
-                </div>
-                <div class="col-actions accordion-actions">
-                  <button class="btn-save" @click="saveEdit(member, true, entry)">저장</button>
-                  <button class="btn-cancel" @click="closeEdit">취소</button>
-                </div>
-              </div>
-            </Transition>
-          </template>
         </template>
       </template>
 
       <!-- 빈 상태 -->
-      <div v-if="entries.length === 0" class="empty-state">등록된 구성원이 없습니다.</div>
+      <div v-if="userList.length === 0 && groupList.length === 0" class="empty-state">등록된 구성원이 없습니다.</div>
     </div>
   </div>
+  <ConfirmDialog v-model:visible="visible" confirmLabel="확인" @confirm="handleDelConfirm">
+    <span class="text-gray-700 font-medium">{{ confirmMsg }}</span>
+  </ConfirmDialog>
 </template>
 
 <style scoped>

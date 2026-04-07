@@ -16,6 +16,7 @@ import java.util.List;
 @Builder
 public class TaskResponse {
   private String id;
+  private String status;
   private String versionId;
   private String title;
   private String description;
@@ -32,6 +33,7 @@ public class TaskResponse {
   private Timestamp actualEnd;
   private BigDecimal estimatedTime;
   private BigDecimal progress;
+  private BigDecimal subProgress;
   private String parentId;
   private String parentName;
   private String isPublic;

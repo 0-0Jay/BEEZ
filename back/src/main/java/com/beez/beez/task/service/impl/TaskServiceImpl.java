@@ -112,10 +112,12 @@ public class TaskServiceImpl implements TaskService {
     
     // 일감 생성자가 일감 담당자와 다를 경우 일감 담당자에게 일감 부여됨을 알림
     if (!task.getCreator().equals(task.getUserId())) {
+      System.out.println(task.getCreator() + ", " + task.getUserId());
       notificationService.sendNotification(NotificationRequest.builder()
         .userId(task.getUserId())
         .content("새로운 일감이 할당되었습니다.")
         .link("/task/" + task.getId())
+        .projectId(task.getProjectId())
         .build());
     }
     
@@ -128,6 +130,7 @@ public class TaskServiceImpl implements TaskService {
     List<FileDetailRequest> fileDetails = fileService.saveFile(files);
     task.setFileDetails(fileDetails);
     taskMapper.updateTask(task);
+    
     // 반려 또는 완료일경우 담당자에게 알림
     if (task.getWorkflow().equals("Q3") || task.getWorkflow().equals("Q4")) {
       notificationService.sendNotification(NotificationRequest.builder()
@@ -192,6 +195,8 @@ public class TaskServiceImpl implements TaskService {
   @Override
   public void insertTaskTime(TaskTimeRequest taskTimeRequest) {
     taskMapper.insertTaskTime(taskTimeRequest);
+    // 진척도 계산
+    taskMapper.calcSubProgress(taskTimeRequest.getTaskId(), taskTimeRequest.getProgress());
   }
   
   // 일감 연결 끊기

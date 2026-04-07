@@ -107,12 +107,7 @@ onMounted(async () => {
               >개
             </p>
           </div>
-          <Button
-            label="일감 유형 추가"
-            icon="pi pi-plus"
-            class="!bg-amber-600 !border-amber-600 hover:!bg-amber-700 hover:!border-amber-700 !text-amber-50 !font-semibold !text-sm !px-4 !py-2 !rounded-lg !shadow-md !shadow-amber-200 transition-all duration-150 hover:!-translate-y-0.5"
-            @click="openTypeAdd"
-          />
+          <Button label="일감 유형 추가" icon="pi pi-plus" raised @click="openTypeAdd" />
         </div>
 
         <div class="overflow-x-auto">
@@ -162,12 +157,7 @@ onMounted(async () => {
               >개
             </p>
           </div>
-          <Button
-            label="일감 범주 추가"
-            icon="pi pi-plus"
-            class="!bg-amber-600 !border-amber-600 hover:!bg-amber-700 hover:!border-amber-700 !text-amber-50 !font-semibold !text-sm !px-4 !py-2 !rounded-lg !shadow-md !shadow-amber-200 transition-all duration-150 hover:!-translate-y-0.5"
-            @click="openCatAdd"
-          />
+          <Button label="일감 범주 추가" icon="pi pi-plus" rasied @click="openCatAdd" />
         </div>
 
         <div class="overflow-x-auto">

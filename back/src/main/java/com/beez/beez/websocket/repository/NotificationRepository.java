@@ -12,14 +12,14 @@ public interface NotificationRepository extends JpaRepository<Notifications, Str
   @Modifying
   @Transactional
   @Query(value =
-    "INSERT INTO notifications(id, user_id, content, created_on, status, link) " +
-      "VALUES(generate_pk('notifications'), :userId, :content, SYSTIMESTAMP, 'G0', :link)",
+    "INSERT INTO notifications(id, user_id, content, created_on, status, link, project_id) " +
+      "VALUES(generate_pk('notifications'), :userId, :content, SYSTIMESTAMP, 'G1', :link, :projectId)",
     nativeQuery = true)
   void insertNotification(
     @Param("userId") String userId,
     @Param("content") String content,
-    @Param("link") String link
+    @Param("link") String link,
+    @Param("projectId") String projectId
   );
-  
-  public List<Notifications> findAllByUserIdOrderByIdDesc(String userId);
+
 }
