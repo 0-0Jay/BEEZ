@@ -142,6 +142,9 @@ BEGIN
         LEFT JOIN roles r ON r.id = rm.role_id
         WHERE pm.project_id = p_project_id
         AND pm.group_id IS NULL
+        AND pm.is_delete = 'F0'
+        AND rm.is_delete = 'F0'
+        AND rm.role_id NOT IN ('ROLE0001', 'ROLE0002')
         ORDER BY pm.id;
         
     OPEN p_groups FOR
@@ -156,6 +159,8 @@ BEGIN
         LEFT JOIN roles r ON r.id = rm.role_id
         WHERE pm.project_id = p_project_id
         AND pm.user_id IS NULL
+        AND pm.is_delete = 'F0'
+        AND rm.is_delete = 'F0'
         ORDER BY pm.id;
     
     OPEN p_group_members FOR
@@ -173,6 +178,8 @@ BEGIN
     WHERE pm.project_id = p_project_id
     AND pm.user_id IS NOT NULL
     AND pm.group_id IS NOT NULL
+    AND pm.is_delete = 'F0'
+    AND rm.is_delete = 'F0'
     ORDER BY pm.id;
 END;
 /
@@ -220,4 +227,123 @@ BEGIN
 END;
 /
 
-SELECT * FROM project_member WHERE project_id = 'PROJ2603007';
+ALTER TABLE project_member ADD (is_delete VARCHAR2(3) DEFAULT 'F0' NOT NULL);
+COMMENT ON COLUMN project_member.is_delete IS '삭제여부';
+COMMIT;
+
+CREATE OR REPLACE PROCEDURE delete_project_member (
+    p_project_member_id IN VARCHAR2
+)
+AS 
+    v_group_id project_member.group_id%TYPE;
+    v_project_id project_member.project_id%TYPE;
+BEGIN
+    -- group_id, project_id 조회
+    SELECT group_id, project_id
+    INTO v_group_id, v_project_id
+    FROM project_member
+    WHERE id = p_project_member_id;
+    
+    IF v_group_id IS NULL THEN
+        -- 개별 사용자 소프트 딜리트
+        UPDATE project_member
+        SET is_delete = 'F1'
+        WHERE id = p_project_member_id;
+        
+        -- 해당 멤버의 role_mapping도 소프트 딜리트
+        UPDATE role_mapping
+        SET is_delete = 'F1'
+        WHERE member_id = p_project_member_id;
+    ELSE
+        -- 그룹 소프트 딜리트
+        UPDATE project_member
+        SET is_delete = 'F1'
+        WHERE id = p_project_member_id;
+        
+        -- 해당 그룹의 role_mapping도 소프트 딜리트
+        UPDATE role_mapping
+        SET is_delete = 'F1'
+        WHERE member_id = p_project_member_id;
+        
+        -- 1. 개별 역할 있는 멤버의 상속 역할만 소프트 딜리트
+        UPDATE role_mapping
+        SET is_delete = 'F1'
+        WHERE member_id IN (
+            SELECT id FROM project_member
+            WHERE group_id = v_group_id
+            AND project_id = v_project_id
+            AND is_delete = 'F0'
+        )
+        AND is_inherited = 'P1';
+        
+        -- 2. 개별 역할 있는 멤버 -> 개별 사용자로 전환
+        UPDATE project_member
+        SET group_id = NULL
+        WHERE group_id = v_group_id
+        AND project_id = v_project_id
+        AND id IN (
+            SELECT member_id FROM role_mapping
+            WHERE is_inherited = 'P0'
+            AND is_delete = 'F0'
+        );
+        
+        -- 3. 나머지 그룹 멤버 role_mapping 소프트 딜리트 (개별 역할도 포함)
+        UPDATE role_mapping
+        SET is_delete = 'F1'
+        WHERE member_id IN (
+            SELECT id FROM project_member
+            WHERE group_id = v_group_id
+            AND project_id = v_project_id
+            AND is_delete = 'F0'
+        );
+        
+        -- 4. 나머지 그룹 멤버 소프트 딜리트
+        UPDATE project_member
+        SET is_delete = 'F1'
+        WHERE group_id = v_group_id
+        AND project_id = v_project_id
+        AND is_delete = 'F0';
+ 
+    END IF;
+    
+    COMMIT;
+END;
+/
+
+ALTER TABLE role_mapping ADD (is_delete VARCHAR2(3) DEFAULT 'F0' NOT NULL);
+COMMENT ON COLUMN role_mapping.is_delete IS '삭제여부';
+
+COMMIT;
+
+SELECT id, name
+FROM roles
+WHERE id >= 'ROLE0004';
+
+-- 프로젝트 구성원 역할 수정 프로시저
+CREATE OR REPLACE PROCEDURE update_project_member_role (
+    p_member_id IN VARCHAR2,
+    p_role_ids  IN T_VARCHAR_LIST  -- 최종 선택된 역할 배열
+)
+AS
+BEGIN
+    -- 1. 기존 직접 부여 역할 전부 삭제 처리
+    UPDATE role_mapping
+    SET is_delete = 'F1'
+    WHERE member_id = p_member_id
+    AND is_inherited = 'P0';
+    
+    -- 2. 선택된 역할들 MERGE INTO
+    FOR i IN 1 .. p_role_ids.COUNT LOOP
+        MERGE INTO role_mapping rm
+        USING DUAL
+        ON (rm.member_id = p_member_id 
+            AND rm.role_id = p_role_ids(i) 
+            AND rm.is_inherited = 'P0')
+        WHEN MATCHED THEN
+            UPDATE SET rm.is_delete ='F0'
+        WHEN NOT MATCHED THEN
+            INSERT (member_id, role_id, is_inherited, is_delete)
+            VALUES (p_member_id,p_role_ids(i), 'P0', 'F0');
+    END LOOP;
+END;
+/
