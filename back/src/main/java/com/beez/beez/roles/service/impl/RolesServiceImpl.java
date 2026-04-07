@@ -1,6 +1,7 @@
 package com.beez.beez.roles.service.impl;
 
 import com.beez.beez.permission.mapper.PermissionMapper;
+import com.beez.beez.roles.dto.RoleDetailResponse;
 import com.beez.beez.roles.dto.RoleListResponse;
 import com.beez.beez.roles.dto.RoleSaveRequest;
 import com.beez.beez.roles.dto.RoleUpdateRequest;
@@ -23,9 +24,16 @@ public class RolesServiceImpl implements RolesService {
   private final RolesMapper rolesMapper;
   private final PermissionMapper permissionMapper;
 
+  // 역할 전체 조회
   @Override
   public List<RoleListResponse> findAllRoles() {
     return rolesMapper.findAllRoles();
+  }
+
+  // 역할 상세 조회
+  @Override
+  public RoleDetailResponse findByRoleIdRole(String id) {
+    return rolesMapper.findByRoleIdRole(id);
   }
 
   // 새 역할 기본 정보 등록
@@ -34,7 +42,7 @@ public class RolesServiceImpl implements RolesService {
     // 역할 이름 중복 체크
     int count = rolesMapper.countByName(dto.getName());
     if (count > 0) {
-      throw new RuntimeException("이미 존재하는 역할 이름입니다.: " + dto.getName());
+      throw new RuntimeException("이미 존재하는 역할 이름입니다.");
     }
 
     Roles newRole
@@ -52,33 +60,33 @@ public class RolesServiceImpl implements RolesService {
 
   // 역할 수정(이름, 권한 등)
   @Override
-  public void updateRoles(RoleUpdateRequest dto) {
+  public void updateRoles(RoleUpdateRequest dto, String id) {
     // 내 ID를 제외하고 이름 중복 체크
-    int count = rolesMapper.countByNameExcludingMe(dto.getName(), dto.getId());
+    int count = rolesMapper.countByNameExcludingMe(dto.getName(), id);
     if (count > 0) {
       throw new RuntimeException("다른 역할에서 이미 사용 중인 이름입니다.");
     }
 
     // 역할 정보 수정
-    rolesMapper.updateByIdRoles(dto);
+    rolesMapper.updateByIdRoles(dto, id);
 
     // 기존 권한 매핑 데이터 전체 삭제
-    permissionMapper.deleteByRoleIdPermissionMapping(dto.getId());
+    permissionMapper.deleteByRoleIdPermissionMapping(id);
 
     // 새로 선택된 권한들이 있다면 다시 넣기
     if (dto.getPerIds() != null && !dto.getPerIds().isEmpty()) {
-      permissionMapper.insertPermissionMapping(dto.getId(), dto.getPerIds());
+      permissionMapper.insertPermissionMapping(id, dto.getPerIds());
     }
   }
 
   // 역할 삭제
   @Override
-  public void deleteRoles(String roleId) {
+  public void deleteRoles(String id) {
     // 권한 매핑 삭제(자식)
-    permissionMapper.deleteByRoleIdPermissionMapping(roleId);
+    permissionMapper.deleteByRoleIdPermissionMapping(id);
 
     // 역할 삭제(부모)
-    int result = rolesMapper.deleteByIdRoles(roleId);
+    int result = rolesMapper.deleteByIdRoles(id);
 
     if(result == 0)
       throw new RuntimeException("역할 삭제를 실패하였습니다.");

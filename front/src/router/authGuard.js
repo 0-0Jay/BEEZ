@@ -52,12 +52,12 @@ export const setupAuthGuard = (to, from, next) => {
   // 권한 체크
   if (to.meta.role) {
     // console.log('권한 체크 진입');
-    const userRoles = authStore.user?.roles || [];
+    const userRole = authStore.user?.role || [];
     // console.log('userRoles:', userRoles);
     // console.log('required:', to.meta.role);
-    if (!userRoles.includes(to.meta.role)) {
+    if (!userRole.includes(to.meta.role)) {
       console.log('alert 직전');
-      alertStore.setAlert(`접근 권한이 없습니다!\n(보유 권한: ${userRoles.length ? userRoles : '없음'}, 필요: ${to.meta.role})`);
+      alertStore.setAlert(`접근 권한이 없습니다!\n(보유 권한: ${userRole.length ? userRole : '없음'}, 필요: ${to.meta.role})`);
       return next({ name: 'dashboard' });
     }
   }

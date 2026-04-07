@@ -7,11 +7,34 @@
     SELECT r.id,
            r.name,
            (SELECT LISTAGG(p.name, ', ') WITHIN GROUP (ORDER BY p.name)
-            FROM permission_mapping pm
-            JOIN permission p ON pm.perm_id = p.id
-            WHERE pm.role_id = r.id ) AS perNames
+            FROM   permission_mapping pm
+            JOIN   permission p ON pm.perm_id = p.id
+            WHERE  pm.role_id = r.id ) AS perNames,
+           (SELECT COUNT(*)
+            FROM   role_mapping
+            WHERE  role_id = r.id) AS useCount
     FROM roles r
     ORDER BY id DESC
+  </select>
+
+  <!-- 역할 상세 조회 -->
+  <resultMap id="roleDetailMap" type="com.beez.beez.roles.dto.RoleDetailResponse">
+    <id property="id" column="id"/>
+    <result property="name" column="name"/>
+    <result property="isAssignee" column="is_assignee"/>
+    <collection property="perIds" ofType="String">
+      <result column="perm_id"/>
+    </collection>
+  </resultMap>
+
+  <select id="findByRoleIdRole" resultMap="roleDetailMap">
+    SELECT r.id,
+           r.name,
+           r.is_assignee,
+           pm.perm_id
+    FROM   roles r
+    LEFT OUTER JOIN permission_mapping pm ON r.id = pm.role_id
+    WHERE  r.id = #{id}
   </select>
 
   <!-- 역할 이름 중복 체크 -->
@@ -29,7 +52,7 @@
   </select>
 
   <!-- 새 역할 기본 정보 등록 -->
-  <insert id="insertRole" parameterType="com.beez.beez.roles.repository.Roles">
+  <insert id="insertRoles" parameterType="com.beez.beez.roles.repository.Roles">
     <selectKey keyProperty="id" resultType="string" order="BEFORE">
       SELECT BEEZ.generate_pk_auto('roles') FROM dual
     </selectKey>
@@ -47,14 +70,14 @@
   <!-- 역할 수정(이름, 권한 등) -->
   <update id="updateByIdRoles">
     UPDATE roles
-    SET    name = #{name} AND is_assignee = #{isAssignee}
+    SET    name = #{dto.name}, is_assignee = #{dto.isAssignee}
     WHERE  id = #{id}
 
   </update>
 
   <!-- 역할 삭제 -->
   <delete id="deleteByIdRoles" >
-    DELETE FROM roles WHERE id = #{roleId}
+    DELETE FROM roles WHERE id = #{id}
   </delete>
 
   <!-- 역할 복사 -->

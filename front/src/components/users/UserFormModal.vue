@@ -116,6 +116,7 @@ const handleRegister = async () => {
     });
     emit('saved');
     close();
+    await usersStore.fetchUsers();
   } catch (error) {
     console.error('등록 실패:', error);
     toast.add({

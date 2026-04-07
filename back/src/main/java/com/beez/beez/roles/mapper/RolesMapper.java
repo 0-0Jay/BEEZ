@@ -1,16 +1,21 @@
 package com.beez.beez.roles.mapper;
 
+import com.beez.beez.roles.dto.RoleDetailResponse;
 import com.beez.beez.roles.dto.RoleListResponse;
 import com.beez.beez.roles.dto.RoleUpdateRequest;
 import com.beez.beez.roles.repository.Roles;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 import java.util.Map;
 
 public interface RolesMapper {
 
-  //역할 목록 조회
+  // 역할 목록 조회
   List<RoleListResponse> findAllRoles();
+
+  // 역할 상세 조회
+  RoleDetailResponse findByRoleIdRole(String id);
 
   // 새 역할 기본 정보 등록
   void insertRoles(Roles roles);
@@ -22,10 +27,10 @@ public interface RolesMapper {
   int countByNameExcludingMe(String name, String id);
 
   // 역할 수정(이름, 권한 등)
-  void updateByIdRoles(RoleUpdateRequest dto);
+  void updateByIdRoles(@Param("dto") RoleUpdateRequest dto, @Param("id") String id);
 
   // 역할 삭제
-  int deleteByIdRoles(String roleId);
+  int deleteByIdRoles(String id);
 
   // 역할 복사
   void copyRoles(Map<String, Object> params);

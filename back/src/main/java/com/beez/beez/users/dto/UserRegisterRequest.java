@@ -21,7 +21,7 @@ public class UserRegisterRequest {
 
   public Users toEntity() {
     // 기본값 ROLE0003: 일반 사용자
-    if (this.role == null || this.role.isEmpty()) {
+    if (this.role == null) {
       this.role = "ROLE0003";
     }
 
@@ -31,7 +31,7 @@ public class UserRegisterRequest {
       .password(this.password)
       .name(this.name)
       .status("H1") // 기본 활성화 상태
-      .roles(List.of(this.role))
+      .role(this.role)
       .build();
   }
 

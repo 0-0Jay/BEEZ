@@ -13,6 +13,7 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class JwtProvider {
@@ -33,7 +34,12 @@ public class JwtProvider {
 
   // 토큰 발급
   public String createToken(Users user){
-    List<String> roles = user.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList();
+    System.out.println("로그인 유저 권한 체크: " + user.getAuthorities());
+
+   String authorities
+     = user.getAuthorities().stream()
+     .map(GrantedAuthority::getAuthority)
+     .collect(Collectors.joining(","));
 
     Date now = new Date();
 
@@ -42,8 +48,9 @@ public class JwtProvider {
 
     return Jwts.builder()
       .subject(user.getId()) // 사원번호를 식별
-      .claim("roles", roles) // 어떤 권한을 가졌는지 토큰에 넣음
       .claim("name", user.getName())
+      .claim("auth", authorities) // 어떤 권한을 가졌는지 토큰에 넣음
+      .claim("role", user.getRole()) // 역할
       .issuedAt(now) // 발급시간
       .expiration(new Date(now.getTime() + tokenValidTime)) // 만료 시간
       .signWith(key) // 비밀키로 전자 서명

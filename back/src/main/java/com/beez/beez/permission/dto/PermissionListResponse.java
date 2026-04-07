@@ -17,6 +17,6 @@ public class PermissionListResponse {
   private String url;
 
   // 가공용 필드
-  private String group;  // "프로젝트"
-  private String type;   // "조회
+  private String category;  // "프로젝트"
+  private String action;   // "조회
 }

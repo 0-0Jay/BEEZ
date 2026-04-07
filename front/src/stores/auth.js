@@ -6,7 +6,12 @@ export const useAuthStore = defineStore('auth', {
   // state
   state: () => ({
     accessToken: null, // 엑세스 토큰
-    user: null // 사용자 정보
+    user: {
+      id: '',
+      name: '',
+      role: '',
+      authorities: []
+    } // 사용자 정보
   }),
 
   // getters
@@ -30,14 +35,16 @@ export const useAuthStore = defineStore('auth', {
           this.accessToken = token;
 
           const decoded = jwtDecode(token);
+          console.log('디코딩된 토큰 내용:', decoded);
 
           this.user = {
             id: decoded.sub,
-            roles: decoded.roles,
-            name: decoded.name
+            name: decoded.name,
+            authorities: decoded.auth ? decoded.auth.split(',') : [],
+            role: decoded.role
           };
 
-          // console.log(token, this.user);
+          // console.log(this.user);
 
           // localStorage.setItem('accessToken', token);
           // localStorage.setItem('user', JSON.stringify(this.user));

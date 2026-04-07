@@ -143,7 +143,7 @@ const toggleAdminMenu = () => {
       </div>
 
       <div v-show="showContent && isOpen">
-        <template v-if="authStore.user?.roles.includes('ROLE0001')">
+        <template v-if="authStore.user?.role.includes('ROLE0001')">
           <div @click="toggleAdminMenu" class="menu-item whitespace-nowrap cursor-pointer px-3 py-2.5 rounded-lg hover:bg-gray-700 transition-colors duration-150 flex items-center justify-between">
             <span>관리</span>
           </div>

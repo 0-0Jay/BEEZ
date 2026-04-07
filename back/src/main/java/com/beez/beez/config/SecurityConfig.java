@@ -1,5 +1,6 @@
 package com.beez.beez.config;
 
+import com.beez.beez.config.auth.DynamicAuthorizationManager;
 import com.beez.beez.config.jwt.JwtAuthenticationFilter;
 import com.beez.beez.config.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class SecurityConfig {
 
   private final JwtProvider jwtProvider;
   private final UserDetailsService userDetailsService;
+  private final DynamicAuthorizationManager dynamicAuthorizationManager;
 
   @Bean
   public PasswordEncoder passwordEncoder(){
@@ -42,13 +44,10 @@ public class SecurityConfig {
       .authorizeHttpRequests(auth -> auth
         // 누구나 접근 가능
         .requestMatchers("/api/auth/**").permitAll()
-        // role에 따른 접근 제어
-        .requestMatchers("/api/users/**", "/api/roles/**", "/api/permission/**").hasAuthority("ROLE0001")
-        // 프로젝트 관련 기능
-        // 특정 역할이 필요한 경로
-//         .requestMatchers("/projects/**").hasAnyAuthority("ROLE0001", "ROLE0002")
+        // 관리자만
+        .requestMatchers("/api/roles/**", "/api/users/**", "/api/permission/**").hasAuthority("ROLE0001")
         // 그 외 페이지
-        .anyRequest().permitAll())
+        .anyRequest().access(dynamicAuthorizationManager))
       // jwt 필터 추가
       .addFilterBefore(new JwtAuthenticationFilter(jwtProvider, userDetailsService), UsernamePasswordAuthenticationFilter.class);
 

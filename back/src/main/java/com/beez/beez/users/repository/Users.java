@@ -28,26 +28,20 @@ public class Users implements UserDetails {
   private LocalDateTime createdOn;
 
   // 역할 리스트
+  private String role;
+
+  // 권한 리스트
   @Builder.Default
-  private List<String> roles = new ArrayList<>();
+  private List<GrantedAuthority> authorities = new ArrayList<>();
 
   // UserDetails 구현
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
-    // 역할 리스트에 담긴 문자열들을 시큐리티 역할 객체로 변환
-    if (this.roles == null || this.roles.isEmpty()) return Collections.emptyList();
-
-    return this.roles.stream()
-      .map(SimpleGrantedAuthority::new)
-      .collect(Collectors.toList());
+    return this.authorities;
   }
 
   @Override
   public String getUsername() { return this.id; }
-
-  public void setRoles(List<String> roles) {
-    this.roles = (roles == null) ? new ArrayList<>() : new ArrayList<>(roles);
-  }
 
 //  @Override
 //  public boolean isAccountNonExpired() { return true; }
@@ -64,4 +58,5 @@ public class Users implements UserDetails {
     // 활성화 상태(H1)일 때만 true를 반환
     return "H1".equals(this.status);
   }
+
 }

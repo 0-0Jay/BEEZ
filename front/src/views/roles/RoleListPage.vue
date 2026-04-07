@@ -1,12 +1,18 @@
 <script setup>
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import { useRolesStore } from '@/stores/roles';
+import { useToast } from 'primevue';
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 const rolesStore = useRolesStore();
 const router = useRouter();
+const toast = useToast();
 
 const loading = ref(false);
+const visible = ref(false);
+const confirmMsg = ref('');
+const selectedRoleId = ref(null); // 삭제할 role id
 
 const totalCount = computed(() => rolesStore.roleList.length);
 
@@ -18,6 +24,75 @@ onMounted(async () => {
     loading.value = false;
   }
 });
+
+const formatPermissions = (perNames) => {
+  if (!perNames) return '-';
+
+  const names = perNames.split(',').map((name) => name.trim());
+
+  if (names.length <= 3) {
+    return names.join(', ');
+  }
+
+  const displayNames = names.slice(0, 2).join(', ');
+  const extraCount = names.length - 2;
+
+  return `${displayNames} 외 ${extraCount}건`;
+};
+
+// 삭제 컨펌
+const openDeleteConfirm = (data) => {
+  selectedRoleId.value = data.id;
+  confirmMsg.value = `'${data.name}' 역할을 삭제하시겠습니까?`;
+  visible.value = true;
+};
+
+// 역할 삭제
+const onDelete = async () => {
+  if (!selectedRoleId.value) return;
+
+  try {
+    await rolesStore.deleteRoles(selectedRoleId.value);
+    toast.add({
+      severity: 'success',
+      summary: '삭제 완료',
+      detail: '역할 삭제가 완료되었습니다.',
+      life: 3000,
+      closable: false
+    });
+
+    await rolesStore.fetchRoles();
+    visible.value = false;
+  } catch (err) {
+    const isConflict = err.response?.status === 409;
+
+    toast.add({
+      severity: isConflict ? 'warn' : 'error',
+      summary: isConflict ? '삭제 불가' : '오류 발생',
+      detail: isConflict ? '현재 사용 중인 역할은 삭제할 수 없습니다.' : '서버 통신 중 오류가 발생했습니다.',
+      life: 5000
+    });
+  } finally {
+    visible.value = false;
+    selectedRoleId.value = null;
+  }
+};
+
+// 역할 복사 페이지 이동
+const onCopy = (data) => {
+  router.push({
+    path: '/roles/add',
+    query: { copyId: data.id }
+  });
+};
+
+// 역할 수정 페이지 이동
+const onEdit = (data) => {
+  router.push({
+    path: '/roles/edit',
+    query: { editId: data.id }
+  });
+};
 </script>
 
 <template>
@@ -25,7 +100,7 @@ onMounted(async () => {
     <h1 class="text-2xl font-bold text-[#1A1816]">역할 목록</h1>
 
     <div class="flex justify-between items-center mb-3" style="margin-top: 50px">
-      <span class="text-sm text-[#3A3B35] font-medium">전체 {{ totalCount }}명</span>
+      <span class="text-sm text-[#3A3B35] font-medium">전체 {{ totalCount }}개</span>
       <Button label="새 역할 추가" icon="pi pi-plus" :style="{ background: '#2D8FAD', borderColor: '#2D8FAD' }" @click="$router.push('/roles/add')" />
     </div>
 
@@ -39,10 +114,18 @@ onMounted(async () => {
           </div>
         </template>
 
-        <Column field="name" header="이름" headerClass="table-header" style="width: 120px" />
-        <Column header="권한" headerClass="table-header" style="width: 120px">
+        <Column field="name" header="이름" headerClass="table-header" style="width: 120px">
           <template #body="{ data }">
-            {{ data.perNames ? data.perNames : '-' }}
+            <span @click="onEdit(data)" class="cursor-pointer hover:underline">
+              {{ data.name }}
+            </span>
+          </template>
+        </Column>
+        <Column header="권한" headerClass="table-header" style="width: 250px">
+          <template #body="{ data }">
+            <span v-tooltip.top="data.perNames" class="cursor-help">
+              {{ formatPermissions(data.perNames) ? formatPermissions(data.perNames) : '-' }}
+            </span>
           </template>
         </Column>
 
@@ -54,12 +137,16 @@ onMounted(async () => {
 
         <Column header="삭제" headerClass="table-header" style="width: 100px">
           <template #body="{ data }">
-            <Button icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger" @click="onDelete(data)" v-tooltip="'역할 삭제'" />
+            <Button icon="pi pi-trash" :disabled="data.useCount > 0" class="p-button-rounded p-button-text p-button-danger" @click="openDeleteConfirm(data)" v-tooltip="data.useCount > 0 ? '사용 중인 역할은 삭제할 수 없습니다' : '역할 삭제'" />
           </template>
         </Column>
       </DataTable>
     </div>
   </div>
+
+  <ConfirmDialog v-model:visible="visible" confirmLabel="확인" @confirm="onDelete()">
+    <span class="text-gray-700 font-medium">{{ confirmMsg }}</span>
+  </ConfirmDialog>
 </template>
 
 <style scoped>

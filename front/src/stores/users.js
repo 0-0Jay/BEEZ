@@ -14,7 +14,7 @@ export const useUsersStore = defineStore('users', {
     async fetchUsers(search = {}) {
       const response = await axios.get('/users/list', { params: search });
       this.userList = response.data;
-      // console.log(this.userList);
+      //console.log(this.userList);
     },
 
     // 초기 비밀번호 생성

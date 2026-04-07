@@ -16,6 +16,12 @@ const Routes1 = [
     name: 'roldAdd',
     component: () => import('@/views/roles/RoleAddPage.vue'),
     meta: { requiresAuth: true, role: 'ROLE0001' }
+  },
+  {
+    path: '/roles/edit',
+    name: 'roldEdit',
+    component: () => import('@/views/roles/RoleManagePage.vue'),
+    meta: { requiresAuth: true, role: 'ROLE0001' }
   }
 ];
 export default Routes1;

@@ -12,14 +12,23 @@
     ORDER BY id ASC
   </select>
 
+  <!-- 해당 역할의 권한 조회 -->
+  <select id="findPermIdsByRoleId" resultType="String">
+    SELECT perm_id
+    FROM   permission_mapping
+    WHERE  role_id = #{roleId}
+  </select>
+
   <!-- 역할별 권한 매핑 정보 일괄 등록 -->
   <insert id="insertPermissionMapping">
-    INSERT ALL
-    <foreach collection="perIds" item="permId" separator=" ">
-      INTO PERMISSION_MAPPING (role_id, perm_id)
-      VALUES (#{roleId}, #{permId})
-    </foreach>
-    SELECT * FROM dual
+    <if test="perIds != null and perIds.size() > 0">
+      INSERT ALL
+      <foreach collection="perIds" item="permId" separator=" ">
+        INTO PERMISSION_MAPPING (role_id, perm_id)
+        VALUES (#{roleId}, #{permId})
+      </foreach>
+      SELECT * FROM DUAL
+    </if>
   </insert>
 
   <!-- 역할별 권한 매핑 삭제 -->

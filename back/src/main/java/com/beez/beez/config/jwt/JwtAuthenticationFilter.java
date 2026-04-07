@@ -38,6 +38,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       UserDetails userDetails = userDetailsService.loadUserByUsername(id);
       Authentication auth = new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
 
+//      System.out.println("DEBUG: 현재 로그인 시도 유저 ID = " + id);
+//      System.out.println("DEBUG: UserDetails가 가진 권한 리스트 = " + userDetails.getAuthorities());
+//      System.out.println("DEBUG: Auth 객체에 담긴 권한 리스트 = " + auth.getAuthorities());
+
       // 시큐리티 세션(context)에 인증 정보를 저장(요청이 끝날 때까지만 유효)
       SecurityContextHolder.getContext().setAuthentication(auth);
     }
