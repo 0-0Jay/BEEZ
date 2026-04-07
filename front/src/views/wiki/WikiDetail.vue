@@ -30,27 +30,27 @@ const tocList = ref([]);
 
 //본문에서 제목을 추출하여 목차 리스트를 만드는 함수
 const generateTOC = () => {
+  if (!wikiDetail.value || !wikiDetail.value.content) return;
+
   const contentEL = document.createElement('div');
   contentEL.innerHTML = wikiDetail.value.content;
 
-  //h2, h3 태그 추출
-  const heading = contentEL.querySelectorAll('h3, h4');
+  const headings = contentEL.querySelectorAll('h3, h4');
   const newToc = [];
 
-  heading.forEach((heading, index) => {
-    const id = heading.id || `section-${index}`;
+  headings.forEach((heading, index) => {
+    const id = `section-${index}`;
+    heading.setAttribute('id', id);
 
     if (heading.tagName === 'H3') {
       newToc.push({ id, title: heading.innerText, sub: [] });
     } else if (heading.tagName === 'H4' && newToc.length > 0) {
-      //h3는 h2하위로 삽입되도록
       newToc[newToc.length - 1].sub.push({ id, title: heading.innerText });
     }
   });
-
   tocList.value = newToc;
+  wikiDetail.value.content = contentEL.innerHTML;
 };
-
 //페이지 로드 될 때 실행
 onMounted(async () => {
   const { projectId, wikiId } = route.params;
