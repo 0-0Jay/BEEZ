@@ -296,7 +296,8 @@ function applyFormat(command, value = null) {
 
       <!-- ③ 프로젝트 정보 카드 -->
       <div class="panel info-panel">
-        <h3 class="project-title">{{ projectInfo.title || '프로젝트 제목 출력 부분' }}</h3>
+        <h3 class="project-title">{{ projectInfo.title || '프로젝트 제목 출력 부분' }} - 기본정보</h3>
+        <br />
         <div class="info-rows">
           <div class="info-row">
             <span class="info-label">프로젝트번호 :</span>

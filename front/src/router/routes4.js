@@ -6,7 +6,7 @@ const Routes4 = [
     component: () => import('@/views/wiki/WikiWrite.vue')
   },
   {
-    path: '/wiki/detail/:id',
+    path: '/wiki/detail/:projectId/:wikiId',
     name: 'WikiDetail',
     component: () => import('@/views/wiki/WikiDetail.vue')
   },

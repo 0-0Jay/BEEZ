@@ -32,5 +32,10 @@ public interface WikiService {
   //프로젝트 정보 조회 (위키 헤더용)
   WikiProjectRequest getProjectInfo(String projectId);
   
+  WikiVersionRequest findLatestByProjectId(String projectId);
+  
+
+  
+  
 
 }

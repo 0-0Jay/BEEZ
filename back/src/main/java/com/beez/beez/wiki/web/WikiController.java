@@ -47,6 +47,12 @@ public class WikiController {
     return wikiService.findLatestVersion(wikiId);
   }
   
+  // 프로젝트 ID로 그 프로젝트의 가장 최신 위키 상세 내용을 바로 가져오기
+  @GetMapping("/wiki/latest/{projectId}")
+  public WikiVersionRequest findLatestByProjectId(@PathVariable String projectId) {
+    return wikiService.findLatestByProjectId(projectId);
+  }
+  
   //위키 히스토리 조회
   @GetMapping("/wiki/history/{wikiId}")
   public List<WikiVersionRequest> findWikiVersionList(@PathVariable String wikiId) {

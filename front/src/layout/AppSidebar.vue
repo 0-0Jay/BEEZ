@@ -1,8 +1,26 @@
 <script setup>
 import { useAuthStore } from '@/stores/auth';
 import { useProjectStore } from '@/stores/project';
+import axios from 'axios';
 import { computed, inject, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
 
+const router = useRouter();
+
+const goWiki = async (projectId) => {
+  try {
+    const res = await axios.get(`/api/wiki/latest/${projectId}`);
+
+    if (res.data) {
+      const wikiId = res.data.wikiId;
+      router.push(`/wiki/detail/${projectId}/${wikiId}`);
+    } else {
+      router.push(`/wiki/write/${projectId}`);
+    }
+  } catch (e) {
+    console.error(e);
+  }
+};
 const isOpen = inject('menuState');
 const toggleMenu = inject('toggleMenu');
 
@@ -100,12 +118,15 @@ const toggleAdminMenu = () => {
           <router-link to="" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
             <span>문서</span>
           </router-link>
-          <router-link
+          <!-- <router-link
             :to="`/wiki/detail/${selectedProject.id}`"
             class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between"
           >
             <span>위키 조회</span>
-          </router-link>
+          </router-link> -->
+          <div @click="goWiki(selectedProject.id)" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
+            <span>위키 조회</span>
+          </div>
           <router-link
             :to="`/wiki/write/${selectedProject.id}`"
             class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between"
