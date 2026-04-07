@@ -65,4 +65,14 @@ public class WikiServiceImpl implements WikiService {
     return wikiMapper.findProjectById(projectId);
   }
   
+  @Override
+  public WikiVersionRequest findLatestByProjectId(String projectId) {
+    List<WikiRequest> wikiList = wikiMapper.findWikiByProjectId(projectId);
+    if (wikiList == null || wikiList.isEmpty()) {
+      return null;
+    }
+    String latestWikiId = wikiList.get(0).getId();
+    return findLatestVersion(latestWikiId);
+  }
+  
 } // class end

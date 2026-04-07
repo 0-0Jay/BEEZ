@@ -79,19 +79,18 @@
   </select>
   
   <!--화면에 출력하는 위키 내용-->
-  <select id="findWikiByProjectId" >
+  <select id="findWikiByProjectId">
     SELECT
-        W.ID,
-        W.PROJECT_ID,
-        W.VERSION_ID,
-        V.CONTENT,
-        V.LINKS,
-        V.VERSION_NAME,
-        V.USER_ID,
-        V.CREATED_ON
+    W.ID,
+    W.PROJECT_ID,
+    W.VERSION_ID,
+    V.CONTENT,
+    V.VERSION_NAME,
+    V.CREATED_ON
     FROM WIKI W
     LEFT JOIN WIKI_VERSION V ON W.VERSION_ID = V.VERSION_ID
-    WHERE PROJECT_ID = #{projectId}
+    WHERE W.PROJECT_ID = #{projectId}
+    ORDER BY V.CREATED_ON DESC
   </select>
   
   <!-- 위키 id에 따라 최신 버전을 가져옴 update있어서 이건 없어도 크게 상관은 없을것 같은데 일단 넣음-->
@@ -129,5 +128,23 @@
     LEFT JOIN users u ON p.user_id = u.id
     WHERE p.id = #{projectId}
   </select>
+  
+  <!--데이터 테스트 완료-->
+<!--  <select id="findWikiDetailWithProject" resultType="com.beez.beez.wiki.dto.WikiVersionRequest">-->
+<!--    SELECT-->
+<!--    V.VERSION_ID,-->
+<!--    V.CONTENT,-->
+<!--    V.USER_ID,-->
+<!--    V.CREATED_ON,-->
+<!--    V.WIKI_ID,-->
+<!--    V.DESCRIPTION,-->
+<!--    V.VERSION_NAME,-->
+<!--    V.LINKS,-->
+<!--    V.WIKI_INFO-->
+<!--    FROM WIKI W-->
+<!--    JOIN WIKI_VERSION V ON W.VERSION_ID = V.VERSION_ID-->
+<!--    WHERE W.ID = #{wikiId}-->
+<!--    AND W.PROJECT_ID = #{projectId}-->
+<!--  </select>-->
   
 </mapper>

@@ -74,7 +74,7 @@ export const useWikiStore = defineStore('wiki', {
           data.links = []; // 데이터가 없을 경우 빈 배열 처리
         }
 
-        // ⭐ 파싱된 'data'를 상태에 할당 (기존 response.data 사용 시 파싱 전 데이터가 들어감)
+        // 파싱된 data를 상태에 할당 (기존 response.data 사용 시 파싱 전 데이터가 들어감)
         this.wikiDetail = data;
         return data;
       } catch (error) {

@@ -8,10 +8,10 @@ const route = useRoute();
 //스토어랑 연결
 const projectInfo = computed(() => wikiStore.projectInfo);
 const wikiDetail = computed(() => wikiStore.wikiDetail);
+
 const relatedLinks = computed(() => {
   if (!wikiDetail.value || !wikiDetail.value.links) return [];
   const rawLinks = wikiDetail.value.links;
-
   try {
     // 문자열이면 파싱하고, 이미 배열이면 그대로 반환
     return typeof rawLinks === 'string' ? JSON.parse(rawLinks) : rawLinks;
@@ -53,12 +53,17 @@ const generateTOC = () => {
 
 //페이지 로드 될 때 실행
 onMounted(async () => {
-  const projectId = route.params.projectId;
+  const { projectId, wikiId } = route.params;
+
+  console.log('projectId:', projectId);
+  console.log('wikiId:', wikiId);
+
+  if (wikiId) {
+    await wikiStore.fetchWikiDetail(wikiId);
+  }
+
   if (projectId) {
     await wikiStore.fetchProjectData(projectId);
-    await wikiStore.fetchWikiDetail(projectId);
-    //데이터 로드 후 목차 생성
-    generateTOC();
   }
 });
 
@@ -129,7 +134,8 @@ watch(
       </div>
 
       <div class="info-card">
-        <div class="info-card-title">{{ projectInfo.title }}</div>
+        <div class="info-card-title">{{ projectInfo.title }} - 기본정보</div>
+        <br />
         <div class="info-row">
           <span class="info-label">상태 : </span>
           <span class="badge-status">{{ projectInfo.status }}</span>
@@ -648,5 +654,12 @@ watch(
 .link-text:hover {
   text-decoration: underline;
   color: #0d3da3;
+}
+
+.wiki-editor-page {
+  /* 브라우저 화면 높이의 100%를 최소 높이로 잡음 */
+  min-height: 100vh;
+  /* 내용이 많아지면 자동으로 늘어남 */
+  padding-bottom: 50px; /* 하단 여백을 주면 스크롤 확인이 더 쉽습니다 */
 }
 </style>
