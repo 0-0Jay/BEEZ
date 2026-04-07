@@ -11,7 +11,7 @@ import java.util.List;
 
 //260407 곽현우 생성
 
-public class DocumentDto {
+public class DocumentRequest {
   //문서 목록 화면
   @Data
   @Builder
