@@ -25,7 +25,7 @@ export const useRolesStore = defineStore('roles', {
 
     // 역할 등록
     async insertRoles(payload) {
-      await axios.post('/roles/add', payload);
+      await axios.post('/roles/create', payload);
     },
 
     // 역할 수정

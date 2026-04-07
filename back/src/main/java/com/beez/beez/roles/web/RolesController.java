@@ -36,7 +36,7 @@ public class RolesController {
   }
 
   // 역할 등록
-  @PostMapping("/add")
+  @PostMapping("/create")
   public ResponseEntity<?> insertRole(@RequestBody RoleSaveRequest roleSaveRequest) {
     rolesService.insertRole(roleSaveRequest);
     return ResponseEntity.ok().body("역할 등록이 완료되었습니다.");

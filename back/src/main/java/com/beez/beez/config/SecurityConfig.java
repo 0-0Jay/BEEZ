@@ -45,7 +45,7 @@ public class SecurityConfig {
         // 누구나 접근 가능
         .requestMatchers("/api/auth/**").permitAll()
         // 관리자만
-        .requestMatchers("/api/roles/**", "/api/users/**", "/api/permission/**").hasAuthority("ROLE0001")
+        .requestMatchers("/api/roles/**", "/api/users/**", "/api/permission/**", "/api/workflow/**").hasAuthority("ROLE0001")
         // 그 외 페이지
         .anyRequest().access(dynamicAuthorizationManager))
       // jwt 필터 추가
