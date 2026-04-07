@@ -17,14 +17,6 @@ import java.util.List;
 public class NotificationController {
   private final NotificationService notificationService;
   
-  // 알림 전송
-  @MessageMapping("/notification/{userId}")
-  @SendTo("/notification/{userId}")
-  public ResponseEntity<NotificationRequest> sendNotification(@DestinationVariable String userId, NotificationRequest notification) {
-    notificationService.sendNotification(notification);
-    return ResponseEntity.ok(notification);
-  }
-  
   // 알림 목록
   @GetMapping("/api/notification/{userId}")
   public ResponseEntity<List<NotificationResponse>> getNotifications(@PathVariable String userId) {
@@ -49,13 +41,6 @@ public class NotificationController {
   @DeleteMapping("/api/notification/{id}")
   public ResponseEntity<Void> deleteNotification(@PathVariable String id) {
     notificationService.deleteNotification(id);
-    return ResponseEntity.ok().build();
-  }
-  
-  // 알림 전송 테스트
-  @PostMapping("/api/notification/test/{userId}")
-  public ResponseEntity<Void> testNotification(@PathVariable String userId, @RequestBody NotificationRequest notificationRequest) {
-    notificationService.sendNotification(notificationRequest);
     return ResponseEntity.ok().build();
   }
 }

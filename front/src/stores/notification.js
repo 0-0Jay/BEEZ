@@ -29,11 +29,6 @@ export const useNotificationStore = defineStore('notification', {
     async readAllNotification(userId) {
       const res = await axios.put(`/notification/${userId}/all`);
       return res.data;
-    },
-    // 알림 전송 테스트
-    async sendTest(data) {
-      const res = await axios.post(`/notification/test/${data.userId}`, data);
-      return res.data;
     }
   },
   persist: {

@@ -18,4 +18,7 @@ public class JournalResponse {
   private String userId;
   private String name;
   private Timestamp createdOn;
+  private String fieldName;
+  private String oldValue;
+  private String newValue;
 }
