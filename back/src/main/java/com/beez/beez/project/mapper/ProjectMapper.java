@@ -41,4 +41,10 @@ public interface ProjectMapper {
   
   //프로젝트 구성원 삭제
   void deleteProjectMember(String projectMemberId);
+  
+  //역할 조회
+  List<RolesResponse> findRoles();
+  
+  //프로젝트 구성원 수정
+  void updateProjectMember(ProjectMemberUpdateRequest dto);
 }

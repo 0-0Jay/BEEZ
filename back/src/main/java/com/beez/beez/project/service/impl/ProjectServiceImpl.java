@@ -119,4 +119,17 @@ public class ProjectServiceImpl implements ProjectService {
     projectMapper.deleteProjectMember(projectMemberId);
   }
 
+  //역할 조회
+  @Override
+  public List<RolesResponse> findRoles() {
+    return projectMapper.findRoles();
+  }
+  
+  //프로젝트 구성원 수정
+  @Override
+  public void updateProjectMember(String projectMemberId, ProjectMemberUpdateRequest dto) {
+    dto.setMemberId(projectMemberId);
+    projectMapper.updateProjectMember(dto);
+  }
+  
 }

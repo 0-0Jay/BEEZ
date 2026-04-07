@@ -74,4 +74,17 @@ public class ProjectController {
     projectService.deleteProjectMember(projectMemberId);
     return ResponseEntity.ok().build();
   }
+  
+  //역할 조회
+  @GetMapping("/roles")
+  public ResponseEntity<List<RolesResponse>> findRoles() {
+    return ResponseEntity.ok(projectService.findRoles());
+  }
+  
+  //프로젝트 구성원 수정
+  @PutMapping("/member/{projectMemberId}")
+  public ResponseEntity<Void> updateProjectMember(@PathVariable String projectMemberId, @RequestBody ProjectMemberUpdateRequest dto) {
+    projectService.updateProjectMember(projectMemberId, dto);
+    return ResponseEntity.ok().build();
+  }
 }
