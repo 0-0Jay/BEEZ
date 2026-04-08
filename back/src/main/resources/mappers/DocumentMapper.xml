@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.beez.beez.file.mapper.DocumentMapper">
+  
+  <insert id="insertFileMaster">
+    <selectKey keyProperty="id" resultType="string" order="BEFORE">
+      SELECT BEEZ.generate_pk_auto('file') FROM dual
+    </selectKey>
+    INSERT INTO files (id, user_id, created_on)
+    VALUES (#{id}, #{userId}, SYSTIMESTAMP)
+  </insert>
+  
+  <insert id="insertFileDetail" parameterType="com.beez.beez.file.dto.FileDetailRequest">
+    <selectKey keyProperty="id" resultType="string" order="BEFORE">
+      SELECT BEEZ.generate_pk_auto('file_detail') FROM dual
+    </selectKey>
+    INSERT INTO file_detail (
+    id, file_id, original_name, stored_name, extension, file_size,
+    is_delete, version, root_id, created_on
+    )
+    VALUES (
+    #{id}, #{fileId}, #{originalName}, #{storedName}, #{extension}, #{fileSize},
+    'N', 1, #{rootId}, SYSTIMESTAMP
+    )
+  </insert>
+  
+  <insert id="insertDocument">
+    <selectKey keyProperty="id" resultType="string" order="BEFORE">
+      SELECT BEEZ.generate_pk_auto('docs') FROM dual
+    </selectKey>
+    INSERT INTO docs (id, title, content, doc_type, file_id, user_id, created_on)
+    VALUES (#{id}, #{doc.title}, #{doc.content}, #{doc.doctype}, #{fileId}, #{userId}, SYSTIMESTAMP)
+  </insert>
+  
+  <update id="updateDocument" parameterType="com.beez.beez.file.dto.DocumentRequest$UpdateRequest">
+    UPDATE docs
+    SET title = #{title},
+    doc_type = #{doctype},
+    content = #{content},
+    edited_on = SYSTIMESTAMP
+    WHERE id = #{id}
+  </update>
+  
+  <update id="deleteFileDetail">
+    UPDATE file_detail
+    SET is_delete = 'Y'
+    WHERE id = #{id}
+  </update>
+  
+  <select id="selectFileDetailById" resultType="com.beez.beez.file.dto.FileDetailRequest">
+    SELECT id, file_id, original_name, stored_name, extension, file_size as fileSize, version, root_id as rootId
+    FROM file_detail
+    WHERE id = #{id}
+  </select>
+  
+  <select id="selectDocumentList" resultType="com.beez.beez.file.dto.DocumentRequest$ListResponse">
+    SELECT id, title, doc_type as doctype, user_id as userName, created_on as createdOn
+    FROM docs
+    ORDER BY created_on DESC
+  </select>
+  
+  <select id="selectDocumentDetail" resultType="com.beez.beez.file.dto.DocumentRequest$DetailResponse">
+    SELECT id, title, doc_type as doctype, content, user_id as userName, created_on as createdOn
+    FROM docs
+    WHERE id = #{id}
+  </select>
+  
+  <select id="selectLatestFilesByDocId" resultType="com.beez.beez.file.dto.FileDetailResponse">
+    SELECT fd.id, fd.file_id as fileId, fd.original_name as name,
+    fd.stored_name as storedName, fd.extension, fd.file_size as size
+    FROM file_detail fd
+    INNER JOIN docs d ON fd.file_id = d.file_id
+    WHERE d.id = #{id}
+    AND fd.is_delete = 'N'
+    AND fd.version = (
+    SELECT MAX(version)
+    FROM file_detail
+    WHERE root_id = fd.root_id
+    AND is_delete = 'N'
+    )
+  </select>
+
+</mapper>

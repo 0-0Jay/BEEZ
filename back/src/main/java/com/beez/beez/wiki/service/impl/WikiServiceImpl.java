@@ -21,7 +21,7 @@ public class WikiServiceImpl implements WikiService {
   private final WikiMapper wikiMapper;
   
   @Override
-  @Transactional // 프로시저 처리 하면 성능 향상 가능 - TaskMapper 파일 제일 밑에 형태 참고
+  @Transactional // ##프로시저 처리 하면 성능 향상 가능 - TaskMapper 파일 제일 밑에 형태 참고
   public void insertWiki(WikiRequest wikiRequest, WikiVersionRequest versionRequest){
     wikiMapper.insertWikiVersion(versionRequest);
     wikiRequest.setVersionId(versionRequest.getVersionId());
@@ -51,7 +51,7 @@ public class WikiServiceImpl implements WikiService {
   @Override
   public WikiVersionRequest findLatestVersion(String wikiId){
     WikiVersionRequest result = wikiMapper.findLatestVersion(wikiId);
-    System.out.println("★ DB에서 가져온 Links: " + (result != null ? result.getLinks() : "결과없음"));
+    System.out.println("## DB에서 가져온 Links: " + (result != null ? result.getLinks() : "결과없음"));
     return result;
   }
   
