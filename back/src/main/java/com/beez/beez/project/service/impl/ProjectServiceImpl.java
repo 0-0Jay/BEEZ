@@ -118,12 +118,6 @@ public class ProjectServiceImpl implements ProjectService {
   public void deleteProjectMember(String projectMemberId) {
     projectMapper.deleteProjectMember(projectMemberId);
   }
-
-  //역할 조회
-  @Override
-  public List<RolesResponse> findRoles() {
-    return projectMapper.findRoles();
-  }
   
   //프로젝트 구성원 수정
   @Override
@@ -131,5 +125,30 @@ public class ProjectServiceImpl implements ProjectService {
     dto.setMemberId(projectMemberId);
     projectMapper.updateProjectMember(dto);
   }
+  
+  //역할 조회
+  @Override
+  public List<RolesResponse> findRoles() {
+    return projectMapper.findRoles();
+  }
+  
+  // 사용자 + 그룹 검색 (합쳐서 반환)
+  @Override
+  public MemberSearchResponseDto searchMembers(String projectId, String keyword) {
+    List<UserResponse> users = projectMapper.findUsers(projectId, keyword);
+    List<GroupResponse> groups = projectMapper.findGroups(projectId, keyword);
+    
+    return MemberSearchResponseDto.builder()
+      .users(users)
+      .groups(groups)
+      .build();
+  }
+  
+  //프로젝트 구성원 추가
+  @Override
+  public void insertProjectMember(ProjectMemberRequest dto) {
+    projectMapper.insertProjectMember(dto);
+  }
+  
   
 }

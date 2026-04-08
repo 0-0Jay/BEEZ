@@ -42,9 +42,19 @@ public interface ProjectMapper {
   //프로젝트 구성원 삭제
   void deleteProjectMember(String projectMemberId);
   
+  //프로젝트 구성원 수정
+  void updateProjectMember(ProjectMemberUpdateRequest dto);
+  
   //역할 조회
   List<RolesResponse> findRoles();
   
-  //프로젝트 구성원 수정
-  void updateProjectMember(ProjectMemberUpdateRequest dto);
+  //사용자 조회
+  List<UserResponse> findUsers(@Param("projectId") String projectId, @Param("keyword") String keyword);
+  
+  //그룹 조회
+  List<GroupResponse> findGroups(@Param("projectId") String projectId, @Param("keyword") String keyword);
+  
+  //프로젝트 구성원 추가
+  void insertProjectMember(ProjectMemberRequest dto);
+  
 }

@@ -319,6 +319,14 @@ SELECT id, name
 FROM roles
 WHERE id >= 'ROLE0004';
 
+SELECT id, name 
+FROM users u
+WHERE status = 'H1'
+AND role = 'ROLE0003'
+AND NOT EXISTS (SELECT 1 FROM project_member pm
+                WHERE pm.user_id = u.id
+                AND pm.project_id = 'PROJ2603007');
+
 -- 프로젝트 구성원 역할 수정 프로시저
 CREATE OR REPLACE PROCEDURE update_project_member_role (
     p_member_id IN VARCHAR2,
@@ -345,5 +353,78 @@ BEGIN
             INSERT (member_id, role_id, is_inherited, is_delete)
             VALUES (p_member_id,p_role_ids(i), 'P0', 'F0');
     END LOOP;
+END;
+/
+
+-- 구성원 추가 프로시저
+CREATE OR REPLACE PROCEDURE add_project_member_role (
+    p_project_id IN VARCHAR2,
+    p_user_ids IN T_VARCHAR_LIST,
+    p_group_ids IN T_VARCHAR_LIST,
+    p_role_ids IN T_VARCHAR_LIST
+)
+AS
+    v_member_id project_member.id%TYPE;
+BEGIN
+    -- [1] 역할(Role) 필수 체크: NULL이거나 비어있으면 에러
+    IF p_role_ids IS NULL OR p_role_ids.COUNT = 0 THEN
+        raise_application_error(-20001, '최소 하나 이상의 역할을 선택해야 합니다.');
+    END IF;
+
+    -- [2] 대상(사용자/그룹) 필수 체크: 둘 다 비어있으면 에러
+    IF (p_user_ids IS NULL OR p_user_ids.COUNT = 0) AND 
+       (p_group_ids IS NULL OR p_group_ids.COUNT = 0) THEN
+        raise_application_error(-20002, '등록할 사용자 또는 그룹을 선택해야 합니다.');
+    END IF;
+
+    -- 1.개별 사용자 추가
+    FOR i IN 1 .. p_user_ids.COUNT LOOP
+        v_member_id := generate_pk_auto('project_member');
+        INSERT INTO project_member (id, project_id, user_id, group_id)
+        VALUES(v_member_id, p_project_id, p_user_ids(i), NULL);
+        
+        FOR j IN 1 .. p_role_ids.COUNT LOOP
+            INSERT INTO role_mapping (member_id, role_id, is_inherited)
+            VALUES (v_member_id, p_role_ids(j), 'P0');
+        END LOOP;
+    END LOOP;
+    
+    -- 2.그룹추가
+    FOR i IN 1 .. p_group_ids.COUNT LOOP
+        v_member_id := generate_pk_auto('project_member');
+        INSERT INTO project_member (id, project_id, user_id, group_id)
+        VALUES (v_member_id, p_project_id, NULL, p_group_ids(i));
+        
+        FOR j IN 1 .. p_role_ids.COUNT LOOP
+            INSERT INTO role_mapping (member_id, role_id, is_inherited)
+            VALUES (v_member_id, p_role_ids(j), 'P0');
+        END LOOP;
+        
+        -- 그룹 소속 사원 루프
+        FOR k IN (SELECT user_id FROM group_member WHERE group_id = p_group_ids(i)) LOOP
+            v_member_id := generate_pk_auto('project_member');
+            INSERT INTO project_member (id, project_id, user_id, group_id)
+            VALUES (v_member_id, p_project_id, k.user_id, p_group_ids(i));
+            
+            FOR j IN 1 .. p_role_ids.COUNT LOOP
+                INSERT INTO role_mapping (member_id, role_id, is_inherited)
+                VALUES (v_member_id, p_role_ids(j), 'P1');
+            END LOOP;
+        END LOOP;
+    END LOOP;
+    
+END;
+/
+
+COMMIT;
+
+BEGIN
+    add_project_member_role(
+        p_project_id => 'PROJ2512002',
+        p_user_ids   => T_VARCHAR_LIST('20260022', '20261111'),
+        p_group_ids  => T_VARCHAR_LIST('GR0001'),
+        p_role_ids   => T_VARCHAR_LIST('ROLE0004', 'ROLE0005')
+    );
+    COMMIT;
 END;
 /

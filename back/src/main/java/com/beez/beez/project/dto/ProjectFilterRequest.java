@@ -8,7 +8,7 @@ import java.util.Date;
 public class ProjectFilterRequest {
   private String id;
   private String pmId;
-  private String startDate;
-  private String endDate;
+  private Date startDate;
+  private Date endDate;
   private String isLock;
 }
