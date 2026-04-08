@@ -25,7 +25,7 @@ public class DynamicAuthorizationManager implements AuthorizationManager<Request
   public AuthorizationDecision check(Supplier<Authentication> authentication, RequestAuthorizationContext object) {
     Authentication auth = authentication.get();
 
-    // 1. 인증 정보가 없으면 거절
+    // 인증 정보가 없으면 거절
     if (auth == null || !auth.isAuthenticated()) {
       return new AuthorizationDecision(false);
     }
