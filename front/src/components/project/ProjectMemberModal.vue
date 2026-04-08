@@ -50,6 +50,17 @@ const close = () => {
 };
 
 const handleSave = async () => {
+  // 1. 프론트엔드 1차 체크 (서버에 가기 전에 미리 확인)
+  if (selectedUsers.value.length === 0 && selectedGroups.value.length === 0) {
+    toast.add({ severity: 'warn', summary: '구성원 미선택', detail: '추가할 사용자 또는 그룹을 선택해주세요.', life: 3000 });
+    return;
+  }
+
+  if (selectedRoles.value.length === 0) {
+    toast.add({ severity: 'warn', summary: '역할 미선택', detail: '최소 하나 이상의 역할을 선택해야 합니다.', life: 3000 });
+    return;
+  }
+
   const requestBody = {
     projectId: selectedprojectId,
     userIds: [...selectedUsers.value],
@@ -57,10 +68,22 @@ const handleSave = async () => {
     roleIds: [...selectedRoles.value]
   };
 
-  await projectStore.insertProjectMember(requestBody);
-  emit('saved');
-  close();
-  toast.add({ severity: 'success', summary: '등록 완료', detail: '구성원이 추가되었습니다.', life: 2000 });
+  // 2. 에러 처리를 위한 try-catch 적용
+  try {
+    await projectStore.insertProjectMember(requestBody);
+
+    // 성공 시 로직
+    emit('saved'); // 부모 컴포넌트에 알림 (목록 갱신용)
+    close(); // 모달 닫기
+    toast.add({ severity: 'success', summary: '등록 완료', detail: '구성원이 성공적으로 추가되었습니다.', life: 2000 });
+  } catch (error) {
+    // 3. 프로시저에서 던진 ORA-20001, ORA-20002 등 서버 에러 처리
+    console.error('저장 중 오류 발생:', error);
+
+    // 서버에서 전달한 에러 메시지가 있다면 그걸 보여주고, 없으면 기본 메시지 출력
+    const errorMessage = error.response?.data?.message || '저장 중 오류가 발생했습니다.';
+    toast.add({ severity: 'error', summary: '저장 실패', detail: errorMessage, life: 3000 });
+  }
 };
 
 onUnmounted(() => {

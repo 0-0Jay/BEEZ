@@ -204,6 +204,7 @@
                     FROM project_member pm
                     WHERE pm.user_id = u.id
                     AND pm.project_id = #{projectId}
+                    AND pm.is_delete = 'F0'
                    )
       <if test="keyword != null and keyword != ''">
         AND name LIKE '%' || #{keyword} || '%'
@@ -219,6 +220,7 @@
                       FROM project_member pm
                       WHERE pm.group_id = g.id
                       AND pm.project_id = #{projectId}
+                      AND pm.is_delete = 'F0'
                       )
       <if test="keyword != null and keyword != ''">
         AND name LIKE '%' || #{keyword} || '%'

@@ -377,7 +377,7 @@ BEGIN
         raise_application_error(-20002, '등록할 사용자 또는 그룹을 선택해야 합니다.');
     END IF;
 
-    -- 1.개별 사용자 추가
+    --  [3] 개별 사용자 추가
     FOR i IN 1 .. p_user_ids.COUNT LOOP
         v_member_id := generate_pk_auto('project_member');
         INSERT INTO project_member (id, project_id, user_id, group_id)
@@ -389,7 +389,7 @@ BEGIN
         END LOOP;
     END LOOP;
     
-    -- 2.그룹추가
+    -- [4] 그룹추가
     FOR i IN 1 .. p_group_ids.COUNT LOOP
         v_member_id := generate_pk_auto('project_member');
         INSERT INTO project_member (id, project_id, user_id, group_id)
@@ -417,6 +417,10 @@ END;
 /
 
 COMMIT;
+
+SELECT * FROM USER_OBJECTS 
+ WHERE OBJECT_TYPE = 'PROCEDURE' 
+   AND OBJECT_NAME = 'ADD_PROJECT_MEMBER_ROLE';
 
 BEGIN
     add_project_member_role(
