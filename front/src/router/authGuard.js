@@ -6,10 +6,21 @@ export const setupAuthGuard = (to, from, next) => {
   const authStore = useAuthStore();
   const alertStore = useAlertStore();
   const token = authStore.accessToken;
-  const currentTime = Date.now() / 1000; // 현재 시간
+  const isAuthenticated = !!token;
+
+  if (to.meta.requiresAuth && !isAuthenticated) {
+    alertStore.setAlert('로그인이 필요한 서비스입니다.');
+    return next({ name: 'login' });
+  }
+
+  if (to.name === 'login' && isAuthenticated) {
+    alertStore.setAlert('이미 로그인되어 있습니다.');
+    return next({ name: 'dashboard' });
+  }
 
   if (token) {
     try {
+      const currentTime = Date.now() / 1000; // 현재 시간
       const decoded = jwtDecode(token);
 
       // 토큰 만료 체크
@@ -35,29 +46,32 @@ export const setupAuthGuard = (to, from, next) => {
     }
   }
 
-  // 인증 여부 확인
-  const isAuthenticated = !!token;
-
-  if (to.name === 'login' && isAuthenticated) {
-    alertStore.setAlert('이미 로그인되어 있습니다.');
-    return next({ name: 'dashboard' });
-  }
-
-  // 로그인 필수 페이지 체크
-  if (to.meta.requiresAuth && !isAuthenticated) {
-    alertStore.setAlert('로그인이 필요한 서비스입니다.');
-    return next({ name: 'login' });
-  }
+  const ROLE_NAMES = {
+    ROLE0001: '관리자',
+    ROLE0002: 'PM / PL',
+    ROLE0003: '일반사용자'
+  };
 
   // 권한 체크
   if (to.meta.role) {
     // console.log('권한 체크 진입');
-    const userRole = authStore.user?.role || [];
+    let userRole = authStore.user?.role || [];
     // console.log('userRoles:', userRoles);
     // console.log('required:', to.meta.role);
+
+    // 배열이 아닌 경우 강제 변환
+    if (!Array.isArray(userRole)) {
+      userRole = [userRole];
+    }
+
     if (!userRole.includes(to.meta.role)) {
-      console.log('alert 직전');
-      alertStore.setAlert(`접근 권한이 없습니다!\n(보유 권한: ${userRole.length ? userRole : '없음'}, 필요: ${to.meta.role})`);
+      // const roleName = ROLE_NAMES[to.meta.role] || to.meta.role;
+      // const myRoleName = userRole.length ? userRole.map((r) => ROLE_NAMES[r] || r).join(', ') : '없음';
+
+      // console.log('alert 직전');
+      // alertStore.setAlert(`접근 권한이 없습니다!\n(보유 권한: ${myRoleName}, 필요: ${roleName})`);
+      alertStore.setAlert('접근 권한이 없습니다!');
+
       return next({ name: 'dashboard' });
     }
   }

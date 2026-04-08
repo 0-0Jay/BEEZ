@@ -19,7 +19,7 @@ const totalCount = computed(() => rolesStore.roleList.length);
 onMounted(async () => {
   loading.value = true;
   try {
-    await rolesStore.fetchRoles();
+    await rolesStore.findRoles();
   } finally {
     loading.value = false;
   }
@@ -61,7 +61,7 @@ const onDelete = async () => {
       closable: false
     });
 
-    await rolesStore.fetchRoles();
+    await rolesStore.findRoles();
     visible.value = false;
   } catch (err) {
     const isConflict = err.response?.status === 409;

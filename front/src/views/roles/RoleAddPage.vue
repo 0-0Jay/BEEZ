@@ -21,9 +21,9 @@ const roleNameError = ref('');
 
 onMounted(async () => {
   // 역할 목록 가져오기
-  await rolesStore.fetchRoles();
+  await rolesStore.findRoles();
   // 권한 목록 가져오기
-  await rolesStore.fetchPermissions();
+  await rolesStore.findPermissions();
   initPermissionMatrix();
 
   const copyId = route.query.copyId;
@@ -137,7 +137,7 @@ const onCancel = () => {
 // 역할 데이터 복사
 const loadCopyData = async (id) => {
   try {
-    const data = await rolesStore.fetchRolesDetail(id);
+    const data = await rolesStore.findRolesDetail(id);
 
     // 기본 정보
     roleName.value = `${data.name}_복사`;

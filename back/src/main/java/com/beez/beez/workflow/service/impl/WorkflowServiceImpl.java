@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -17,7 +18,7 @@ public class WorkflowServiceImpl implements WorkflowService {
 
   private final WorkflowMapper workflowMapper;
 
-  // 업무흐름 기본설정 조회
+  // 업무흐름 조회
   @Override
   public List<WorkflowResponse> findWorkflowMatrix(String roleId, String typeId, String conditionType) {
     return workflowMapper.findWorkflowMatrix(roleId, typeId, conditionType);
@@ -37,7 +38,11 @@ public class WorkflowServiceImpl implements WorkflowService {
     } catch (Exception e) {
       throw new RuntimeException("업무흐름 등록 중 오류가 발생하였습니다.");
     }
+  }
 
-
+  // 일감 상태 공통 코드 조회
+  @Override
+  public List<Map<String, Object>> findTaskStatusCode(String groupValue) {
+    return workflowMapper.findTaskStatusCode(groupValue);
   }
 }

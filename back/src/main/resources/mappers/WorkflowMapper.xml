@@ -12,13 +12,15 @@
     <result property="conditionType" column="condition_type"/>
   </resultMap>
 
-  <!-- 업무흐름 기본설정 조회 -->
+  <!-- 업무흐름 조회 -->
   <select id="findWorkflowMatrix" resultMap="workflowMap">
     SELECT c.before_code,
            c.before_name,
            c.after_code,
            c.after_name,
-           NVL(w.is_allow, 'Y0') as is_allow,
+           CASE WHEN c.before_code = c.after_code THEN 'Y1'
+                ELSE NVL(w.is_allow, 'Y0')
+           END as is_allow,
            #{roleId} as role_id,
            #{typeId} as type_id,
            #{conditionType} as condition_type
@@ -57,4 +59,13 @@
     </foreach>
     END;
   </insert>
+
+  <!-- 일감 상태 공통 코드 조회 -->
+  <select id="findTaskStatusCode" resultType="map">
+    SELECT com_value as "key",
+           com_name  as "label"
+    FROM  common_code
+    WHERE group_value = #{groupValue} AND is_use = 1
+    ORDER BY com_value
+  </select>
 </mapper>

@@ -18,6 +18,22 @@ axiosInstance.interceptors.request.use(
       // Authorization 헤더에 Bearer 토큰 추가
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // sessionStorage에서 project 데이터 가져옴
+    const data = sessionStorage.getItem('project');
+    if (data) {
+      try {
+        const parsedData = JSON.parse(data);
+        const projectId = parsedData.selectedProject?.id;
+
+        if (projectId) {
+          config.headers['X-Project-Id'] = projectId;
+        }
+      } catch (e) {
+        console.error('Project ID 파싱 오류: ', e);
+      }
+    }
+
     return config;
   },
   (error) => {

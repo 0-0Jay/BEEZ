@@ -2,6 +2,7 @@ package com.beez.beez.users.service;
 
 import com.beez.beez.config.jwt.JwtProvider;
 import com.beez.beez.permission.mapper.PermissionMapper;
+import com.beez.beez.users.dto.CustomUserDetails;
 import com.beez.beez.users.dto.PasswordUpdateRequest;
 import com.beez.beez.users.mapper.UsersMapper;
 import com.beez.beez.users.repository.Users;
@@ -40,15 +41,15 @@ public class AuthService {
     }
 
     // 계정 활성화 상태 확인
-    if (!user.isEnabled()) {
+    if (!"H1".equals(user.getStatus())) {
       throw new DisabledException("비활성화된 계정입니다. 관리자에게 문의하세요.");
     }
 
     // 권한 넣기
-    Users userAuth = (Users) userDetailsService.loadUserByUsername(id);
+    CustomUserDetails userDetails = (CustomUserDetails) userDetailsService.loadUserByUsername(id);
 
     // 로그인 성공 후 토큰 생성
-    return jwtProvider.createToken(userAuth);
+    return jwtProvider.createToken(userDetails);
   }
 
   // 비밀번호 재설정

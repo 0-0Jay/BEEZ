@@ -1,6 +1,7 @@
 package com.beez.beez.users.service;
 
 import com.beez.beez.permission.mapper.PermissionMapper;
+import com.beez.beez.users.dto.CustomUserDetails;
 import com.beez.beez.users.mapper.UsersMapper;
 import com.beez.beez.users.repository.Users;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -24,22 +26,21 @@ public class CustomUserDetailsService implements UserDetailsService {
 
   @Override
   public UserDetails loadUserByUsername(String id) throws UsernameNotFoundException {
-//    System.out.println("ID 확인: " + id);
-    // 사용자가 로그인 시 입력한 사원번호로 DB를 통해 찾음
-    Optional<Users> usersOptional = usersMapper.findById(id);
 
-    return usersOptional.map(users -> {
-      List<String> permList = permissionMapper.findPermIdsByRoleId(users.getRole());
-      List<GrantedAuthority> list = permList.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+    return usersMapper.findById(id).map(user ->{
+      // 권한 및 역할 리스트 생성
+      List<GrantedAuthority> authorities = new ArrayList<>();
 
-      // 역할도 담기
-      if (users.getRole() != null) {
-        list.add(new SimpleGrantedAuthority(users.getRole()));
+      // 역할에 매핑된 상세 권한 조회
+      if(user.getRole() != null){
+        List<String> permList = permissionMapper.findPermIdsByRoleId(user.getRole());
+        permList.forEach(permId -> authorities.add(new SimpleGrantedAuthority(permId)));
+
+        // 역할코드도 권한에 추가
+        authorities.add(new SimpleGrantedAuthority(user.getRole()));
       }
 
-      users.setAuthorities(list);
-
-      return users;
-    }).orElseThrow(() -> new UsernameNotFoundException(("존재하지 않는 사원번호입니다: " + id)));
+      return new CustomUserDetails(user, authorities);
+    }).orElseThrow(() -> new UsernameNotFoundException("존재하지 않는 사원번호입니다."));
   }
 }

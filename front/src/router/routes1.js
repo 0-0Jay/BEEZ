@@ -22,6 +22,12 @@ const Routes1 = [
     name: 'roldEdit',
     component: () => import('@/views/roles/RoleManagePage.vue'),
     meta: { requiresAuth: true, role: 'ROLE0001' }
+  },
+  {
+    path: '/workflow/list',
+    name: 'workflow',
+    component: () => import('@/views/roles/WorkflowManagePage.vue'),
+    meta: { requiresAuth: true, role: 'ROLE0001' }
   }
 ];
 export default Routes1;

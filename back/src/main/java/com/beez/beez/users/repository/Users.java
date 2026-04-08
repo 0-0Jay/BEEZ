@@ -12,12 +12,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Getter
-@Setter
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Users implements UserDetails {
+public class Users{
 
 
   private String id;          // 사원번호
@@ -26,37 +25,7 @@ public class Users implements UserDetails {
   private String name;
   private String status;
   private LocalDateTime createdOn;
-
-  // 역할 리스트
+  // 역할
   private String role;
-
-  // 권한 리스트
-  @Builder.Default
-  private List<GrantedAuthority> authorities = new ArrayList<>();
-
-  // UserDetails 구현
-  @Override
-  public Collection<? extends GrantedAuthority> getAuthorities() {
-    return this.authorities;
-  }
-
-  @Override
-  public String getUsername() { return this.id; }
-
-//  @Override
-//  public boolean isAccountNonExpired() { return true; }
-
-  @Override
-  public boolean isAccountNonLocked() {
-    return true;
-  }
-
-//  @Override
-//  public boolean isCredentialsNonExpired() { return true; }
-  @Override
-  public boolean isEnabled() {
-    // 활성화 상태(H1)일 때만 true를 반환
-    return "H1".equals(this.status);
-  }
 
 }

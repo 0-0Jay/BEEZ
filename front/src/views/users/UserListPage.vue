@@ -23,10 +23,10 @@ const statusOptions = [
 
 const totalCount = computed(() => usersStore.userList.length);
 
-const fetchUsers = async () => {
+const findUsers = async () => {
   loading.value = true;
   try {
-    await usersStore.fetchUsers({
+    await usersStore.findUsers({
       name: search.name,
       status: search.status,
       startDate: formatDate(search.startDate),
@@ -38,12 +38,12 @@ const fetchUsers = async () => {
 };
 
 onMounted(() => {
-  fetchUsers();
+  findUsers();
 });
 
 const resetFilters = () => {
   Object.assign(search, { name: '', status: '', startDate: null, endDate: null });
-  fetchUsers();
+  findUsers();
 };
 
 const formatDate = (date) => {
@@ -71,7 +71,7 @@ const openUserFormModal = () => {
       <div class="flex items-center flex-wrap gap-y-3">
         <div class="flex items-center mr-8">
           <label class="filter-label mr-3">사원 이름</label>
-          <InputText v-model="search.name" placeholder="이름을 입력해 주세요." class="filter-input w-52" @keyup.enter="fetchUsers" />
+          <InputText v-model="search.name" placeholder="이름을 입력해 주세요." class="filter-input w-52" @keyup.enter="findUsers" />
         </div>
 
         <label class="filter-label mr-3">상태</label>
@@ -85,7 +85,7 @@ const openUserFormModal = () => {
 
       <div class="flex gap-2 ml-auto">
         <Button label="초기화" severity="secondary" raised @click="resetFilters" />
-        <Button label="조회" icon="pi pi-search" raised @click="fetchUsers" />
+        <Button label="조회" icon="pi pi-search" raised @click="findUsers" />
       </div>
     </div>
 

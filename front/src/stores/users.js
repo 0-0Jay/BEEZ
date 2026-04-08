@@ -11,7 +11,7 @@ export const useUsersStore = defineStore('users', {
   // actions
   actions: {
     // 사용자 목록 조회
-    async fetchUsers(search = {}) {
+    async findUsers(search = {}) {
       const response = await axios.get('/users/list', { params: search });
       this.userList = response.data;
       //console.log(this.userList);

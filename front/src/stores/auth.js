@@ -35,7 +35,7 @@ export const useAuthStore = defineStore('auth', {
           this.accessToken = token;
 
           const decoded = jwtDecode(token);
-          console.log('디코딩된 토큰 내용:', decoded);
+          // console.log('디코딩된 토큰 내용:', decoded);
 
           this.user = {
             id: decoded.sub,

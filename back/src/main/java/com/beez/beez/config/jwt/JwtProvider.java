@@ -1,5 +1,6 @@
 package com.beez.beez.config.jwt;
 
+import com.beez.beez.users.dto.CustomUserDetails;
 import com.beez.beez.users.repository.Users;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -33,17 +34,20 @@ public class JwtProvider {
   }
 
   // 토큰 발급
-  public String createToken(Users user){
-    System.out.println("로그인 유저 권한 체크: " + user.getAuthorities());
+  public String createToken(CustomUserDetails userDetails) {
+    Users user = userDetails.getUser();
 
-   String authorities
-     = user.getAuthorities().stream()
-     .map(GrantedAuthority::getAuthority)
-     .collect(Collectors.joining(","));
+    System.out.println("로그인 유저 권한 체크: " + userDetails.getAuthorities());
+
+    String authorities
+      = userDetails.getAuthorities()
+      .stream()
+      .map(GrantedAuthority::getAuthority)
+      .collect(Collectors.joining(","));
 
     Date now = new Date();
 
-    // 토큰 유효 시간 : 1시간
+    // 토큰 유효 시간 : 8시간
     long tokenValidTime = 480 * 60 * 1000L;
 
     return Jwts.builder()

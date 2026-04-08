@@ -11,14 +11,14 @@ export const useRolesStore = defineStore('roles', {
   // actions
   actions: {
     // 역할 목록 조회
-    async fetchRoles() {
+    async findRoles() {
       const response = await axios.get('/roles/list');
       this.roleList = response.data;
       // console.log(this.roleList);
     },
 
     // 역할 상세 조회
-    async fetchRolesDetail(id) {
+    async findRolesDetail(id) {
       const response = await axios.get(`/roles/${id}`);
       return response.data;
     },
@@ -44,7 +44,7 @@ export const useRolesStore = defineStore('roles', {
     },
 
     // 권한 목록 조회
-    async fetchPermissions() {
+    async findPermissions() {
       const response = await axios.get('/permission/list');
       // console.log(response.data);
       this.perList = response.data;

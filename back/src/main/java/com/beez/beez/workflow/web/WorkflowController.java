@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -17,7 +18,7 @@ public class WorkflowController {
 
   private final WorkflowService workflowService;
 
-  // 업무흐름 기본설정 조회
+  // 업무흐름 조회
   @GetMapping("/list")
   public ResponseEntity<List<WorkflowResponse>> findWorkflowMatrix(@RequestParam(name = "roleId") String roleId,
                                               @RequestParam(name = "typeId") String typeId,
@@ -31,6 +32,13 @@ public class WorkflowController {
   public ResponseEntity<String> insertWorkflow(@RequestBody WorkflowSaveRequest dto){
     workflowService.insertWorkflow(dto);
     return ResponseEntity.ok("성공적으로 저장되었습니다.");
+  }
+
+  // 일감 상태 공통 코드 조회
+  @GetMapping("/taskStatus/{groupValue}")
+  public ResponseEntity<List<Map<String, Object>>> findTaskStatusCode(@PathVariable String groupValue){
+    List<Map<String, Object>> list = workflowService.findTaskStatusCode(groupValue);
+    return ResponseEntity.ok(list);
   }
 
 }

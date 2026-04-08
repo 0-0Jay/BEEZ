@@ -11,7 +11,6 @@ const toast = useToast();
 
 const roleName = ref('');
 const isAssignee = ref(false);
-const workflowCopy = ref(null);
 
 const permissionItems = ref([]); // 메뉴
 const permissions = ref({}); // 체크 상태
@@ -21,9 +20,9 @@ const roleNameError = ref('');
 
 onMounted(async () => {
   // 역할 목록 가져오기
-  await rolesStore.fetchRoles();
+  await rolesStore.findRoles();
   // 권한 목록 가져오기
-  await rolesStore.fetchPermissions();
+  await rolesStore.findPermissions();
   initPermissionMatrix();
 
   const editId = route.query.editId;
@@ -85,7 +84,7 @@ const deselectAll = () => {
 // 데이터 불러오기
 const loadEditData = async (id) => {
   try {
-    const data = await rolesStore.fetchRolesDetail(id);
+    const data = await rolesStore.findRolesDetail(id);
 
     roleName.value = data.name; // 원본 이름 그대로
     isAssignee.value = data.isAssignee === 'Y1';
@@ -176,11 +175,6 @@ const onCancel = () => {
       <div class="flex items-center gap-2">
         <Checkbox v-model="isAssignee" binary inputId="isAssignee" />
         <label for="isAssignee" class="form-label cursor-pointer whitespace-nowrap"> 담당자 지정 가능 여부 </label>
-      </div>
-
-      <div class="flex items-center gap-3">
-        <label class="form-label whitespace-nowrap">업무 흐름 복사</label>
-        <Select v-model="workflowCopy" :options="rolesStore.roleList" optionLabel="name" optionValue="id" placeholder="선택" class="role-pv-select" />
       </div>
     </div>
 
