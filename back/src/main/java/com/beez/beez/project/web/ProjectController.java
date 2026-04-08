@@ -91,8 +91,16 @@ public class ProjectController {
   //사용자 + 그룹 검색
   @GetMapping("/members/search")
   public ResponseEntity<MemberSearchResponseDto> searchMembers(
+    @RequestParam String projectId,
     @RequestParam(required = false) String keyword) {
-      return ResponseEntity.ok(projectService.searchMembers(keyword));
+      return ResponseEntity.ok(projectService.searchMembers(projectId, keyword));
+  }
+  
+  //프로젝트 구성원 추가
+  @PostMapping("/members")
+  public ResponseEntity<Void> insertProjectMember(@RequestBody ProjectMemberRequest dto) {
+    projectService.insertProjectMember(dto);
+    return ResponseEntity.ok().build();
   }
   
   

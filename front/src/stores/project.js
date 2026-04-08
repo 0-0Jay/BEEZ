@@ -117,10 +117,16 @@ export const useProjectStore = defineStore('project', {
     // 사용자 + 그룹 (검색)
     async fetchSearchMembers(keyword = null) {
       const response = await axios.get(`/project/members/search`, {
-        params: { keyword }
+        params: { projectId: this.selectedProject.id, keyword }
       });
       this.users = response.data.users;
       this.groups = response.data.groups;
+    },
+
+    // 프로젝트 구성원 추가
+    async insertProjectMember(requestBody) {
+      const response = await axios.post(`/project/members`, requestBody);
+      return response.data;
     }
   },
   persist: {

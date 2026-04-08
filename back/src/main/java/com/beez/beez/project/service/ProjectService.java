@@ -39,6 +39,10 @@ public interface ProjectService {
   //역할 조회
   List<RolesResponse> findRoles();
   
-  // 사용자 + 그룹 검색 (합쳐서 반환)
-  MemberSearchResponseDto searchMembers(String keyword);
+  //사용자 + 그룹 검색 (합쳐서 반환)
+  MemberSearchResponseDto searchMembers(String projectId, String keyword);
+  
+  //프로젝트 구성원 추가
+  void insertProjectMember(ProjectMemberRequest dto);
+  
 }

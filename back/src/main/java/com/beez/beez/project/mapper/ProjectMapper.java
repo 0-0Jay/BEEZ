@@ -49,8 +49,12 @@ public interface ProjectMapper {
   List<RolesResponse> findRoles();
   
   //사용자 조회
-  List<UserResponse> findUsers(String keyword);
+  List<UserResponse> findUsers(@Param("projectId") String projectId, @Param("keyword") String keyword);
   
   //그룹 조회
-  List<GroupResponse> findGroups(String keyword);
+  List<GroupResponse> findGroups(@Param("projectId") String projectId, @Param("keyword") String keyword);
+  
+  //프로젝트 구성원 추가
+  void insertProjectMember(ProjectMemberRequest dto);
+  
 }

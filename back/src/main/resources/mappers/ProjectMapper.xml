@@ -197,9 +197,14 @@
   <select id="findUsers" resultType="UserResponse">
     SELECT id,
            name
-    FROM users
+    FROM users u
     WHERE status = 'H1'
     AND role = 'ROLE0003'
+    AND NOT EXISTS( SELECT 1
+                    FROM project_member pm
+                    WHERE pm.user_id = u.id
+                    AND pm.project_id = #{projectId}
+                   )
       <if test="keyword != null and keyword != ''">
         AND name LIKE '%' || #{keyword} || '%'
       </if>
@@ -209,11 +214,27 @@
   <select id="findGroups" resultType="GroupResponse">
     SELECT id,
            name
-    FROM groups
-    <where>
+    FROM groups g
+    WHERE NOT EXISTS( SELECT 1
+                      FROM project_member pm
+                      WHERE pm.group_id = g.id
+                      AND pm.project_id = #{projectId}
+                      )
       <if test="keyword != null and keyword != ''">
         AND name LIKE '%' || #{keyword} || '%'
       </if>
-    </where>
   </select>
+  
+  <!-- 프로젝트 구성원 추가 -->
+  <insert id="insertProjectMember" parameterType="com.beez.beez.project.dto.ProjectMemberRequest" statementType="CALLABLE">
+    {
+        CALL add_project_member_role(
+             #{projectId, mode=IN, jdbcType=VARCHAR},
+             #{userIds,   mode=IN, jdbcType=ARRAY, typeHandler=com.beez.beez.config.OracleTypeHandler.VarcharTypeHandler},
+             #{groupIds,  mode=IN, jdbcType=ARRAY, typeHandler=com.beez.beez.config.OracleTypeHandler.VarcharTypeHandler},
+             #{roleIds,   mode=IN, jdbcType=ARRAY, typeHandler=com.beez.beez.config.OracleTypeHandler.VarcharTypeHandler}
+             )
+    }
+  </insert>
+
 </mapper>

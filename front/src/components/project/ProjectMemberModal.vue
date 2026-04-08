@@ -1,7 +1,7 @@
 <script setup>
 import { useProjectStore } from '@/stores/project';
 import { useToast } from 'primevue';
-import { computed, ref } from 'vue';
+import { computed, onUnmounted, ref, watch } from 'vue';
 
 const props = defineProps({
   visible: { type: Boolean, required: true }
@@ -10,19 +10,62 @@ const props = defineProps({
 const emit = defineEmits(['update:visible', 'saved']);
 const projectStore = useProjectStore();
 const toast = useToast();
-const submitted = ref(false);
 
+const selectedprojectId = projectStore.selectedProject.id;
 const searchKeyword = ref('');
 const selectedUsers = ref([]);
 const selectedGroups = ref([]);
 const selectedRoles = ref([]);
+let timer = null;
+
+// visible이 true가 될 때 초기 로드
+watch(
+  () => props.visible,
+  async (val) => {
+    if (val) {
+      await projectStore.fetchSearchMembers();
+    }
+  }
+);
 
 const roles = computed(() => projectStore.roles);
-const filteredUsers = ref([]);
-const filteredGroups = ref([]);
+const filteredUsers = computed(() => projectStore.users);
+const filteredGroups = computed(() => projectStore.groups);
 
-const close = () => emit('update:visible', false);
-const handleSave = () => {};
+// 키워드 변경 시 자동 검색 (디바운스 적용)
+watch(searchKeyword, (keyword) => {
+  clearTimeout(timer);
+  timer = setTimeout(async () => {
+    await projectStore.fetchSearchMembers(keyword || null);
+  }, 300);
+});
+
+//모달 닫힐 때 상태 초기화
+const close = () => {
+  searchKeyword.value = '';
+  selectedUsers.value = [];
+  selectedGroups.value = [];
+  selectedRoles.value = [];
+  emit('update:visible', false);
+};
+
+const handleSave = async () => {
+  const requestBody = {
+    projectId: selectedprojectId,
+    userIds: [...selectedUsers.value],
+    groupIds: [...selectedGroups.value],
+    roleIds: [...selectedRoles.value]
+  };
+
+  await projectStore.insertProjectMember(requestBody);
+  emit('saved');
+  close();
+  toast.add({ severity: 'success', summary: '등록 완료', detail: '구성원이 추가되었습니다.', life: 2000 });
+};
+
+onUnmounted(() => {
+  if (timer) clearTimeout(timer);
+});
 </script>
 <template>
   <Dialog :visible="visible" header="새 구성원" modal :style="{ width: '560px' }" @update:visible="close">

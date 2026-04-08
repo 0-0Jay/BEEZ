@@ -103,6 +103,11 @@ const openAddModal = () => {
 const closeAddModal = () => {
   modalVisible.value = false;
 };
+
+// 구성원 추가 완료 시 호출될 함수
+const handleMemberSaved = async () => {
+  await projectStore.fetchProjectMembers(projectId);
+};
 </script>
 
 <template>
@@ -259,7 +264,7 @@ const closeAddModal = () => {
   </ConfirmDialog>
   <ProjectMemberModal
     v-model:visible="modalVisible"
-    @saved=""
+    @saved="handleMemberSaved"
     @update:visible="
       (val) => {
         if (!val) closeAddModal();

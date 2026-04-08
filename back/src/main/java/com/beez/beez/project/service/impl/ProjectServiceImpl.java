@@ -134,14 +134,20 @@ public class ProjectServiceImpl implements ProjectService {
   
   // 사용자 + 그룹 검색 (합쳐서 반환)
   @Override
-  public MemberSearchResponseDto searchMembers(String keyword) {
-    List<UserResponse> users = projectMapper.findUsers(keyword);
-    List<GroupResponse> groups = projectMapper.findGroups(keyword);
+  public MemberSearchResponseDto searchMembers(String projectId, String keyword) {
+    List<UserResponse> users = projectMapper.findUsers(projectId, keyword);
+    List<GroupResponse> groups = projectMapper.findGroups(projectId, keyword);
     
     return MemberSearchResponseDto.builder()
       .users(users)
       .groups(groups)
       .build();
+  }
+  
+  //프로젝트 구성원 추가
+  @Override
+  public void insertProjectMember(ProjectMemberRequest dto) {
+    projectMapper.insertProjectMember(dto);
   }
   
   
