@@ -7,14 +7,17 @@
   
   <!--등록 관련-->
   <insert id="insertFileMaster">
+    <selectKey keyProperty="id" resultType="string" order="BEFORE">
+      SELECT BEEZ.generate_pk_auto('file') FROM dual
+    </selectKey>
     INSERT INTO files (id, user_id, created_on)
-    VALUES (#{fileId}, #{userId}, SYSTIMESTAMP)
+    VALUES (#{id}, #{userId}, SYSTIMESTAMP)
   </insert>
   
   
   <insert id="insertFileDetail" parameterType="com.beez.beez.file.dto.FileDetailRequest">
     <selectKey keyProperty="id" resultType="string" order="BEFORE">
-      SELECT seq_file_detail.NEXTVAL FROM DUAL
+      SELECT BEEZ.generate_pk_auto('file_detail') FROM dual
     </selectKey>
     INSERT INTO file_detail (
     id, file_id, original_name, stored_name, extension, file_size,
@@ -22,13 +25,16 @@
     )
     VALUES (
     #{id}, #{fileId}, #{originalName}, #{storedName}, #{extension}, #{fileSize},
-    'N', 1, #{id}, SYSTIMESTAMP
+    'N', 1, #{rootId}, SYSTIMESTAMP
     )
   </insert>
   
   <insert id="insertDocument">
+    <selectKey keyProperty="id" resultType="string" order="BEFORE">
+      SELECT BEEZ.generate_pk_auto('docs') FROM dual
+    </selectKey>
     INSERT INTO docs (id, title, content, doc_type, file_id, user_id, created_on)
-    VALUES (seq_docs.NEXTVAL, #{doc.title}, #{doc.content}, #{doc.doctype}, #{fileId}, #{userId}, SYSTIMESTAMP)
+    VALUES (#{id}, #{doc.title}, #{doc.content}, #{doc.doctype}, #{fileId}, #{userId}, SYSTIMESTAMP)
   </insert>
   
   
@@ -37,7 +43,8 @@
     UPDATE docs
     SET title = #{title},
     doc_type = #{doctype},
-    content = #{content}
+    content = #{content},
+    edited_on = SYSTIMESTAMP
     WHERE id = #{id}
   </update>
   
@@ -75,10 +82,10 @@
     WHERE d.id = #{id}
     AND fd.is_delete = 'N'
     AND fd.version = (
-    SELECT MAX(version)
-    FROM file_detail
-    WHERE root_id = fd.root_id
-    AND is_delete = 'N'
+      SELECT MAX(version)
+      FROM file_detail
+      WHERE root_id = fd.root_id
+      AND is_delete = 'N'
     )
   </select>
   

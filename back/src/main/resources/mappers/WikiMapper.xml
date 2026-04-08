@@ -48,6 +48,7 @@
     )
   </insert>
   
+  <!-- 버전 업 위함 -->
   <update id="updateWikiIdInVersion">
     UPDATE WIKI_VERSION
     SET WIKI_ID = #{wikiId}
@@ -78,7 +79,12 @@
     ORDER BY CREATED_ON DESC
   </select>
   
-  <!--화면에 출력하는 위키 내용-->
+  <!--화면에 출력하는 프로젝트별 최신 위키 내용-->
+  
+  
+  
+  
+  
   <select id="findWikiByProjectId">
     SELECT
     W.ID,
@@ -93,7 +99,7 @@
     ORDER BY V.CREATED_ON DESC
   </select>
   
-  <!-- 위키 id에 따라 최신 버전을 가져옴 update있어서 이건 없어도 크게 상관은 없을것 같은데 일단 넣음-->
+  <!-- 위키 id에 따라 최신 버전을 가져옴-->
   <select id="findLatestVersion" >
     SELECT
         V.VERSION_ID,
@@ -129,22 +135,5 @@
     WHERE p.id = #{projectId}
   </select>
   
-  <!--데이터 테스트 완료-->
-<!--  <select id="findWikiDetailWithProject" resultType="com.beez.beez.wiki.dto.WikiVersionRequest">-->
-<!--    SELECT-->
-<!--    V.VERSION_ID,-->
-<!--    V.CONTENT,-->
-<!--    V.USER_ID,-->
-<!--    V.CREATED_ON,-->
-<!--    V.WIKI_ID,-->
-<!--    V.DESCRIPTION,-->
-<!--    V.VERSION_NAME,-->
-<!--    V.LINKS,-->
-<!--    V.WIKI_INFO-->
-<!--    FROM WIKI W-->
-<!--    JOIN WIKI_VERSION V ON W.VERSION_ID = V.VERSION_ID-->
-<!--    WHERE W.ID = #{wikiId}-->
-<!--    AND W.PROJECT_ID = #{projectId}-->
-<!--  </select>-->
   
 </mapper>

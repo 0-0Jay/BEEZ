@@ -1,10 +1,11 @@
 package com.beez.beez.file.service;
 
 import com.beez.beez.file.dto.DocumentRequest;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-public interface DocService {
+public interface DocumentService {
   //문서 등록
   void registerDocument(DocumentRequest.CreateRequest request, String userId);
   
@@ -15,5 +16,7 @@ public interface DocService {
   DocumentRequest.DetailResponse getDocumentDetail(String id);
   
   //문서 수정(버전 관리 로직 포함)
-  void updateDocument(DocumentRequest.UpdateRequest request, String userId);
+  void updateDocument(DocumentRequest.UpdateRequest request,
+                      List<MultipartFile> newFiles,
+                      String userId);
 }

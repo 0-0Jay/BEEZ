@@ -26,6 +26,7 @@ public interface WikiMapper {
   //wiki 테이블에 최신 버전의 위키를 알려주기 위함/ 되돌리기 기능
   void updateWiki(WikiRequest wikiRequest);
   
+  //버전 업 위함
   void updateWikiIdInVersion(WikiVersionRequest wikiVersionRequest);
   
   //하나의 위키(wikiId)의 과거 수정이력을 보기 위함 - 히스토리 기능
