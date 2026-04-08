@@ -12,7 +12,9 @@ export const useTaskStore = defineStore('task', {
     versionList: [],
     commonCodeList: [],
     journalList: [],
-    task: ref(null)
+    task: ref(null),
+    overview: [],
+    spent: []
   }),
   // getters
   // actions
@@ -97,6 +99,14 @@ export const useTaskStore = defineStore('task', {
     },
     async deleteTaskLink(id) {
       const res = await axios.delete(`/task/link/${id}`);
+    },
+    async findTaskOverview(id) {
+      const res = await axios.get(`/task/overview/${id}`);
+      this.overview = res.data;
+    },
+    async findSpentOverview(id) {
+      const res = await axios.get(`/task/spent/${id}`);
+      this.spent = res.data;
     }
     // async downloadFile(file) {
     //   const res = await axios.get(`/api/file/${file.storedName}`);

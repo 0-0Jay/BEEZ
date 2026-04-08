@@ -24,6 +24,7 @@ const openLogoutConfirm = () => {
 
 const handleLogoutConfirm = () => {
   authStore.logout();
+  projectStore.selectedProject = null;
   visible.value = false;
   router.push('/');
 };

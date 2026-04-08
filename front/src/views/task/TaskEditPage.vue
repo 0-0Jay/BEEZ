@@ -108,7 +108,8 @@ const originalValues = isEditMode
       actualEnd: formatDate(task.value?.actualEnd),
       estimatedTime: task.value?.estimatedTime ?? 0,
       progress: task.value?.progress ?? 0,
-      attachments: (task.value?.fileList ?? []).map((f) => ({ ...f }))
+      attachments: (task.value?.fileList ?? []).map((f) => ({ ...f })),
+      reject: task.value?.reject ?? ''
     }
   : null;
 
@@ -337,6 +338,7 @@ onMounted(async () => {
   await taskStore.findMember(project.value.id);
   await taskStore.findTaskList(project.value.id, userId.value);
   await taskStore.findVersionList(project.value.id);
+  console.log(taskStore.memberList);
   validate();
 });
 </script>

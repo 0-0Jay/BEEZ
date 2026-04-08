@@ -243,9 +243,9 @@ onMounted(async () => {
         <div class="flex flex-col gap-1.5 col-span-2">
           <label class="text-base font-semibold uppercase tracking-wider text-stone-400">마감일</label>
           <div class="flex items-center gap-2">
-            <DatePicker v-model="filters.plannedStart" date-format="yy-mm-dd" placeholder="시작일" show-button-bar class="flex-1 min-w-0 w-full" input-class="w-full" />
+            <DatePicker v-model="filters.plannedStart" date-format="yy-mm-dd" placeholder="시작일" show-button-bar showIcon class="flex-1 min-w-0 w-full" input-class="w-full" />
             <span class="text-stone-400 text-sm shrink-0">~</span>
-            <DatePicker v-model="filters.plannedEnd" date-format="yy-mm-dd" placeholder="종료일" show-button-bar class="flex-1 min-w-0 w-full" input-class="w-full" />
+            <DatePicker v-model="filters.plannedEnd" date-format="yy-mm-dd" placeholder="종료일" show-button-bar showIcon class="flex-1 min-w-0 w-full" input-class="w-full" />
           </div>
         </div>
 

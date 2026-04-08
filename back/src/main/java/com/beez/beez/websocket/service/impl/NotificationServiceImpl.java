@@ -26,6 +26,7 @@ public class NotificationServiceImpl implements NotificationService {
   public void sendNotification(NotificationRequest dto) {
     notificationRepository.insertNotification(dto.getUserId(), dto.getContent(), dto.getLink(), dto.getProjectId());
     NotificationResponse notificationResponse = notificationMapper.findNotification(dto.getUserId());
+    System.out.println(dto.getUserId() + " , " + notificationResponse.getContent());
     messagingTemplate.convertAndSend("/notification/" + dto.getUserId(), notificationResponse);
   }
   

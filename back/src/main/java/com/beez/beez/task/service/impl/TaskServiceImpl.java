@@ -60,7 +60,6 @@ public class TaskServiceImpl implements TaskService {
   // 일감 범주 수정
   @Override
   public void updateTaskCategory(TaskCategoryRequest dto) {
-    System.out.println(dto.getDescription());
     taskCategoryRepository.save(TaskCategory.toEntity(dto));
   }
   
@@ -91,7 +90,6 @@ public class TaskServiceImpl implements TaskService {
   // 일감 등록 / 복사
   @Override
   public String insertTask(TaskRequest task, List<MultipartFile> files) {
-    System.out.println(task.getProjectId());
     List<FileDetailRequest> fileDetails = fileService.saveFile(files);
     task.setFileDetails(fileDetails);
     taskMapper.insertTask(task);
@@ -112,7 +110,6 @@ public class TaskServiceImpl implements TaskService {
     
     // 일감 생성자가 일감 담당자와 다를 경우 일감 담당자에게 일감 부여됨을 알림
     if (!task.getCreator().equals(task.getUserId())) {
-      System.out.println(task.getCreator() + ", " + task.getUserId());
       notificationService.sendNotification(NotificationRequest.builder()
         .userId(task.getUserId())
         .content("새로운 일감이 할당되었습니다.")
@@ -132,11 +129,13 @@ public class TaskServiceImpl implements TaskService {
     taskMapper.updateTask(task);
     
     // 반려 또는 완료일경우 담당자에게 알림
-    if (task.getWorkflow().equals("Q3") || task.getWorkflow().equals("Q4")) {
+    boolean isWorkflowChanged = task.getJournals().stream().anyMatch(journal -> "workflow".equals(journal.getFieldName()));
+    if (isWorkflowChanged && (task.getWorkflow().equals("Q3") || task.getWorkflow().equals("Q4"))) {
       notificationService.sendNotification(NotificationRequest.builder()
           .userId(task.getUserId())
           .content("일감의 진행 상태가 " + ((task.getWorkflow().equals("Q3")) ? "승인" : "반려") + " 되었습니다.")
           .link("/task/" + task.getId())
+          .projectId(task.getProjectId())
           .build());
     }
   }
@@ -204,4 +203,16 @@ public class TaskServiceImpl implements TaskService {
   public void deleteTaskLink(String id) {
     taskMapper.deleteTaskLink(id);
   }
+  
+  // 일감 보고서
+  @Override
+  public List<TaskOverviewResponse> findTaskOverview(String id) {
+    return taskMapper.findTaskOverview(id);
+  }
+  
+  // 소요시간
+  @Override
+  public List<TaskSpentResponse> findSpentOverview(String id) {
+    return taskMapper.findSpentOverview(id);
+  };
 }

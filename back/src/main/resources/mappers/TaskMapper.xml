@@ -29,7 +29,9 @@
            u.name
     FROM project_member p
     JOIN users u ON p.user_id = u.id
-    WHERE p.project_id = #{projectId}
+    JOIN role_mapping rm ON p.id = rm.member_id
+    JOIN roles r ON r.id = rm.role_id
+    WHERE p.project_id = #{projectId} AND r.is_assignee = 'Y1' AND rm.is_delete = 'F0' AND p.is_delete = 'F0'
   </select>
   
   <select id="findCommonCodeList" resultType="CommonCodeResponse">
@@ -250,8 +252,42 @@
   </select>
   
   <select id="findTaskOverview" resultType="TaskOverviewResponse">
-    SELECT type, category, priority, user_id, creator, version_id
-    FROM task
-    WHERE project_id = #{id}
+    SELECT tt.name AS type,
+           tc.name AS category,
+           cc1.com_name AS priority,
+           u1.name || '(' || t.user_id || ')' AS user_id,
+           u2.name || '(' || t.creator || ')' creator,
+           cc2.com_name AS workflow,
+           NVL(v.name, '없음') AS version_id
+    FROM task t
+    JOIN task_type tt ON tt.id = t.type
+    JOIN task_category tc ON tc.id = t.category
+    JOIN common_code cc1 ON cc1.com_value = t.priority
+    JOIN users u1 ON u1.id = t.user_id
+    JOIN users u2 ON u2.id = t.creator
+    JOIN common_code cc2 ON cc2.com_value = t.workflow
+    LEFT JOIN version v ON v.id = t.version_id
+    WHERE t.project_id = #{id} AND t.status = 'T1'
+    ORDER BY priority
+  </select>
+  
+  <select id="findSpentOverview" resultType="TaskSpentResponse">
+    SELECT s.task_id,
+           t.title AS task_title,
+           t.project_id,
+           p.title AS project_title,
+           t.type,
+           t.category,
+           s.user_id,
+           u.name,
+           s.description,
+           s.activity_type,
+           s.task_start,
+           s.spent
+    FROM time s
+    JOIN task t ON t.id = s.task_id
+    JOIN project p ON t.project_id = p.id
+    JOIN users u ON u.id = s.user_id
+    WHERE p.id = #{id} OR p.parent_id = #{id}
   </select>
 </mapper>
