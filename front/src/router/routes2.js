@@ -28,6 +28,16 @@ const Routes2 = [
     path: '/task/:taskId',
     name: 'taskDetail',
     component: () => import('@/views/task/TaskDetailPage.vue')
+  },
+  {
+    path: '/task/overview',
+    name: 'taskOverview',
+    component: () => import('@/views/task/TaskOverviewPage.vue')
+  },
+  {
+    path: '/spent',
+    name: 'spent',
+    component: () => import('@/views/task/SpentOverviewPage.vue')
   }
 ];
 export default Routes2;

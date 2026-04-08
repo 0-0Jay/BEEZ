@@ -37,4 +37,6 @@ public interface TaskMapper {
   void calcSubProgress(@Param("taskId") String taskId,@Param("progress") int progress);
   
   List<TaskOverviewResponse> findTaskOverview(String id);
+  
+  List<TaskSpentResponse> findSpentOverview(String id);
 }

@@ -81,7 +81,6 @@ async function loadNotifications() {
 
 function togglePanel() {
   if (!isOpen.value) loadNotifications(); // 열 때마다 최신화
-  console.log(notifications.value);
   isOpen.value = !isOpen.value;
 }
 
@@ -160,7 +159,7 @@ onUnmounted(() => {
           <li
             v-for="n in notifications"
             :key="n.id"
-            class="group flex items-start gap-3.5 px-5 py-4 transition-colors duration-100"
+            class="group flex items-center gap-3.5 px-5 py-4 transition-colors duration-100"
             :class="[n.status == 'G0' ? 'bg-white hover:bg-stone-50' : 'bg-amber-50/60 hover:bg-amber-50', n.link ? 'cursor-pointer' : 'cursor-default']"
             @click="markAsRead(n)"
           >
@@ -171,6 +170,7 @@ onUnmounted(() => {
 
             <!-- 알림 내용 -->
             <div class="flex-1 min-w-0">
+              <p class="text-sm text-stone-700 leading-relaxed line-clamp-2" :class="n.status == 'G1' ? 'font-normal' : 'font-semibold'">{{ n.title }}</p>
               <p class="text-sm text-stone-700 leading-relaxed line-clamp-2" :class="n.status == 'G1' ? 'font-normal' : 'font-semibold'">
                 {{ n.content }}
                 <span v-if="n.status == 'G1'" class="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 ml-1 mb-px align-middle"></span>

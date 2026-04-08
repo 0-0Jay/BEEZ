@@ -66,4 +66,8 @@ public interface TaskService {
   void insertTaskTime(TaskTimeRequest taskTimeRequest);
   
   void deleteTaskLink(String id);
+  
+  List<TaskOverviewResponse> findTaskOverview(String id);
+  
+  List<TaskSpentResponse> findSpentOverview(String id);
 }

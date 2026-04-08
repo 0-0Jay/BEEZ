@@ -25,6 +25,7 @@ public class TaskController {
   // 담당자 목록 조회
   @GetMapping("/member/{projectId}")
   public ResponseEntity<List<MemberResponse>> findMemberList(@PathVariable String projectId) {
+    System.out.println(projectId + ", " + taskService.findMemberList(projectId).size());
     return ResponseEntity.ok(taskService.findMemberList(projectId));
   }
   
@@ -98,5 +99,17 @@ public class TaskController {
   public ResponseEntity<Void> deleteTaskLink(@PathVariable String id) {
     taskService.deleteTaskLink(id);
     return ResponseEntity.ok().build();
+  }
+  
+  // 일감 보고서
+  @GetMapping("/overview/{id}")
+  public ResponseEntity<List<TaskOverviewResponse>> findTaskOverview(@PathVariable String id) {
+    return ResponseEntity.ok(taskService.findTaskOverview(id));
+  }
+  
+  // 소요시간
+  @GetMapping("/spent/{id}")
+  public ResponseEntity<List<TaskSpentResponse>> findSpentOverview(@PathVariable String id) {
+    return ResponseEntity.ok(taskService.findSpentOverview(id));
   }
 }
