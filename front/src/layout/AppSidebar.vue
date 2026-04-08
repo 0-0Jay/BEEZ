@@ -143,7 +143,7 @@ const toggleAdminMenu = () => {
       </div>
 
       <div v-show="showContent && isOpen">
-        <template v-if="authStore.user?.roles.includes('ROLE0001')">
+        <template v-if="authStore.user?.role.includes('ROLE0001')">
           <div @click="toggleAdminMenu" class="menu-item whitespace-nowrap cursor-pointer px-3 py-2.5 rounded-lg hover:bg-gray-700 transition-colors duration-150 flex items-center justify-between">
             <span>관리</span>
           </div>
@@ -155,9 +155,9 @@ const toggleAdminMenu = () => {
             <router-link to="/roles/list" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
               <span>역할 관리</span>
             </router-link>
-            <!-- <router-link to="/admin/codes" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
-              <span>공통 코드 관리</span>
-            </router-link> -->
+            <router-link to="/workflow/list" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
+              <span>업무 흐름</span>
+            </router-link>
           </div>
         </template>
       </div>

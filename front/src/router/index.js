@@ -25,6 +25,7 @@ const router = createRouter({
     {
       path: '/main',
       component: AppLayout,
+      meta: { requiresAuth: true },
       children: [
         {
           path: '/main',
@@ -37,12 +38,12 @@ const router = createRouter({
           component: () => import('@/views/project/ProjectListPage.vue')
         },
         // 권한 테스트용
-        {
-          path: '/test/auth',
-          name: 'authTest',
-          component: () => import('@/views/AuthTest.vue'),
-          meta: { requiresAuth: true, role: 'ROLE0001' } // 필요한 권한을 메타 정보에 기록
-        },
+        // {
+        //   path: '/test/auth',
+        //   name: 'authTest',
+        //   component: () => import('@/views/AuthTest.vue'),
+        //   meta: { requiresAuth: true, role: 'ROLE0001' } // 필요한 권한을 메타 정보에 기록
+        // },
         {
           path: '/error',
           name: 'error',

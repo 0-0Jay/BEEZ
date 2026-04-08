@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.beez.beez.workflow.mapper.WorkflowMapper">
+  <resultMap id="workflowMap" type="com.beez.beez.workflow.dto.WorkflowResponse">
+    <result property="beforeCode" column="before_code"/>
+    <result property="beforeName" column="before_name"/>
+    <result property="afterCode" column="after_code"/>
+    <result property="afterName" column="after_name"/>
+    <result property="isAllow" column="is_allow"/>
+    <result property="roleId" column="role_id"/>
+    <result property="typeId" column="type_id"/>
+    <result property="conditionType" column="condition_type"/>
+  </resultMap>
+
+  <!-- 업무흐름 조회 -->
+  <select id="findWorkflowMatrix" resultMap="workflowMap">
+    SELECT c.before_code,
+           c.before_name,
+           c.after_code,
+           c.after_name,
+           CASE WHEN c.before_code = c.after_code THEN 'Y1'
+                ELSE NVL(w.is_allow, 'Y0')
+           END as is_allow,
+           #{roleId} as role_id,
+           #{typeId} as type_id,
+           #{conditionType} as condition_type
+    FROM (SELECT c1.com_value as before_code,
+                 c1.com_name as before_name,
+                 c2.com_value as after_code,
+                 c2.com_name as after_name
+    FROM common_code c1
+    CROSS JOIN common_code c2
+    WHERE c1.group_value = '0Q' AND c2.group_value = '0Q' ) c
+    LEFT OUTER JOIN workflow w
+    ON  c.before_code = w.before AND c.after_code = w.after
+        AND w.role_id = #{roleId} AND w.type_id = #{typeId}
+        AND w.condition_type =#{conditionType}
+    ORDER BY c.before_code, c.after_code
+  </select>
+
+  <!-- 업무흐름 삭제 -->
+  <delete id="deleteWorkflowConfig">
+    DELETE FROM workflow
+    WHERE role_id = #{roleId} AND type_id = #{typeId} AND condition_type = #{conditionType}
+  </delete>
+
+  <!-- 업무흐름 기본정보 등록 -->
+  <insert id="insertWorkflowConfig">
+    BEGIN
+    <foreach collection="details" item="item" separator=" ">
+      INSERT INTO workflow(id, role_id, type_id, before, after, is_allow, condition_type)
+      VALUES(BEEZ.generate_pk_auto('workflow'),
+             #{roleId},
+             #{typeId},
+             #{item.beforeCode},
+             #{item.afterCode},
+             #{item.isAllow},
+             #{conditionType});
+    </foreach>
+    END;
+  </insert>
+
+  <!-- 일감 상태 공통 코드 조회 -->
+  <select id="findTaskStatusCode" resultType="map">
+    SELECT com_value as "key",
+           com_name  as "label"
+    FROM  common_code
+    WHERE group_value = #{groupValue} AND is_use = 1
+    ORDER BY com_value
+  </select>
+</mapper>

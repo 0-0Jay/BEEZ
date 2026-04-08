@@ -34,13 +34,13 @@ public class UsersController {
   }
 
   // 이메일 중복체크
-  @GetMapping("/register/check-email")
+  @GetMapping("/create/check-email")
   public ResponseEntity<Boolean> checkEmailExists(@RequestParam("email") String email) {
     return  ResponseEntity.ok(usersService.checkEmailExists(email));
   }
 
   // 사용자 등록
-  @PostMapping("/register")
+  @PostMapping("/create")
   public ResponseEntity<String> insertUser(@RequestBody UserRegisterRequest dto) {
     try{
 //      System.out.println("========================================");

@@ -1,5 +1,6 @@
 package com.beez.beez.config.jwt;
 
+import com.beez.beez.users.dto.CustomUserDetails;
 import com.beez.beez.users.repository.Users;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -13,6 +14,7 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class JwtProvider {
@@ -32,18 +34,27 @@ public class JwtProvider {
   }
 
   // 토큰 발급
-  public String createToken(Users user){
-    List<String> roles = user.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList();
+  public String createToken(CustomUserDetails userDetails) {
+    Users user = userDetails.getUser();
+
+    System.out.println("로그인 유저 권한 체크: " + userDetails.getAuthorities());
+
+    String authorities
+      = userDetails.getAuthorities()
+      .stream()
+      .map(GrantedAuthority::getAuthority)
+      .collect(Collectors.joining(","));
 
     Date now = new Date();
 
-    // 토큰 유효 시간 : 1시간
+    // 토큰 유효 시간 : 8시간
     long tokenValidTime = 480 * 60 * 1000L;
 
     return Jwts.builder()
       .subject(user.getId()) // 사원번호를 식별
-      .claim("roles", roles) // 어떤 권한을 가졌는지 토큰에 넣음
       .claim("name", user.getName())
+      .claim("auth", authorities) // 어떤 권한을 가졌는지 토큰에 넣음
+      .claim("role", user.getRole()) // 역할
       .issuedAt(now) // 발급시간
       .expiration(new Date(now.getTime() + tokenValidTime)) // 만료 시간
       .signWith(key) // 비밀키로 전자 서명

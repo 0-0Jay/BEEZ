@@ -28,11 +28,11 @@ public class PermissionServiceImpl implements PermissionService {
       int lastSpaceIndex = name.lastIndexOf(" ");
 
       if (lastSpaceIndex > 0) {
-        p.setGroup(name.substring(0, lastSpaceIndex));
-        p.setType(name.substring(lastSpaceIndex + 1));
+        p.setCategory(name.substring(0, lastSpaceIndex));
+        p.setAction(name.substring(lastSpaceIndex + 1));
       } else {
-        p.setGroup(name);
-        p.setType("");
+        p.setCategory(name);
+        p.setAction("");
       }
     }
 

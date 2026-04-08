@@ -1,80 +1,178 @@
 <script setup>
-import Checkbox from 'primevue/checkbox';
-import { ref } from 'vue';
+import { useRolesStore } from '@/stores/roles';
+import { useToast } from 'primevue';
+import { onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
-// 권한 항목
-const permissionItems = ref([
-  { key: 'project', label: '프로젝트' },
-  { key: 'user', label: '사용자' },
-  { key: 'group', label: '그룹' },
-  { key: 'board', label: '게시판' },
-  { key: 'calendar', label: '달력' },
-  { key: 'document', label: '문서' },
-  { key: 'file', label: '파일' },
-  { key: 'gantt', label: '간트차트' },
-  { key: 'worklog', label: '일감관리' },
-  { key: 'notice', label: '공지사항' },
-  { key: 'storage', label: '저장소' },
-  { key: 'timespent', label: '소요시간' },
-  { key: 'roadmap', label: '로드맵' },
-  { key: 'wiki', label: '위키' },
-  { key: 'changelog', label: '변경 로그' }
-]);
+const rolesStore = useRolesStore();
+const router = useRouter();
+const route = useRoute();
+const toast = useToast();
 
+const roleName = ref('');
+const isAssignee = ref(false);
+const workflowCopy = ref(null);
+
+const permissionItems = ref([]); // 메뉴
+const permissions = ref({}); // 체크 상태
 const permissionTypes = ['조회', '등록', '수정', '삭제'];
 
-// 권한 초기화 함수
-function createPermissions() {
-  const obj = {};
-  permissionItems.value.forEach((item) => {
-    obj[item.key] = Object.fromEntries(permissionTypes.map((type) => [type, false]));
+const roleNameError = ref('');
+
+onMounted(async () => {
+  // 역할 목록 가져오기
+  await rolesStore.findRoles();
+  // 권한 목록 가져오기
+  await rolesStore.findPermissions();
+  initPermissionMatrix();
+
+  const copyId = route.query.copyId;
+  if (copyId) {
+    await loadCopyData(copyId);
+  }
+});
+
+// 권한 목록 조립
+const initPermissionMatrix = () => {
+  const rawData = rolesStore.perList;
+  // console.log(rawData);
+  const matrix = {};
+
+  rawData.forEach((p) => {
+    if (!matrix[p.category]) {
+      matrix[p.category] = {
+        label: p.category,
+        key: p.category,
+        permissionIds: {}
+      };
+
+      permissions.value[p.category] = {
+        조회: false,
+        등록: false,
+        수정: false,
+        삭제: false
+      };
+    }
+
+    matrix[p.category].permissionIds[p.action] = p.id;
   });
-  return obj;
-}
 
-const permissions = ref(createPermissions());
+  permissionItems.value = Object.values(matrix);
+  // console.log(permissionItems.value);
+};
 
-// 폼 데이터
-const roleName = ref('');
-const canAssignManager = ref(false);
-const workflowCopy = ref('');
-
-// 옵션
-const workflowOptions = [
-  { value: '', label: '선택' },
-  { value: 'default', label: '기본' },
-  { value: 'custom', label: '커스텀' }
-];
-
-// 전체 선택 / 해제
-function setAllPermissions(value) {
+// 모두 선택
+const selectAll = () => {
   permissionItems.value.forEach((item) => {
     permissionTypes.forEach((type) => {
-      permissions.value[item.key][type] = value;
+      // 해당 메뉴에 그 권한 ID가 존재할 때만 true
+      if (item.permissionIds[type]) {
+        permissions.value[item.key][type] = true;
+      }
     });
   });
-}
+};
 
-const selectAll = () => setAllPermissions(true);
-const deselectAll = () => setAllPermissions(false);
+// 선택 해제
+const deselectAll = () => {
+  Object.keys(permissions.value).forEach((key) => {
+    permissionTypes.forEach((type) => {
+      permissions.value[key][type] = false;
+    });
+  });
+};
 
-// 저장
-function onSave() {
-  const payload = {
-    roleName: roleName.value,
-    canAssignManager: canAssignManager.value,
-    workflowCopy: workflowCopy.value,
-    permissions: permissions.value
-  };
+// 역할 등록
+const onSave = async () => {
+  roleNameError.value = '';
 
-  console.log('저장 데이터:', payload);
-  alert('저장되었습니다.');
-}
+  if (!roleName.value.trim()) {
+    roleNameError.value = '역할 이름을 입력해 주세요.';
+    return;
+  }
+
+  try {
+    const selectedIds = [];
+
+    permissionItems.value.forEach((item) => {
+      ['조회', '등록', '수정', '삭제'].forEach((type) => {
+        if (permissions.value[item.key][type]) selectedIds.push(item.permissionIds[type]);
+      });
+    });
+
+    const payload = {
+      name: roleName.value,
+      isAssignee: isAssignee.value ? 'Y1' : 'Y0',
+      perIds: selectedIds
+    };
+
+    await rolesStore.insertRoles(payload);
+
+    toast.add({
+      severity: 'success',
+      summary: '등록 완료',
+      detail: '새 역할이 등록되었습니다.',
+      life: 3000,
+      closable: false
+    });
+
+    router.push('/roles/list');
+  } catch (err) {
+    const serverMessage = err.response?.data?.message || err.response?.data || '오류가 발생했습니다.';
+    toast.add({
+      severity: 'error',
+      summary: '오류',
+      detail: serverMessage,
+      life: 3000,
+      closable: false
+    });
+  }
+};
 
 // 취소
-function onCancel() {
-  alert('취소되었습니다.');
-}
+const onCancel = () => {
+  router.push('/roles/list');
+};
+
+// 역할 데이터 복사
+const loadCopyData = async (id) => {
+  try {
+    const data = await rolesStore.findRolesDetail(id);
+
+    // 기본 정보
+    roleName.value = `${data.name}_복사`;
+    isAssignee.value = data.isAssignee === 'Y1';
+
+    // 권한 체크박스
+    permissionItems.value.forEach((item) => {
+      ['조회', '등록', '수정', '삭제'].forEach((type) => {
+        const perIds = data.perIds || [];
+        const currentId = item.permissionIds[type];
+        // perIds 배열에 해당 ID가 있으면 true로 변경
+        if (perIds.includes(currentId)) {
+          permissions.value[item.key][type] = true;
+        }
+      });
+    });
+
+    toast.add({
+      severity: 'info',
+      summary: '복사 모드',
+      detail: '원본 데이터를 불러왔습니다.',
+      life: 3000,
+      closable: false
+    });
+  } catch (err) {
+    console.error('데이터 복사 실패:', err);
+    toast.add({
+      severity: 'error',
+      summary: '오류',
+      detail: '원본 데이터를 가져오지 못했습니다.',
+      life: 3000,
+      closable: false
+    });
+  }
+};
 </script>
 
 <template>
@@ -84,17 +182,18 @@ function onCancel() {
     <div class="form-bar mb-6">
       <div class="flex items-center gap-3">
         <label class="form-label"> 역할 이름 <span class="text-red-500">*</span> </label>
-        <InputText v-model="roleName" placeholder="역할 이름을 입력해 주세요." class="role-input" />
+        <InputText v-model="roleName" placeholder="역할 이름을 입력해 주세요." name="role_name" autocomplete="on" class="role-input" :class="{ 'p-invalid': roleNameError }" />
+        <small v-if="roleNameError" class="text-red-500 text-xs"> <i class="pi pi-exclamation-circle" style="font-size: 10px" /> {{ roleNameError }} </small>
       </div>
 
       <div class="flex items-center gap-2">
-        <Checkbox v-model="canAssignManager" binary inputId="canAssignManager" />
-        <label for="canAssignManager" class="form-label cursor-pointer whitespace-nowrap"> 담당자 지정 가능 여부 </label>
+        <Checkbox v-model="isAssignee" binary inputId="isAssignee" />
+        <label for="isAssignee" class="form-label cursor-pointer whitespace-nowrap"> 담당자 지정 가능 여부 </label>
       </div>
 
       <div class="flex items-center gap-3">
         <label class="form-label whitespace-nowrap">업무 흐름 복사</label>
-        <Select v-model="workflowCopy" :options="workflowOptions" optionLabel="label" optionValue="value" placeholder="선택" class="role-pv-select" />
+        <Select v-model="workflowCopy" :options="rolesStore.roleList" optionLabel="name" optionValue="id" placeholder="선택" class="role-pv-select" />
       </div>
     </div>
 
@@ -109,7 +208,7 @@ function onCancel() {
 
       <Column v-for="type in permissionTypes" :key="type" :header="type" headerClass="perm-header" bodyClass="perm-body-cell">
         <template #body="{ data }">
-          <Checkbox v-model="permissions[data.key][type]" binary />
+          <Checkbox v-model="permissions[data.key][type]" binary :disabled="!data.permissionIds[type]" />
         </template>
       </Column>
     </DataTable>
@@ -197,5 +296,13 @@ function onCancel() {
 
 :deep(.p-datatable-tbody > tr:last-child > td) {
   border-bottom: none !important;
+}
+
+:deep(.p-inputtext.p-invalid) {
+  border-color: #f5a623;
+}
+
+:deep(.p-inputtext.p-invalid::placeholder) {
+  color: #736f68;
 }
 </style>

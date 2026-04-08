@@ -1,18 +1,24 @@
 package com.beez.beez.users.service;
 
 import com.beez.beez.config.jwt.JwtProvider;
+import com.beez.beez.permission.mapper.PermissionMapper;
+import com.beez.beez.users.dto.CustomUserDetails;
 import com.beez.beez.users.dto.PasswordUpdateRequest;
 import com.beez.beez.users.mapper.UsersMapper;
 import com.beez.beez.users.repository.Users;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +27,7 @@ public class AuthService {
   private final UsersMapper usersMapper;
   private final PasswordEncoder passwordEncoder;
   private final JwtProvider jwtProvider;
+  private final CustomUserDetailsService userDetailsService;
 
   // 로그인
   @Transactional(readOnly = true)
@@ -34,12 +41,15 @@ public class AuthService {
     }
 
     // 계정 활성화 상태 확인
-    if (!user.isEnabled()) {
+    if (!"H1".equals(user.getStatus())) {
       throw new DisabledException("비활성화된 계정입니다. 관리자에게 문의하세요.");
     }
 
+    // 권한 넣기
+    CustomUserDetails userDetails = (CustomUserDetails) userDetailsService.loadUserByUsername(id);
+
     // 로그인 성공 후 토큰 생성
-    return jwtProvider.createToken(user);
+    return jwtProvider.createToken(userDetails);
   }
 
   // 비밀번호 재설정

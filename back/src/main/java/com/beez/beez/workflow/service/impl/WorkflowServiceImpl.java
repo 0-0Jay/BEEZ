@@ -1,0 +1,48 @@
+package com.beez.beez.workflow.service.impl;
+
+import com.beez.beez.workflow.dto.WorkflowResponse;
+import com.beez.beez.workflow.dto.WorkflowSaveRequest;
+import com.beez.beez.workflow.mapper.WorkflowMapper;
+import com.beez.beez.workflow.service.WorkflowService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Map;
+
+@Service
+@Transactional
+@RequiredArgsConstructor
+public class WorkflowServiceImpl implements WorkflowService {
+
+  private final WorkflowMapper workflowMapper;
+
+  // 업무흐름 조회
+  @Override
+  public List<WorkflowResponse> findWorkflowMatrix(String roleId, String typeId, String conditionType) {
+    return workflowMapper.findWorkflowMatrix(roleId, typeId, conditionType);
+  }
+
+  // 업무흐름 등록
+  @Override
+  public void insertWorkflow(WorkflowSaveRequest dto) {
+    try{
+      // 업무흐름 삭제(기존데이터)
+      workflowMapper.deleteWorkflowConfig(dto);
+
+      // 체크된 데이터가 있을 때만 저장 진행
+      if(dto.getDetails() != null && !dto.getDetails().isEmpty()){
+        workflowMapper.insertWorkflowConfig(dto);
+      }
+    } catch (Exception e) {
+      throw new RuntimeException("업무흐름 등록 중 오류가 발생하였습니다.");
+    }
+  }
+
+  // 일감 상태 공통 코드 조회
+  @Override
+  public List<Map<String, Object>> findTaskStatusCode(String groupValue) {
+    return workflowMapper.findTaskStatusCode(groupValue);
+  }
+}
