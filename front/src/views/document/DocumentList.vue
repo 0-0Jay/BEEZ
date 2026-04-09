@@ -1,4 +1,37 @@
 <script setup>
+import { ref } from 'vue'; // 1. ref 임포트 추가
+import { useRoute, useRouter } from 'vue-router';
+
+const router = useRouter();
+const route = useRoute();
+
+const activeFav = ref(1);
+
+// 문서 등록 페이지로 이동하는 함수
+const goToWrite = () => {
+  // 현재 URL의 projectId를 가져오거나, 데이터에 있는 ID를 사용하세요.
+  const projectId = route.params.projectId;
+
+  router.push({
+    name: 'DocumentWrite',
+    params: { projectId: projectId }
+  });
+};
+
+// [추가] 문서 상세 페이지 이동 함수  ###### 연결 테스트 떄문에 이렇게 적어 넣음
+//실제로 기능 구현 할때는 @click 과 v-bind 써야함
+const goToDetail = (docId) => {
+  const projectId = route.params.projectId; // URL의 프로젝트 ID 사용
+
+  router.push({
+    name: 'DocumentDetail',
+    params: {
+      projectId: projectId,
+      docId: docId
+    }
+  });
+};
+
 // 즐겨찾기 카드 선택
 document.querySelectorAll('.fav-card').forEach((card) => {
   card.addEventListener('click', () => {
@@ -35,62 +68,48 @@ document.querySelectorAll('.page-btn:not(.arrow)').forEach((btn) => {
 </script>
 
 <template>
-  <div class="wrap">
-    <!-- 검색 영역 -->
-    <div class="search-bar">
-      <div class="search-input-wrap">
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
-        <input type="text" placeholder="검색어를 입력해주세요." />
+  <div class="wiki-list-page">
+    <h1 class="text-2xl font-bold text-[#1A1816]">문서 목록</h1>
+
+    <div class="panel search-panel">
+      <div class="search-bar">
+        <div class="search-input-wrap">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input type="text" placeholder="검색어를 입력해주세요." />
+        </div>
+        <span class="label">문서 유형</span>
+        <div class="select-wrap">
+          <select>
+            <option value="">선택</option>
+            <option>기타</option>
+            <option>기획서</option>
+            <option>견적서</option>
+            <option>회의록</option>
+            <option>보고서</option>
+          </select>
+        </div>
+        <button class="btn btn-edit">조회</button>
       </div>
-      <span class="label">문서 유형</span>
-      <div class="select-wrap">
-        <select>
-          <option value="">선택</option>
-          <option>기타</option>
-          <option>기획서</option>
-          <option>견적서</option>
-          <option>회의록</option>
-          <option>보고서</option>
-        </select>
-      </div>
-      <button class="btn-search">조회</button>
     </div>
 
-    <!-- 즐겨찾기 문서 -->
-    <div class="section-title">즐겨찾기 문서</div>
+    <div class="section-title">즐겨찾기 문서 - 시간안에 안되면 날리겠음</div>
     <div class="fav-grid">
-      <div class="fav-card active">
-        <div class="fav-icon"><span class="radio-dot active"></span></div>
-        <div class="fav-name">프로젝트 기획서</div>
-        <div class="fav-meta">작성자: 곽현우 / 2026.03.19</div>
-      </div>
-      <div class="fav-card">
-        <div class="fav-icon"><span class="radio-dot"></span></div>
-        <div class="fav-name">프로젝트 기획서.pdf</div>
-        <div class="fav-meta">작성자: 곽현우 / 2026.03.19</div>
-      </div>
-      <div class="fav-card">
-        <div class="fav-icon"><span class="radio-dot"></span></div>
-        <div class="fav-name">프로젝트 기획서.txt</div>
-        <div class="fav-meta">작성자: 곽현우 / 2026.03.19</div>
-      </div>
-      <div class="fav-card">
-        <div class="fav-icon"><span class="radio-dot"></span></div>
-        <div class="fav-name">프로젝트 기획서</div>
+      <div v-for="i in 4" :key="i" class="panel fav-card" :class="{ active: activeFav === i }" @click="activeFav = i">
+        <div class="fav-icon">
+          <span class="radio-dot" :class="{ active: activeFav === i }"></span>
+        </div>
+        <div class="fav-name">프로젝트 기획안_{{ i }}</div>
         <div class="fav-meta">작성자: 곽현우 / 2026.03.19</div>
       </div>
     </div>
 
-    <!-- 문서등록 버튼 -->
-    <div class="clearfix">
-      <button class="btn-register">문서등록</button>
+    <div class="table-actions">
+      <button class="btn btn-edit" @click="goToWrite">문서등록</button>
     </div>
-
-    <!-- 게시글 목록 -->
-    <div class="board-wrap">
+    <div class="panel table-panel">
       <div class="board-header">
         <span>번호</span>
         <span>글 제목</span>
@@ -98,319 +117,204 @@ document.querySelectorAll('.page-btn:not(.arrow)').forEach((btn) => {
         <span>작성자</span>
         <span>작성일자</span>
       </div>
-      <div class="board-row">
-        <span class="num" style="display: flex; align-items: center; justify-content: center; gap: 4px"> <span class="star">☆</span> 5 </span>
-        <span class="title">해당 프로젝트와 관련하여 작성된 문서의 목록을 조회할 수 있는 페이지</span>
-        <span><span class="badge 기획안">기획안</span></span>
-        <span>곽현우</span>
-        <span class="date">2026.03.19</span>
-      </div>
-      <div class="board-row">
-        <span class="num" style="display: flex; align-items: center; justify-content: center; gap: 4px"> <span class="star active">★</span> 4 </span>
-        <span class="title">해당 프로젝트와 관련하여 작성된 문서의 목록을 조회할 수 있는 페이지</span>
-        <span><span class="badge 기획안">기획안</span></span>
-        <span>곽현우</span>
-        <span class="date">2026.03.19</span>
-      </div>
-      <div class="board-row">
-        <span class="num" style="display: flex; align-items: center; justify-content: center; gap: 4px"> <span class="star">☆</span> 3 </span>
-        <span class="title">해당 프로젝트와 관련하여 작성된 문서의 목록을 조회할 수 있는 페이지</span>
-        <span><span class="badge 기획서">기획서</span></span>
-        <span>곽현우</span>
-        <span class="date">2026.03.19</span>
-      </div>
-      <div class="board-row">
-        <span class="num" style="display: flex; align-items: center; justify-content: center; gap: 4px"> <span class="star active">★</span> 2 </span>
-        <span class="title">해당 프로젝트와 관련하여 작성된 문서의 목록을 조회할 수 있는 페이지</span>
-        <span><span class="badge 기획안">기획안</span></span>
-        <span>곽현우</span>
-        <span class="date">2026.03.19</span>
-      </div>
-      <div class="board-row">
-        <span class="num" style="display: flex; align-items: center; justify-content: center; gap: 4px"> <span class="star">☆</span> 1 </span>
-        <span class="title">해당 프로젝트와 관련하여 작성된 문서의 목록을 조회할 수 있는 페이지</span>
-        <span><span class="badge 기획안">기획안</span></span>
+      <div v-for="n in 5" :key="n" class="board-row">
+        <span class="num">
+          <span class="star" :class="{ active: n % 2 === 0 }">{{ n % 2 === 0 ? '★' : '☆' }}</span>
+          {{ 6 - n }}
+        </span>
+
+        <span class="title" @click="goToDetail(n)" style="cursor: pointer; color: #3d7eff"> 해당 프로젝트와 관련하여 작성된 문서의 제목입니다. (ID: {{ n }}) </span>
+
+        <span
+          ><span class="badge" :class="n === 3 ? '기획서' : '기획안'">{{ n === 3 ? '기획서' : '기획안' }}</span></span
+        >
         <span>곽현우</span>
         <span class="date">2026.03.19</span>
       </div>
     </div>
 
-    <!-- 페이지네이션 -->
     <div class="pagination">
       <div class="page-btn arrow">‹</div>
-      <div class="page-btn">1</div>
-      <div class="page-btn active">2</div>
-      <div class="page-btn">3</div>
-      <div class="page-btn">4</div>
-      <div class="page-btn">5</div>
-      <div class="page-btn">6</div>
-      <div class="page-btn">7</div>
-      <div class="page-btn">8</div>
-      <div class="page-btn">9</div>
-      <div class="page-btn">10</div>
+      <div class="page-btn active">1</div>
+      <div v-for="p in 4" :key="p + 1" class="page-btn">{{ p + 1 }}</div>
       <div class="page-btn arrow">›</div>
     </div>
   </div>
 </template>
 
-<style>
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-body {
-  font-family: sans-serif;
-  font-size: 14px;
-  color: #1a1a1a;
-  background: #f5f5f5;
-}
-.wrap {
-  padding: 20px;
-  max-width: 900px;
-  margin: 0 auto;
+<style scoped>
+/* 섹션 타이틀 스타일 수정 */
+.h1 {
+  margin: 1.5rem 0 0rem 0; /* 상단 여백 1.5rem, 하단 여백 0.5rem */
+  font-family: inherit; /* 부모의 폰트 계승 */
+  font-weight: 700; /* 굵게 */
+  line-height: 1.5; /* 줄 간격 */
+  color: #1a1816; /* var(--text-color) 대신 구체적인 색상 지정 */
+  font-size: 16px; /* 적절한 크기 추가 */
 }
 
-/* 검색 영역 */
-.search-bar {
+/* WIKI 페이지 스타일 가이드 적용 */
+.wiki-list-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: #f5f5f5;
+  min-height: 100vh;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  color: #333;
+  box-sizing: border-box;
+}
+
+.project-desc {
+  font-size: 14px;
+  color: #666;
+  margin-top: 4px;
+}
+
+/* 패널 공통 (WIKI 코드의 .panel 스타일) */
+.panel {
   background: #fff;
-  border: 0.5px solid #ddd;
-  border-radius: 12px;
-  padding: 16px 20px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 16px;
+}
+
+/* 검색바 조정 */
+.search-panel {
+  padding: 12px 20px;
+}
+.search-bar {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 20px;
 }
 .search-input-wrap {
   flex: 1;
   display: flex;
   align-items: center;
   gap: 8px;
-  border: 0.5px solid #ccc;
-  border-radius: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
   padding: 6px 12px;
-  background: #f9f9f9;
+  background: #fff;
 }
 .search-input-wrap input {
   border: none;
   outline: none;
-  background: transparent;
   width: 100%;
-  font-size: 13px;
-  color: #1a1a1a;
-}
-.search-input-wrap svg {
-  flex-shrink: 0;
-  opacity: 0.4;
-}
-.label {
-  font-size: 13px;
-  color: #666;
-  white-space: nowrap;
-}
-.select-wrap {
-  position: relative;
-  display: inline-block;
-}
-.select-wrap select {
-  appearance: none;
-  -webkit-appearance: none;
-  border: 0.5px solid #ccc;
-  border-radius: 8px;
-  padding: 6px 32px 6px 12px;
-  font-size: 13px;
-  background: #fff;
-  color: #1a1a1a;
-  cursor: pointer;
-  min-width: 110px;
-}
-.select-wrap::after {
-  content: '';
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  border: 4px solid transparent;
-  border-top: 5px solid #888;
-  pointer-events: none;
-}
-.btn-search {
-  background: #c0392b;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 7px 20px;
-  font-size: 13px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.btn-search:hover {
-  background: #a93226;
 }
 
-/* 섹션 타이틀 */
-.section-title {
+.select-wrap select {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 6px 12px;
+  background: #fff;
+}
+
+/* 버튼 스타일 (WIKI 스타일 계승) */
+.btn {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
   font-size: 13px;
   font-weight: 500;
-  color: #1a1a1a;
-  margin-bottom: 10px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
-.section-title::before {
-  content: '';
-  display: inline-block;
-  width: 3px;
-  height: 14px;
-  background: #c0392b;
-  border-radius: 2px;
+.btn-edit {
+  background: #e8920e;
+  color: #fff;
+}
+.btn-cancel {
+  background: #ffffff;
+  border: 1px solid #bbb;
+  color: #555;
 }
 
-/* 즐겨찾기 카드 */
+/* 즐겨찾기 그리드 (화면 전체 활용) */
 .fav-grid {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  width: 100%; /* 부모 너비에 꽉 차게 설정 */
 }
+
+/* 카드의 최소 높이나 너비가 너무 작아지지 않게 조절 (선택 사항) */
 .fav-card {
-  background: #fff;
-  border: 0.5px solid #ddd;
-  border-radius: 12px;
-  padding: 12px 16px;
-  min-width: 160px;
-  flex: 1;
   cursor: pointer;
-  transition: border-color 0.15s;
+  transition: all 0.2s;
+  min-width: 0; /* grid 내부에서 내용물이 박스를 뚫고 나가는 것 방지 */
 }
-.fav-card:hover {
-  border-color: #bbb;
-}
-.fav-card .fav-icon {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
+.fav-card.active {
+  border-color: #e8920e;
 }
 .radio-dot {
+  display: inline-block;
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  border: 2px solid #ccc;
-  display: inline-block;
-  flex-shrink: 0;
+  border: 2px solid #ddd;
 }
-.fav-card.active .radio-dot {
-  border-color: #c0392b;
-  background: #c0392b;
+.radio-dot.active {
+  background: #e8920e;
+  border-color: #e8920e;
 }
-.fav-card .fav-name {
-  font-size: 13px;
-  font-weight: 500;
-  color: #1a1a1a;
-  margin-bottom: 4px;
+.fav-name {
+  font-weight: bold;
+  margin: 4px 0;
 }
-.fav-card .fav-meta {
-  font-size: 11px;
+.fav-meta {
+  font-size: 12px;
   color: #888;
 }
 
-/* 문서등록 버튼 */
-.clearfix::after {
-  content: '';
-  display: block;
-  clear: both;
+/* 테이블 스타일 */
+.table-actions {
+  display: flex;
+  justify-content: flex-end;
 }
-.btn-register {
-  float: right;
-  margin-bottom: 8px;
-  background: #f5f5f5;
-  border: 0.5px solid #ccc;
-  border-radius: 8px;
-  padding: 6px 14px;
-  font-size: 12px;
-  color: #666;
-  cursor: pointer;
-}
-.btn-register:hover {
-  background: #fff;
-}
-
-/* 게시글 목록 */
-.board-wrap {
-  background: #fff;
-  border: 0.5px solid #ddd;
-  border-radius: 12px;
+.table-panel {
+  padding: 0; /* 내부 행들이 꽉 차도록 */
   overflow: hidden;
-  margin-bottom: 16px;
 }
-.board-header {
-  display: grid;
-  grid-template-columns: 60px 1fr 100px 80px 90px;
-  background: #f9f9f9;
-  border-bottom: 0.5px solid #ddd;
-  padding: 8px 0;
-}
-.board-header span {
-  font-size: 12px;
-  color: #888;
-  font-weight: 500;
-  text-align: center;
-}
-.board-header span:nth-child(2) {
-  text-align: left;
-  padding-left: 8px;
-}
+.board-header,
 .board-row {
   display: grid;
-  grid-template-columns: 60px 1fr 100px 80px 90px;
-  border-bottom: 0.5px solid #eee;
-  padding: 10px 0;
+  grid-template-columns: 80px 1fr 120px 100px 120px;
   align-items: center;
-  cursor: pointer;
-  transition: background 0.1s;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+}
+.board-header {
+  background: #fafafa;
+  font-weight: bold;
+  color: #666;
 }
 .board-row:last-child {
   border-bottom: none;
 }
 .board-row:hover {
-  background: #fafafa;
-}
-.board-row span {
-  font-size: 13px;
-  color: #1a1a1a;
-  text-align: center;
-}
-.board-row .title {
-  text-align: left;
-  padding-left: 8px;
-}
-.board-row .num {
-  color: #888;
-  font-size: 12px;
-}
-.board-row .date {
-  font-size: 12px;
-  color: #888;
-}
-.star {
-  font-size: 14px;
-  cursor: pointer;
-  color: #ccc;
-}
-.star.active {
-  color: #e2b007;
+  background: #f9f9f9;
 }
 
-/* 뱃지 */
+.num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.star {
+  color: #ccc;
+  cursor: pointer;
+}
+.star.active {
+  color: #e8920e;
+}
 .badge {
-  display: inline-block;
-  font-size: 11px;
   padding: 2px 8px;
   border-radius: 4px;
-  font-weight: 500;
+  font-size: 12px;
 }
 .badge.기획안 {
   background: #eaf3de;
@@ -420,50 +324,24 @@ body {
   background: #e6f1fb;
   color: #185fa5;
 }
-.badge.견적서 {
-  background: #faeeda;
-  color: #854f0b;
-}
-.badge.회의록 {
-  background: #fbeaf0;
-  color: #993556;
-}
-.badge.보고서 {
-  background: #fcebeb;
-  color: #a32d2d;
-}
 
 /* 페이지네이션 */
 .pagination {
   display: flex;
   justify-content: center;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 0;
+  gap: 8px;
+  margin-top: 8px;
 }
 .page-btn {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 0.5px solid #ddd;
-  border-radius: 8px;
-  font-size: 12px;
-  cursor: pointer;
-  color: #888;
+  padding: 6px 12px;
+  border: 1px solid #ddd;
   background: #fff;
-  user-select: none;
-}
-.page-btn:hover {
-  background: #f5f5f5;
+  cursor: pointer;
+  border-radius: 4px;
 }
 .page-btn.active {
-  background: #c0392b;
+  background: #e8920e;
   color: #fff;
-  border-color: #c0392b;
-}
-.page-btn.arrow {
-  font-size: 14px;
+  border-color: #e8920e;
 }
 </style>

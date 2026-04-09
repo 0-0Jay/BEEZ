@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface DocumentService {
   //문서 등록
-  void registerDocument(DocumentRequest.CreateRequest request, String userId);
+  void registerDocument(DocumentRequest.CreateRequest request, String userId, String projectId);
   
   //문서 목록 조회
   List<DocumentRequest.ListResponse> getDocumentList();

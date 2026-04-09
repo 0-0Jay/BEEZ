@@ -395,7 +395,7 @@ function applyFormat(command, value = null) {
 
       <!-- 에디터 본문 -->
       <div ref="editorRef" class="editor-body" contenteditable="true" @input="onEditorInput" @keydown="onEditorKeydown">
-        <p v-if="!editorContent" class="editor-placeholder">텍스트를 입력하세요</p>
+        <p v-if="!editorContent" class="editor-placeholder"></p>
       </div>
     </div>
   </div>
