@@ -2,42 +2,37 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.beez.beez.project.mapper.ProjectMapper">
 
-<!--  프로젝트 생성  -->
-  <insert id="insertProject" parameterType="com.beez.beez.project.dto.ProjectCreateRequest">
-    <selectKey keyProperty="id" resultType="string" order="BEFORE">
-      SELECT BEEZ.generate_pk_auto('project') FROM dual
-    </selectKey>
-      
-      INSERT INTO project (
-        id,
-        identifier,
-        title,
-        description,
-        is_public,
-        parent_id,
-        created_on,
-        start_date,
-        end_date,
-        status,
-        is_lock,
-        default_version_id,
-        user_id
-    ) VALUES (
-        #{id},
-        #{identifier},
-        #{title},
-        #{description},
-        #{isPublic},
-        #{parentId},
-        SYSDATE,
-        #{startDate},
-        #{endDate},
-        'K1',
-        'L0',
-        #{defaultVersionId},
-        #{userId}
-    )
+  <!--  프로젝트 생성  -->
+  <insert id="insertProject" parameterType="com.beez.beez.project.dto.ProjectCreateRequest"
+          statementType="CALLABLE">
+    {
+        CALL proc_create_project(
+                  #{identifier},
+                  #{title},
+                  #{description},
+                  #{isPublic},
+                  #{parentId},
+                  #{startDate},
+                  #{endDate},
+                  #{userId},
+                  #{id, mode=OUT, jdbcType=VARCHAR}
+                  )
+    }
   </insert>
+  
+  <!-- 프로젝트 타이틀 중복체크 -->
+  <select id="countByTitle" resultType="int">
+    SELECT COUNT(*) FROM project
+                    WHERE title = #{title}
+                    AND status = 'K1'
+  </select>
+  
+  <!-- 프로젝트 식별자 중복체크 -->
+  <select id="countByIdentifier" resultType="int">
+    SELECT COUNT(*) FROM project
+                    WHERE identifier = #{identifier}
+                    AND status = 'K1'
+  </select>
   
   <!-- 프로젝트 수정 -->
   <update id="updateProject" parameterType="com.beez.beez.project.dto.ProjectUpdateRequest">
@@ -51,6 +46,22 @@
         end_date = #{endDate}
     WHERE id = #{id}
   </update>
+  
+  <!-- 프로젝트 수정 시 식별자 중복체크 -->
+  <select id="countByIdentifierExclude" resultType="int">
+    SELECT COUNT(*) FROM project
+    WHERE identifier = #{identifier}
+      AND status = 'K1'
+      AND id != #{projectId}
+  </select>
+  
+  <!-- 프로젝트 수정 시 타이틀 중복 체크 -->
+  <select id="countByTitleExclude" resultType="int">
+    SELECT COUNT(*) FROM project
+    WHERE title = #{title}
+      AND status = 'K1'
+      AND id != #{projectId}
+  </select>
   
   <!-- 프로젝트 단건 조회 -->
   <select id="findById" resultType="ProjectInfoResponse">
@@ -204,6 +215,7 @@
                     FROM project_member pm
                     WHERE pm.user_id = u.id
                     AND pm.project_id = #{projectId}
+                    AND pm.is_delete = 'F0'
                    )
       <if test="keyword != null and keyword != ''">
         AND name LIKE '%' || #{keyword} || '%'
@@ -219,6 +231,7 @@
                       FROM project_member pm
                       WHERE pm.group_id = g.id
                       AND pm.project_id = #{projectId}
+                      AND pm.is_delete = 'F0'
                       )
       <if test="keyword != null and keyword != ''">
         AND name LIKE '%' || #{keyword} || '%'
