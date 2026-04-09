@@ -12,10 +12,16 @@ public interface WorkflowMapper {
   List<WorkflowResponse> findWorkflowMatrix(String roleId, String typeId, String conditionType);
 
   // 업무흐름 기본정보 등록
-  void insertWorkflowConfig(WorkflowSaveRequest dto);
+ //  void insertWorkflowConfig(WorkflowSaveRequest dto);
 
   // 업무흐름 삭제
-  void deleteWorkflowConfig(WorkflowSaveRequest dto);
+ //  void deleteWorkflowConfig(WorkflowSaveRequest dto);
+
+  // 업무흐름 등록
+  void saveWorkflow(WorkflowSaveRequest dto);
+
+  // 업무흐름 복사
+  void copyWorkflow();
 
   // 일감 상태 공통 코드 조회
   List<Map<String,Object>> findTaskStatusCode(String groupValue);

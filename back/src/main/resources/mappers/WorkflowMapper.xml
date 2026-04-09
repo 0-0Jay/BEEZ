@@ -59,6 +59,15 @@
     </foreach>
     END;
   </insert>
+  
+  <!-- 업무흐름 등록 -->
+  <update id="saveWorkflow" statementType="CALLABLE" parameterType="com.beez.beez.workflow.dto.WorkflowSaveRequest">
+    { CALL SP_SAVE_WORKFLOW(
+        #{roleId},
+        #{typeId},
+        #{details, mode=IN, jdbcType=ARRAY, jdbcTypeName=WORKFLOW_TAB, typeHandler=com.beez.beez.config.OracleTypeHandler.WorkflowTypeHandler}
+    ) }
+  </update>
 
   <!-- 일감 상태 공통 코드 조회 -->
   <select id="findTaskStatusCode" resultType="map">
