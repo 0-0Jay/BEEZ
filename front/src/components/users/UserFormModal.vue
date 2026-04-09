@@ -118,11 +118,12 @@ const handleRegister = async () => {
     close();
     await usersStore.findUsers();
   } catch (error) {
-    console.error('등록 실패:', error);
+    const errorMsg = err.response?.data?.message || err.response?.data || '사용자 등록 중 오류가 발생했습니다.';
+
     toast.add({
       severity: 'error',
       summary: '등록 실패',
-      detail: '사용자 등록 중 오류가 발생했습니다.',
+      detail: errorMsg,
       life: 3000,
       closable: false
     });

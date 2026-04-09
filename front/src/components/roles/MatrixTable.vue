@@ -27,7 +27,6 @@ const setChecked = (beforeCode, afterCode, val) => {
 
   updatedMatrix[beforeCode][afterCode] = val;
 
-  // 부모 컴포넌트의 workflowMatrices 업데이트
   emit('update:matrix', updatedMatrix);
 };
 </script>

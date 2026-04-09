@@ -98,24 +98,20 @@ const accordionSections = computed(() => [
 ]);
 
 // 전체 선택
-const selectAll = () => {
-  const types = ['Z0', 'Z1', 'Z2'];
-  types.forEach((type) => {
-    statusCodes.value.forEach((before) => {
-      if (!workflowMatrices[type][before]) {
-        workflowMatrices[type][before] = {};
-      }
-      statusCodes.value.forEach((after) => {
-        workflowMatrices[type][before][after] = true;
-      });
+const selectAll = (type) => {
+  statusCodes.value.forEach((before) => {
+    if (!workflowMatrices[type][before]) {
+      workflowMatrices[type][before] = {};
+    }
+    statusCodes.value.forEach((after) => {
+      workflowMatrices[type][before][after] = true;
     });
   });
 };
 
 // 선택 해제
-const deselectAll = () => {
-  const types = ['Z0', 'Z1', 'Z2'];
-  types.forEach((type) => {
+const deselectAll = (type) => {
+  if (workflowMatrices[type]) {
     statusCodes.value.forEach((before) => {
       if (workflowMatrices[type][before]) {
         statusCodes.value.forEach((after) => {
@@ -123,7 +119,7 @@ const deselectAll = () => {
         });
       }
     });
-  });
+  }
 };
 
 // 저장
@@ -167,10 +163,12 @@ const onSave = async () => {
 
     await loadWorkflowData();
   } catch (err) {
+    const errorMsg = err.response?.data?.message || err.response?.data || '등록 중 오류가 발생했습니다.';
+
     toast.add({
       severity: 'error',
-      summary: '저장 실패',
-      detail: err.response?.data || '처리 중 오류가 발생했습니다.',
+      summary: '등록 실패',
+      detail: errorMsg,
       life: 3000
     });
   }
@@ -178,6 +176,21 @@ const onSave = async () => {
 
 const openWorkflowCopyModal = () => {
   visible.value = true;
+};
+
+const onCopied = async (data) => {
+  selectedRole.value = data.roleId;
+  selectedIssueType.value = data.typeId;
+
+  toast.add({
+    severity: 'info',
+    summary: '화면 이동',
+    detail: '복사된 대상의 설정 화면으로 이동했습니다.',
+    life: 2000,
+    closable: false
+  });
+
+  await loadWorkflowData();
 };
 </script>
 
@@ -209,9 +222,9 @@ const openWorkflowCopyModal = () => {
         <h3 class="text-lg font-semibold">기본 업무흐름</h3>
 
         <div class="flex items-center gap-2 text-sm">
-          <button type="button" @click="selectAll" class="text-[#3A3B35] hover:underline font-medium">모두 선택</button>
+          <button type="button" @click="selectAll('Z0')" class="text-[#3A3B35] hover:underline font-medium">모두 선택</button>
           <span class="text-[#C7C7C2]">|</span>
-          <button type="button" @click="deselectAll" class="text-[#3A3B35] hover:underline font-medium">선택 해제</button>
+          <button type="button" @click="selectAll('Z0')" class="text-[#3A3B35] hover:underline font-medium">선택 해제</button>
         </div>
       </div>
       <MatrixTable :matrix="workflowMatrices.Z0" :statusList="statusList" />
@@ -221,6 +234,12 @@ const openWorkflowCopyModal = () => {
       <AccordionPanel v-for="section in accordionSections" :key="section.value" :value="section.value">
         <AccordionHeader>{{ section.label }}</AccordionHeader>
         <AccordionContent>
+          <div v-if="statusCodes.length > 0" class="flex justify-end items-center gap-2 mb-3 text-[12px]">
+            <button type="button" @click="selectAll(section.value)" class="text-[#3A3B35] hover:underline font-medium">모두 선택</button>
+            <span class="text-[#C7C7C2]">|</span>
+            <button type="button" @click="deselectAll(section.value)" class="text-[#3A3B35] hover:underline font-medium">선택 해제</button>
+          </div>
+
           <MatrixTable v-if="statusCodes.length > 0" v-model:matrix="section.matrix" :statusList="statusList" />
         </AccordionContent>
       </AccordionPanel>
@@ -231,5 +250,5 @@ const openWorkflowCopyModal = () => {
     </div>
   </div>
 
-  <WorkflowCopyModal v-model:visible="visible"></WorkflowCopyModal>
+  <WorkflowCopyModal v-model:visible="visible" @copied="onCopied"></WorkflowCopyModal>
 </template>
