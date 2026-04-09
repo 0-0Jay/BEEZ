@@ -106,10 +106,4 @@ public class TaskController {
   public ResponseEntity<List<TaskOverviewResponse>> findTaskOverview(@PathVariable String id) {
     return ResponseEntity.ok(taskService.findTaskOverview(id));
   }
-  
-  // 소요시간
-  @GetMapping("/spent/{id}")
-  public ResponseEntity<List<TaskSpentResponse>> findSpentOverview(@PathVariable String id) {
-    return ResponseEntity.ok(taskService.findSpentOverview(id));
-  }
 }

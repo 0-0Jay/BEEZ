@@ -392,12 +392,17 @@ onMounted(async () => {
           <tr class="divide-x divide-[#F2F0EB]">
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">진척도</td>
             <td colspan="3" class="px-6 py-3">
-              <div class="flex items-center gap-3">
-                <div class="flex-1 max-w-xs h-2 rounded-full bg-[#F2F0EB] overflow-hidden">
-                  <div class="h-full rounded-full transition-all duration-500" :style="{ width: displayProgress + '%', backgroundColor: progressColor(displayProgress) }"></div>
-                </div>
-                <span class="text-base font-semibold text-[#1A1816] w-10 shrink-0">{{ displayProgress }}%</span>
-              </div>
+              <ProgressBar
+                class="w-150"
+                :value="displayProgress"
+                :pt="{
+                  value: {
+                    style: {
+                      background: progressColor(displayProgress)
+                    }
+                  }
+                }"
+              ></ProgressBar>
             </td>
           </tr>
 
@@ -503,12 +508,16 @@ onMounted(async () => {
             <td class="px-6 py-3 font-mono text-base text-[#9A9B90]">{{ sub.id }}</td>
             <td class="px-6 py-3 text-[#1A1816] font-medium hover:text-[#E8920E] transition-colors">{{ sub.title }}</td>
             <td class="px-6 py-3 text-center">
-              <div class="flex items-center gap-2">
-                <div class="flex-1 h-1.5 rounded-full bg-[#F2F0EB] overflow-hidden">
-                  <div class="h-full rounded-full" :style="{ width: sub.progress + '%', backgroundColor: progressColor(sub.progress) }"></div>
-                </div>
-                <span class="text-base text-[#6B6B63] w-10 text-right shrink-0">{{ sub.progress }}%</span>
-              </div>
+              <ProgressBar
+                :value="sub.progress"
+                :pt="{
+                  value: {
+                    style: {
+                      background: progressColor(sub.progress)
+                    }
+                  }
+                }"
+              ></ProgressBar>
             </td>
             <td class="px-6 py-3 text-center">
               <span class="text-base font-semibold px-2 py-0.5 rounded-full" :class="workflowClass[sub.workflow]">{{ workflowMap[sub.workflow] }}</span>
@@ -553,12 +562,16 @@ onMounted(async () => {
               <span v-else class="text-[#9A9B90]">-</span>
             </td>
             <td class="px-6 py-3 text-center cursor-pointer" @click="goToTask(linked.id)">
-              <div class="flex items-center gap-2">
-                <div class="flex-1 h-1.5 rounded-full bg-[#F2F0EB] overflow-hidden">
-                  <div class="h-full rounded-full" :style="{ width: parseInt(linked.progress || 0) + '%', backgroundColor: progressColor(parseInt(linked.progress || 0)) }"></div>
-                </div>
-                <span class="text-base text-[#6B6B63] w-10 text-right shrink-0">{{ linked.progress || 0 }}%</span>
-              </div>
+              <ProgressBar
+                :value="linked.progress"
+                :pt="{
+                  value: {
+                    style: {
+                      background: progressColor(linked.progress)
+                    }
+                  }
+                }"
+              ></ProgressBar>
             </td>
             <td class="px-6 py-3 text-center cursor-pointer" @click="goToTask(linked.id)">
               <span class="text-base font-semibold px-2 py-0.5 rounded-full" :class="workflowClass[linked.workflow]">{{ workflowMap[linked.workflow] }}</span>
@@ -759,12 +772,16 @@ onMounted(async () => {
               <td class="py-3 pr-4 text-base font-semibold text-[#E8920E]">{{ formatMinutes(log.spent) }}</td>
               <td class="py-3 pr-4 text-base text-[#1A1816]">{{ log.description || '-' }}</td>
               <td class="py-3 pr-4">
-                <div class="flex items-center gap-2">
-                  <div class="w-16 h-1.5 rounded-full bg-[#F2F0EB] overflow-hidden">
-                    <div class="h-full rounded-full" :style="{ width: log.progress + '%', backgroundColor: progressColor(log.progress) }"></div>
-                  </div>
-                  <span class="text-base text-[#6B6B63]">{{ log.progress }}%</span>
-                </div>
+                <ProgressBar
+                  :value="log.progress"
+                  :pt="{
+                    value: {
+                      style: {
+                        background: progressColor(log.progress)
+                      }
+                    }
+                  }"
+                ></ProgressBar>
               </td>
               <td class="py-3">
                 <span class="px-2 py-0.5 bg-[#F2F0EB] rounded text-base font-semibold text-[#3A3B35] border border-[#E5E4DF]">{{ activityMap[log.activityType] || '-' }}</span>

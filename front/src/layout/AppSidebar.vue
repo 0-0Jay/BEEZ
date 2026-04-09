@@ -100,23 +100,20 @@ const toggleAdminMenu = () => {
           <router-link to="/tasks" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
             <span>일감 목록</span>
           </router-link>
-          <router-link to="" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
+          <router-link to="/gantt" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
             <span>간트차트</span>
           </router-link>
-          <router-link to="" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
+          <router-link to="/calendar" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
             <span>달력</span>
           </router-link>
-          <router-link to="" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
+          <!-- <router-link to="" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
             <span>공지사항</span>
           </router-link>
           <router-link to="" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
             <span>게시판</span>
-          </router-link>
+          </router-link> -->
           <router-link to="" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
-            <span>파일</span>
-          </router-link>
-          <router-link to="" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
-            <span>문서</span>
+            <span>문서/파일</span>
           </router-link>
           <!-- <router-link
             :to="`/wiki/detail/${selectedProject.id}`"
@@ -157,6 +154,9 @@ const toggleAdminMenu = () => {
             </router-link>
             <router-link to="/workflow/list" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
               <span>업무 흐름</span>
+            </router-link>
+            <router-link to="/task/option" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
+              <span>일감 유형/범주</span>
             </router-link>
           </div>
         </template>

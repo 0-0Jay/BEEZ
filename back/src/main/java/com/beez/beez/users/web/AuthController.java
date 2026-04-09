@@ -71,4 +71,5 @@ public class AuthController {
     return ResponseEntity.ok().body("비밀번호 재설정을 완료하였습니다.");
   }
 
+  //
 }

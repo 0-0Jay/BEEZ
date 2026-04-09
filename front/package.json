@@ -21,6 +21,7 @@
     "sockjs-client": "^1.6.1",
     "tailwindcss-primeui": "^0.6.0",
     "vue": "^3.4.34",
+    "vue-ganttastic": "^0.9.34",
     "vue-router": "^4.4.0"
   },
   "devDependencies": {

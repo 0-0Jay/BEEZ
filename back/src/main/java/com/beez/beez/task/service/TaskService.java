@@ -65,9 +65,15 @@ public interface TaskService {
   // 소요시간 기록
   void insertTaskTime(TaskTimeRequest taskTimeRequest);
   
+  // 일감 연결 끊기
   void deleteTaskLink(String id);
   
+  // 일감 보고서
   List<TaskOverviewResponse> findTaskOverview(String id);
   
+  // 소요시간
   List<TaskSpentResponse> findSpentOverview(String id);
+  
+  // 간트차트
+  List<GanttDataResponse> findGanttData(String id);
 }
