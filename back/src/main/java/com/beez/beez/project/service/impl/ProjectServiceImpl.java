@@ -88,10 +88,10 @@ public class ProjectServiceImpl implements ProjectService {
   
   // 프로젝트 삭제
   @Override
-  public void updateProjectStatus(String id) {
+  public void deleteProject(String id) {
     String userId = getCurrentUserId();
     ProjectInfoResponse project = projectMapper.findById(id);
-    projectMapper.updateProjectStatus(id);
+    projectMapper.deleteProject(id);
     
     String link = "/project/list";
     String content = String.format("프로젝트 삭제 (프로젝트명 : %s)", project.getTitle());

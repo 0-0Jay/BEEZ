@@ -115,7 +115,6 @@ const handleMemberSaved = async () => {
     <!-- 상단 버튼 영역 -->
     <div class="flex justify-end gap-2 mb-4">
       <Button label="구성원 추가" icon="pi pi-user-plus" outlined class="btn-outline" @click="openAddModal" />
-      <Button label="사용자 관리" icon="pi pi-users" class="btn-solid" />
     </div>
 
     <!-- 테이블 -->
