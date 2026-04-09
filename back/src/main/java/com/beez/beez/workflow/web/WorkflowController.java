@@ -27,10 +27,10 @@ public class WorkflowController {
     return ResponseEntity.ok(list);
   }
 
-  // 업무흐름 저장
+  // 업무흐름 등록
   @PostMapping("/create")
-  public ResponseEntity<String> insertWorkflow(@RequestBody WorkflowSaveRequest dto){
-    workflowService.insertWorkflow(dto);
+  public ResponseEntity<String> saveWorkflow(@RequestBody WorkflowSaveRequest dto){
+    workflowService.saveWorkflow(dto);
     return ResponseEntity.ok("성공적으로 저장되었습니다.");
   }
 

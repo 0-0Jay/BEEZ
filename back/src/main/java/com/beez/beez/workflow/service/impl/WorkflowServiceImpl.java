@@ -5,6 +5,7 @@ import com.beez.beez.workflow.dto.WorkflowSaveRequest;
 import com.beez.beez.workflow.mapper.WorkflowMapper;
 import com.beez.beez.workflow.service.WorkflowService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +15,7 @@ import java.util.Map;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class WorkflowServiceImpl implements WorkflowService {
 
   private final WorkflowMapper workflowMapper;
@@ -26,16 +28,11 @@ public class WorkflowServiceImpl implements WorkflowService {
 
   // 업무흐름 등록
   @Override
-  public void insertWorkflow(WorkflowSaveRequest dto) {
+  public void saveWorkflow(WorkflowSaveRequest dto) {
     try{
-      // 업무흐름 삭제(기존데이터)
-      workflowMapper.deleteWorkflowConfig(dto);
-
-      // 체크된 데이터가 있을 때만 저장 진행
-      if(dto.getDetails() != null && !dto.getDetails().isEmpty()){
-        workflowMapper.insertWorkflowConfig(dto);
-      }
+      workflowMapper.saveWorkflow(dto);
     } catch (Exception e) {
+      log.error("업무흐름 등록 오류: roleId={}, typeId={}", dto.getRoleId(), dto.getTypeId(), e);
       throw new RuntimeException("업무흐름 등록 중 오류가 발생하였습니다.");
     }
   }

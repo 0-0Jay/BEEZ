@@ -1,7 +1,7 @@
 <script setup>
 import { useAuthStore } from '@/stores/auth';
+import axios from '@/stores/AxiosInstance';
 import { useProjectStore } from '@/stores/project';
-import axios from 'axios';
 import { computed, inject, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -9,7 +9,7 @@ const router = useRouter();
 
 const goWiki = async (projectId) => {
   try {
-    const res = await axios.get(`/api/wiki/latest/${projectId}`);
+    const res = await axios.get(`/wiki/latest/${projectId}`);
 
     if (res.data) {
       const wikiId = res.data.wikiId;

@@ -9,6 +9,5 @@ public class WorkflowSaveRequest {
 
   private String roleId;
   private String typeId;
-  private String conditionType;
   private List<WorkflowItemRequest> details;
 }

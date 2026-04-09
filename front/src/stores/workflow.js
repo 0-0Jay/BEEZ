@@ -57,6 +57,11 @@ export const useWorkflowStore = defineStore('workflow', {
         });
       });
       return matrix;
+    },
+
+    // 업무흐름 등록
+    async insertWorkflow(payload) {
+      await axios.post('/workflow/create', payload);
     }
   }
   // ,persist: true
