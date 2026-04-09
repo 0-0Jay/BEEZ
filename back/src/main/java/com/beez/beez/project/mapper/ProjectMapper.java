@@ -12,6 +12,12 @@ public interface ProjectMapper {
   //프로젝트 등록
   void insertProject(ProjectCreateRequest dto);
   
+  //프로젝트 식별자 중복체크
+  int countByIdentifier(String identifier);
+  
+  //프로젝트 타이틀 중복체크
+  int countByTitle(String title);
+  
   //프로젝트 목록 조회(필터링)
   List<ProjectListResponse> selectProjectList(ProjectFilterRequest filter);
 
@@ -29,6 +35,12 @@ public interface ProjectMapper {
 
   //프로젝트 수정
   void updateProject(ProjectUpdateRequest dto);
+  
+  //프로젝트 수정 시 식별자 중복체크
+  int countByIdentifierExclude(@Param("identifier") String identifier, @Param("projectId") String projectId);
+  
+  //프로젝트 수정 시 타이틀 중복 체크
+  int countByTitleExclude(@Param("title") String title, @Param("projectId") String projectId);
   
   //프로젝트 기본버전 조회
   String findDefaultVersionId(String projectId);

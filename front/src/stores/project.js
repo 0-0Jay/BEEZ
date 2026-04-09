@@ -74,6 +74,22 @@ export const useProjectStore = defineStore('project', {
       return response.data;
     },
 
+    // 프로젝트 식별자 중복체크
+    async checkIdentifier(identifier, projectId = null) {
+      const response = await axios.get('/project/check/identifier', {
+        params: { identifier, projectId }
+      });
+      return response.data;
+    },
+
+    // 프로젝트 이름 중복체크
+    async checkTitle(title, projectId = null) {
+      const response = await axios.get('/project/check/title', {
+        params: { title, projectId }
+      });
+      return response.data;
+    },
+
     // 프로젝트 단건 조회
     async findProject(id) {
       const response = await axios.get(`/project/${id}`);

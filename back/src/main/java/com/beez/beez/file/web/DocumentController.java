@@ -20,8 +20,9 @@ public class DocumentController {
   private final DocumentService documentService;
   
   //새 게시글 작성
-  @PostMapping("document/register")
+  @PostMapping("/document/write/{projectId}")
   public ResponseEntity<String> registerDocument(
+    @PathVariable String projectId,
     @RequestPart("document")DocumentRequest.CreateRequest request,
     @RequestPart(value = "files", required = false)List<MultipartFile> files,
     @AuthenticationPrincipal User user) { //스프링 시큐리티 - 로그인한 유저의 정보를 직접 받음 - 이거 왜 필요한것? 나중에 권한 체크 하면 되는거 아닌가
@@ -30,13 +31,13 @@ public class DocumentController {
     String userId = user.getUsername();
     
     request.setFiles(files);
-    documentService.registerDocument(request, userId);
+    documentService.registerDocument(request, userId, projectId);
     
     return ResponseEntity.ok("문서 등록 성공");
   }
   
   //문서 수정
-  @PutMapping("document/update")
+  @PutMapping("/document/update")
   public ResponseEntity<String> updateDocument(
     @RequestPart("document") DocumentRequest.UpdateRequest updateRequest,
     @RequestPart(value = "newFile", required = false) List<MultipartFile> newFiles,

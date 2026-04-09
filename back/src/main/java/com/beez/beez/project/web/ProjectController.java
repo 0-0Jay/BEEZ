@@ -21,6 +21,22 @@ public class ProjectController {
     return projectService.insertProject(dto);
   }
   
+  //프로젝트 식별자 중복체크
+  @GetMapping("/check/identifier")
+  public ResponseEntity<Boolean> checkIdentifier(
+    @RequestParam String identifier,
+    @RequestParam(required = false) String projectId) {
+    return ResponseEntity.ok(projectService.checkIdentifier(identifier, projectId));
+  }
+
+  //프로젝트 이름 중복체크
+  @GetMapping("/check/title")
+  public ResponseEntity<Boolean> checkTitle(
+    @RequestParam String title,
+    @RequestParam(required = false) String projectId) {
+    return ResponseEntity.ok(projectService.checkTitle(title, projectId));
+  }
+  
   //프로젝트 목록 조회
   @GetMapping("/list")
   public ResponseEntity<List<ProjectListResponse>> selectProjectList(@ModelAttribute ProjectFilterRequest filter) {

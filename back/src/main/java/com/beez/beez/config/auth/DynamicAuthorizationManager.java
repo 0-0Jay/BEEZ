@@ -25,7 +25,7 @@ public class DynamicAuthorizationManager implements AuthorizationManager<Request
   public AuthorizationDecision check(Supplier<Authentication> authentication, RequestAuthorizationContext object) {
     Authentication auth = authentication.get();
 
-    // 1. 인증 정보가 없으면 거절
+    // 인증 정보가 없으면 거절
     if (auth == null || !auth.isAuthenticated()) {
       return new AuthorizationDecision(false);
     }
@@ -72,6 +72,7 @@ public class DynamicAuthorizationManager implements AuthorizationManager<Request
     // 디버깅 로그 (테스트할 때 큰 도움이 돼!)
     System.out.println("========================================");
     System.out.println("검사 중인 URL: [" + method + "] " + url);
+    System.out.println("현재 유저가 가진 권한: " + auth.getAuthorities());
     System.out.println("헤더 프로젝트 ID: " + projectId);
     System.out.println("필요한 권한: " + requiredPerms);
     System.out.println("프로젝트 실시간 권한: " + projectPerms);

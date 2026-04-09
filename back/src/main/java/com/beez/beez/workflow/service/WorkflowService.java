@@ -12,7 +12,7 @@ public interface WorkflowService {
   List<WorkflowResponse> findWorkflowMatrix(String roleId, String typeId, String conditionType);
 
   // 업무흐름 등록
-  void insertWorkflow(WorkflowSaveRequest dto);
+  void saveWorkflow(WorkflowSaveRequest dto);
 
   // 일감 상태 공통 코드 조회
   List<Map<String,Object>> findTaskStatusCode(String groupValue);

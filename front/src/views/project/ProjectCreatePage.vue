@@ -69,6 +69,58 @@ const validate = () => {
   return valid;
 };
 
+const checkIdentifier = async () => {
+  if (!form.identifier.trim()) return;
+  const isDuplicate = await projectStore.checkIdentifier(form.identifier);
+  if (isDuplicate) {
+    errors.identifier = '이미 사용중인 식별자입니다.';
+  } else {
+    errors.identifier = '';
+  }
+};
+
+const checkTitle = async () => {
+  if (!form.title.trim()) return;
+  const isDuplicate = await projectStore.checkTitle(form.title);
+  if (isDuplicate) {
+    errors.title = '이미 사용중인 프로젝트명입니다.';
+  } else {
+    errors.title = '';
+  }
+};
+
+const handleSubmit = async () => {
+  // 1. 빈값/형식 체크
+  if (!validate()) return;
+
+  // 2. 중복 체크 (validate 통과 후에)
+  const isIdentifierDuplicate = await projectStore.checkIdentifier(form.identifier);
+  if (isIdentifierDuplicate) {
+    errors.identifier = '이미 사용중인 식별자입니다.';
+    return;
+  }
+
+  const isTitleDuplicate = await projectStore.checkTitle(form.title);
+  if (isTitleDuplicate) {
+    errors.title = '이미 사용중인 프로젝트명입니다.';
+    return;
+  }
+
+  // 3. 생성
+  const id = await projectStore.createProject({
+    title: form.title,
+    identifier: form.identifier,
+    description: form.description,
+    startDate: formatDate(form.startDate),
+    endDate: formatDate(form.endDate),
+    isPublic: form.isPublic ? 'J1' : 'J0',
+    parentId: form.parentId
+  });
+  toast.add({ severity: 'success', summary: '등록 완료', detail: '프로젝트가 등록되었습니다.', life: 2000 });
+
+  router.push(`/project/setting/${id}`);
+};
+
 watch(
   () => [form.startDate, form.endDate],
   () => {
@@ -90,23 +142,6 @@ const formatDate = (date) => {
   if (!date) return null;
   const d = new Date(date);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-};
-
-const handleSubmit = async () => {
-  if (!validate()) return;
-
-  const id = await projectStore.createProject({
-    title: form.title,
-    identifier: form.identifier,
-    description: form.description,
-    startDate: formatDate(form.startDate),
-    endDate: formatDate(form.endDate),
-    isPublic: form.isPublic ? 'J1' : 'J0',
-    parentId: form.parentId
-  });
-  toast.add({ severity: 'success', summary: '등록 완료', detail: '프로젝트가 등록되었습니다.', life: 2000 });
-
-  router.push(`/project/setting/${id}`);
 };
 
 const handleCancel = () => {
@@ -132,7 +167,7 @@ const handleCancel = () => {
         <div class="flex items-start px-8 py-4">
           <label class="form-label w-36 pt-2 shrink-0"> 프로젝트명 <span class="text-red-500">*</span> </label>
           <div class="flex-1">
-            <InputText v-model="form.title" placeholder="텍스트를 입력해 주세요." class="w-full form-input" />
+            <InputText v-model="form.title" @blur="checkTitle" placeholder="텍스트를 입력해 주세요." class="w-full form-input" />
             <small v-if="errors.title" class="text-red-500 mt-1 block">{{ errors.title }}</small>
           </div>
         </div>
@@ -149,7 +184,7 @@ const handleCancel = () => {
         <div class="flex items-start px-8 py-4">
           <label class="form-label w-36 pt-2 shrink-0"> 식별자 <span class="text-red-500">*</span> </label>
           <div class="flex-1">
-            <InputText v-model="form.identifier" placeholder="텍스트를 입력해 주세요." class="w-full form-input" />
+            <InputText v-model="form.identifier" @blur="checkIdentifier" placeholder="텍스트를 입력해 주세요." class="w-full form-input" />
             <small class="text-[#9A9B90] mt-1 block">영문 소문자(a-z), 숫자, 대시(_)만 가능합니다.</small>
             <small v-if="errors.identifier" class="text-red-500 block">{{ errors.identifier }}</small>
           </div>

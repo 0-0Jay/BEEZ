@@ -1,5 +1,6 @@
 <script setup>
 import MatrixTable from '@/components/roles/MatrixTable.vue';
+import WorkflowCopyModal from '@/components/workflow/WorkflowCopyModal.vue';
 import { useRolesStore } from '@/stores/roles';
 import { useTaskStore } from '@/stores/task';
 import { useWorkflowStore } from '@/stores/workflow';
@@ -10,6 +11,8 @@ const wStore = useWorkflowStore();
 const rStore = useRolesStore();
 const tStore = useTaskStore();
 const toast = useToast();
+
+const visible = ref(false);
 
 const statusList = ref([]);
 const statusCodes = computed(() => statusList.value.map((s) => s.key));
@@ -94,18 +97,87 @@ const accordionSections = computed(() => [
   }
 ]);
 
-// 저장 로직
-const onSave = async () => {
-  // TODO: 백엔드 insert API 연결 시 이 부분 구현
-  console.log('현재 설정된 매트릭스:', workflowMatrices);
-
-  toast.add({
-    severity: 'success',
-    summary: '저장 완료',
-    detail: '업무흐름이 성공적으로 반영되었습니다.',
-    life: 3000,
-    closable: false
+// 전체 선택
+const selectAll = () => {
+  const types = ['Z0', 'Z1', 'Z2'];
+  types.forEach((type) => {
+    statusCodes.value.forEach((before) => {
+      if (!workflowMatrices[type][before]) {
+        workflowMatrices[type][before] = {};
+      }
+      statusCodes.value.forEach((after) => {
+        workflowMatrices[type][before][after] = true;
+      });
+    });
   });
+};
+
+// 선택 해제
+const deselectAll = () => {
+  const types = ['Z0', 'Z1', 'Z2'];
+  types.forEach((type) => {
+    statusCodes.value.forEach((before) => {
+      if (workflowMatrices[type][before]) {
+        statusCodes.value.forEach((after) => {
+          workflowMatrices[type][before][after] = false;
+        });
+      }
+    });
+  });
+};
+
+// 저장
+const onSave = async () => {
+  try {
+    const details = [];
+    const conditionTypes = ['Z0', 'Z1', 'Z2'];
+
+    conditionTypes.forEach((cType) => {
+      const matrix = workflowMatrices[cType];
+
+      for (const beforeCode in matrix) {
+        for (const afterCode in matrix[beforeCode]) {
+          if (matrix[beforeCode][afterCode] === true) {
+            details.push({
+              beforeCode: beforeCode,
+              afterCode: afterCode,
+              isAllow: 'R1',
+              conditionType: cType
+            });
+          }
+        }
+      }
+    });
+
+    const payload = {
+      roleId: selectedRole.value,
+      typeId: selectedIssueType.value,
+      details: details
+    };
+
+    await wStore.insertWorkflow(payload);
+
+    toast.add({
+      severity: 'success',
+      summary: '등록 완료',
+      detail: '업무흐름이 성공적으로 등록되었습니다.',
+      life: 3000,
+      closable: false
+    });
+
+    await loadWorkflowData();
+  } catch (err) {
+    toast.add({
+      severity: 'error',
+      summary: '저장 실패',
+      detail: err.response?.data || '처리 중 오류가 발생했습니다.',
+      life: 3000
+    });
+  }
+};
+
+const openWorkflowCopyModal = () => {
+  visible.value = true;
 };
 </script>
 
@@ -116,7 +188,7 @@ const onSave = async () => {
     <div class="flex items-center justify-between mb-2">
       <p class="text-[#6b7280]">업무흐름을 수정하려면 역할과 일감 유형을 선택하세요.</p>
       <div class="flex gap-1">
-        <Button label="복사" icon="pi pi-copy" text />
+        <Button label="복사" icon="pi pi-copy" text @click="openWorkflowCopyModal" />
       </div>
     </div>
 
@@ -133,7 +205,15 @@ const onSave = async () => {
     </div>
 
     <div class="mb-8" v-if="statusCodes.length > 0">
-      <h3 class="text-lg font-semibold mb-3">기본 업무흐름</h3>
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-lg font-semibold">기본 업무흐름</h3>
+
+        <div class="flex items-center gap-2 text-sm">
+          <button type="button" @click="selectAll" class="text-[#3A3B35] hover:underline font-medium">모두 선택</button>
+          <span class="text-[#C7C7C2]">|</span>
+          <button type="button" @click="deselectAll" class="text-[#3A3B35] hover:underline font-medium">선택 해제</button>
+        </div>
+      </div>
       <MatrixTable :matrix="workflowMatrices.Z0" :statusList="statusList" />
     </div>
 
@@ -146,8 +226,10 @@ const onSave = async () => {
       </AccordionPanel>
     </Accordion>
 
-    <div class="mt-8 flex justify-end">
+    <div class="mt-8 flex justify-center">
       <Button label="저장" raised class="!text-white px-10 py-2" @click="onSave" />
     </div>
   </div>
+
+  <WorkflowCopyModal v-model:visible="visible"></WorkflowCopyModal>
 </template>

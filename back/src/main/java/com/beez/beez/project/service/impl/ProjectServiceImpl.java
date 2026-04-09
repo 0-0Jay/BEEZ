@@ -41,6 +41,21 @@ public class ProjectServiceImpl implements ProjectService {
     return dto.getId();
   }
   
+  //프로젝트 식별자 중복체크
+  @Override
+  public Boolean checkIdentifier(String identifier, String projectId) {
+    if (projectId == null) return projectMapper.countByIdentifier(identifier) > 0;
+    return projectMapper.countByIdentifierExclude(identifier, projectId) > 0;
+  }
+  
+  //프로젝트 이름 중복체크
+  @Override
+  public Boolean checkTitle(String title, String projectId) {
+    if (projectId == null) return projectMapper.countByTitle(title) > 0;
+    return projectMapper.countByTitleExclude(title, projectId) > 0;
+  }
+  
+  
   // 프로젝트 목록 조회(필터링)
   @Override
   public List<ProjectListResponse> selectProjectList(ProjectFilterRequest filter) {
