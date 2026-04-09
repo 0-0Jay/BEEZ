@@ -450,7 +450,9 @@ onMounted(async () => {
               <span class="flex items-center gap-1">담당자<span class="text-red-500 inline-block text-xl">*</span></span>
             </td>
             <td class="px-6 py-3">
-              <Select v-model="form.userId" :options="userOptions" optionLabel="name" optionValue="id" placeholder="검색 또는 선택" filter class="w-full" @change="nextTick(validate)" />
+              <Select v-model="form.userId" :options="userOptions" optionLabel="name" optionValue="id" placeholder="검색 또는 선택" filter class="w-full" @change="nextTick(validate)">
+                <template #option="data"> {{ data.option.name }}({{ data.option.id }}) </template>
+              </Select>
               <small v-if="touched.userId && errors.userId" class="text-red-500 mt-1 block text-xs">{{ errors.userId }}</small>
             </td>
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">진척도 (%)</td>

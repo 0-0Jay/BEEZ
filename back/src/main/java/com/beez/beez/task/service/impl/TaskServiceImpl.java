@@ -215,4 +215,10 @@ public class TaskServiceImpl implements TaskService {
   public List<TaskSpentResponse> findSpentOverview(String id) {
     return taskMapper.findSpentOverview(id);
   };
+  
+  // 간트차트
+  @Override
+  public List<GanttDataResponse> findGanttData(String id) {
+    return taskMapper.findGanttData(id);
+  }
 }

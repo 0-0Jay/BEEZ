@@ -236,7 +236,9 @@ onMounted(async () => {
         <!-- 담당자: Select + filter 옵션 -->
         <div class="flex flex-col gap-1.5">
           <label class="text-base font-semibold uppercase tracking-wider text-stone-400">담당자</label>
-          <Select v-model="filters.userId" :options="userOptions" option-label="name" option-value="name" placeholder="이름 검색" filter filter-placeholder="이름 검색" show-clear />
+          <Select v-model="filters.userId" :options="userOptions" option-label="name" option-value="id" placeholder="이름 검색" filter filter-placeholder="이름 검색" show-clear>
+            <template #option="data"> {{ data.option.name }} ({{ data.option.id }}) </template>
+          </Select>
         </div>
 
         <!-- 마감일 범위 -->
@@ -316,13 +318,13 @@ onMounted(async () => {
                 </button>
               </th>
               <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-24">범주</th>
-              <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-stone-400 min-w-52">제목</th>
-              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-50">
+              <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-stone-400 min-w-70">제목</th>
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-70">
                 <button class="sort-btn" :class="{ active: sortKey === 'progress' }" @click="toggleSort('progress')">
                   진척도 <span class="sort-icon">{{ sortIcon('progress') }}</span>
                 </button>
               </th>
-              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-28">담당자</th>
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-45">담당자</th>
               <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-36">
                 <button class="sort-btn" :class="{ active: sortKey === 'plannedEnd' }" @click="toggleSort('plannedEnd')">
                   마감일 <span class="sort-icon">{{ sortIcon('plannedEnd') }}</span>
@@ -359,14 +361,18 @@ onMounted(async () => {
                 <span class="block text-base font-medium text-stone-800 hover:text-amber-600 transition-colors leading-snug">{{ task.title }}</span>
               </td>
               <td class="px-4 py-3.5">
-                <div class="flex items-center gap-2">
-                  <div class="flex-1 h-1.5 bg-stone-200 rounded-full overflow-hidden">
-                    <div class="h-full rounded-full transition-all duration-500" :style="{ width: task.progress + '%', background: progressBarColor(task.progress) }"></div>
-                  </div>
-                  <span class="text-base font-semibold text-stone-500 w-9 text-right shrink-0">{{ task.progress }}%</span>
-                </div>
+                <ProgressBar
+                  :value="task.progress"
+                  :pt="{
+                    value: {
+                      style: {
+                        background: progressBarColor(task.progress)
+                      }
+                    }
+                  }"
+                ></ProgressBar>
               </td>
-              <td class="px-4 py-3.5 text-base text-stone-600 text-center">{{ task.userName }}</td>
+              <td class="px-4 py-3.5 text-base text-stone-600 text-center">{{ task.userName }}({{ task.userId }})</td>
               <td class="px-4 py-3.5 text-base text-stone-500 tabular-nums text-center">{{ formatListDate(task.plannedEnd) }}</td>
             </tr>
             <tr v-if="pagedTasks.length === 0">

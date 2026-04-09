@@ -38,6 +38,16 @@ const Routes2 = [
     path: '/spent',
     name: 'spent',
     component: () => import('@/views/task/SpentOverviewPage.vue')
+  },
+  {
+    path: '/gantt',
+    name: 'gantt',
+    component: () => import('@/views/task/GanttChartPage.vue')
+  },
+  {
+    path: '/calendar',
+    name: 'calendar',
+    component: () => import('@/views/calendar/CalendarPage.vue')
   }
 ];
 export default Routes2;

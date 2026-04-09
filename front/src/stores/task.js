@@ -105,7 +105,7 @@ export const useTaskStore = defineStore('task', {
       this.overview = res.data;
     },
     async findSpentOverview(id) {
-      const res = await axios.get(`/task/spent/${id}`);
+      const res = await axios.get(`/spent/${id}`);
       this.spent = res.data;
     }
     // async downloadFile(file) {
