@@ -9,6 +9,12 @@ public interface ProjectService {
   // 프로젝트 등록
   String insertProject(ProjectCreateRequest dto);
   
+  //프로젝트 식별자 중복체크
+  Boolean checkIdentifier(String identifier, String projectId);
+  
+  //프로젝트 이름 중복체크
+  Boolean checkTitle(String title, String projectId);
+  
   // 프로젝트 목록 조회
   List<ProjectListResponse> selectProjectList(ProjectFilterRequest filter);
   

@@ -432,3 +432,103 @@ BEGIN
     COMMIT;
 END;
 /
+
+-- 프로젝트 생성 프로시저
+CREATE OR REPLACE PROCEDURE proc_create_project (
+    p_identifier         IN VARCHAR2,
+    p_title              IN VARCHAR2,
+    p_description        IN VARCHAR2,
+    p_is_public          IN VARCHAR2,
+    p_parent_id          IN VARCHAR2,
+    p_start_date         IN DATE,
+    p_end_date           IN DATE,
+    p_user_id            IN VARCHAR2,
+    p_project_id         OUT VARCHAR2
+) AS
+    v_member_id          project_member.id%TYPE;
+    v_count              NUMBER;
+BEGIN
+    -- 1. 식별자 중복 체크
+    SELECT COUNT(*) INTO v_count FROM project 
+    WHERE identifier = p_identifier AND status = 'K1';
+    IF v_count > 0 THEN
+        RAISE_APPLICATION_ERROR(-20001, '이미 사용중인 식별자입니다.');
+    END IF;
+    
+    -- 2. 타이틀 중복 체크
+    SELECT COUNT(*) INTO v_count FROM project 
+    WHERE title = p_title AND status = 'K1';
+    IF v_count > 0 THEN
+        RAISE_APPLICATION_ERROR(-20002, '이미 사용중인 프로젝트명입니다.');
+    END IF;
+    
+    -- 3. project PK 생성
+    SELECT BEEZ.generate_pk_auto('project') 
+    INTO p_project_id 
+    FROM dual;
+    
+    -- 4. project 삽입
+    INSERT INTO project (
+                         id, 
+                         identifier, 
+                         title, 
+                         description, 
+                         is_public,
+                         parent_id, 
+                         created_on, 
+                         start_date, 
+                         end_date,
+                         status, 
+                         is_lock, 
+                         user_id
+    ) VALUES (
+                p_project_id, 
+                p_identifier, 
+                p_title, 
+                p_description, 
+                p_is_public,
+                p_parent_id, 
+                SYSDATE, 
+                p_start_date, 
+                p_end_date,
+                'K1', 
+                'L0',
+                p_user_id
+    );
+    
+    -- 5. project_member 삽입 (생성자 자동 등록)
+    SELECT BEEZ.generate_pk_auto('project_member') 
+    INTO v_member_id 
+    FROM dual;
+    
+    INSERT INTO project_member (
+                                id,
+                                project_id,
+                                user_id,
+                                group_id
+                                )
+    VALUES ( 
+            v_member_id,
+            p_project_id,
+            p_user_id,
+            NULL
+            );
+            
+    -- 6. role_mapping 삽입 (생성자 = 관리자 역할)
+    INSERT INTO role_mapping (
+                              member_id,
+                              role_id,
+                              is_inherited
+                              )
+    VALUES (
+            v_member_id,
+            'ROLE0002',
+            'P0'
+            );
+END proc_create_project;
+/
+
+ALTER TABLE project ADD CONSTRAINT  uq_project_identifier UNIQUE (identifier);
+ALTER TABLE project ADD CONSTRAINT uq_project_title UNIQUE (title);
+
+COMMIT;
