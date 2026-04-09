@@ -42,9 +42,10 @@
   </select>
   
   <select id="findVersionList" resultType="VersionResponse">
-    SELECT *
-    FROM version
-    WHERE project_id = #{projectId}
+    SELECT v.id, v.name, p.id AS default_version
+    FROM version v
+    LEFT JOIN project p ON p.default_version_id = v.id
+    WHERE v.project_id = #{projectId}
   </select>
   
   <select id="insertTask" parameterType="TaskRequest" statementType="CALLABLE">

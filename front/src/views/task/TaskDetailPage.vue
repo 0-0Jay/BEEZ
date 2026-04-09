@@ -70,16 +70,8 @@ const activityMap = computed(() => Object.fromEntries(activity.value.map((a) => 
 // 수정/소요시간 권한
 const canEdit = computed(() => {
   const uid = userId.value;
-  return task.value?.creator === uid || task.value?.userId === uid;
-
-  // TODO: role 기능 도입 시 아래 코드로 교체
-  // const role = authStore.user?.role;
-  // return (
-  //   task.value?.creator === uid ||
-  //   task.value?.userId === uid ||
-  //   role === 'PM' ||
-  //   role === 'ADMIN'
-  // );
+  const role = authStore.user?.role;
+  return task.value?.creator === uid || task.value?.userId === uid || role === 'ROLE0001' || role === 'ROLE0002';
 });
 
 // 최근 수정 정보
@@ -708,7 +700,16 @@ onMounted(async () => {
 
       <!-- 수정 이력 -->
       <div v-if="activeTab === 'history'" class="p-6">
-        <DataTable :value="history" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20]" paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown" stripedRows class="text-base">
+        <DataTable
+          :value="history"
+          paginator
+          :rows="5"
+          :rowsPerPageOptions="[5, 10, 20]"
+          paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+          stripedRows
+          class="text-base"
+          table-style="table-layout: fixed; width: 100%"
+        >
           <Column field="userId" header="수정자" :style="{ width: '160px' }">
             <template #body="{ data }">
               <span class="font-semibold text-[#1A1816]">{{ data.name }}</span>
@@ -722,12 +723,12 @@ onMounted(async () => {
           </Column>
           <Column field="oldValue" header="수정 전" :style="{ width: '200px' }">
             <template #body="{ data }">
-              <span class="text-[#9A9B90] line-through">{{ resolveValue(data.fieldName, data.oldValue) }}</span>
+              <span class="block text-[#9A9B90] truncate line-through">{{ resolveValue(data.fieldName, data.oldValue) }}</span>
             </template>
           </Column>
           <Column field="newValue" header="수정 후" :style="{ width: '200px' }">
             <template #body="{ data }">
-              <span class="font-medium text-[#1A1816]">{{ resolveValue(data.fieldName, data.newValue) }}</span>
+              <span class="block font-medium truncate text-[#1A1816]">{{ resolveValue(data.fieldName, data.newValue) }}</span>
             </template>
           </Column>
           <Column field="createdOn" header="수정일" :style="{ width: '160px' }">

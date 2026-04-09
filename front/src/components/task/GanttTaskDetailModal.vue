@@ -3,132 +3,132 @@
     <div v-if="task" class="max-h-[70vh] overflow-y-auto">
       <!-- 기본 정보 -->
       <section class="px-6 pt-4 pb-3 border-b border-gray-100">
-        <p class="text-[11px] font-bold text-[#5B6E96] uppercase tracking-widest mb-3">기본 정보</p>
+        <p class="text-base font-bold text-[#5B6E96] uppercase tracking-widest mb-3">기본 정보</p>
         <div class="grid grid-cols-2 gap-x-6 gap-y-3">
           <div class="flex flex-col gap-0.5">
-            <span class="text-[11px] text-gray-400 font-medium">일감 번호</span>
-            <span class="text-sm text-gray-700">{{ task.taskId }}</span>
+            <span class="text-base text-gray-400 font-medium">일감 번호</span>
+            <span class="text-base text-gray-700">{{ task.taskId }}</span>
           </div>
           <div class="flex flex-col gap-0.5">
-            <span class="text-[11px] text-gray-400 font-medium">일감명</span>
-            <span class="text-sm font-semibold text-gray-800">{{ task.taskTitle }}</span>
+            <span class="text-base text-gray-400 font-medium">일감명</span>
+            <span class="text-base font-semibold text-gray-800">{{ task.taskTitle }}</span>
           </div>
           <div class="flex flex-col gap-0.5">
-            <span class="text-[11px] text-gray-400 font-medium">업무 유형</span>
-            <span class="text-sm text-gray-700">{{ task.type || '-' }}</span>
+            <span class="text-base text-gray-400 font-medium">업무 유형</span>
+            <span class="text-base text-gray-700">{{ task.type || '-' }}</span>
           </div>
           <div class="flex flex-col gap-0.5">
-            <span class="text-[11px] text-gray-400 font-medium">업무 범주</span>
-            <span class="text-sm text-gray-700">{{ task.cate || '-' }}</span>
+            <span class="text-base text-gray-400 font-medium">업무 범주</span>
+            <span class="text-base text-gray-700">{{ task.cate || '-' }}</span>
           </div>
           <div class="flex flex-col gap-0.5">
-            <span class="text-[11px] text-gray-400 font-medium">업무흐름 상태</span>
-            <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 w-fit">
+            <span class="text-base text-gray-400 font-medium">업무흐름 상태</span>
+            <span class="inline-block px-2.5 py-0.5 rounded-full text-base font-semibold bg-indigo-50 text-indigo-700 w-fit">
               {{ task.workflow }}
             </span>
           </div>
           <div class="flex flex-col gap-0.5">
-            <span class="text-[11px] text-gray-400 font-medium">우선순위</span>
-            <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold w-fit" :class="priorityClass(task.priority)">
+            <span class="text-base text-gray-400 font-medium">우선순위</span>
+            <span class="inline-block px-2.5 py-0.5 rounded-full text-base font-semibold w-fit" :class="priorityClass(task.priority)">
               {{ task.priority }}
             </span>
           </div>
           <div class="flex flex-col gap-0.5">
-            <span class="text-[11px] text-gray-400 font-medium">부모 일감 번호</span>
-            <span class="text-sm text-gray-700">{{ task.parentId || '없음' }}</span>
+            <span class="text-base text-gray-400 font-medium">부모 일감 번호</span>
+            <span class="text-base text-gray-700">{{ task.parentId || '없음' }}</span>
           </div>
         </div>
       </section>
 
       <!-- 프로젝트 / 버전 -->
       <section class="px-6 pt-4 pb-3 border-b border-gray-100">
-        <p class="text-[11px] font-bold text-[#5B6E96] uppercase tracking-widest mb-3">프로젝트 / 버전</p>
+        <p class="text-base font-bold text-[#5B6E96] uppercase tracking-widest mb-3">프로젝트 / 버전</p>
         <div class="grid grid-cols-2 gap-x-6 gap-y-3">
           <div class="flex flex-col gap-0.5">
-            <span class="text-[11px] text-gray-400 font-medium">프로젝트 번호</span>
-            <span class="text-sm text-gray-700">{{ task.projectId }}</span>
+            <span class="text-base text-gray-400 font-medium">프로젝트 번호</span>
+            <span class="text-base text-gray-700">{{ task.projectId }}</span>
           </div>
           <div class="flex flex-col gap-0.5">
-            <span class="text-[11px] text-gray-400 font-medium">프로젝트명</span>
-            <span class="text-sm text-gray-700">{{ task.projectTitle }}</span>
+            <span class="text-base text-gray-400 font-medium">프로젝트명</span>
+            <span class="text-base text-gray-700">{{ task.projectTitle }}</span>
           </div>
           <div class="flex flex-col gap-0.5">
-            <span class="text-[11px] text-gray-400 font-medium">버전 번호</span>
-            <span class="text-sm text-gray-700">{{ task.versionId }}</span>
+            <span class="text-base text-gray-400 font-medium">버전 번호</span>
+            <span class="text-base text-gray-700">{{ task.versionId }}</span>
           </div>
           <div class="flex flex-col gap-0.5">
-            <span class="text-[11px] text-gray-400 font-medium">버전명</span>
-            <span class="text-sm text-gray-700">{{ task.versionName }}</span>
+            <span class="text-base text-gray-400 font-medium">버전명</span>
+            <span class="text-base text-gray-700">{{ task.versionName }}</span>
           </div>
         </div>
       </section>
 
       <!-- 담당자 -->
       <section class="px-6 pt-4 pb-3 border-b border-gray-100">
-        <p class="text-[11px] font-bold text-[#5B6E96] uppercase tracking-widest mb-3">담당자</p>
+        <p class="text-base font-bold text-[#5B6E96] uppercase tracking-widest mb-3">담당자</p>
         <div class="grid grid-cols-2 gap-x-6 gap-y-3">
           <div class="flex flex-col gap-0.5">
-            <span class="text-[11px] text-gray-400 font-medium">담당자 번호</span>
-            <span class="text-sm text-gray-700">{{ task.userId }}</span>
+            <span class="text-base text-gray-400 font-medium">담당자 번호</span>
+            <span class="text-base text-gray-700">{{ task.userId }}</span>
           </div>
           <div class="flex flex-col gap-0.5">
-            <span class="text-[11px] text-gray-400 font-medium">담당자 이름</span>
-            <span class="text-sm text-gray-700">{{ task.name }}</span>
+            <span class="text-base text-gray-400 font-medium">담당자 이름</span>
+            <span class="text-base text-gray-700">{{ task.name }}</span>
           </div>
         </div>
       </section>
 
       <!-- 일정 -->
       <section class="px-6 pt-4 pb-3 border-b border-gray-100">
-        <p class="text-[11px] font-bold text-[#5B6E96] uppercase tracking-widest mb-3">일정</p>
+        <p class="text-base font-bold text-[#5B6E96] uppercase tracking-widest mb-3">일정</p>
         <div class="grid grid-cols-2 gap-x-6 gap-y-3">
           <div class="flex flex-col gap-0.5">
-            <span class="text-[11px] text-gray-400 font-medium">시작계획일</span>
-            <span class="text-sm text-gray-700">{{ task.plannedStart || '-' }}</span>
+            <span class="text-base text-gray-400 font-medium">시작계획일</span>
+            <span class="text-base text-gray-700">{{ task.plannedStart || '-' }}</span>
           </div>
           <div class="flex flex-col gap-0.5">
-            <span class="text-[11px] text-gray-400 font-medium">마감계획일</span>
-            <span class="text-sm text-gray-700">{{ task.plannedEnd || '-' }}</span>
+            <span class="text-base text-gray-400 font-medium">마감계획일</span>
+            <span class="text-base text-gray-700">{{ task.plannedEnd || '-' }}</span>
           </div>
           <div class="flex flex-col gap-0.5">
-            <span class="text-[11px] text-gray-400 font-medium">실제시작일</span>
-            <span class="text-sm text-gray-700">{{ task.actualStart || '-' }}</span>
+            <span class="text-base text-gray-400 font-medium">실제시작일</span>
+            <span class="text-base text-gray-700">{{ task.actualStart || '-' }}</span>
           </div>
           <div class="flex flex-col gap-0.5">
-            <span class="text-[11px] text-gray-400 font-medium">실제종료일</span>
-            <span class="text-sm text-gray-700">{{ task.actualEnd || '-' }}</span>
+            <span class="text-base text-gray-400 font-medium">실제종료일</span>
+            <span class="text-base text-gray-700">{{ task.actualEnd || '-' }}</span>
           </div>
         </div>
       </section>
 
       <!-- 진척도 -->
       <section class="px-6 pt-4 pb-3 border-b border-gray-100">
-        <p class="text-[11px] font-bold text-[#5B6E96] uppercase tracking-widest mb-3">진척도</p>
+        <p class="text-base font-bold text-[#5B6E96] uppercase tracking-widest mb-3">진척도</p>
         <div class="flex items-center gap-4">
-          <span class="text-[11px] text-gray-400 font-medium min-w-[130px]">
+          <span class="text-base text-gray-400 font-medium min-w-[130px]">
             {{ hasChildren ? '하위 진척도 (subProgress)' : '진척도 (progress)' }}
           </span>
           <div class="flex flex-1 items-center gap-3">
             <div class="flex-1">
               <ProgressBar :value="hasChildren ? task.subProgress : task.progress" :pt="{ value: { style: { background: progressBarColor(task.priority) } } }" />
             </div>
-            <span class="text-sm font-semibold text-[#5B6E96] min-w-[36px] text-right"> {{ hasChildren ? task.subProgress : task.progress }}% </span>
+            <span class="text-base font-semibold text-[#5B6E96] min-w-[36px] text-right"> {{ hasChildren ? task.subProgress : task.progress }}% </span>
           </div>
         </div>
       </section>
 
       <!-- 연관 일감 -->
       <section class="px-6 pt-4 pb-5">
-        <p class="text-[11px] font-bold text-[#5B6E96] uppercase tracking-widest mb-3">연관 일감</p>
+        <p class="text-base font-bold text-[#5B6E96] uppercase tracking-widest mb-3">연관 일감</p>
         <div v-if="task.relation && task.relation.length > 0" class="flex flex-col gap-2">
           <div v-for="(rel, idx) in task.relation" :key="idx" class="flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-lg">
-            <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold" :class="relationClass(rel.relationType)">
+            <span class="inline-block px-2.5 py-0.5 rounded-full text-base font-semibold" :class="relationClass(rel.relationType)">
               {{ rel.relationType }}
             </span>
-            <span class="text-sm text-gray-700">{{ rel.relatedTaskId }}</span>
+            <span class="text-base text-gray-700">{{ rel.relatedTaskId }}</span>
           </div>
         </div>
-        <p v-else class="text-sm text-gray-400 py-1">연관된 일감이 없습니다.</p>
+        <p v-else class="text-base text-gray-400 py-1">연관된 일감이 없습니다.</p>
       </section>
     </div>
 

@@ -6,8 +6,6 @@ import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
 import { computed, onMounted, ref } from 'vue';
 
-// Store & Data
-
 const taskStore = useTaskStore();
 const projectStore = useProjectStore();
 
@@ -237,11 +235,18 @@ const chartOptions = {
 // 유틸
 function formatMinutes(mins) {
   if (!mins && mins !== 0) return '-';
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-  if (h === 0) return `${m}시간`;
-  if (m === 0) return `${h}분`;
-  return `${h}시간 ${m}분`;
+
+  const totalMins = mins;
+  const d = Math.floor(totalMins / (8 * 60)); // 480분 = 1일
+  const h = Math.floor((totalMins % (8 * 60)) / 60);
+  const m = totalMins % 60;
+
+  const parts = [];
+  if (d > 0) parts.push(`${d}일`);
+  if (h > 0) parts.push(`${h}시간`);
+  if (m > 0) parts.push(`${m}분`);
+
+  return parts.length > 0 ? parts.join(' ') : '0분';
 }
 
 function formatDateTime(dt) {
@@ -257,6 +262,7 @@ onMounted(async () => {
   await taskStore.findCateList();
   await taskStore.findTypeList();
   await taskStore.findSpentOverview(project.value?.id);
+  console.log(taskStore.spent);
 });
 </script>
 
@@ -354,8 +360,8 @@ onMounted(async () => {
           <table class="w-full border-collapse text-base">
             <thead>
               <tr class="bg-stone-100 border-b border-stone-200">
-                <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-stone-400 min-w-30">일감</th>
                 <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-stone-400 min-w-30">프로젝트</th>
+                <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-stone-400 min-w-30">일감</th>
                 <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-24">유형</th>
                 <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-24">범주</th>
                 <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-28">담당자</th>
@@ -376,12 +382,12 @@ onMounted(async () => {
             <tbody>
               <tr v-for="(item, idx) in pagedSpent" :key="`${item.taskId}-${item.taskStart}`" class="border-b border-stone-100 last:border-none hover:bg-amber-50 transition-colors duration-100" :class="idx % 2 !== 0 ? 'bg-stone-50/60' : 'bg-white'">
                 <td class="px-4 py-3.5">
-                  <span class="block text-base font-medium text-stone-800 leading-snug">{{ item.taskTitle }}</span>
-                  <span class="font-mono text-base font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded mt-0.5 inline-block">{{ item.taskId }}</span>
-                </td>
-                <td class="px-4 py-3.5">
                   <span class="block text-base text-stone-700 leading-snug">{{ item.projectTitle }}</span>
                   <span class="text-base font-mono text-stone-400 mt-0.5 inline-block">#{{ item.projectId }}</span>
+                </td>
+                <td class="px-4 py-3.5">
+                  <span class="block text-base font-medium text-stone-800 leading-snug">{{ item.taskTitle }}</span>
+                  <span class="font-mono text-base font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded mt-0.5 inline-block">{{ item.taskId }}</span>
                 </td>
                 <td class="px-4 py-3.5 text-center">
                   <span class="inline-block px-2.5 py-0.5 rounded-full text-base font-semibold whitespace-nowrap bg-[#eeedfe] text-[#3c3489]">{{ typeMap[item.type] ?? item.type }}</span>

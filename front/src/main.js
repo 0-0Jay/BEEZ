@@ -4,6 +4,7 @@ import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';
 
+import VueGanttastic from '@infectoone/vue-ganttastic';
 import { $t } from '@primeuix/themes';
 import Aura from '@primeuix/themes/aura';
 import PrimeVue from 'primevue/config';
@@ -32,6 +33,7 @@ const amber = {
   950: '#451a03'
 };
 
+app.use(VueGanttastic);
 app.use(pinia);
 app.use(router);
 app.use(PrimeVue, {

@@ -90,6 +90,7 @@ function handleError(status, message) {
       router.push('/main');
       break;
 
+    case 400:
     case 404:
     case 405:
     case 500:

@@ -10,7 +10,7 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   optimizeDeps: {
     noDiscovery: true,
-    include: ['@stomp/stompjs']
+    include: ['@stomp/stompjs', 'dayjs']
   },
   plugins: [
     vue(),
@@ -32,6 +32,7 @@ export default defineConfig({
     }
   },
   resolve: {
+    dedupe: ['vue'],
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }

@@ -8,6 +8,7 @@
     "lint": "eslint --fix . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore"
   },
   "dependencies": {
+    "@infectoone/vue-ganttastic": "^2.3.2",
     "@primeuix/themes": "^2.0.0",
     "@stomp/stompjs": "^7.3.0",
     "@vueup/vue-quill": "^1.2.0",
@@ -21,7 +22,6 @@
     "sockjs-client": "^1.6.1",
     "tailwindcss-primeui": "^0.6.0",
     "vue": "^3.4.34",
-    "vue-ganttastic": "^0.9.34",
     "vue-router": "^4.4.0"
   },
   "devDependencies": {

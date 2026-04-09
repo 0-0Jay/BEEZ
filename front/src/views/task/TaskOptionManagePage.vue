@@ -157,7 +157,7 @@ onMounted(async () => {
               >개
             </p>
           </div>
-          <Button label="일감 범주 추가" icon="pi pi-plus" rasied @click="openCatAdd" />
+          <Button label="일감 범주 추가" icon="pi pi-plus" raised @click="openCatAdd" />
         </div>
 
         <div class="overflow-x-auto">
