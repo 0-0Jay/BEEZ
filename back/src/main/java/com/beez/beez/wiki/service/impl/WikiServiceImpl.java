@@ -51,7 +51,7 @@ public class WikiServiceImpl implements WikiService {
   @Override
   public WikiVersionRequest findLatestVersion(String wikiId){
     WikiVersionRequest result = wikiMapper.findLatestVersion(wikiId);
-    System.out.println("## DB에서 가져온 Links: " + (result != null ? result.getLinks() : "결과없음"));
+//    System.out.println("## DB에서 가져온 Links: " + (result != null ? result.getLinks() : "결과없음"));
     return result;
   }
   

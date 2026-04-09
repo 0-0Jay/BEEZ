@@ -23,7 +23,7 @@ public class DocumentServiceImpl implements DocumentService {
   
   @Override
   @Transactional //문서글(텍스트) + 파일묶음 = 1개의 게시글 형태로 만들기 위함
-  public void registerDocument(DocumentRequest.CreateRequest request, String userId){
+  public void registerDocument(DocumentRequest.CreateRequest request, String userId, String projectId){
     // 파일 바구니 생성
     String fileId = ""; //초기값 xml파일의 selectkey 가 채워줄거임
     documentMapper.insertFileMaster(fileId, userId);
@@ -39,7 +39,7 @@ public class DocumentServiceImpl implements DocumentService {
     }
     
     //문서 정보 저장
-    documentMapper.insertDocument(request, fileId, userId);
+    documentMapper.insertDocument(request, userId, projectId);
   } // registerDocument end
   
   
