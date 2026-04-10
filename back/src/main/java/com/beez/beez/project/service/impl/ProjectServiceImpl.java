@@ -19,7 +19,12 @@ import java.util.List;
 public class ProjectServiceImpl implements ProjectService {
   
   private final ProjectMapper projectMapper;
-  private final LogsService logsService;
+  
+  //  세션에서 아이디 받아오기
+  private String getCurrentUserId() {
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    return auth.getName();
+  }
   
   // 프로젝트 생성
   @Loggable(
@@ -30,6 +35,8 @@ public class ProjectServiceImpl implements ProjectService {
   )
   @Override
   public String insertProject(ProjectCreateRequest dto) {
+    String userId = getCurrentUserId();
+    dto.setUserId(userId);
     projectMapper.insertProject(dto);
     return dto.getId();
   }
@@ -121,18 +128,39 @@ public class ProjectServiceImpl implements ProjectService {
   }
   
   //프로젝트 구성원 추가
+  @Loggable(
+    logType = "A0",
+    logCategory = "B0",
+    content = "프로젝트 구성원 추가(프로젝트명: {projectId})",
+    link = "/project/setting/{projectId}/members",
+    idField = "projectId"
+  )
   @Override
   public void insertProjectMember(ProjectMemberRequest dto) {
     projectMapper.insertProjectMember(dto);
   }
   
   //프로젝트 구성원 삭제
+  @Loggable(
+    logType = "A3",
+    logCategory = "B0",
+    content = "프로젝트 구성원 삭제(프로젝트명: {projectId})",
+    link = "/project/setting/{projectId}/members",
+    idField = "projectId"
+  )
   @Override
   public void deleteProjectMember(String projectMemberId) {
     projectMapper.deleteProjectMember(projectMemberId);
   }
   
   //프로젝트 구성원 수정
+  @Loggable(
+    logType = "A2",
+    logCategory = "B0",
+    content = "프로젝트 구성원 역할수정(프로젝트명: {projectId})",
+    link = "/project/setting/{projectId}/members",
+    idField = "projectId"
+  )
   @Override
   public void updateProjectMember(String projectMemberId, ProjectMemberUpdateRequest dto) {
     dto.setMemberId(projectMemberId);
