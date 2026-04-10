@@ -1,5 +1,6 @@
 package com.beez.beez.workflow.mapper;
 
+import com.beez.beez.workflow.dto.WorkflowCopyRequest;
 import com.beez.beez.workflow.dto.WorkflowResponse;
 import com.beez.beez.workflow.dto.WorkflowSaveRequest;
 
@@ -21,7 +22,7 @@ public interface WorkflowMapper {
   void saveWorkflow(WorkflowSaveRequest dto);
 
   // 업무흐름 복사
-  void copyWorkflow();
+  void copyWorkflow(WorkflowCopyRequest dto);
 
   // 일감 상태 공통 코드 조회
   List<Map<String,Object>> findTaskStatusCode(String groupValue);

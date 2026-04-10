@@ -45,34 +45,47 @@ export const useVersionStore = defineStore('version', {
       }
     },
 
-    // 프로젝트 삭제
+    // 버전 삭제
     async deleteVersion(id, projectId, name) {
-      await axios.delete(`/project/version/delete/${id}`, {
-        data: {
-          projectId,
-          name
-        }
-      });
+      try {
+        await axios.delete(`/project/version/delete/${id}`, {
+          data: {
+            projectId,
+            name
+          }
+        });
+      } catch (error) {
+        throw new Error(error.response?.data);
+      }
     },
 
     // 버전 생성
     async insertVersion(form) {
-      const response = await axios.post('/project/version', form);
-      return response.data;
+      try {
+        const response = await axios.post('/project/version', form);
+        return response.data;
+      } catch (error) {
+        throw new Error(error.response?.data);
+      }
     },
 
     // 프로젝트 단건 조회
     async findProject(id) {
       const response = await axios.get(`/project/${id}`);
-      console.log(response.data);
       this.projectInfo = response.data;
+      return response.data;
     },
 
     // 버전 수정
     async updateVersion(id, form) {
-      await axios.put(`/project/version/${id}`, form);
+      try {
+        await axios.put(`/project/version/${id}`, form);
+      } catch (error) {
+        throw new Error(error.response?.data);
+      }
     },
 
+    // 공통코드
     async findCommonCodeList() {
       const res = await axios.get(`/task/common`);
       this.commonCodeList = res.data;

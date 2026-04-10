@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.beez.beez.group.mapper.GroupMapper">
+
+  <resultMap id="groupMap" type="com.beez.beez.group.dto.GroupListResponse">
+    <result property="id" column="id"/>
+    <result property="name" column="name"/>
+    <result property="description" column="description"/>
+    <result property="memberCnt" column="member_cnt"/>
+  </resultMap>
+  <!-- 그룹 목록 조회 -->
+  <select id="findAllGroup" resultMap="groupMap">
+    SELECT g.id, g.name, g.description, COUNT(CASE WHEN gm.is_delete = 'F0' THEN gm.user_id END) AS member_cnt
+    FROM groups g
+    LEFT OUTER JOIN group_member gm ON g.id = gm.group_id AND gm.is_delete = 'F0'
+    <where>
+      g.is_delete = 'F0'
+      <if test="name != null and name != ''">
+        AND g.name LIKE '%' || #{name} || '%'
+      </if>
+    </where>
+    GROUP BY g.id, g.name, g.description
+    ORDER BY g.name
+  </select>
+
+  <!-- 그룹 등록 -->
+  <insert id="insertGroup" statementType="CALLABLE">
+    { CALL PROC_CREATE_GROUP(
+      #{name, mode=IN, jdbcType=VARCHAR},
+      #{description, mode=IN, jdbcType=VARCHAR},
+      #{userIds, mode=IN, jdbcType=ARRAY, jdbcTypeName=USER_ID_TAB, typeHandler=com.beez.beez.config.OracleTypeHandler.ArrayTypeHandler},
+      #{projects, mode=IN, jdbcType=ARRAY, jdbcTypeName=PROJECT_TAB, typeHandler=com.beez.beez.config.OracleTypeHandler.ProjectArrayTypeHandler})
+    }
+  </insert>
+
+  <!-- 그룹 수정 -->
+  <update id="updateGroup" statementType="CALLABLE">
+    { CALL PROC_UPDATE_GROUP(
+      #{id, mode=IN, jdbcType=VARCHAR},
+      #{name, mode=IN, jdbcType=VARCHAR},
+      #{description, mode=IN, jdbcType=VARCHAR},
+      #{userIds, mode=IN, jdbcType=ARRAY, jdbcTypeName=USER_ID_TAB, typeHandler=com.beez.beez.config.OracleTypeHandler.ArrayTypeHandler},
+      #{projects, mode=IN, jdbcType=ARRAY, jdbcTypeName=PROJECT_TAB, typeHandler=com.beez.beez.config.OracleTypeHandler.ProjectArrayTypeHandler})
+    }
+  </update>
+
+  <!-- 그룹 삭제 -->
+  <delete id="deleteGroup" statementType="CALLABLE">
+    { CALL PROC_DELETE_GROUP(#{id, mode=IN, jdbcType=VARCHAR}) }
+  </delete>
+
+</mapper>
