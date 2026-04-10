@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -219,6 +220,13 @@ public class TaskServiceImpl implements TaskService {
   // 간트차트
   @Override
   public List<GanttDataResponse> findGanttData(String id) {
-    return taskMapper.findGanttData(id);
+    List<GanttDataResponse> gantData = taskMapper.findGanttData(id);
+    List<GanttRelationResponse> gantRelation = taskMapper.findGanttRelation(id);
+    
+    Map<String, List<GanttRelationResponse>> relationMap = gantRelation.stream().collect(Collectors.groupingBy(GanttRelationResponse::getTaskId));
+    
+    gantData.forEach(g -> g.setRelation(relationMap.getOrDefault(g.getTaskId(), Collections.emptyList())));
+    
+    return gantData;
   }
 }

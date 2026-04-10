@@ -42,9 +42,10 @@
   </select>
   
   <select id="findVersionList" resultType="VersionResponse">
-    SELECT *
-    FROM version
-    WHERE project_id = #{projectId}
+    SELECT v.id, v.name, p.id AS default_version
+    FROM version v
+    LEFT JOIN project p ON p.default_version_id = v.id
+    WHERE v.project_id = #{projectId}
   </select>
   
   <select id="insertTask" parameterType="TaskRequest" statementType="CALLABLE">
@@ -289,5 +290,47 @@
     JOIN project p ON t.project_id = p.id
     JOIN users u ON u.id = s.user_id
     WHERE p.id = #{id} OR p.parent_id = #{id}
+  </select>
+  
+  <select id="findGanttData" resultType="GanttDataResponse">
+    SELECT t.id AS task_id,
+           t.title AS task_title,
+           t.project_id,
+           p.title AS project_title,
+           t.version_id,
+           v.name AS version_name,
+           t.user_id,
+           u.name,
+           t.planned_start,
+           t.planned_end,
+           t.actual_start,
+           t.actual_end,
+           cc1.com_name AS priority,
+           cc2.com_name AS workflow,
+           tt.name AS type,
+           tc.name AS category,
+           t.progress,
+           t.sub_progress,
+           t.parent_id
+    FROM task t
+    JOIN project p ON p.id = t.project_id
+    LEFT JOIN version v ON v.id = t.version_id
+    JOIN users u ON u.id = t.user_id
+    JOIN common_code cc1 ON cc1.com_value = t.priority
+    JOIN common_code cc2 ON cc2.com_value = t.workflow
+    JOIN task_type tt ON tt.id = t.type
+    JOIN task_category tc ON tc.id = t.category
+    WHERE (p.id = #{id} OR p.parent_id = #{id}) AND t.status = 'T1'
+  </select>
+  
+  <select id="findGanttRelation" resultType="GanttRelationResponse">
+    SELECT tr.task_id,
+           tr.related_task_id,
+           cc.com_name AS relation_type
+    FROM task_relations tr
+    JOIN common_code cc ON tr.relation_type = cc.com_value
+    JOIN task t ON tr.task_id = t.id
+    JOIN project p ON p.id = t.project_id
+    WHERE (p.id = #{id} OR p.parent_id = #{id}) AND t.status = 'T1'
   </select>
 </mapper>

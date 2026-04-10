@@ -41,4 +41,6 @@ public interface TaskMapper {
   List<TaskSpentResponse> findSpentOverview(String id);
   
   List<GanttDataResponse> findGanttData(String id);
+  
+  List<GanttRelationResponse> findGanttRelation(String id);
 }

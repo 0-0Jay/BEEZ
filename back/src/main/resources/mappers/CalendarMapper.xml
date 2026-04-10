@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.beez.beez.calendar.mapper.CalendarMapper">
+  <select id="findAllSchedule" resultType="CalendarResponse">
+    SELECT c.id, c.user_id, u.name, c.type, c.title, c.content, c.start_date, c.end_date
+    FROM calendar c
+    JOIN users u ON u.id = c.user_id
+    WHERE c.project_id = #{id}
+  </select>
+  
+  <insert id="insertSchedule" parameterType="CalendarRequest">
+    <selectKey keyProperty="id" resultType="String" order="BEFORE">
+      SELECT BEEZ.generate_pk_auto('calendar') FROM dual
+    </selectKey>
+    INSERT INTO calendar(id, user_id, type, title, content, project_id, start_date, end_date)
+    VALUES(#{id}, #{userId}, #{type}, #{title}, #{content}, #{projectId}, #{startDate}, #{endDate})
+  </insert>
+</mapper>

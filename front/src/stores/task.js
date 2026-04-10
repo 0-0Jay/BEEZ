@@ -14,7 +14,8 @@ export const useTaskStore = defineStore('task', {
     journalList: [],
     task: ref(null),
     overview: [],
-    spent: []
+    spent: [],
+    ganttData: []
   }),
   // getters
   // actions
@@ -107,6 +108,10 @@ export const useTaskStore = defineStore('task', {
     async findSpentOverview(id) {
       const res = await axios.get(`/spent/${id}`);
       this.spent = res.data;
+    },
+    async findGanttData(id) {
+      const res = await axios.get(`/gantt/${id}`);
+      this.ganttData = res.data;
     }
     // async downloadFile(file) {
     //   const res = await axios.get(`/api/file/${file.storedName}`);

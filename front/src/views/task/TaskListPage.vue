@@ -123,10 +123,16 @@ const processedTasks = computed(() => {
   if (appliedFilters.value.title) list = list.filter((t) => t.title.includes(appliedFilters.value.title));
 
   // DatePicker가 Date 객체를 반환하므로 문자열로 변환 후 비교
-  const startStr = formatDate(appliedFilters.value.plannedStart);
-  const endStr = formatDate(appliedFilters.value.plannedEnd);
-  if (startStr) list = list.filter((t) => t.plannedEnd && t.plannedEnd >= startStr);
-  if (endStr) list = list.filter((t) => t.plannedEnd && t.plannedEnd <= endStr);
+  const startDate = appliedFilters.value.plannedStart ? new Date(appliedFilters.value.plannedStart) : null;
+  const endDate = appliedFilters.value.plannedEnd ? new Date(appliedFilters.value.plannedEnd) : null;
+  if (startDate) {
+    startDate.setHours(0, 0, 0, 0);
+  }
+  if (endDate) {
+    endDate.setHours(23, 59, 59, 999);
+  }
+  if (startDate) list = list.filter((t) => t.plannedEnd && new Date(t.plannedEnd) >= startDate);
+  if (endDate) list = list.filter((t) => t.plannedEnd && new Date(t.plannedEnd) <= endDate);
 
   if (sortKey.value) {
     const dir = sortDir.value === 'asc' ? 1 : -1;
@@ -246,7 +252,7 @@ onMounted(async () => {
           <label class="text-base font-semibold uppercase tracking-wider text-stone-400">마감일</label>
           <div class="flex items-center gap-2">
             <DatePicker v-model="filters.plannedStart" date-format="yy-mm-dd" placeholder="시작일" show-button-bar showIcon class="flex-1 min-w-0 w-full" input-class="w-full" />
-            <span class="text-stone-400 text-sm shrink-0">~</span>
+            <span class="text-stone-400 text-base shrink-0">~</span>
             <DatePicker v-model="filters.plannedEnd" date-format="yy-mm-dd" placeholder="종료일" show-button-bar showIcon class="flex-1 min-w-0 w-full" input-class="w-full" />
           </div>
         </div>
@@ -281,7 +287,7 @@ onMounted(async () => {
           <!-- 내 일감 보기 -->
           <div class="flex items-center gap-2">
             <Checkbox v-model="filters.showMyTasks" :binary="true" inputId="showMyTasks" />
-            <label for="showMyTasks" class="text-sm text-stone-500 cursor-pointer select-none">내 일감 보기</label>
+            <label for="showMyTasks" class="text-base text-stone-500 cursor-pointer select-none">내 일감 보기</label>
           </div>
         </div>
 
@@ -295,14 +301,14 @@ onMounted(async () => {
     <!-- 테이블 카드 -->
     <div class="bg-white border border-[#C7C7C2] rounded-xl shadow-sm overflow-hidden">
       <div class="px-6 py-3.5 border-b border-stone-100">
-        <span class="text-sm text-stone-400">
+        <span class="text-lg text-stone-400">
           총 <strong class="text-stone-700 font-bold">{{ processedTasks.length }}</strong
           >개
         </span>
       </div>
 
       <div class="overflow-x-auto">
-        <table class="w-full border-collapse text-sm">
+        <table class="w-full border-collapse text-base">
           <thead>
             <tr class="bg-stone-100 border-b border-stone-200">
               <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-50">
@@ -310,6 +316,7 @@ onMounted(async () => {
                   번호 <span class="sort-icon">{{ sortIcon('id') }}</span>
                 </button>
               </th>
+              <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-stone-400 min-w-70">제목</th>
               <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-24">유형</th>
               <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-28">상태</th>
               <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-24">
@@ -318,7 +325,6 @@ onMounted(async () => {
                 </button>
               </th>
               <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-24">범주</th>
-              <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-stone-400 min-w-70">제목</th>
               <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-70">
                 <button class="sort-btn" :class="{ active: sortKey === 'progress' }" @click="toggleSort('progress')">
                   진척도 <span class="sort-icon">{{ sortIcon('progress') }}</span>
@@ -343,22 +349,22 @@ onMounted(async () => {
               <td class="px-4 py-3.5">
                 <span class="font-mono text-m font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded">{{ task.id }}</span>
               </td>
+              <td class="px-4 py-3.5">
+                <span class="block text-base font-medium text-stone-800 hover:text-amber-600 transition-colors leading-snug">{{ task.title }}</span>
+              </td>
               <td class="px-4 py-3.5 text-base text-stone-600 text-center">{{ taskTypeMap[task.type] ?? task.type }}</td>
               <td class="px-4 py-3.5 text-center">
-                <span class="inline-block px-2.5 py-0.5 rounded-full text-sm font-semibold whitespace-nowrap" :class="workflowClass[task.workflow] ?? 'bg-stone-100 text-stone-500'">
+                <span class="inline-block px-2.5 py-0.5 rounded-full text-base font-semibold whitespace-nowrap" :class="workflowClass[task.workflow] ?? 'bg-stone-100 text-stone-500'">
                   {{ workflowMap[task.workflow] ?? task.workflow }}
                 </span>
               </td>
               <td class="px-4 py-3.5 text-center">
-                <span class="inline-block px-2.5 py-0.5 rounded-full text-sm font-semibold" :class="priorityClass[task.priority] ?? 'bg-stone-100 text-stone-400'">
+                <span class="inline-block px-2.5 py-0.5 rounded-full text-base font-semibold" :class="priorityClass[task.priority] ?? 'bg-stone-100 text-stone-400'">
                   {{ priorityMap[task.priority] ?? task.priority }}
                 </span>
               </td>
               <td class="px-4 py-3.5 text-center">
-                <span class="inline-block mt-1 text-sm text-stone-400 bg-stone-100 px-2 py-px rounded">{{ taskCateMap[task.category] ?? task.category }}</span>
-              </td>
-              <td class="px-4 py-3.5">
-                <span class="block text-base font-medium text-stone-800 hover:text-amber-600 transition-colors leading-snug">{{ task.title }}</span>
+                <span class="inline-block mt-1 text-base text-stone-400 bg-stone-100 px-2 py-px rounded">{{ taskCateMap[task.category] ?? task.category }}</span>
               </td>
               <td class="px-4 py-3.5">
                 <ProgressBar
@@ -376,7 +382,7 @@ onMounted(async () => {
               <td class="px-4 py-3.5 text-base text-stone-500 tabular-nums text-center">{{ formatListDate(task.plannedEnd) }}</td>
             </tr>
             <tr v-if="pagedTasks.length === 0">
-              <td colspan="9" class="text-center py-16 text-sm text-stone-400">일감이 없습니다.</td>
+              <td colspan="9" class="text-center py-16 text-base text-stone-400">일감이 없습니다.</td>
             </tr>
           </tbody>
         </table>

@@ -37,6 +37,9 @@ const priorityOptions = computed(() => commonCodes.value.filter((p) => p.cgroup 
 const parentTaskOptions = computed(() => [{ id: null, title: '없음' }, ...taskStore.taskList]);
 const versionOptions = computed(() => taskStore.versionList);
 
+// 기본 버전
+const defaultVersionId = computed(() => taskStore.versionList.find((v) => v.defaultVersion !== null)?.id);
+
 function formatDate(d) {
   if (!d) return '';
   // 문자열이면 앞 10자리(YYYY-MM-DD)만 사용
@@ -73,7 +76,7 @@ const form = reactive({
   parentId: fixedParentId ?? (isPopulated ? (task.value?.parentId ?? null) : null),
   category: isPopulated ? (task.value?.category ?? null) : null,
   userId: isPopulated ? (task.value?.userId ?? null) : null,
-  versionId: isPopulated ? (task.value?.versionId ?? null) : null,
+  versionId: isPopulated ? (task.value?.versionId ?? null) : defaultVersionId.value,
   plannedStart: isPopulated ? parseDate(task.value?.plannedStart) : null,
   plannedEnd: isPopulated ? parseDate(task.value?.plannedEnd) : null,
   actualStart: isPopulated ? parseDate(task.value?.actualStart) : null,
@@ -338,7 +341,7 @@ onMounted(async () => {
   await taskStore.findMember(project.value.id);
   await taskStore.findTaskList(project.value.id, userId.value);
   await taskStore.findVersionList(project.value.id);
-  console.log(taskStore.memberList);
+  console.log(taskStore.versionList);
   validate();
 });
 </script>
@@ -463,7 +466,7 @@ onMounted(async () => {
               </template>
               <template v-else>
                 <div class="flex items-center gap-4">
-                  <InputNumber v-model="form.progress" :min="0" :max="100" placeholder="0" class="w-28 shrink-0" suffix="%" />
+                  <InputNumber v-model="form.progress" :min="0" :max="100" showButtons mode="decimal" :step="10" placeholder="0" suffix="%" />
                 </div>
               </template>
             </td>

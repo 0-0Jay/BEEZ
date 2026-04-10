@@ -14,6 +14,10 @@ import '@/assets/styles.scss';
 import '@/assets/tailwind.css';
 import 'primeicons/primeicons.css';
 
+import '@bryntum/gantt/fontawesome/css/solid.css';
+import '@bryntum/gantt/gantt.css';
+import '@bryntum/gantt/stockholm-light.css';
+
 const app = createApp(App);
 const pinia = createPinia();
 pinia.use(piniaPlugin);

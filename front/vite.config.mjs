@@ -10,7 +10,8 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   optimizeDeps: {
     noDiscovery: true,
-    include: ['@stomp/stompjs']
+    include: ['@stomp/stompjs'],
+    exclude: ['@/lib/bryntum/gantt.module.js']
   },
   plugins: [
     vue(),
@@ -32,6 +33,7 @@ export default defineConfig({
     }
   },
   resolve: {
+    dedupe: ['vue'],
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }

@@ -108,18 +108,7 @@ function handleCancel() {
             작업 일시
             <span class="text-red-500 text-base leading-none">•</span>
           </label>
-          <DatePicker
-            v-model="form.taskStart"
-            showTime
-            hourFormat="24"
-            dateFormat="yy-mm-dd"
-            placeholder="작업 일시를 선택하세요"
-            class="w-full"
-            input-class="w-full"
-            :pt="{
-              input: { class: 'w-full h-9 px-3 text-base border border-stone-200 rounded-lg outline-none focus:border-orange-400 bg-stone-50 text-stone-700 placeholder-stone-400' }
-            }"
-          />
+          <DatePicker v-model="form.taskStart" showTime hourFormat="24" dateFormat="yy-mm-dd" placeholder="작업 일시를 선택하세요" class="w-full" input-class="w-full" />
         </div>
 
         <!-- 소요 시간 / 진척도 (2열) -->
@@ -130,15 +119,7 @@ function handleCancel() {
               소요 시간 (분)
               <span class="text-red-500 text-base leading-none">•</span>
             </label>
-            <InputNumber
-              v-model="form.spent"
-              :min="0"
-              placeholder="분 단위로 입력"
-              class="w-full"
-              :pt="{
-                input: { class: 'w-full h-9 px-3 text-base border border-stone-200 rounded-lg outline-none focus:border-orange-400 bg-stone-50 text-stone-700 placeholder-stone-400' }
-              }"
-            />
+            <InputNumber v-model="form.spent" :min="0" placeholder="분 단위로 입력" class="w-full" />
           </div>
 
           <!-- 진척도 -->
@@ -147,16 +128,7 @@ function handleCancel() {
               진척도 (%)
               <span class="text-red-500 text-base leading-none">•</span>
             </label>
-            <InputNumber
-              v-model="form.progress"
-              :min="0"
-              :max="100"
-              placeholder="0 ~ 100"
-              class="w-full"
-              :pt="{
-                input: { class: 'w-full h-9 px-3 text-base border border-stone-200 rounded-lg outline-none focus:border-orange-400 bg-stone-50 text-stone-700 placeholder-stone-400' }
-              }"
-            />
+            <InputNumber v-model="form.progress" :min="0" :max="100" showButtons mode="decimal" :step="10" placeholder="0 ~ 100" class="w-full" />
           </div>
         </div>
 
