@@ -1,5 +1,6 @@
 package com.beez.beez.workflow.web;
 
+import com.beez.beez.workflow.dto.WorkflowCopyRequest;
 import com.beez.beez.workflow.dto.WorkflowResponse;
 import com.beez.beez.workflow.dto.WorkflowSaveRequest;
 import com.beez.beez.workflow.service.WorkflowService;
@@ -32,6 +33,13 @@ public class WorkflowController {
   public ResponseEntity<String> saveWorkflow(@RequestBody WorkflowSaveRequest dto){
     workflowService.saveWorkflow(dto);
     return ResponseEntity.ok("성공적으로 저장되었습니다.");
+  }
+
+  // 업무흐름 복사
+  @PostMapping("/copy")
+  public ResponseEntity<String> copyWorkflow(@RequestBody WorkflowCopyRequest dto){
+    workflowService.copyWorkflow(dto);
+    return ResponseEntity.ok("업무흐름 복사가 완료되었습니다.");
   }
 
   // 일감 상태 공통 코드 조회

@@ -25,7 +25,7 @@ onMounted(async () => {
   await rolesStore.findPermissions();
   initPermissionMatrix();
 
-  const editId = route.query.editId;
+  const editId = route.params.editId;
   if (editId) {
     await loadEditData(editId);
   }
@@ -99,10 +99,10 @@ const loadEditData = async (id) => {
       });
     });
   } catch (err) {
-    const msg = err.response?.data || '데이터를 불러오지 못했습니다.';
+    const errorMsg = err.response?.data || '데이터를 불러오지 못했습니다.';
     toast.add({
       severity: 'error',
-      detail: msg,
+      detail: errorMsg,
       life: 3000,
       closable: false
     });
@@ -117,7 +117,7 @@ const onSave = async () => {
     return;
   }
 
-  const editId = route.query.editId;
+  const editId = route.params.editId;
   try {
     const selectedIds = [];
     permissionItems.value.forEach((item) => {
@@ -144,11 +144,11 @@ const onSave = async () => {
 
     router.push('/roles/list');
   } catch (err) {
-    const serverMessage = err.response?.data?.message || err.response?.data || '오류가 발생했습니다.';
+    const errorMsg = err.response?.data?.message || err.response?.data || '수정 중 오류가 발생했습니다.';
     toast.add({
       severity: 'error',
-      summary: '오류',
-      detail: serverMessage,
+      summary: '수정 실패',
+      detail: errorMsg,
       life: 3000,
       closable: false
     });

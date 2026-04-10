@@ -18,7 +18,7 @@ const Routes1 = [
     meta: { requiresAuth: true, role: 'ROLE0001' }
   },
   {
-    path: '/roles/edit',
+    path: `/roles/:editId`,
     name: 'roldEdit',
     component: () => import('@/views/roles/RoleManagePage.vue'),
     meta: { requiresAuth: true, role: 'ROLE0001' }
@@ -27,6 +27,18 @@ const Routes1 = [
     path: '/workflow/list',
     name: 'workflow',
     component: () => import('@/views/roles/WorkflowManagePage.vue'),
+    meta: { requiresAuth: true, role: 'ROLE0001' }
+  },
+  {
+    path: '/group/list',
+    name: 'groupList',
+    component: () => import('@/views/group/GroupListPage.vue'),
+    meta: { requiresAuth: true, role: 'ROLE0001' }
+  },
+  {
+    path: '/group/add',
+    name: 'groupAdd',
+    component: () => import('@/views/group/GroupAddPage.vue'),
     meta: { requiresAuth: true, role: 'ROLE0001' }
   }
 ];

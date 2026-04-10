@@ -70,23 +70,42 @@ const handleCopy = async () => {
   if (!targetIssueTypes.value.length || !targetRoles.value.length) return;
 
   try {
-    // 백엔드 프로시저가 단일 대상만 처리한다면 루프를 돌아야 할 수도 있고,
-    // 리스트를 다 받는 API라면 한 번에 던지면 돼.
     const payload = {
-      source: { roleId: sourceRole.value, typeId: sourceIssueType.value },
-      targets: {
-        roleIds: targetRoles.value,
-        typeIds: targetIssueTypes.value
-      }
+      sourceRoleId: sourceRole.value,
+      sourceTypeId: sourceIssueType.value,
+      targetRoleIds: targetRoles.value,
+      targetTypeIds: targetIssueTypes.value
     };
 
-    await wStore.copyWorkflow(payload); // 스토어에 복사 액션 추가 필요
+    await wStore.copyWorkflow(payload);
 
-    toast.add({ severity: 'success', summary: '복사 성공', detail: '업무흐름이 복사되었습니다.' });
-    emit('copied');
+    toast.add({
+      severity: 'success',
+      summary: '복사 완료',
+      detail: '업무흐름이 복사되었습니다.',
+      life: 3000,
+      closable: false
+    });
+
+    if (targetRoles.value.length > 0 && targetIssueTypes.value.length > 0) {
+      emit('copied', {
+        roleId: targetRoles.value[0],
+        typeId: targetIssueTypes.value[0]
+      });
+    }
     close();
-  } catch (error) {
-    // 에러 처리...
+  } catch (err) {
+    const errorMsg = err.response?.data?.message || err.response?.data || '복사 중 오류가 발생했습니다.';
+
+    toast.add({
+      severity: 'error',
+      summary: '복사 실패',
+      detail: errorMsg,
+      life: 3000,
+      closable: false
+    });
+
+    console.error('Copy Error Detail:', err);
   }
 };
 </script>

@@ -1,5 +1,6 @@
 package com.beez.beez.workflow.service.impl;
 
+import com.beez.beez.workflow.dto.WorkflowCopyRequest;
 import com.beez.beez.workflow.dto.WorkflowResponse;
 import com.beez.beez.workflow.dto.WorkflowSaveRequest;
 import com.beez.beez.workflow.mapper.WorkflowMapper;
@@ -35,6 +36,12 @@ public class WorkflowServiceImpl implements WorkflowService {
       log.error("업무흐름 등록 오류: roleId={}, typeId={}", dto.getRoleId(), dto.getTypeId(), e);
       throw new RuntimeException("업무흐름 등록 중 오류가 발생하였습니다.");
     }
+  }
+
+  // 업무흐름 복사
+  @Override
+  public void copyWorkflow(WorkflowCopyRequest dto) {
+    workflowMapper.copyWorkflow(dto);
   }
 
   // 일감 상태 공통 코드 조회

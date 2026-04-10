@@ -69,6 +69,16 @@
     ) }
   </update>
 
+  <!-- 업무흐름 복사 -->
+  <update id="copyWorkflow" statementType="CALLABLE" parameterType="com.beez.beez.workflow.dto.WorkflowCopyRequest">
+    { CALL SP_COPY_WORKFLOW(
+    #{sourceRoleId},
+    #{sourceTypeId},
+    #{targetRoleIds, mode=IN, jdbcType=ARRAY, typeHandler=com.beez.beez.config.OracleTypeHandler.RoleIdListTypeHandler},
+    #{targetTypeIds, mode=IN, jdbcType=ARRAY, typeHandler=com.beez.beez.config.OracleTypeHandler.TypeIdListTypeHandler}
+    ) }
+  </update>
+
   <!-- 일감 상태 공통 코드 조회 -->
   <select id="findTaskStatusCode" resultType="map">
     SELECT com_value as "key",
