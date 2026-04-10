@@ -92,11 +92,11 @@ watch(
           <div>
             <div class="wiki-header-left">
               <span class="badge-wiki">wiki</span>
-              <span class="wiki-title">{{ projectInfo.title }}</span>
+              <!-- <span class="wiki-title">{{ projectInfo.title }}</span> -->
               <!-- 이거 백처리랑 wiki.js파일 작업 안되어 있음-->
               <!-- <span class="badge-version">{{ projectInfo. }}</span> -->
             </div>
-            <p class="wiki-subtitle">{{ projectInfo.description }}</p>
+            <p class="wiki-subtitle">{{ wikiStore.wikiDetail.wikiInfo }}</p>
           </div>
           <div class="wiki-header-right">
             <div class="btn-group">
@@ -134,7 +134,7 @@ watch(
       </div>
 
       <div class="info-card">
-        <div class="info-card-title">{{ projectInfo.title }} - 기본정보</div>
+        <div class="info-card-title">프로젝트 - 기본정보</div>
         <br />
         <div class="info-row">
           <span class="info-label">상태 : </span>
@@ -236,7 +236,7 @@ watch(
   flex-wrap: wrap;
 }
 .badge-wiki {
-  font-size: 11px;
+  font-size: 20px;
   background: #e8f0fe;
   border: 1px solid #90b8f8;
   border-radius: 20px;
@@ -660,6 +660,6 @@ watch(
   /* 브라우저 화면 높이의 100%를 최소 높이로 잡음 */
   min-height: 100vh;
   /* 내용이 많아지면 자동으로 늘어남 */
-  padding-bottom: 570x; /* 하단 여백을 주면 스크롤 확인이 더 쉽습니다 */
+  padding-bottom: 770x; /* 하단 여백을 주면 스크롤 확인이 더 쉽습니다 */
 }
 </style>

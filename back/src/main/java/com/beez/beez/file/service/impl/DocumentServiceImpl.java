@@ -1,8 +1,7 @@
 package com.beez.beez.file.service.impl;
 
 
-import com.beez.beez.file.dto.DocumentRequest;
-import com.beez.beez.file.dto.FileDetailRequest;
+import com.beez.beez.file.dto.*;
 import com.beez.beez.file.mapper.DocumentMapper;
 import com.beez.beez.file.service.DocumentService;
 import com.beez.beez.file.service.FileService;
@@ -23,30 +22,29 @@ public class DocumentServiceImpl implements DocumentService {
   
   @Override
   @Transactional //문서글(텍스트) + 파일묶음 = 1개의 게시글 형태로 만들기 위함
-  public void registerDocument(DocumentRequest.CreateRequest request, String userId, String projectId){
+  public void registerDocument(CreateRequest request){
     // 파일 바구니 생성
-    String fileId = ""; //초기값 xml파일의 selectkey 가 채워줄거임
-    documentMapper.insertFileMaster(fileId, userId);
+    documentMapper.insertFileMaster(request);
     
     //파일 상세 정보 저장
     if(request.getFiles() != null && !request.getFiles().isEmpty()) {
       List<FileDetailRequest> saveFiles = fileService.saveFile(request.getFiles());
       
       for (FileDetailRequest file : saveFiles){
-        file.setFileId(fileId); //파일 바구니 ID연결
+        file.setFileId(request.getFileId()); //파일 바구니 ID연결
         documentMapper.insertFileDetail(file);
       }
     }
     
     //문서 정보 저장
-    documentMapper.insertDocument(request, userId, projectId);
+    documentMapper.insertDocument(request);
   } // registerDocument end
   
   
   
 @Override
 @Transactional //update로직에 본인이 쓴 글만 수정할 수 있게 체크하는 로직을 추가해야할 수 있음
-public void updateDocument(DocumentRequest.UpdateRequest updateRequest,
+public void updateDocument(UpdateRequest updateRequest,
                            List<MultipartFile> newFiles,
                            String userId) {
     documentMapper.updateDocument(updateRequest);
@@ -54,7 +52,7 @@ public void updateDocument(DocumentRequest.UpdateRequest updateRequest,
     if(updateRequest.getFileUpdates() !=null) { //업데이트할때 파일있으면 처리하도록 함
       int fileIdx = 0;
       
-      for(DocumentRequest.FileUpdateInfo updateInfo : updateRequest.getFileUpdates()) {
+      for(FileUpdateInfo updateInfo : updateRequest.getFileUpdates()) {
         
         if(updateInfo.isDeleted()){ //삭제 버튼 클릭시
           documentMapper.deleteFileDetail(updateInfo.getTargetFileDetailId()); //소프트 딜리트 처리
@@ -82,14 +80,14 @@ public void updateDocument(DocumentRequest.UpdateRequest updateRequest,
   }
   
   @Override //목록 조회
-  public List<DocumentRequest.ListResponse> getDocumentList() {
+  public List<ListResponse> getDocumentList(String projectId) {
     return documentMapper.selectDocumentList();
   }
   
   //상세 조회
   @Override
-  public DocumentRequest.DetailResponse getDocumentDetail(String id){
-    DocumentRequest.DetailResponse detail = documentMapper.selectDocumentDetail(id);
+  public DetailResponse getDocumentDetail(String id){
+    DetailResponse detail = documentMapper.selectDocumentDetail(id);
     detail.setFileList(documentMapper.selectLatestFilesByDocId(id));
     return detail;
   }

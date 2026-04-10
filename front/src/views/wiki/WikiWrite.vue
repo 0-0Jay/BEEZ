@@ -11,7 +11,7 @@ const userId = ref(''); //입력받을 작성자명
 const wikiInfo = ref(''); //작성창 한줄 설명
 
 //version id 별로,  wikiId별로 겹치지 않도록
-//###### 필요 없는 코드
+//###### 필요 없는 코드 - 정리예정
 const generateId = (prefix) => {
   const now = new Date();
   const timestamp =
@@ -334,8 +334,8 @@ function applyFormat(command, value = null) {
         <div class="link-form">
           <div class="link-items-container">
             <div v-for="(link, index) in linkItems" :key="index" class="link-item-group">
-              <input v-model="link.title" type="text" class="field-input" placeholder="연결할 문서 제목을 작성해주세요." />
-              <input v-model="link.url" type="text" class="field-input" placeholder="연결할 링크를 입력해주세요." />
+              <input v-model="link.title" type="text" class="field-input" placeholder="연결할 링크 이름을 작성해주세요." />
+              <input v-model="link.url" type="text" class="field-input" placeholder="링크 주소" />
             </div>
           </div>
 
