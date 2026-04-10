@@ -87,8 +87,16 @@ const filteredSpent = computed(() => {
     if (f.titleSearch && !s.taskTitle?.toLowerCase().includes(f.titleSearch.toLowerCase())) return false;
     if (f.dateFrom || f.dateTo) {
       const d = new Date(s.taskStart);
-      if (f.dateFrom && d < f.dateFrom) return false;
-      if (f.dateTo && d > f.dateTo) return false;
+      if (f.dateFrom) {
+        const from = new Date(f.dateFrom);
+        from.setHours(0, 0, 0, 0);
+        if (d < from) return false;
+      }
+      if (f.dateTo) {
+        const to = new Date(f.dateTo);
+        to.setHours(23, 59, 59, 999);
+        if (d > to) return false;
+      }
     }
     return true;
   });
@@ -162,8 +170,16 @@ const reportSpent = computed(() => {
   if (!reportDateFrom.value && !reportDateTo.value) return spent.value || [];
   return (spent.value || []).filter((s) => {
     const d = new Date(s.taskStart);
-    if (reportDateFrom.value && d < reportDateFrom.value) return false;
-    if (reportDateTo.value && d > reportDateTo.value) return false;
+    if (reportDateFrom.value) {
+      const from = new Date(reportDateFrom.value);
+      from.setHours(0, 0, 0, 0);
+      if (d < from) return false;
+    }
+    if (reportDateTo.value) {
+      const to = new Date(reportDateTo.value);
+      to.setHours(23, 59, 59, 999);
+      if (d > to) return false;
+    }
     return true;
   });
 });
@@ -440,7 +456,7 @@ onMounted(async () => {
 
       <!-- 전체 소요시간 요약 -->
       <div class="bg-[#F2F0EB] border border-[#C7C7C2] rounded-xl shadow-sm px-7 pt-5 pb-5 mb-5">
-        <p class="text-xl font-bold tracking-wider uppercase text-amber-700 mb-4"><i class="pi pi-chart-bar" style="font-size: 1rem"></i> 전체 소요시간</p>
+        <p class="text-2xl font-bold tracking-wider uppercase text-amber-700 mb-4"><i class="pi pi-chart-bar" style="font-size: 1rem"></i> 전체 소요시간</p>
         <div class="grid grid-cols-2 gap-5">
           <div class="summary-stat-card">
             <div class="text-6xl font-bold text-amber-700">{{ formatMinutes(reportTotalMinutes) }}</div>
@@ -455,7 +471,7 @@ onMounted(async () => {
 
       <!-- 프로젝트별 (도넛 + 리스트) -->
       <div class="bg-white border border-[#C7C7C2] rounded-xl shadow-sm px-7 py-5 mb-5">
-        <p class="text-base font-bold uppercase tracking-wider text-stone-500 mb-5">프로젝트별 소요시간</p>
+        <p class="text-2xl font-bold uppercase tracking-wider text-stone-500 mb-5">프로젝트별 소요시간</p>
         <div class="text-base text-stone-400 flex items-center gap-2 mb-4">
           <i class="pi pi-info-circle"></i>
           <span>현재 프로젝트와 직속 하위 프로젝트만 집계됩니다.</span>
@@ -484,7 +500,7 @@ onMounted(async () => {
                 :pt="{
                   value: {
                     style: {
-                      background: donutColors[0]
+                      background: donutColors[idx % donutColors.length]
                     }
                   }
                 }"
@@ -499,7 +515,7 @@ onMounted(async () => {
       <div class="grid grid-cols-2 gap-5">
         <!-- 일감 범주별 -->
         <div class="bg-white border border-[#C7C7C2] rounded-xl shadow-sm px-7 py-5">
-          <p class="text-base font-bold uppercase tracking-wider text-stone-500 mb-5">일감 범주별 소요시간</p>
+          <p class="text-2xl font-bold uppercase tracking-wider text-stone-500 mb-5">일감 범주별 소요시간</p>
           <div class="space-y-4">
             <div v-for="item in categoryStats" :key="item.label">
               <div class="flex justify-between items-center mb-1.5">
@@ -523,7 +539,7 @@ onMounted(async () => {
 
         <!-- 일감 유형별 -->
         <div class="bg-white border border-[#C7C7C2] rounded-xl shadow-sm px-7 py-5">
-          <p class="text-base font-bold uppercase tracking-wider text-stone-500 mb-5">일감 유형별 소요시간</p>
+          <p class="text-2xl font-bold uppercase tracking-wider text-stone-500 mb-5">일감 유형별 소요시간</p>
           <div class="space-y-4">
             <div v-for="item in typeStats" :key="item.label">
               <div class="flex justify-between items-center mb-1.5">
@@ -547,7 +563,7 @@ onMounted(async () => {
 
         <!-- 담당자별 -->
         <div class="bg-white border border-[#C7C7C2] rounded-xl shadow-sm px-7 py-5">
-          <p class="text-base font-bold uppercase tracking-wider text-stone-500 mb-5">담당자별 소요시간</p>
+          <p class="text-2xl font-bold uppercase tracking-wider text-stone-500 mb-5">담당자별 소요시간</p>
           <div class="space-y-4">
             <div v-for="item in assigneeStats" :key="item.label">
               <div class="flex justify-between items-center mb-1.5">
@@ -571,7 +587,7 @@ onMounted(async () => {
 
         <!-- 작업 종류별 -->
         <div class="bg-white border border-[#C7C7C2] rounded-xl shadow-sm px-7 py-5">
-          <p class="text-base font-bold uppercase tracking-wider text-stone-500 mb-5">작업 종류별 소요시간</p>
+          <p class="text-2xl font-bold uppercase tracking-wider text-stone-500 mb-5">작업 종류별 소요시간</p>
           <div class="space-y-4">
             <div v-for="item in activityStats" :key="item.label">
               <div class="flex justify-between items-center mb-1.5">

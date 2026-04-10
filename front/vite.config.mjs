@@ -10,7 +10,8 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   optimizeDeps: {
     noDiscovery: true,
-    include: ['@stomp/stompjs', 'dayjs']
+    include: ['@stomp/stompjs'],
+    exclude: ['@/lib/bryntum/gantt.module.js']
   },
   plugins: [
     vue(),

@@ -123,10 +123,16 @@ const processedTasks = computed(() => {
   if (appliedFilters.value.title) list = list.filter((t) => t.title.includes(appliedFilters.value.title));
 
   // DatePicker가 Date 객체를 반환하므로 문자열로 변환 후 비교
-  const startStr = formatDate(appliedFilters.value.plannedStart);
-  const endStr = formatDate(appliedFilters.value.plannedEnd);
-  if (startStr) list = list.filter((t) => t.plannedEnd && t.plannedEnd >= startStr);
-  if (endStr) list = list.filter((t) => t.plannedEnd && t.plannedEnd <= endStr);
+  const startDate = appliedFilters.value.plannedStart ? new Date(appliedFilters.value.plannedStart) : null;
+  const endDate = appliedFilters.value.plannedEnd ? new Date(appliedFilters.value.plannedEnd) : null;
+  if (startDate) {
+    startDate.setHours(0, 0, 0, 0);
+  }
+  if (endDate) {
+    endDate.setHours(23, 59, 59, 999);
+  }
+  if (startDate) list = list.filter((t) => t.plannedEnd && new Date(t.plannedEnd) >= startDate);
+  if (endDate) list = list.filter((t) => t.plannedEnd && new Date(t.plannedEnd) <= endDate);
 
   if (sortKey.value) {
     const dir = sortDir.value === 'asc' ? 1 : -1;

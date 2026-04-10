@@ -1,3 +1,46 @@
+<script setup>
+import Button from 'primevue/button';
+import Dialog from 'primevue/dialog';
+import ProgressBar from 'primevue/progressbar';
+import { computed } from 'vue';
+
+const props = defineProps({
+  modelValue: Boolean,
+  task: Object,
+  allTasks: { type: Array, default: () => [] }
+});
+const emit = defineEmits(['update:modelValue']);
+
+const visible = computed({
+  get: () => props.modelValue,
+  set: (val) => emit('update:modelValue', val)
+});
+
+function formatDate(val) {
+  if (!val) return '-';
+  return new Date(val).toISOString().slice(0, 10);
+}
+
+const hasChildren = computed(() => {
+  if (!props.task) return false;
+  return props.allTasks.some((t) => t.parentId === props.task.taskId);
+});
+
+function priorityClass(priority) {
+  return { 하: 'priority-low', 중: 'priority-mid', 상: 'priority-high', 긴급: 'priority-urgent' }[priority] || '';
+}
+
+function progressBarColor(priority) {
+  return { 하: '#6aaa27', 중: '#1a7fd4', 상: '#e07b1a', 긴급: '#c0392b' }[priority] || '#5B6E96';
+}
+
+function relationClass(type) {
+  if (type === '막고있음' || type === '막혀있음') return 'rel-block';
+  if (type === '선행' || type === '후행') return 'rel-seq';
+  return 'rel-related';
+}
+</script>
+
 <template>
   <Dialog v-model:visible="visible" modal header="일감 상세 정보" :style="{ width: '680px', maxWidth: '95vw' }" :pt="{ content: { class: 'p-0' } }">
     <div v-if="task" class="max-h-[70vh] overflow-y-auto">
@@ -33,10 +76,6 @@
               {{ task.priority }}
             </span>
           </div>
-          <div class="flex flex-col gap-0.5">
-            <span class="text-base text-gray-400 font-medium">부모 일감 번호</span>
-            <span class="text-base text-gray-700">{{ task.parentId || '없음' }}</span>
-          </div>
         </div>
       </section>
 
@@ -45,20 +84,12 @@
         <p class="text-base font-bold text-[#5B6E96] uppercase tracking-widest mb-3">프로젝트 / 버전</p>
         <div class="grid grid-cols-2 gap-x-6 gap-y-3">
           <div class="flex flex-col gap-0.5">
-            <span class="text-base text-gray-400 font-medium">프로젝트 번호</span>
-            <span class="text-base text-gray-700">{{ task.projectId }}</span>
-          </div>
-          <div class="flex flex-col gap-0.5">
             <span class="text-base text-gray-400 font-medium">프로젝트명</span>
             <span class="text-base text-gray-700">{{ task.projectTitle }}</span>
           </div>
           <div class="flex flex-col gap-0.5">
-            <span class="text-base text-gray-400 font-medium">버전 번호</span>
-            <span class="text-base text-gray-700">{{ task.versionId }}</span>
-          </div>
-          <div class="flex flex-col gap-0.5">
             <span class="text-base text-gray-400 font-medium">버전명</span>
-            <span class="text-base text-gray-700">{{ task.versionName }}</span>
+            <span class="text-base text-gray-700">{{ task.versionName || '-' }}</span>
           </div>
         </div>
       </section>
@@ -84,19 +115,19 @@
         <div class="grid grid-cols-2 gap-x-6 gap-y-3">
           <div class="flex flex-col gap-0.5">
             <span class="text-base text-gray-400 font-medium">시작계획일</span>
-            <span class="text-base text-gray-700">{{ task.plannedStart || '-' }}</span>
+            <span class="text-base text-gray-700">{{ formatDate(task.plannedStart) }}</span>
           </div>
           <div class="flex flex-col gap-0.5">
             <span class="text-base text-gray-400 font-medium">마감계획일</span>
-            <span class="text-base text-gray-700">{{ task.plannedEnd || '-' }}</span>
+            <span class="text-base text-gray-700">{{ formatDate(task.plannedEnd) }}</span>
           </div>
           <div class="flex flex-col gap-0.5">
             <span class="text-base text-gray-400 font-medium">실제시작일</span>
-            <span class="text-base text-gray-700">{{ task.actualStart || '-' }}</span>
+            <span class="text-base text-gray-700">{{ formatDate(task.actualStart) }}</span>
           </div>
           <div class="flex flex-col gap-0.5">
             <span class="text-base text-gray-400 font-medium">실제종료일</span>
-            <span class="text-base text-gray-700">{{ task.actualEnd || '-' }}</span>
+            <span class="text-base text-gray-700">{{ formatDate(task.actualEnd) }}</span>
           </div>
         </div>
       </section>
@@ -139,44 +170,6 @@
     </template>
   </Dialog>
 </template>
-
-<script setup>
-import Button from 'primevue/button';
-import Dialog from 'primevue/dialog';
-import ProgressBar from 'primevue/progressbar';
-import { computed } from 'vue';
-
-const props = defineProps({
-  modelValue: Boolean,
-  task: Object,
-  allTasks: { type: Array, default: () => [] }
-});
-const emit = defineEmits(['update:modelValue']);
-
-const visible = computed({
-  get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
-});
-
-const hasChildren = computed(() => {
-  if (!props.task) return false;
-  return props.allTasks.some((t) => t.parentId === props.task.taskId);
-});
-
-function priorityClass(priority) {
-  return { 하: 'priority-low', 중: 'priority-mid', 상: 'priority-high', 긴급: 'priority-urgent' }[priority] || '';
-}
-
-function progressBarColor(priority) {
-  return { 하: '#6aaa27', 중: '#1a7fd4', 상: '#e07b1a', 긴급: '#c0392b' }[priority] || '#5B6E96';
-}
-
-function relationClass(type) {
-  if (type === '막고있음' || type === '막혀있음') return 'rel-block';
-  if (type === '선행' || type === '후행') return 'rel-seq';
-  return 'rel-related';
-}
-</script>
 
 <style scoped>
 .priority-low {

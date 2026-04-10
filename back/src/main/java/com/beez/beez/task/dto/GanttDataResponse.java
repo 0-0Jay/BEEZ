@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -18,6 +19,7 @@ public class GanttDataResponse {
   private String projectId;
   private String projectTitle;
   private String versionId;
+  private String versionName;
   private String userId;
   private String name;
   private Timestamp plannedStart;
@@ -27,9 +29,9 @@ public class GanttDataResponse {
   private String priority;
   private String workflow;
   private String type;
-  private String cate;
-  private int progress;
-  private int subProgress;
+  private String category;
+  private BigDecimal progress;
+  private BigDecimal subProgress;
   private String parentId;
   private List<GanttRelationResponse> relation;
 }

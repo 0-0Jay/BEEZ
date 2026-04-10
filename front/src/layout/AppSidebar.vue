@@ -54,7 +54,7 @@ const toggleAdminMenu = () => {
 </script>
 
 <template>
-  <div :class="['bg-gray-900 text-white h-full transition-all duration-300 overflow-hidden flex flex-col', isOpen ? 'w-64' : 'w-20']">
+  <div :class="['bg-gray-900 text-white h-full transition-all duration-300 overflow-hidden flex flex-col shrink-0', isOpen ? 'w-64' : 'w-20']">
     <!-- 펼쳐진 상태 사이드바 상단 -->
     <div v-if="isOpen" class="flex items-center justify-between h-20 px-5 shrink-0">
       <div v-show="showContent" class="flex items-center gap-2">

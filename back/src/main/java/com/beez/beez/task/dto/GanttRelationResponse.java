@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class GanttRelationResponse {
+  private String taskId;
   private String relatedTaskId;
   private String relationType;
 }

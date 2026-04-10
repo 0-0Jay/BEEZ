@@ -141,12 +141,23 @@ const formatDateTime = (ts) => {
   });
 };
 
-// 소요 시간 포맷
+// 시간 포맷
 const formatMinutes = (m) => {
-  if (!m) return 0;
-  const h = Math.floor(m / 60);
-  const min = m % 60;
-  return h > 0 ? `${h}시간 ${min > 0 ? min + '분' : ''}` : `${min}분`;
+  if (!m) return '0분';
+
+  const MINS_PER_HOUR = 60;
+  const MINS_PER_DAY = 8 * MINS_PER_HOUR; // 1일 = 8시간 = 480분
+
+  const days = Math.floor(m / MINS_PER_DAY);
+  const hours = Math.floor((m % MINS_PER_DAY) / MINS_PER_HOUR);
+  const mins = m % MINS_PER_HOUR;
+
+  const parts = [];
+  if (days > 0) parts.push(`${days}일`);
+  if (hours > 0) parts.push(`${hours}시간`);
+  if (mins > 0) parts.push(`${mins}분`);
+
+  return parts.length ? parts.join(' ') : '0분';
 };
 
 // 파일 크기 포맷
@@ -386,7 +397,7 @@ onMounted(async () => {
             <td colspan="3" class="px-6 py-3">
               <ProgressBar
                 class="w-150"
-                :value="displayProgress"
+                :value="Number(displayProgress)"
                 :pt="{
                   value: {
                     style: {
@@ -415,14 +426,14 @@ onMounted(async () => {
           </tr>
 
           <!-- 추정 시간 / 소요 시간 + 기록 -->
-          <tr class="divide-x divide-[#F2F0EB]">
+          <tr v-if="subTasks.length === 0" class="divide-x divide-[#F2F0EB]">
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">추정 시간</td>
             <td class="px-6 py-3 text-base text-[#1A1816]">{{ formatMinutes(task.estimatedTime) }}</td>
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">소요 시간</td>
             <td class="px-6 py-3">
               <div class="flex items-center gap-3">
                 <span class="text-base text-[#1A1816]">{{ formatMinutes(spentTime) }}</span>
-                <Button v-if="canEdit && subTasks.length == 0" label="소요 시간 기록" icon="pi pi-plus" severity="secondary" raised @click="timeLogVisible = true" />
+                <Button v-if="canEdit" label="소요 시간 기록" icon="pi pi-plus" severity="secondary" raised @click="timeLogVisible = true" />
               </div>
             </td>
           </tr>
@@ -501,7 +512,7 @@ onMounted(async () => {
             <td class="px-6 py-3 text-[#1A1816] font-medium hover:text-[#E8920E] transition-colors">{{ sub.title }}</td>
             <td class="px-6 py-3 text-center">
               <ProgressBar
-                :value="sub.progress"
+                :value="Number(sub.progress)"
                 :pt="{
                   value: {
                     style: {
@@ -555,7 +566,7 @@ onMounted(async () => {
             </td>
             <td class="px-6 py-3 text-center cursor-pointer" @click="goToTask(linked.id)">
               <ProgressBar
-                :value="linked.progress"
+                :value="Number(linked.progress)"
                 :pt="{
                   value: {
                     style: {
@@ -587,11 +598,7 @@ onMounted(async () => {
       <!-- 탭 헤더 -->
       <div class="flex border-b border-[#C7C7C2] bg-[#F2F0EB] rounded-t-lg overflow-hidden">
         <button
-          v-for="tab in [
-            { key: 'comments', label: '댓글' },
-            { key: 'history', label: '수정 이력' },
-            { key: 'timelog', label: '소요 시간' }
-          ]"
+          v-for="tab in [{ key: 'comments', label: '댓글' }, { key: 'history', label: '수정 이력' }, ...(subTasks.length === 0 ? [{ key: 'timelog', label: '소요 시간' }] : [])]"
           :key="tab.key"
           class="px-6 py-3 text-base font-semibold transition-colors relative"
           :class="activeTab === tab.key ? 'text-[#E8920E] bg-white border-b-2 border-[#E8920E]' : 'text-[#6B6B63] hover:text-[#3A3B35] hover:bg-[#F8F7F4]'"
@@ -774,7 +781,7 @@ onMounted(async () => {
               <td class="py-3 pr-4 text-base text-[#1A1816]">{{ log.description || '-' }}</td>
               <td class="py-3 pr-4">
                 <ProgressBar
-                  :value="log.progress"
+                  :value="Number(log.progress)"
                   :pt="{
                     value: {
                       style: {
