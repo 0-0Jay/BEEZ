@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface DocumentService {
   //문서 등록
-  void registerDocument(CreateRequest request);
+  String registerDocument(CreateRequest request, List<MultipartFile> files);
   
   //문서 목록 조회
   List<ListResponse> getDocumentList(String projectId);

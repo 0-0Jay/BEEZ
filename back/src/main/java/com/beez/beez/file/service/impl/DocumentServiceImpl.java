@@ -22,9 +22,9 @@ public class DocumentServiceImpl implements DocumentService {
   
   @Override
   @Transactional //문서글(텍스트) + 파일묶음 = 1개의 게시글 형태로 만들기 위함
-  public void registerDocument(CreateRequest request){
+  public String registerDocument(CreateRequest request, List<MultipartFile> files){
     // 파일 바구니 생성
-    documentMapper.insertFileMaster(request);
+    documentMapper.insertFileMaster(request, files);
     
     //파일 상세 정보 저장
     if(request.getFiles() != null && !request.getFiles().isEmpty()) {
@@ -38,6 +38,7 @@ public class DocumentServiceImpl implements DocumentService {
     
     //문서 정보 저장
     documentMapper.insertDocument(request);
+    return"";
   } // registerDocument end
   
   

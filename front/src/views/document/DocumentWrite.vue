@@ -1,4 +1,5 @@
 <script setup>
+//내코드
 import { useAuthStore } from '@/stores/auth';
 import { useDocumentStore } from '@/stores/document';
 import { computed, ref } from 'vue';
@@ -34,22 +35,28 @@ const submit = async () => {
   if (!form.value.title) return alert('문서 제목을 선택해주세요.');
   const formData = new FormData();
 
-  const docData = {
-    projectId: projectId,
-    userId: userId.value,
-    title: form.value.title,
-    content: form.value.content,
-    doctype: form.value.doctype
-  };
+  // const docData = {
+  //   projectId: projectId,
+  //   userId: userId.value,
+  //   title: form.value.title,
+  //   content: form.value.content,
+  //   doctype: form.value.doctype
+  // };
 
-  formData.append('document', new Blob([JSON.stringify(docData)], { type: 'application/json' }));
+  formData.append('projectId', projectId);
+  formData.append('userId', userId.value);
+  formData.append('title', form.value.title);
+  formData.append('content', form.value.content ?? '');
+  formData.append('doctype', form.value.doctype);
+
+  // formData.append('document', new Blob([JSON.stringify(docData)], { type: 'application/json' }));
 
   attachedFiles.value.forEach((file) => {
     formData.append('files', file);
   });
 
   try {
-    await docStore.writeDocument(projectId, formData);
+    await docStore.writeDocument(formData);
     alert('등록되었습니다.');
     goToList();
   } catch (err) {

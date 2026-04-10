@@ -1,11 +1,10 @@
 package com.beez.beez.file.web;
 
-import com.beez.beez.file.dto.CreateRequest;
-import com.beez.beez.file.dto.DetailResponse;
-import com.beez.beez.file.dto.ListResponse;
-import com.beez.beez.file.dto.UpdateRequest;
+import com.beez.beez.file.dto.*;
 import com.beez.beez.file.service.DocumentService;
+import com.beez.beez.file.service.FileService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,18 +18,23 @@ public class DocumentController {
   
   private final DocumentService documentService;
   
-  @PostMapping("/document/write/{projectId}")
+//  @PostMapping("/document/write/{projectId}")
+//  public ResponseEntity<String> registerDocument(
+//    @RequestPart("document") CreateRequest request,
+//    @RequestPart(value = "files", required = false) List<MultipartFile> files) {
+//
+//    request.setFiles(files);
+//    documentService.registerDocument(request);
+//
+//    return ResponseEntity.ok("문서 등록 성공");
+//  }
+  
+  @PostMapping(value = "/document/write" , consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<String> registerDocument(
-    @PathVariable String projectId,
-    @RequestPart("document") CreateRequest request,
-    @RequestPart(value = "files", required = false) List<MultipartFile> files) {
-    
-    request.setFiles(files);
-    System.out.println(request.getUserId());
-    documentService.registerDocument(request);
-    
-    return ResponseEntity.ok("문서 등록 성공");
+    @ModelAttribute CreateRequest request, @RequestParam(value = "files", required = false) List<MultipartFile> files){
+    return ResponseEntity.ok(documentService.registerDocument(request, files));
   }
+  
   
   // 문서 수정
   @PutMapping("/document/update")
