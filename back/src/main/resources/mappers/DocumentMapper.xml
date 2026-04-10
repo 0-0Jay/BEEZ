@@ -3,9 +3,9 @@
 
 <mapper namespace="com.beez.beez.file.mapper.DocumentMapper">
   
-  <insert id="insertFileMaster">
+  <insert id="insertFileMaster" parameterType="com.beez.beez.file.dto.CreateRequest" >
     <selectKey keyProperty="id" resultType="string" order="BEFORE">
-      SELECT BEEZ.generate_pk_auto('file') FROM dual
+      SELECT BEEZ.generate_pk_auto('files') FROM dual
     </selectKey>
     INSERT INTO files (id, user_id, created_on)
     VALUES (#{id}, #{userId}, SYSTIMESTAMP)
@@ -25,15 +25,15 @@
     )
   </insert>
   
-  <insert id="insertDocument">
+  <insert id="insertDocument" parameterType="com.beez.beez.file.dto.CreateRequest">
     <selectKey keyProperty="id" resultType="string" order="BEFORE">
       SELECT BEEZ.generate_pk_auto('docs') FROM dual
     </selectKey>
     INSERT INTO docs (id, project_id, title, content, doc_type, file_id, user_id, created_on)
-    VALUES (#{id}, #{projectId}, #{doc.title}, #{doc.content}, #{doc.doctype}, #{fileId}, #{userId}, SYSTIMESTAMP)
+    VALUES (#{id}, #{projectId}, #{title}, #{content}, #{doctype}, #{fileId}, #{userId}, SYSTIMESTAMP)
   </insert>
   
-  <update id="updateDocument" parameterType="com.beez.beez.file.dto.DocumentRequest$UpdateRequest">
+  <update id="updateDocument" parameterType="com.beez.beez.file.dto.UpdateRequest">
     UPDATE docs
     SET title = #{title},
     doc_type = #{doctype},
@@ -54,13 +54,13 @@
     WHERE id = #{id}
   </select>
   
-  <select id="selectDocumentList" resultType="com.beez.beez.file.dto.DocumentRequest$ListResponse">
+  <select id="selectDocumentList" resultType="com.beez.beez.file.dto.ListResponse">
     SELECT id, title, doc_type as doctype, user_id as userName, created_on as createdOn
     FROM docs
     ORDER BY created_on DESC
   </select>
   
-  <select id="selectDocumentDetail" resultType="com.beez.beez.file.dto.DocumentRequest$DetailResponse">
+  <select id="selectDocumentDetail" resultType="com.beez.beez.file.dto.DetailResponse">
     SELECT id, title, doc_type as doctype, content, user_id as userName, created_on as createdOn
     FROM docs
     WHERE id = #{id}

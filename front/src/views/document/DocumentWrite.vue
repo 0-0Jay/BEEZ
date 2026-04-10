@@ -1,42 +1,66 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+// import axios from '@/stores/AxiosInstance';
+import { useAuthStore } from '@/stores/auth';
+import { useDocumentStore } from '@/stores/document';
 
 const router = useRouter();
 const route = useRoute();
 
-const goToList = () => {
-  const projectId = route.params.projectId;
-
-  router.push({
-    name: 'DocumentList',
-    params: { projectId: projectId }
-  });
-};
+const authstore = useAuthStore();
+const docStore = useDocumentStore();
+const userId = computed(() => authstore.user?.id);
+const projectId = route.params.projectId;
 
 const form = ref({
   title: '',
-  type: '기타',
-  author: '홍길동',
-  date: new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\. /g, '.').replace('.', ''),
-  description: ''
+  doctype: '기획서',
+  content: ''
 });
 
+// //파일 첨부 관련 로직
 const attachedFiles = ref([]);
 const fileInput = ref(null);
-
 const triggerFileInput = () => fileInput.value?.click();
 
 const onFileChange = (e) => {
   attachedFiles.value.push(...Array.from(e.target.files));
   e.target.value = '';
 };
-
 const removeFile = (index) => attachedFiles.value.splice(index, 1);
 
-const submit = () => {
+//문서 등록 실행
+const submit = async () => {
   if (!form.value.title) return alert('문서 제목을 선택해주세요.');
-  console.log('등록:', form.value, attachedFiles.value);
+  const formData = new FormData();
+
+  const docData = {
+    projectId: projectId,
+    userId: userId.value,
+    title: form.value.title,
+    content: form.value.content,
+    doctype: form.value.doctype
+  };
+
+  formData.append('document', new Blob([JSON.stringify(docData)], { type: 'application/json' }));
+
+  attachedFiles.value.forEach((file) => {
+    formData.append('files', file);
+  });
+
+  try {
+    await docStore.writeDocument(projectId, formData);
+    alert('등록되었습니다.');
+    goToList();
+  } catch (err) {
+    console.error(err);
+    alert('등록에 실패했습니다.');
+  }
+};
+
+const goToList = () => {
+  router.push({ name: 'DocumentList', params: { projectId } });
 };
 </script>
 
@@ -58,23 +82,20 @@ const submit = () => {
         <div class="form-group">
           <span class="form-label">문서 유형<span class="required">*</span></span>
           <div class="select-wrap">
-            <select v-model="form.type" class="form-select">
-              <option>기타</option>
-              <option>기획서</option>
-              <option>설계서</option>
-              <option>회의록</option>
-              <option>보고서</option>
+            <select v-model="form.doctype" class="form-select">
+              <option value="기타">기타</option>
+              <option value="기획서">기획서</option>
+              <option value="설계서">설계서</option>
+              <option value="회의록">회의록</option>
+              <option value="보고서">보고서</option>
             </select>
             <span class="select-arrow">▼</span>
           </div>
         </div>
-        <div class="form-group">
-          <span class="form-label">작성자</span>
-          <input class="form-input readonly" type="text" :value="form.author" readonly />
-        </div>
+
         <div class="form-group">
           <span class="form-label">작성일</span>
-          <input class="form-input readonly" type="text" :value="form.date" readonly />
+          <input class="form-input readonly" type="text" :value="new Date().toISOString().split('T')[0]" readonly />
         </div>
       </div>
 
@@ -82,7 +103,7 @@ const submit = () => {
       <div class="form-row">
         <div class="form-group full align-top">
           <span class="form-label pt">문서 설명</span>
-          <textarea v-model="form.description" class="textarea" />
+          <textarea v-model="form.content" class="textarea" />
         </div>
       </div>
     </div>
@@ -91,9 +112,11 @@ const submit = () => {
     <div class="panel">
       <div class="panel-title"><span class="badge-num">2</span> 첨부 파일</div>
       <button class="btn btn-attach" @click="triggerFileInput">첨부파일 등록</button>
+
       <input ref="fileInput" type="file" multiple style="display: none" @change="onFileChange" />
       <div class="attach-area">
         <span v-if="!attachedFiles.length" class="attach-placeholder">파일을 첨부해주세요</span>
+
         <ul v-else class="file-list">
           <li v-for="(f, i) in attachedFiles" :key="i">
             {{ f.name }}
@@ -105,7 +128,8 @@ const submit = () => {
 
     <!-- 하단 버튼 -->
     <div class="footer-row">
-      <button class="btn btn-cancel" @click="goToList('cancel')">취소</button>
+      <button class="btn btn-cancel" @click="goToList">취소</button>
+      <button class="btn btn-primary" @click="submit">등록</button>
     </div>
   </div>
 </template>
