@@ -224,7 +224,7 @@ const onCopied = async (data) => {
         <div class="flex items-center gap-2 text-sm">
           <button type="button" @click="selectAll('Z0')" class="text-[#3A3B35] hover:underline font-medium">모두 선택</button>
           <span class="text-[#C7C7C2]">|</span>
-          <button type="button" @click="selectAll('Z0')" class="text-[#3A3B35] hover:underline font-medium">선택 해제</button>
+          <button type="button" @click="deselectAll('Z0')" class="text-[#3A3B35] hover:underline font-medium">선택 해제</button>
         </div>
       </div>
       <MatrixTable :matrix="workflowMatrices.Z0" :statusList="statusList" />

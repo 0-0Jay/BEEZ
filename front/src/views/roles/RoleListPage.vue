@@ -12,7 +12,7 @@ const toast = useToast();
 const loading = ref(false);
 const visible = ref(false);
 const confirmMsg = ref('');
-const selectedRoleId = ref(null); // 삭제할 role id
+const selectedRoleId = ref(null); // 삭제할 역할id
 
 const totalCount = computed(() => rolesStore.roleList.length);
 
@@ -89,8 +89,7 @@ const onCopy = (data) => {
 // 역할 수정 페이지 이동
 const onEdit = (data) => {
   router.push({
-    path: '/roles/edit',
-    query: { editId: data.id }
+    path: `/roles/${data.id}`
   });
 };
 </script>

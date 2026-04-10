@@ -25,7 +25,7 @@ onMounted(async () => {
   await rolesStore.findPermissions();
   initPermissionMatrix();
 
-  const editId = route.query.editId;
+  const editId = route.params.editId;
   if (editId) {
     await loadEditData(editId);
   }
@@ -117,7 +117,7 @@ const onSave = async () => {
     return;
   }
 
-  const editId = route.query.editId;
+  const editId = route.params.editId;
   try {
     const selectedIds = [];
     permissionItems.value.forEach((item) => {
