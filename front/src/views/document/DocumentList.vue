@@ -1,17 +1,35 @@
 <script setup>
-import { ref } from 'vue'; // 1. ref 임포트 추가
+import { useDocumentStore } from '@/stores/document';
+import { computed, onMounted, ref } from 'vue'; // 1. ref 임포트 추가
 import { useRoute, useRouter } from 'vue-router';
 
 const router = useRouter();
 const route = useRoute();
+const docStore = useDocumentStore();
 
-const activeFav = ref(1);
+const projectId = route.params.projectId;
+
+const activeFav = ref(null);
+const searchKeyword = ref('');
+const searchDoctype = ref('');
+
+onMounted(async () => {
+  await docStore.fetchDocumentList(projectId);
+});
+
+const filteredList = computed(() => {
+  return docStore.documentList.filter((doc) => {
+    const matchKeyword = !searchKeyword.value || doc.title.includes(searchKeyword.value);
+    const matchDoctype = !searchDoctype.value || doc.doctype === searchDoctype.value;
+    return matchKeyword && matchDoctype;
+  });
+});
+
+//즐겨찾기 문서만
+const favList = computed(() => docStore.documentList.filter((doc) => doc.isFavorite));
 
 // 문서 등록 페이지로 이동하는 함수
 const goToWrite = () => {
-  // 현재 URL의 projectId를 가져오거나, 데이터에 있는 ID를 사용하세요.
-  const projectId = route.params.projectId;
-
   router.push({
     name: 'DocumentWrite',
     params: { projectId: projectId }
@@ -32,39 +50,40 @@ const goToDetail = (docId) => {
   });
 };
 
-// 즐겨찾기 카드 선택
-document.querySelectorAll('.fav-card').forEach((card) => {
-  card.addEventListener('click', () => {
-    document.querySelectorAll('.fav-card').forEach((c) => {
-      c.classList.remove('active');
-      c.querySelector('.radio-dot').classList.remove('active');
-    });
-    card.classList.add('active');
-    card.querySelector('.radio-dot').classList.add('active');
-  });
+// 페이지네이션
+const currentPage = ref(1);
+const pageSize = 10;
+const totalPages = computed(() => Math.ceil(filteredList.value.length / pageSize));
+const pagedList = computed(() => {
+  const start = (currentPage.value - 1) * pageSize;
+  return filteredList.value.slice(start, start + pageSize);
 });
 
-// 별표 토글
-document.querySelectorAll('.star').forEach((star) => {
-  star.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (star.textContent === '☆') {
-      star.textContent = '★';
-      star.classList.add('active');
-    } else {
-      star.textContent = '☆';
-      star.classList.remove('active');
+// 날짜 포맷 함수 추가 (YYYY-MM-DD)
+const formatDate = (dateStr) => {
+  if (!dateStr) return '';
+
+  // 문자열이 '26/04/10 14:27:18...' 형식이거나 ISO 형식일 때를 모두 대응
+  // 만약 DB에서 26/04/10 처럼 오면 연도 처리가 필요할 수 있습니다.
+  const date = new Date(dateStr);
+
+  // 날짜 객체가 유효하지 않을 경우 (예: '26/04/10' 형식이 Date에서 안 읽힐 때)
+  // 단순 문자열 슬라이싱으로 처리하는 방법이 더 확실할 수 있습니다.
+  if (isNaN(date)) {
+    // '26/04/10 14:27:18' -> '2026-04-10' (필요시 조정)
+    const parts = dateStr.split(' ')[0].split('/');
+    if (parts.length === 3) {
+      return `20${parts[0]}-${parts[1]}-${parts[2]}`;
     }
-  });
-});
+    return dateStr;
+  }
 
-// 페이지 선택
-document.querySelectorAll('.page-btn:not(.arrow)').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.page-btn').forEach((b) => b.classList.remove('active'));
-    btn.classList.add('active');
-  });
-});
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+};
 </script>
 
 <template>
@@ -78,15 +97,15 @@ document.querySelectorAll('.page-btn:not(.arrow)').forEach((btn) => {
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-          <input type="text" placeholder="검색어를 입력해주세요." />
+          <input v-model="searchKeyword" type="text" placeholder="검색어를 입력해주세요." />
         </div>
         <span class="label">문서 유형</span>
         <div class="select-wrap">
-          <select>
+          <select v-model="searchDoctype">
             <option value="">선택</option>
             <option>기타</option>
             <option>기획서</option>
-            <option>견적서</option>
+            <option>설계서</option>
             <option>회의록</option>
             <option>보고서</option>
           </select>
@@ -95,20 +114,25 @@ document.querySelectorAll('.page-btn:not(.arrow)').forEach((btn) => {
       </div>
     </div>
 
-    <div class="section-title">즐겨찾기 문서 - 시간안에 안되면 날리겠음</div>
-    <div class="fav-grid">
-      <div v-for="i in 4" :key="i" class="panel fav-card" :class="{ active: activeFav === i }" @click="activeFav = i">
-        <div class="fav-icon">
-          <span class="radio-dot" :class="{ active: activeFav === i }"></span>
+    <!-- 즐겨찾기 -->
+    <template v-if="favList.length">
+      <div class="section-title">즐겨찾기 문서</div>
+      <div class="fav-grid">
+        <div v-for="doc in favList" :key="doc.id" class="panel fav-card" :class="{ active: activeFav === doc.id }" @click="activeFav = doc.id">
+          <div class="fav-icon">
+            <span class="radio-dot" :class="{ active: activeFav === doc.id }"></span>
+          </div>
+          <div class="fav-name">{{ doc.title }}</div>
+          <div class="fav-meta">작성자: {{ doc.userName }} / {{ formatDate(doc.createdOn) }}</div>
         </div>
-        <div class="fav-name">프로젝트 기획안_{{ i }}</div>
-        <div class="fav-meta">작성자: 곽현우 / 2026.03.19</div>
       </div>
-    </div>
+    </template>
 
+    <!-- 목록 테이블 -->
     <div class="table-actions">
       <button class="btn btn-edit" @click="goToWrite">문서등록</button>
     </div>
+
     <div class="panel table-panel">
       <div class="board-header">
         <span>번호</span>
@@ -117,19 +141,30 @@ document.querySelectorAll('.page-btn:not(.arrow)').forEach((btn) => {
         <span>작성자</span>
         <span>작성일자</span>
       </div>
-      <div v-for="n in 5" :key="n" class="board-row">
+
+      <template v-if="docStore.loading">
+        <div class="board-empty">불러오는 중...</div>
+      </template>
+
+      <template v-else-if="pagedList.length === 0">
+        <div class="board-empty">등록된 문서가 없습니다.</div>
+      </template>
+
+      <div v-for="(doc, index) in pagedList" :key="doc.id" class="board-row">
         <span class="num">
-          <span class="star" :class="{ active: n % 2 === 0 }">{{ n % 2 === 0 ? '★' : '☆' }}</span>
-          {{ 6 - n }}
+          <span class="star" :class="{ active: doc.isFavorite }">
+            {{ doc.isFavorite ? '★' : '☆' }}
+          </span>
+          {{ filteredList.length - ((currentPage - 1) * pageSize + index) }}
         </span>
-
-        <span class="title" @click="goToDetail(n)" style="cursor: pointer; color: #3d7eff"> 해당 프로젝트와 관련하여 작성된 문서의 제목입니다. (ID: {{ n }}) </span>
-
-        <span
-          ><span class="badge" :class="n === 3 ? '기획서' : '기획안'">{{ n === 3 ? '기획서' : '기획안' }}</span></span
-        >
-        <span>곽현우</span>
-        <span class="date">2026.03.19</span>
+        <span class="title" @click="goToDetail(doc.id)" style="cursor: pointer; color: #3d7eff">
+          {{ doc.title }}
+        </span>
+        <span>
+          <span class="badge" :class="doc.doctype">{{ doc.doctype }}</span>
+        </span>
+        <span>{{ doc.userName }}</span>
+        <span class="date">{{ formatDate(doc.createdOn) }}</span>
       </div>
     </div>
 

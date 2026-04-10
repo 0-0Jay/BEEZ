@@ -1,12 +1,12 @@
 package com.beez.beez.file.web;
 
-
-import com.beez.beez.file.dto.DocumentRequest;
+import com.beez.beez.file.dto.CreateRequest;
+import com.beez.beez.file.dto.DetailResponse;
+import com.beez.beez.file.dto.ListResponse;
+import com.beez.beez.file.dto.UpdateRequest;
 import com.beez.beez.file.service.DocumentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,35 +19,47 @@ public class DocumentController {
   
   private final DocumentService documentService;
   
-  //새 게시글 작성
   @PostMapping("/document/write/{projectId}")
   public ResponseEntity<String> registerDocument(
     @PathVariable String projectId,
-    @RequestPart("document")DocumentRequest.CreateRequest request,
-    @RequestPart(value = "files", required = false)List<MultipartFile> files,
-    @AuthenticationPrincipal User user) { //스프링 시큐리티 - 로그인한 유저의 정보를 직접 받음 - 이거 왜 필요한것? 나중에 권한 체크 하면 되는거 아닌가
-    
-    //사원의 id 추출 - 프론트에서 받으면 보안 위험있다고 해서 넣었음
-    String userId = user.getUsername();
+    @RequestPart("document") CreateRequest request,
+    @RequestPart(value = "files", required = false) List<MultipartFile> files) {
     
     request.setFiles(files);
-    documentService.registerDocument(request, userId, projectId);
+    System.out.println(request.getUserId());
+    documentService.registerDocument(request);
     
     return ResponseEntity.ok("문서 등록 성공");
   }
   
-  //문서 수정
+  // 문서 수정
   @PutMapping("/document/update")
   public ResponseEntity<String> updateDocument(
-    @RequestPart("document") DocumentRequest.UpdateRequest updateRequest,
-    @RequestPart(value = "newFile", required = false) List<MultipartFile> newFiles,
-    @AuthenticationPrincipal User user) {
-    
-    String userId = user.getUsername();
-    documentService.updateDocument(updateRequest, newFiles ,userId);
+    @RequestPart("document") UpdateRequest updateRequest,
+    @RequestPart(value = "newFile", required = false) List<MultipartFile> newFiles
+  ) {
+    // 수정 시에도 프론트에서 넘겨준 작성자 정보를 사용하도록 서비스 호출
+    documentService.updateDocument(updateRequest, newFiles, updateRequest.getUserId());
     
     return ResponseEntity.ok("문서 수정이 완료 되었습니다");
   }
   
+  // 특정 프로젝트의 문서 목록 조회
+  @GetMapping("/document/list/{projectId}")
+  public ResponseEntity<List<ListResponse>> getDocumentList(
+    @PathVariable String projectId) {
+    List<ListResponse> list = documentService.getDocumentList(projectId);
+    return ResponseEntity.ok(list);
+  }
   
+  // 문서 상세 조회
+  @GetMapping("/document/detail/{id}")
+  public ResponseEntity<DetailResponse> getDocumentDetail(
+    @PathVariable String id) {
+    DetailResponse detail = documentService.getDocumentDetail(id);
+    if(detail == null) {
+      return ResponseEntity.notFound().build();
+    }
+    return ResponseEntity.ok(detail);
+  }
 }

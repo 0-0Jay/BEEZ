@@ -88,7 +88,7 @@ const handleRegister = async () => {
     emit('saved');
     close();
   } catch (error) {
-    toast.add({ severity: 'error', summary: '실패', detail: '오류가 발생했습니다.', life: 2000 });
+    toast.add({ severity: 'error', summary: '실패', detail: error.message, life: 2000 });
   }
 };
 

@@ -62,6 +62,11 @@ export const useWorkflowStore = defineStore('workflow', {
     // 업무흐름 등록
     async insertWorkflow(payload) {
       await axios.post('/workflow/create', payload);
+    },
+
+    // 업무흐름 복사
+    async copyWorkflow(payload) {
+      await axios.post('/workflow/copy', payload);
     }
   }
   // ,persist: true

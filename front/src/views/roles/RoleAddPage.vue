@@ -118,11 +118,11 @@ const onSave = async () => {
 
     router.push('/roles/list');
   } catch (err) {
-    const serverMessage = err.response?.data?.message || err.response?.data || '오류가 발생했습니다.';
+    const errorMsg = err.response?.data?.message || err.response?.data || '등록 중 오류가 발생했습니다.';
     toast.add({
       severity: 'error',
-      summary: '오류',
-      detail: serverMessage,
+      summary: '등록 실패',
+      detail: errorMsg,
       life: 3000,
       closable: false
     });
