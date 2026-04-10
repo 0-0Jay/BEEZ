@@ -1,5 +1,6 @@
 package com.beez.beez.project.service.impl;
 
+import com.beez.beez.aop.Loggable;
 import com.beez.beez.logs.service.LogsService;
 import com.beez.beez.project.dto.*;
 import com.beez.beez.project.mapper.ProjectMapper;
@@ -19,25 +20,17 @@ public class ProjectServiceImpl implements ProjectService {
   
   private final ProjectMapper projectMapper;
   private final LogsService logsService;
-  private ProjectService projectService;
-  
-  //  세션에서 아이디 받아오기
-  private String getCurrentUserId() {
-    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-    return auth.getName();
-  }
   
   // 프로젝트 생성
+  @Loggable(
+    logType = "A1",
+    logCategory = "B0",
+    content = "프로젝트 생성(프로젝트명: {id})",
+    link = "/project/setting/{id}/info"
+  )
   @Override
   public String insertProject(ProjectCreateRequest dto) {
-    String userId = getCurrentUserId();
-    dto.setUserId(userId);
     projectMapper.insertProject(dto);
-    
-    String link = "/project/" + dto.getId();
-    String content = String.format("프로젝트 생성 (프로젝트명 : %s)", dto.getTitle());
-    logsService.insertLogs(dto.getId(), "A1", "B0", content, link, userId);
-    
     return dto.getId();
   }
   
@@ -63,39 +56,39 @@ public class ProjectServiceImpl implements ProjectService {
   }
   
   // 프로젝트 잠금보관
+  @Loggable(
+    logType = "A0",
+    logCategory = "B0",
+    content = "프로젝트 잠금보관(프로젝트명: {id})",
+    link = "/project/setting/{id}/info"
+  )
   @Override
   public void updateProjectLock(String id) {
-    String userId = getCurrentUserId();
-    ProjectInfoResponse project = projectMapper.findById(id);
     projectMapper.updateProjectLock(id);
-    
-    String link = "/project/list";
-    String content = String.format("프로젝트 잠금보관 (프로젝트명 : %s)", project.getTitle());
-    logsService.insertLogs(id, "A0", "B0", content, link, userId);
   }
   
   // 프로젝트 잠금보관 해제
+  @Loggable(
+    logType = "A0",
+    logCategory = "B0",
+    content = "프로젝트 잠금보관 해제(프로젝트명: {id})",
+    link = "/project/setting/{id}/info"
+  )
   @Override
   public void updateUnProjectLock(String id) {
-    String userId = getCurrentUserId();
-    ProjectInfoResponse project = projectMapper.findById(id);
     projectMapper.updateUnProjectLock(id);
-    
-    String link = "/project/list";
-    String content = String.format("프로젝트 잠금보관 해제 (프로젝트명 : %s)", project.getTitle());
-    logsService.insertLogs(id, "A0", "B0", content, link, userId);
   }
   
   // 프로젝트 삭제
+  @Loggable(
+    logType = "A3",
+    logCategory = "B0",
+    content = "프로젝트 삭제(프로젝트명: {id})",
+    link = "/project/list"
+  )
   @Override
   public void deleteProject(String id) {
-    String userId = getCurrentUserId();
-    ProjectInfoResponse project = projectMapper.findById(id);
     projectMapper.deleteProject(id);
-    
-    String link = "/project/list";
-    String content = String.format("프로젝트 삭제 (프로젝트명 : %s)", project.getTitle());
-    logsService.insertLogs(id, "A3", "B0", content, link, userId);
   }
   
   // 프로젝트 단건 조회
@@ -105,16 +98,15 @@ public class ProjectServiceImpl implements ProjectService {
   }
   
   // 프로젝트 수정
+  @Loggable(
+    logType = "A2",
+    logCategory = "B0",
+    content = "프로젝트 수정(프로젝트명: {id})",
+    link = "/project/setting/{id}/info"
+  )
   @Override
   public ProjectInfoResponse updateProject(String id, ProjectUpdateRequest dto) {
-    String userId = getCurrentUserId();
     dto.setId(id);
-    ProjectInfoResponse project = projectMapper.findById(id);
-    
-    String link = "/project/" + dto.getId();
-    String content = String.format("프로젝트 수정 (프로젝트명 : %s)", project.getTitle());
-    logsService.insertLogs(id, "A2", "B0", content, link, userId);
-    
     projectMapper.updateProject(dto);
     return projectMapper.findById(id);
   }
@@ -126,6 +118,12 @@ public class ProjectServiceImpl implements ProjectService {
     member.setProjectId(projectId);;
     projectMapper.findProjectMember(member);
     return member;
+  }
+  
+  //프로젝트 구성원 추가
+  @Override
+  public void insertProjectMember(ProjectMemberRequest dto) {
+    projectMapper.insertProjectMember(dto);
   }
   
   //프로젝트 구성원 삭제
@@ -158,12 +156,5 @@ public class ProjectServiceImpl implements ProjectService {
       .groups(groups)
       .build();
   }
-  
-  //프로젝트 구성원 추가
-  @Override
-  public void insertProjectMember(ProjectMemberRequest dto) {
-    projectMapper.insertProjectMember(dto);
-  }
-  
   
 }

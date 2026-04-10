@@ -6,6 +6,7 @@ import com.beez.beez.project.dto.VersionListResponse;
 import com.beez.beez.project.service.VersionService;
 import com.beez.beez.task.dto.CommonCodeResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,22 +21,37 @@ public class VersionController {
   
   // 버전 생성
   @PostMapping
-  public void insertVersion(@RequestBody VersionCreateRequest dto) {
-    versionService.insertVersion(dto);
+  public ResponseEntity<?> insertVersion(@RequestBody VersionCreateRequest dto) {
+    try {
+      versionService.insertVersion(dto);
+      return ResponseEntity.ok().build();
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    }
   }
   
   // 버전 수정
   @PutMapping("/{id}")
-  public void updateVersion(@PathVariable String id, @RequestBody VersionCreateRequest dto) {
-    dto.setId(id);
-    versionService.updateVersion(dto);
+  public ResponseEntity<?> updateVersion(@PathVariable String id, @RequestBody VersionCreateRequest dto) {
+    try {
+      dto.setId(id);
+      versionService.updateVersion(dto);
+      return  ResponseEntity.ok().build();
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    }
   }
   
   // 버전 삭제
   @DeleteMapping("/delete/{id}")
-  public void deleteVersion(@PathVariable String id,
+  public ResponseEntity<?> deleteVersion(@PathVariable String id,
                             @RequestBody VersionCreateRequest dto) {
-    versionService.deleteVersion(id, dto.getProjectId(), dto.getName());
+    try {
+      versionService.deleteVersion(id, dto.getProjectId(), dto.getName());
+      return ResponseEntity.ok().build();
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    }
   }
   
   // 버전 목록조회(필터링)

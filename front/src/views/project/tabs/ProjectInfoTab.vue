@@ -1,15 +1,18 @@
 <script setup>
 import { useProjectStore } from '@/stores/project';
+import { useVersionStore } from '@/stores/version';
 import { useToast } from 'primevue';
 import { onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 const projectStore = useProjectStore();
+const versionStore = useVersionStore();
 const router = useRouter();
 const route = useRoute();
 const toast = useToast();
 const visible = ref(false);
 const confirmMsg = ref('');
+const hasVersion = ref(false);
 
 const openUpdateConfirm = () => {
   confirmMsg.value = '정말 수정하시겠습니까?';
@@ -22,6 +25,8 @@ const projectOptions = ref([]);
 onMounted(async () => {
   await projectStore.findProject(route.params.id);
   await projectStore.fetchProjects({});
+  const versions = await versionStore.fetchVersions({ projectId: route.params.id });
+  hasVersion.value = versions.length > 0;
   const info = projectStore.projectInfo;
   form.title = info.title;
   form.identifier = info.identifier;
@@ -245,7 +250,10 @@ const handleCancel = () => {
       <div class="flex items-start px-8 py-4">
         <label class="form-label w-36 pt-2 shrink-0">상위 프로젝트</label>
         <div class="flex-1">
-          <Select v-model="form.parentId" :options="projectOptions" optionLabel="label" optionValue="value" placeholder="선택" class="form-input w-64" />
+          <Select v-model="form.parentId" :disabled="hasVersion" :options="projectOptions" optionLabel="label" optionValue="value" placeholder="선택" class="form-input w-64" />
+          <div v-if="hasVersion" class="mt-1">
+            <small class="text-red-400">버전이 생성된 프로젝트는 상위 프로젝트를 선택할 수 없습니다.</small>
+          </div>
         </div>
       </div>
     </div>
