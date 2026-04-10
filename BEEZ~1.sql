@@ -532,3 +532,17 @@ ALTER TABLE project ADD CONSTRAINT  uq_project_identifier UNIQUE (identifier);
 ALTER TABLE project ADD CONSTRAINT uq_project_title UNIQUE (title);
 
 COMMIT;
+
+SELECT SYSDATE, CURRENT_DATE, SESSIONTIMEZONE FROM DUAL;
+
+SELECT 
+    p.id,
+    p.title,
+    p.parent_id,
+    LEVEL - 1 AS "lv",
+    LPAD(' ', (LEVEL - 1) * 4) || p.title AS "hierarchy_title"
+FROM project p
+WHERE p.status = 'K1'
+START WITH p.parent_id IS NULL
+CONNECT BY PRIOR p.id = p.parent_id
+ORDER SIBLINGS BY p.id DESC;

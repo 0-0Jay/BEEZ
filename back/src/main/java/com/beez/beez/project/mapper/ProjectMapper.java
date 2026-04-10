@@ -28,7 +28,7 @@ public interface ProjectMapper {
   void updateUnProjectLock(String id);
   
   //프로젝트 삭제
-  void updateProjectStatus(String id);
+  void deleteProject(String id);
   
   //프로젝트 단건 조회
   ProjectInfoResponse findById(String id);
