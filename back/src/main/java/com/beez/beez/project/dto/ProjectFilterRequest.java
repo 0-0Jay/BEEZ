@@ -1,6 +1,7 @@
 package com.beez.beez.project.dto;
 
 import lombok.Data;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Date;
 
@@ -8,7 +9,9 @@ import java.util.Date;
 public class ProjectFilterRequest {
   private String id;
   private String pmId;
+  @DateTimeFormat(pattern = "yyyy-MM-dd")
   private Date startDate;
+  @DateTimeFormat(pattern = "yyyy-MM-dd")
   private Date endDate;
   private String isLock;
 }

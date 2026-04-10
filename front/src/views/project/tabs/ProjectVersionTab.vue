@@ -16,6 +16,7 @@ const versionOptions = ref([]); // 버전명 Select 옵션
 const statusOptions = ref([]); // 상태 Select 옵션
 const selectedRow = ref(null);
 const editRow = ref(null);
+const projectInfo = ref(null);
 
 // --- 1. 스토어 연결 ---
 const versionStore = useVersionStore();
@@ -30,7 +31,7 @@ const filters = reactive({
 
 // --- 3. 조회 로직 ---
 onMounted(async () => {
-  console.log('projectId:', route.params.id);
+  projectInfo.value = await versionStore.findProject(route.params.id);
   await versionStore.fetchVersions(filters);
 
   // Select 옵션 구성
@@ -79,10 +80,14 @@ const openDeleteConfirm = (row) => {
 const handleDelConfirm = async () => {
   visible.value = false;
   if (selectedRow.value) {
-    await versionStore.deleteVersion(selectedRow.value.id, selectedRow.value.projectId, selectedRow.value.name);
-    selectedRow.value = null;
-    fetchVersions();
-    toast.add({ severity: 'success', summary: '삭제 완료', detail: '버전이 삭제되었습니다.', life: 2000 });
+    try {
+      await versionStore.deleteVersion(selectedRow.value.id, selectedRow.value.projectId, selectedRow.value.name);
+      selectedRow.value = null;
+      fetchVersions();
+      toast.add({ severity: 'success', summary: '삭제 완료', detail: '버전이 삭제되었습니다.', life: 2000 });
+    } catch (error) {
+      toast.add({ severity: 'error', summary: '삭제 실패', detail: error.message, life: 2000 });
+    }
   }
 };
 
@@ -97,7 +102,7 @@ const formatDate = (date) => {
 <template>
   <div>
     <div class="flex justify-end mb-4">
-      <Button label="버전 추가" icon="pi pi-plus" severity="contrast" outlined @click="modalVisible = true" />
+      <Button v-if="!projectInfo?.parentId" label="버전 추가" icon="pi pi-plus" severity="contrast" outlined @click="modalVisible = true" />
     </div>
     <!-- 조회 영역 -->
     <div class="flex bg-[#E8E5DC] px-10 py-8 rounded-lg mb-8 shadow-sm border border-[#C7C7C2]">
@@ -139,7 +144,7 @@ const formatDate = (date) => {
             <span>{{ formatDate(data.endDate) }}</span>
           </template>
         </Column>
-        <Column headerClass="table-header" style="width: 10%">
+        <Column headerClass="table-header" v-if="!projectInfo?.parentId" style="width: 10%">
           <template #body="{ data }">
             <div class="flex gap-2">
               <Button label="편집" icon="pi pi-pencil" text size="small" class="text-[#6B6B63]" @click="openEditModal(data)" />

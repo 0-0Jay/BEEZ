@@ -1,28 +1,49 @@
 <script setup>
+import ProjectDeleteModal from '@/components/project/ProjectDeleteModal.vue';
 import { useProjectStore } from '@/stores/project';
 import { storeToRefs } from 'pinia';
 import { useToast } from 'primevue';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
-const pendingDeleteId = ref(null); // 삭제할 id 임시 저장
-const visible = ref(false);
-const confirmMsg = ref('');
 const toast = useToast();
+const deleteModalVisible = ref(false);
+const projectToDelete = ref({ id: '', identifier: '' });
 
-const openDeleteConfirm = (id) => {
-  pendingDeleteId.value = id;
-  confirmMsg.value = '정말 삭제하시겠습니까?';
-  visible.value = true;
+const openDeleteModal = (data) => {
+  // 1. 현재 화면에 있는 목록 중 나를 부모로 가진 프로젝트가 있는지 확인
+  const hasChild = projectStore.projects.some((p) => p.parentId && String(p.parentId).trim() === String(data.id).trim());
+
+  if (hasChild) {
+    // 하위 항목이 있으면 토스트 띄우고 중단
+    toast.add({
+      severity: 'warn',
+      summary: '삭제 불가',
+      detail: '하위 프로젝트가 존재하는 프로젝트는 삭제할 수 없습니다.',
+      life: 3000
+    });
+    return;
+  }
+
+  // 2. 하위 항목이 없으면 삭제 확인 모달 오픈
+  projectToDelete.value = { id: data.id, identifier: data.identifier };
+  deleteModalVisible.value = true;
 };
 
-const handleDelConfirm = async () => {
-  visible.value = false;
-  if (pendingDeleteId.value !== null) {
-    await projectStore.deleteProject(pendingDeleteId.value);
-    pendingDeleteId.value = null;
-    fetchProjects();
-    toast.add({ severity: 'success', summary: '삭제 완료', detail: '프로젝트가 삭제되었습니다.', life: 2000 });
+const handleActualDelete = async (id) => {
+  deleteModalVisible.value = false;
+
+  try {
+    await projectStore.deleteProject(id);
+    fetchProjects(); // 목록 새로고침
+    toast.add({
+      severity: 'success',
+      summary: '삭제 완료',
+      detail: '프로젝트가 영구적으로 삭제되었습니다.',
+      life: 2000
+    });
+  } catch (error) {
+    toast.add({ severity: 'error', summary: '삭제 실패', detail: '오류가 발생했습니다.' });
   }
 };
 
@@ -48,26 +69,54 @@ const projectOptions = ref([]);
 const pmOptions = ref([]);
 
 // --- 3. 조회 로직 ---
-onMounted(async () => {
-  await projectStore.fetchProjects(filters);
 
-  // select 옵션 구성
+// 1. 옵션 구성 로직을 별도 함수로 분리
+const updateSelectOptions = () => {
+  // 프로젝트명 옵션
   projectOptions.value = projectStore.projects.map((p) => ({
     label: p.title,
     value: p.id
   }));
-  pmOptions.value = [...new Map(projectStore.projects.map((p) => [p.pm, { label: p.pm, value: p.pmId }])).values()]; // 중복 제거
-});
 
-const fetchProjects = () => {
+  // PM/PL 옵션 (중복 제거)
+  pmOptions.value = [...new Map(projectStore.projects.map((p) => [p.pm, { label: p.pm, value: p.pmId }])).values()];
+};
+
+// 2. 조회 함수
+const fetchProjects = async () => {
   if (!validate()) return;
 
-  projectStore.fetchProjects({
+  await projectStore.fetchProjects({
     ...filters,
     startDate: formatDate(filters.startDate),
     endDate: formatDate(filters.endDate)
   });
+
+  // 조회가 끝난 후 최신 데이터로 옵션 갱신
+  updateSelectOptions();
+
+  // 체크박스 전용 감시자
+  watch(
+    () => filters.isLock,
+    () => {
+      filters.id = null;
+      filters.pmId = null;
+      filters.startDate = null;
+      filters.endDate = null;
+      fetchProjects(); // 즉시 재조회
+    }
+  );
+
+  // 만약 현재 선택된 프로젝트가 바뀐 목록에 없다면 선택 해제 (디테일)
+  if (filters.id && !projectStore.projects.some((p) => p.id === filters.id)) {
+    filters.id = null;
+  }
 };
+
+// 3. 초기 로딩 수정
+onMounted(() => {
+  fetchProjects(); // 이미 정의된 조회 로직 호출
+});
 
 const resetFilters = () => {
   Object.assign(filters, {
@@ -77,7 +126,7 @@ const resetFilters = () => {
     endDate: null,
     isLock: false
   });
-  fetchProjects(); // 초기화 후 재조회
+  fetchProjects(); // 초기화 후 재조회 (여기서도 옵션이 갱신됨)
 };
 
 // --- 나머지 유틸리티 ---
@@ -121,7 +170,7 @@ const actionItems = computed(() => [
     command: () => (selectedRow.value?.isLock === 'L1' ? unlockProject(selectedRow.value.id) : lockProject(selectedRow.value.id))
   },
   { label: '프로젝트 복사', icon: 'pi pi-copy' },
-  { label: '프로젝트 삭제', icon: 'pi pi-trash', command: () => openDeleteConfirm(selectedRow.value.id) }
+  { label: '프로젝트 삭제', icon: 'pi pi-trash', command: () => openDeleteModal(selectedRow.value) }
 ]);
 
 const rowClass = (data) => {
@@ -191,9 +240,16 @@ const unlockProject = async (id) => {
 
         <Column field="title" header="프로젝트명" headerClass="table-header" style="width: 25%">
           <template #body="{ data }">
-            <span class="font-medium text-stone-800 hover:text-amber-600 transition-colors cursor-pointer" @click="goToDetail(data)">
-              {{ data.title }}
-            </span>
+            <div :style="{ paddingLeft: `${data.level * 2}rem` }" class="flex items-center">
+              <span v-if="data.level > 0" class="text-stone-400 mr-2 font-mono">└</span>
+
+              <i v-if="data.level === 0" class="mr-2 text-amber-500"></i>
+              <i v-else class="mr-2 text-stone-400"></i>
+
+              <span class="font-medium text-stone-800 hover:text-amber-600 transition-colors cursor-pointer" @click="goToDetail(data)">
+                {{ data.title }}
+              </span>
+            </div>
           </template>
         </Column>
 
@@ -230,10 +286,7 @@ const unlockProject = async (id) => {
 
     <Menu ref="menu" :model="actionItems" :popup="true" />
   </div>
-
-  <ConfirmDialog v-model:visible="visible" confirmLabel="확인" @confirm="handleDelConfirm">
-    <span class="text-gray-700 font-medium">{{ confirmMsg }}</span>
-  </ConfirmDialog>
+  <ProjectDeleteModal v-model:visible="deleteModalVisible" :projectId="projectToDelete.id" :identifier="projectToDelete.identifier" @confirm="handleActualDelete" />
 </template>
 
 <style scoped>

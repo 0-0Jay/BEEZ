@@ -59,8 +59,8 @@ public class ProjectController {
   
   //프로젝트 삭제
   @DeleteMapping("/delete/{id}")
-  public ResponseEntity<Void> updateProjectStatus(@PathVariable String id) {
-    projectService.updateProjectStatus(id);
+  public ResponseEntity<Void> deleteProject(@PathVariable String id) {
+    projectService.deleteProject(id);
     return ResponseEntity.ok().build();
   }
   
