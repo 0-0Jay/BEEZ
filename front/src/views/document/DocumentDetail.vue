@@ -1,80 +1,106 @@
 <script setup>
-import { defineEmits, defineProps } from 'vue';
+import { useDocumentStore } from '@/stores/document';
+import { onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 const router = useRouter();
 const route = useRoute();
+const docStore = useDocumentStore();
+
+const projectId = route.params.projectId;
+const docId = route.params.docId;
+
+onMounted(async () => {
+  await docStore.fetchDocumentDetail(docId);
+});
 
 const goToList = () => {
-  const projectId = route.params.projectId;
-
-  router.push({
-    name: 'DocumentList',
-    params: { projectId: projectId }
-  });
+  router.push({ name: 'DocumentList', params: { projectId: projectId } });
 };
 
-defineEmits(['edit', 'back']);
+const goToEdit = () => {
+  router.push({ name: 'DocumentEdit', params: { projectId, docId } });
+};
 
-const props = defineProps({
-  doc: {
-    type: Object,
-    default: () => ({
-      type: '기획서',
-      title: '프로젝트 기획서',
-      author: '홍길동',
-      date: '2026.03.19',
-      description: `앱 리디자인 프로젝트의 전반적인 범위, 목표, 일정, 팀 구성을 정의하는 핵심 기획 문서입니다.
-2025년 3분기 출시를 목표로 MAU 30% 증대를 달성하기 위한 로드맵을 포함합니다.`,
-      files: [
-        { name: '프로젝트 기획서', size: '2.4 MB', uploadedAt: '2026.03.19' },
-        { name: '참고사항.txt', size: '4.7 MB', uploadedAt: '2026.03.19' },
-        { name: '프로젝트 정리표.xlsx', size: '3.1 MB', uploadedAt: '2026.03.19' }
-      ]
-    })
+// 날짜 포맷 함수 추가 (YYYY-MM-DD)
+const formatDate = (dateStr) => {
+  if (!dateStr) return '';
+
+  // 문자열이 '26/04/10 14:27:18...' 형식이거나 ISO 형식일 때를 모두 대응
+  // 만약 DB에서 26/04/10 처럼 오면 연도 처리가 필요할 수 있습니다.
+  const date = new Date(dateStr);
+
+  // 날짜 객체가 유효하지 않을 경우 (예: '26/04/10' 형식이 Date에서 안 읽힐 때)
+  // 단순 문자열 슬라이싱으로 처리하는 방법이 더 확실할 수 있습니다.
+  if (isNaN(date)) {
+    // '26/04/10 14:27:18' -> '2026-04-10' (필요시 조정)
+    const parts = dateStr.split(' ')[0].split('/');
+    if (parts.length === 3) {
+      return `20${parts[0]}-${parts[1]}-${parts[2]}`;
+    }
+    return dateStr;
   }
-});
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+};
 </script>
 
 <template>
   <div class="doc-detail-page">
-    <!-- 섹션 1: 문서 헤더 -->
-    <div class="panel">
-      <div class="doc-header">
-        <div>
-          <div class="panel-label">{{ doc.type }}</div>
-          <div class="doc-title">{{ doc.title }}</div>
-          <div class="doc-meta">
-            <span>작성자 {{ doc.author }}</span>
-            <span>작성일 {{ doc.date }}</span>
+    <template v-if="docStore.loading">
+      <div class="panel">불러오는 중...</div>
+    </template>
+
+    <template v-else-if="!docStore.currentDocument">
+      <div class="panel">문서를 찾을 수 없습니다.</div>
+    </template>
+
+    <template v-else>
+      <!-- 섹션 1: 문서 헤더 -->
+
+      <div class="panel">
+        <div class="doc-header">
+          <div>
+            <div class="panel-label">{{ docStore.currentDocument.doctype }}</div>
+            <div class="doc-title">{{ docStore.currentDocument.title }}</div>
+            <div class="doc-meta">
+              <span>작성자 {{ docStore.currentDocument.userName }}</span>
+              <span>작성일 {{ formatDate(docStore.currentDocument.createdOn) }}</span>
+            </div>
           </div>
+          <button class="btn btn-edit" @click="goToEdit">편집</button>
         </div>
-        <button class="btn btn-edit" @click="$emit('edit', doc)">편집</button>
       </div>
-    </div>
 
-    <!-- 섹션 2: 내용 -->
-    <div class="panel">
-      <div class="panel-label">내용</div>
-      <div class="content-box">{{ doc.description }}</div>
-    </div>
+      <!-- 섹션 2: 내용 -->
+      <div class="panel">
+        <div class="panel-label">내용</div>
+        <div class="content-box">{{ docStore.currentDocument.content }}</div>
+      </div>
 
-    <!-- 섹션 3: 첨부파일 -->
-    <div class="panel">
-      <div class="panel-label">첨부파일</div>
-      <div class="file-list">
-        <div v-for="(file, i) in doc.files" :key="i" class="file-row">
-          <span class="file-name">{{ file.name }}</span>
-          <span class="file-meta">용량 {{ file.size }} &nbsp; {{ file.uploadedAt }} 업로드</span>
+      <!-- 섹션 3: 첨부파일 -->
+      <div class="panel">
+        <div class="panel-label">첨부파일</div>
+        <div class="file-list">
+          <template v-if="docStore.currentDocument.files?.length">
+            <div v-for="(file, i) in docStore.currentDocument.files" :key="i" class="file-row">
+              <span class="file-name">{{ file.name }}</span>
+              <span class="file-meta">용량 {{ file.size }} &nbsp; {{ file.uploadedAt }} 업로드</span>
+            </div>
+          </template>
+          <div v-else class="file-empty">첨부파일이 없습니다.</div>
         </div>
-        <div v-if="!doc.files.length" class="file-empty">첨부파일이 없습니다.</div>
       </div>
-    </div>
 
-    <!-- 섹션 4: 목록 버튼 -->
-    <div class="footer-row">
-      <button class="btn btn-list" @click="goToList('back')">목록</button>
-    </div>
+      <!-- 섹션 4: 목록 버튼 -->
+      <div class="footer-row">
+        <button class="btn btn-list" @click="goToList('back')">목록</button>
+      </div>
+    </template>
   </div>
 </template>
 

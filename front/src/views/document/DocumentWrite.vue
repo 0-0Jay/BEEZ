@@ -1,9 +1,8 @@
 <script setup>
-import { computed, ref } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-// import axios from '@/stores/AxiosInstance';
 import { useAuthStore } from '@/stores/auth';
 import { useDocumentStore } from '@/stores/document';
+import { computed, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 const router = useRouter();
 const route = useRoute();

@@ -17,11 +17,11 @@
     </selectKey>
     INSERT INTO file_detail (
     id, file_id, original_name, stored_name, extension, file_size,
-    is_delete, version, root_id, created_on
+    is_delete, version, root_id
     )
     VALUES (
     #{id}, #{fileId}, #{originalName}, #{storedName}, #{extension}, #{fileSize},
-    'N', 1, #{rootId}, SYSTIMESTAMP
+    'N', 1, #{rootId}
     )
   </insert>
   
@@ -67,8 +67,12 @@
   </select>
   
   <select id="selectLatestFilesByDocId" resultType="com.beez.beez.file.dto.FileDetailResponse">
-    SELECT fd.id, fd.file_id as fileId, fd.original_name as name,
-    fd.stored_name as storedName, fd.extension, fd.file_size as size
+    SELECT fd.id,
+    fd.file_id as fileId,
+    fd.original_name as name,
+    fd.stored_name as storedName,
+    fd.extension,
+    fd.file_size as fileSize
     FROM file_detail fd
     INNER JOIN docs d ON fd.file_id = d.file_id
     WHERE d.id = #{id}
