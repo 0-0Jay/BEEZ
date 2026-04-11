@@ -76,4 +76,7 @@ public interface TaskService {
   
   // 간트차트
   List<GanttDataResponse> findGanttData(String id);
+  
+  // 업무흐름
+  List<TaskWorkflowResponse> findWorkflow(TaskWorkflowRequest taskWorkflowRequest);
 }

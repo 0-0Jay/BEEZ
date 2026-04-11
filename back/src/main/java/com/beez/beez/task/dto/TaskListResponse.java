@@ -24,4 +24,5 @@ public class TaskListResponse {
   private String priority;
   private Timestamp plannedEnd;
   private int progress;
+  private String parentId;
 }

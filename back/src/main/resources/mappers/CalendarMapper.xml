@@ -5,7 +5,7 @@
     SELECT c.id, c.user_id, u.name, c.type, c.title, c.content, c.start_date, c.end_date
     FROM calendar c
     JOIN users u ON u.id = c.user_id
-    WHERE c.project_id = #{id}
+    WHERE c.project_id = #{id} AND (c.type = 'D1' OR (c.type = 'D0' AND c.user_id = #{userId}))
   </select>
   
   <insert id="insertSchedule" parameterType="CalendarRequest">
@@ -15,4 +15,15 @@
     INSERT INTO calendar(id, user_id, type, title, content, project_id, start_date, end_date)
     VALUES(#{id}, #{userId}, #{type}, #{title}, #{content}, #{projectId}, #{startDate}, #{endDate})
   </insert>
+
+  <update id="updateSchedule" parameterType="CalendarRequest">
+    UPDATE calendar
+    SET type = #{type}, title = #{title}, content = #{content}, start_date = #{startDate}, end_date = #{endDate}
+    WHERE id = #{id}
+  </update>
+
+  <delete id="deleteSchedule">
+    DELETE FROM calendar
+    WHERE id = #{id}
+  </delete>
 </mapper>

@@ -18,7 +18,8 @@
              )
                THEN t.sub_progress
              ELSE t.progress
-             END AS progress
+             END AS progress,
+           t.parent_id
     FROM task t
            JOIN users u ON t.user_id = u.id
     WHERE t.project_id = #{projectId} AND t.status = 'T1'
@@ -45,7 +46,7 @@
     SELECT v.id, v.name, p.id AS default_version
     FROM version v
     LEFT JOIN project p ON p.default_version_id = v.id
-    WHERE v.project_id = #{projectId}
+    WHERE v.project_id = #{projectId} AND v.is_delete = 'F0' AND v.status = 'N1'
   </select>
   
   <select id="insertTask" parameterType="TaskRequest" statementType="CALLABLE">
@@ -273,7 +274,8 @@
   </select>
   
   <select id="findSpentOverview" resultType="TaskSpentResponse">
-    SELECT s.task_id,
+    SELECT s.id,
+           s.task_id,
            t.title AS task_title,
            t.project_id,
            p.title AS project_title,
@@ -332,5 +334,11 @@
     JOIN task t ON tr.task_id = t.id
     JOIN project p ON p.id = t.project_id
     WHERE (p.id = #{id} OR p.parent_id = #{id}) AND t.status = 'T1'
+  </select>
+
+  <select id="findWorkflow" parameterType="TaskWorkflowRequest" resultType="TaskWorkflowResponse">
+    SELECT role_id, type_id, before, after, is_allow, condition_type
+    FROM workflow
+    WHERE role_id = #{roleId} OR type_id = #{typeId} OR condition_type = #{conditionType}
   </select>
 </mapper>

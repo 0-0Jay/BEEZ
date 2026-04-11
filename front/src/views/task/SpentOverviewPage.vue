@@ -46,7 +46,18 @@ const projectOptions = computed(() => {
       map.set(s.projectId, { label: s.projectTitle, value: s.projectId });
     }
   });
-  return Array.from(map.values());
+  const options = Array.from(map.values());
+  const currentId = project.value?.id;
+
+  if (!currentId) return options;
+
+  const idx = options.findIndex((o) => o.value === currentId);
+  if (idx > 0) {
+    const [current] = options.splice(idx, 1);
+    options.unshift(current);
+  }
+
+  return options;
 });
 
 const commonCodes = computed(() => taskStore.commonCodeList);
@@ -278,7 +289,6 @@ onMounted(async () => {
   await taskStore.findCateList();
   await taskStore.findTypeList();
   await taskStore.findSpentOverview(project.value?.id);
-  console.log(taskStore.spent);
 });
 </script>
 
@@ -396,7 +406,7 @@ onMounted(async () => {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(item, idx) in pagedSpent" :key="`${item.taskId}-${item.taskStart}`" class="border-b border-stone-100 last:border-none hover:bg-amber-50 transition-colors duration-100" :class="idx % 2 !== 0 ? 'bg-stone-50/60' : 'bg-white'">
+              <tr v-for="(item, idx) in pagedSpent" :key="item.id" class="border-b border-stone-100 last:border-none hover:bg-amber-50 transition-colors duration-100" :class="idx % 2 !== 0 ? 'bg-stone-50/60' : 'bg-white'">
                 <td class="px-4 py-3.5">
                   <span class="block text-base text-stone-700 leading-snug">{{ item.projectTitle }}</span>
                   <span class="text-base font-mono text-stone-400 mt-0.5 inline-block">#{{ item.projectId }}</span>
@@ -456,11 +466,17 @@ onMounted(async () => {
 
       <!-- 전체 소요시간 요약 -->
       <div class="bg-[#F2F0EB] border border-[#C7C7C2] rounded-xl shadow-sm px-7 pt-5 pb-5 mb-5">
-        <p class="text-2xl font-bold tracking-wider uppercase text-amber-700 mb-4"><i class="pi pi-chart-bar" style="font-size: 1rem"></i> 전체 소요시간</p>
+        <p class="text-2xl font-bold tracking-wider uppercase text-amber-700 mb-4">
+          <i class="pi pi-chart-bar" style="font-size: 1rem"></i> 전체 소요시간
+          <span class="text-base text-stone-400 mt-1">총 {{ reportSpent.length }}개 일감</span>
+        </p>
         <div class="grid grid-cols-2 gap-5">
           <div class="summary-stat-card">
             <div class="text-6xl font-bold text-amber-700">{{ formatMinutes(reportTotalMinutes) }}</div>
-            <div class="text-base text-stone-400 mt-1">총 {{ reportSpent.length }}개 일감</div>
+            <div class="text-base text-stone-400 flex items-center gap-2 mt-1">
+              <i class="pi pi-info-circle"></i>
+              <span>모든 소요시간은 1일 8시간 업무로 가정하여 계산됩니다.</span>
+            </div>
           </div>
           <div class="summary-stat-card text-right">
             <div class="text-base font-semibold uppercase tracking-wider text-stone-400 mb-2">일 평균</div>

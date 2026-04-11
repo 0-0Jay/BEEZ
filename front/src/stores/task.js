@@ -7,6 +7,7 @@ export const useTaskStore = defineStore('task', {
   state: () => ({
     typeList: [],
     cateList: [],
+    workflow: [],
     memberList: [],
     taskList: [],
     versionList: [],
@@ -112,6 +113,10 @@ export const useTaskStore = defineStore('task', {
     async findGanttData(id) {
       const res = await axios.get(`/gantt/${id}`);
       this.ganttData = res.data;
+    },
+    async findWorkflow(data) {
+      const res = await axios.get('/task/workflow', { params: data });
+      this.workflow = res.data;
     }
     // async downloadFile(file) {
     //   const res = await axios.get(`/api/file/${file.storedName}`);

@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class TaskSpentResponse {
+  private String id;
   private String taskId;
   private String taskTitle;
   private String projectId;

@@ -8,9 +8,7 @@ import com.beez.beez.task.repository.*;
 import com.beez.beez.task.service.TaskService;
 import com.beez.beez.websocket.dto.NotificationRequest;
 import com.beez.beez.websocket.service.NotificationService;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -229,4 +227,11 @@ public class TaskServiceImpl implements TaskService {
     
     return gantData;
   }
+  
+  // 업무 흐름
+  @Override
+  public List<TaskWorkflowResponse> findWorkflow(TaskWorkflowRequest taskWorkflowRequest) {
+    return taskMapper.findWorkflow(taskWorkflowRequest);
+  }
+  
 }

@@ -295,7 +295,6 @@ onMounted(async () => {
   await taskStore.findCateList();
   await taskStore.findTypeList();
   await taskStore.findCommonCodeList();
-  console.log(task.value);
 });
 </script>
 

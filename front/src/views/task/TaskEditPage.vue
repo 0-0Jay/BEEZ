@@ -13,6 +13,8 @@ const projectStore = useProjectStore();
 const authStore = useAuthStore();
 const project = computed(() => projectStore.selectedProject);
 const userId = computed(() => authStore.user.id);
+const roleId = computed(() => authStore.user.role);
+const condition = computed(() => (taskStore.task.creator == userId.value ? 'Z1' : taskStore.task.userId == userId.value ? 'Z2' : 'Z0'));
 
 const isEditMode = route.path.includes('/task/edit');
 const isCopyMode = route.path.includes('/task/copy');
@@ -34,8 +36,13 @@ const userOptions = computed(() => taskStore.memberList);
 const typeOptions = computed(() => taskStore.typeList);
 const categoryOptions = computed(() => taskStore.cateList);
 const priorityOptions = computed(() => commonCodes.value.filter((p) => p.cgroup === '0S'));
-const parentTaskOptions = computed(() => [{ id: null, title: '없음' }, ...taskStore.taskList]);
 const versionOptions = computed(() => taskStore.versionList);
+
+const parentTaskName = computed(() => {
+  if (fixedParentId) return fixedParentName;
+  if (form.parentId) return taskStore.taskList.find((t) => t.id == form.parentId)?.title ?? String(form.parentId);
+  return null;
+});
 
 // 기본 버전
 const defaultVersionId = computed(() => taskStore.versionList.find((v) => v.defaultVersion !== null)?.id);
@@ -253,8 +260,14 @@ const isSaveDisabled = computed(() => {
 });
 
 const handleFileChange = ({ files }) => {
+  const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+
   files.forEach((newFile) => {
-    // 기존 파일(서버)과 새 파일(File) 모두 중복 체크
+    if (newFile.size > MAX_SIZE) {
+      alert(`첨부파일 크기는 10MB를 넘길 수 없습니다!\n(${newFile.name})`);
+      return;
+    }
+
     const isDuplicate = form.attachments.some((f) => {
       if (f instanceof File) return f.name === newFile.name && f.size === newFile.size;
       return f.originalName === newFile.name && f.fileSize === newFile.size;
@@ -341,7 +354,8 @@ onMounted(async () => {
   await taskStore.findMember(project.value.id);
   await taskStore.findTaskList(project.value.id, userId.value);
   await taskStore.findVersionList(project.value.id);
-  console.log(taskStore.versionList);
+  await taskStore.findWorkflow({ roleId: roleId.value, typeId: taskStore.task.type, conditionType: condition.value });
+  console.log(taskStore.workflow);
   validate();
 });
 </script>
@@ -434,16 +448,15 @@ onMounted(async () => {
             </td>
           </tr>
 
-          <!-- 상위 일감 / 목표 버전 -->
+          <!-- 목표 버전 / 추정 시간-->
           <tr class="divide-x divide-[#F2F0EB]">
-            <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">상위 일감</td>
-            <td class="px-6 py-3">
-              <span v-if="fixedParentId" class="inline-flex items-center gap-1.5 text-base text-[#E8920E] font-medium"> {{ fixedParentName }} </span>
-              <Select v-else v-model="form.parentId" :options="parentTaskOptions" optionLabel="title" optionValue="id" placeholder="선택" class="w-full" />
-            </td>
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">목표 버전</td>
             <td class="px-6 py-3">
               <Select v-model="form.versionId" :options="versionOptions" optionLabel="name" optionValue="id" placeholder="선택" class="w-full" />
+            </td>
+            <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">추정 시간 (분)</td>
+            <td colspan="3" class="px-6 py-3">
+              <InputNumber v-model="form.estimatedTime" :min="0" placeholder="0" class="w-36" />
             </td>
           </tr>
 
@@ -502,11 +515,11 @@ onMounted(async () => {
             </td>
           </tr>
 
-          <!-- 추정 시간 -->
-          <tr class="divide-x divide-[#F2F0EB]">
-            <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">추정 시간 (분)</td>
+          <!-- 상위 일감 -->
+          <tr v-if="parentTaskName" class="divide-x divide-[#F2F0EB]">
+            <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">상위 일감</td>
             <td colspan="3" class="px-6 py-3">
-              <InputNumber v-model="form.estimatedTime" :min="0" placeholder="0" class="w-36" />
+              <span class="inline-flex items-center gap-1.5 text-base font-medium">{{ parentTaskName }}</span>
             </td>
           </tr>
 
@@ -562,7 +575,7 @@ onMounted(async () => {
                   </button>
                 </div>
               </div>
-              <small class="text-[#9A9B90] mt-2 block text-xs">파일당 최대 10MB / 여러 파일을 한 번에 선택하거나 반복 추가할 수 있습니다.</small>
+              <small class="text-[#9A9B90] mt-2 block text-base">파일당 최대 10MB / 여러 파일을 한 번에 선택하거나 반복 추가할 수 있습니다.</small>
             </td>
           </tr>
 
