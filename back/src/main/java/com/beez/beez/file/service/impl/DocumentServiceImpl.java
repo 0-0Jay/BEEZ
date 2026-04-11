@@ -68,13 +68,17 @@ public class DocumentServiceImpl implements DocumentService {
 public void updateDocument(UpdateRequest updateRequest,
                            List<MultipartFile> newFiles,
                            String userId) {
+  System.out.println("=== updateDocument 진입 ===");                          // ← 추가
+  System.out.println("fileUpdates: " + updateRequest.getFileUpdates());       // ← 추가
     documentMapper.updateDocument(updateRequest);
     
     if(updateRequest.getFileUpdates() !=null) { //업데이트할때 파일있으면 처리하도록 함
       int fileIdx = 0;
       
       for(FileUpdateInfo updateInfo : updateRequest.getFileUpdates()) {
-        
+        System.out.println("targetId: " + updateInfo.getTargetFileDetailId()); // ← 추가
+        System.out.println("isDeleted: " + updateInfo.isDeleted());             // ← 추가
+
         if(updateInfo.isDeleted()){ //삭제 버튼 클릭시
           documentMapper.deleteFileDetail(updateInfo.getTargetFileDetailId()); //소프트 딜리트 처리
         } else if (newFiles != null && fileIdx < newFiles.size()) { //새파일이 교체되면 아래 실행

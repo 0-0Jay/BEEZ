@@ -56,6 +56,8 @@ export const useDocumentStore = defineStore('document', {
           targetFileDetailId: id,
           isDeleted: true
         }));
+        console.log('deletedFileIds:', deletedFileIds); // ← 추가
+        console.log('fileUpdates:', fileUpdates); // ← 추가
 
         updateRequest.fileUpdates = fileUpdates;
 

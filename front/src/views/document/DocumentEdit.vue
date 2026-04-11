@@ -26,6 +26,8 @@ const deletedFileIds = ref([]); // 삭제할 기존 파일 id추적
 // 기존 파일 삭제
 const removeExistingFile = (index) => {
   const file = form.value.attachments[index];
+  console.log('삭제할 파일:', file); // ← 추가
+  console.log('file.id:', file.id); // ← 추가
   if (file.id) deletedFileIds.value.push(file.id); // 삭제 id 추적
   form.value.attachments.splice(index, 1);
 };
@@ -66,8 +68,7 @@ const submit = async () => {
     title: form.value.title,
     content: form.value.content ?? '',
     doctype: form.value.doctype,
-    changeReason: form.value.editReason,
-    fileUpdates: [] // 파일 삭제/수정 정보 (일단 빈 배열)
+    changeReason: form.value.editReason
   };
 
   try {
