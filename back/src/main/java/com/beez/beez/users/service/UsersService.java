@@ -3,6 +3,8 @@ package com.beez.beez.users.service;
 import com.beez.beez.users.dto.UserListResponse;
 import com.beez.beez.users.dto.UserRegisterRequest;
 import com.beez.beez.users.dto.UserSearchRequest;
+import com.beez.beez.users.dto.UserUpdateRequest;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 import java.util.Map;
@@ -21,4 +23,7 @@ public interface UsersService {
 
   // 사용자 등록
   void insertUser(UserRegisterRequest userRegisterRequest);
+
+  // 사용자 정보 수정
+  void updateUser(UserUpdateRequest dto, String id);
 }

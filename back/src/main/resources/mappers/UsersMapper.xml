@@ -117,12 +117,35 @@
     )
   </insert>
 
-  <!-- 비밀번호 재설정 -->
+  <!-- 비밀번호 재설정(비밀번호 찾기) -->
   <update id="updatePassword" parameterType="map" statementType="CALLABLE">
     { CALL PROC_UPDATE_PASSWORD(
         #{token, mode=IN, jdbcType=VARCHAR},
         #{password, mode=IN, jdbcType=VARCHAR},
         #{result, mode=OUT, jdbcType=VARCHAR})
     }
+  </update>
+
+  <!-- 사용자 정보 수정 -->
+  <update id="updateUser">
+    UPDATE users
+    <set>
+      <if test="dto.name != null and dto.name != ''">
+        name = #{dto.name},
+      </if>
+
+      <if test="dto.email != null and dto.email != ''">
+        email = #{dto.email},
+      </if>
+
+      <if test="dto.status != null and dto.status != ''">
+        status = #{dto.status},
+      </if>
+
+      <if test="dto.newPassword != null">
+        password = #{dto.newPassword}
+      </if>
+    </set>
+    WHERE id = #{id}
   </update>
 </mapper>
