@@ -6,10 +6,22 @@ import com.beez.beez.file.mapper.DocumentMapper;
 import com.beez.beez.file.service.DocumentService;
 import com.beez.beez.file.service.FileService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.web.ServerProperties;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.data.jpa.domain.JpaSort;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.UriUtils;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
 
@@ -97,9 +109,42 @@ public void updateDocument(UpdateRequest updateRequest,
   @Override
   public DetailResponse getDocumentDetail(String id){
     DetailResponse detail = documentMapper.selectDocumentDetail(id);
-    detail.setFileList(documentMapper.selectLatestFilesByDocId(id));
+    List<FileDetailResponse> files = documentMapper.selectLatestFilesByDocId(id);
+    System.out.println("docId: " + id);
+    System.out.println("fileList size: " + files.size());
+    System.out.println("fileList: " + files);
+    detail.setFileList(files);
     return detail;
   }
-  
+
+  //파일 다운로드
+  @Value("D:/beezfile")
+  private String uploadPath;
+
+  @Override
+  public ResponseEntity<Resource> downloadFile(String fileDetailId){
+    //DB에서 파일 정보 조회
+    FileDetailRequest file = documentMapper.selectFileDetailById(fileDetailId);
+
+    System.out.println("storedName: " + file.getStoredName());  // ← 추가
+    System.out.println("uploadPath: " + uploadPath);            // ← 추가
+
+    //실제 파일 경로
+      Path filePath = Paths.get(uploadPath, file.getStoredName());
+    System.out.println("fullPath: " + filePath.toAbsolutePath()); // ← 추가
+      Resource resource = new FileSystemResource(filePath);
+
+    if(!resource.exists()){
+      throw new RuntimeException("파일을 찾을 수 없습니다.");
+    }
+
+    //한글 파일명 깨짐 방지
+    String encodedName = UriUtils.encode(file.getOriginalName(), StandardCharsets.UTF_8);
+
+    return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + encodedName + "\"")
+            .contentType(MediaType.APPLICATION_OCTET_STREAM)
+            .body(resource);
+  }
   
 } //end

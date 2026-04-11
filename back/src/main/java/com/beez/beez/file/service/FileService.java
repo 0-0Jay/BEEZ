@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface FileService {
   List<FileDetailRequest> saveFile(List<MultipartFile> files);
+
+
 }

@@ -4,6 +4,7 @@ import com.beez.beez.file.dto.*;
 import com.beez.beez.file.service.DocumentService;
 import com.beez.beez.file.service.FileService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -67,4 +68,11 @@ public class DocumentController {
     }
     return ResponseEntity.ok(detail);
   }
-}
+
+  //파일 다운로드 기능
+  @GetMapping("/document/download/{fileDetailId}")
+  public ResponseEntity<Resource> downloadFile(@PathVariable String fileDetailId) {
+    return documentService.downloadFile(fileDetailId);
+  }
+
+} //CLASS END
