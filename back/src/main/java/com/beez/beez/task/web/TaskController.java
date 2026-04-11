@@ -54,6 +54,17 @@ public class TaskController {
     return ResponseEntity.ok(taskService.findTaskDetail(id));
   }
   
+  // 업무 흐름 가져오기
+  @GetMapping("/workflow")
+  public ResponseEntity<List<TaskWorkflowResponse>> findWorkflow(@RequestParam String roleId, @RequestParam String typeId, @RequestParam String conditionType ) {
+    System.out.println(roleId + typeId + conditionType);
+    return ResponseEntity.ok(taskService.findWorkflow(TaskWorkflowRequest.builder()
+        .roleId(roleId)
+        .typeId(typeId)
+        .conditionType(conditionType)
+      .build()));
+  }
+  
   // 댓글 삽입
   @PostMapping("/reply")
   public ResponseEntity<Void> insertTaskReply(@RequestBody TaskReplyRequest taskReplyRequest) {

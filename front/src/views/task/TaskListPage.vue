@@ -107,9 +107,44 @@ function sortIcon(key) {
   return sortDir.value === 'asc' ? '↑' : '↓';
 }
 
+// 트리 빌드 후 DFS 평탄화 (_depth, _children 포함)
+const flattenedTasks = computed(() => {
+  const map = {};
+  tasks.value.forEach((t) => (map[t.id] = { ...t, _children: [] }));
+
+  const roots = [];
+  tasks.value.forEach((t) => {
+    if (t.parentId && map[t.parentId]) {
+      map[t.parentId]._children.push(map[t.id]);
+    } else {
+      roots.push(map[t.id]);
+    }
+  });
+
+  // 형제 노드 정렬 함수
+  function sortNodes(nodes) {
+    const dir = sortDir.value === 'asc' ? 1 : -1;
+    return [...nodes].sort((a, b) => {
+      if (sortKey.value === 'priority') return ((priorityWeight[a.priority] ?? 0) - (priorityWeight[b.priority] ?? 0)) * dir;
+      if (sortKey.value === 'progress') return (a.progress - b.progress) * dir;
+      const va = a[sortKey.value] ?? '';
+      const vb = b[sortKey.value] ?? '';
+      return va < vb ? -dir : va > vb ? dir : 0;
+    });
+  }
+
+  const result = [];
+  function dfs(node, depth) {
+    result.push({ ...node, _depth: depth });
+    sortNodes(node._children).forEach((child) => dfs(child, depth + 1));
+  }
+  sortNodes(roots).forEach((r) => dfs(r, 0));
+  return result;
+});
+
 // 필터 결과
 const processedTasks = computed(() => {
-  let list = [...tasks.value];
+  let list = [...flattenedTasks.value];
 
   if (appliedFilters.value.showMyTasks) {
     list = list.filter((t) => t.userId === userId.value);
@@ -133,21 +168,6 @@ const processedTasks = computed(() => {
   }
   if (startDate) list = list.filter((t) => t.plannedEnd && new Date(t.plannedEnd) >= startDate);
   if (endDate) list = list.filter((t) => t.plannedEnd && new Date(t.plannedEnd) <= endDate);
-
-  if (sortKey.value) {
-    const dir = sortDir.value === 'asc' ? 1 : -1;
-    list.sort((a, b) => {
-      if (sortKey.value === 'priority') {
-        return ((priorityWeight[a.priority] ?? 0) - (priorityWeight[b.priority] ?? 0)) * dir;
-      }
-      if (sortKey.value === 'progress') {
-        return (a.progress - b.progress) * dir;
-      }
-      const va = a[sortKey.value] ?? '';
-      const vb = b[sortKey.value] ?? '';
-      return va < vb ? -dir : va > vb ? dir : 0;
-    });
-  }
 
   return list;
 });
@@ -350,7 +370,10 @@ onMounted(async () => {
                 <span class="font-mono text-m font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded">{{ task.id }}</span>
               </td>
               <td class="px-4 py-3.5">
-                <span class="block text-base font-medium text-stone-800 hover:text-amber-600 transition-colors leading-snug">{{ task.title }}</span>
+                <span class="block text-base font-medium text-stone-800 hover:text-amber-600 transition-colors leading-snug" :style="{ paddingLeft: task._depth * 20 + 'px' }">
+                  <span v-if="task._depth > 0" class="text-stone-400 mr-1">└</span>
+                  {{ task.title }}
+                </span>
               </td>
               <td class="px-4 py-3.5 text-base text-stone-600 text-center">{{ taskTypeMap[task.type] ?? task.type }}</td>
               <td class="px-4 py-3.5 text-center">

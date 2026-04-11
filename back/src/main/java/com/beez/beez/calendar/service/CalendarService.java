@@ -11,5 +11,11 @@ public interface CalendarService {
   void insertSchedule(CalendarRequest calendarRequest);
   
   // 프로젝트 일정
-  List<CalendarResponse> findAllSchedule(String id);
+  List<CalendarResponse> findAllSchedule(String id, String userId);
+  
+  // 일정 수정
+  void updateSchedule(CalendarRequest calendarRequest);
+  
+  // 일정 삭제
+  void deleteSchedule(String id);
 }
