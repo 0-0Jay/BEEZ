@@ -41,6 +41,10 @@
       <if test="endDate != null">
         AND TRUNC(created_on) &lt;= #{endDate}
       </if>
+
+      <if test="excludeRoleId != null and excludeRoleId != ''">
+        AND role != #{excludeRoleId}
+      </if>
     </where>
     ORDER BY created_on DESC
   </select>

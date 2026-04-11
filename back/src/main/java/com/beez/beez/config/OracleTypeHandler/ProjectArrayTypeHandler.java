@@ -17,14 +17,26 @@ public class ProjectArrayTypeHandler implements TypeHandler<List<GroupProjectDto
                            List<GroupProjectDto> projects, JdbcType jdbcType) throws SQLException {
     OracleConnection conn = ps.getConnection().unwrap(OracleConnection.class);
 
-    Struct[] structs = new Struct[projects.size()];
-    for(int j = 0; j < projects.size(); j++) {
-      GroupProjectDto p = projects.get(j);
-      Object[] objAttributes = new Object[] { p.getProjectId(), p.getRoleId() };
-      structs[j] = conn.createStruct("PROJECT_OBJ", objAttributes);
+    if (projects == null) {
+      ps.setNull(i, Types.ARRAY, "PROJECT_TAB");
+      return;
     }
 
-    ps.setArray(i, conn.createOracleArray("PROJECT_TAB", structs));
+    Struct[] structs = new Struct[projects.size()];
+    for (int j = 0; j < projects.size(); j++) {
+      GroupProjectDto p = projects.get(j);
+
+      Array roleIdsArray = conn.createOracleArray("ROLE_ID_TAB", p.getRoleIds().toArray());
+
+      Object[] objAttributes = new Object[] {
+        p.getProjectId(),
+        roleIdsArray
+      };
+
+      structs[j] = conn.createStruct("PROJECT_REC", objAttributes);
+    }
+    Array projectArray = conn.createOracleArray("PROJECT_TAB", structs);
+    ps.setArray(i, projectArray);
   }
 
   @Override public List<GroupProjectDto> getResult(ResultSet rs, String col) { return null; }

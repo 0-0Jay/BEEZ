@@ -9,4 +9,5 @@ public class GroupListResponse {
   private String name;
   private String description;
   private int memberCnt;
+  private int projectCnt;
 }

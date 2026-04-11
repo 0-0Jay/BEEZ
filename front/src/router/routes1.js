@@ -40,6 +40,12 @@ const Routes1 = [
     name: 'groupAdd',
     component: () => import('@/views/group/GroupAddPage.vue'),
     meta: { requiresAuth: true, role: 'ROLE0001' }
+  },
+  {
+    path: '/group/:id',
+    name: 'groupManage',
+    component: () => import('@/views/group/GroupManagePage.vue'),
+    meta: { requiresAuth: true, role: 'ROLE0001' }
   }
 ];
 export default Routes1;

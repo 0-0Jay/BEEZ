@@ -1,14 +1,14 @@
 package com.beez.beez.group.web;
 
-import com.beez.beez.group.dto.GroupInsertRequest;
-import com.beez.beez.group.dto.GroupListResponse;
-import com.beez.beez.group.dto.GroupUpdateRequest;
+import com.beez.beez.group.dto.*;
 import com.beez.beez.group.service.GroupService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -22,6 +22,13 @@ public class GroupController {
   public ResponseEntity<List<GroupListResponse>> findAllGroup(String name) {
     List<GroupListResponse> list = groupService.findAllGroup(name);
     return ResponseEntity.ok(list);
+  }
+
+  // 그룹 상세 조회
+  @GetMapping("/{id}")
+  public ResponseEntity<Map<String, Object>> findGroupDetail(@PathVariable String id){
+    Map<String, Object> details = groupService.findGroupDetail(id);
+    return ResponseEntity.ok(details);
   }
 
   // 그룹 등록
@@ -42,7 +49,16 @@ public class GroupController {
   // 그룹 삭제
   @DeleteMapping("/{id}")
   public ResponseEntity<String> deleteGroup(@PathVariable String id) {
-    groupService.deleteGroup(id);
-    return  ResponseEntity.ok("그룹 삭제가 완료되었습니다.");
+    try {
+      groupService.deleteGroup(id);
+      return ResponseEntity.ok("그룹 삭제가 완료되었습니다.");
+    } catch (RuntimeException e) {
+      if ("USED_IN_PROJECT".equals(e.getMessage())) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+          .body("현재 프로젝트에 할당된 그룹은 삭제할 수 없습니다.");
+      }
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .body("서버 오류로 삭제에 실패했습니다.");
+    }
   }
 }
