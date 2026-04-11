@@ -21,6 +21,15 @@ const form = ref({
   attachments: [] // 기존 파일 목록
 });
 
+const deletedFileIds = ref([]); // 삭제할 기존 파일 id추적
+
+// 기존 파일 삭제
+const removeExistingFile = (index) => {
+  const file = form.value.attachments[index];
+  if (file.id) deletedFileIds.value.push(file.id); // 삭제 id 추적
+  form.value.attachments.splice(index, 1);
+};
+
 const fileInput = ref(null);
 const triggerFileInput = () => fileInput.value?.click();
 
@@ -46,25 +55,23 @@ const onFileChange = (e) => {
 
 const removeNewFile = (index) => newFiles.value.splice(index, 1);
 
-// 수정 실행
 const submit = async () => {
   if (!form.value.title) return alert('문서 제목을 입력해주세요.');
   if (!form.value.editReason) return alert('수정 사유를 입력해주세요.');
 
-  const formData = new FormData();
-  formData.append('id', docId);
-  formData.append('userId', userId.value);
-  formData.append('title', form.value.title);
-  formData.append('content', form.value.content ?? '');
-  formData.append('doctype', form.value.doctype);
-  formData.append('editReason', form.value.editReason);
-
-  newFiles.value.forEach((file) => {
-    formData.append('newFile', file);
-  });
+  // UpdateRequest 형태로 만들기
+  const updateRequest = {
+    id: docId,
+    userId: userId.value,
+    title: form.value.title,
+    content: form.value.content ?? '',
+    doctype: form.value.doctype,
+    changeReason: form.value.editReason,
+    fileUpdates: [] // 파일 삭제/수정 정보 (일단 빈 배열)
+  };
 
   try {
-    await docStore.updateDocument(formData);
+    await docStore.updateDocument(updateRequest, newFiles.value, deletedFileIds.value);
     alert('수정되었습니다.');
     router.push({ name: 'DocumentDetail', params: { projectId, docId } });
   } catch (err) {
@@ -142,7 +149,7 @@ const goToDetail = () => {
         <ul class="file-list">
           <li v-for="(f, i) in form.attachments" :key="'old-' + i">
             {{ f.name }} <span class="file-badge">기존</span>
-            <button class="btn-remove" @click="form.attachments.splice(i, 1)">✕</button>
+            <button class="btn-remove" @click="removeExistingFile(i)">✕</button>
           </li>
           <li v-for="(f, i) in newFiles" :key="'new-' + i">
             {{ f.name }} <span class="file-badge new">신규</span>

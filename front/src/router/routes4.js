@@ -33,7 +33,7 @@ const Routes4 = [
   {
     path: '/document/edit/:projectId/:docId',
     name: 'DocumentEdit',
-    component: () => import('@/views/document/DocumentWrite.vue')
+    component: () => import('@/views/document/DocumentEdit.vue')
   }
 ]; //router end
 export default Routes4;
