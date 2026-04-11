@@ -28,7 +28,8 @@ public class DocumentController {
 //
 //    return ResponseEntity.ok("문서 등록 성공");
 //  }
-  
+
+  //수정해야할 수 있음 일단 보류
   @PostMapping(value = "/document/write" , consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<String> registerDocument(
     @ModelAttribute CreateRequest request, @RequestParam(value = "files", required = false) List<MultipartFile> files){

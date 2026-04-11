@@ -23,8 +23,16 @@ public class DocumentServiceImpl implements DocumentService {
   @Override
   @Transactional //문서글(텍스트) + 파일묶음 = 1개의 게시글 형태로 만들기 위함
   public String registerDocument(CreateRequest request, List<MultipartFile> files){
+
+    request.setFiles(files);
+    System.out.println("projectId: " + request.getProjectId());
+    System.out.println("userId: " + request.getUserId());
+    System.out.println("title: " + request.getTitle());
+
+
     // 파일 바구니 생성
-    documentMapper.insertFileMaster(request, files);
+    documentMapper.insertFileMaster(request);
+    request.setFileId(request.getId());
     
     //파일 상세 정보 저장
     if(request.getFiles() != null && !request.getFiles().isEmpty()) {

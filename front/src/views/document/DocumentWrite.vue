@@ -16,32 +16,32 @@ const projectId = route.params.projectId;
 const form = ref({
   title: '',
   doctype: '기획서',
-  content: ''
+  content: '',
+  attachments: []
 });
 
 // //파일 첨부 관련 로직
-const attachedFiles = ref([]);
+
 const fileInput = ref(null);
 const triggerFileInput = () => fileInput.value?.click();
 
 const onFileChange = (e) => {
-  attachedFiles.value.push(...Array.from(e.target.files));
+  Array.from(e.target.files).forEach((newFile) => {
+    const isDuplicate = form.value.attachments.some((f) => f.name === newFile.name && f.size === newFile.size);
+    if (!isDuplicate) form.value.attachments.push(newFile);
+  });
   e.target.value = '';
 };
-const removeFile = (index) => attachedFiles.value.splice(index, 1);
+
+const removeFile = (index) => form.value.attachments.splice(index, 1);
 
 //문서 등록 실행
 const submit = async () => {
   if (!form.value.title) return alert('문서 제목을 선택해주세요.');
   const formData = new FormData();
 
-  // const docData = {
-  //   projectId: projectId,
-  //   userId: userId.value,
-  //   title: form.value.title,
-  //   content: form.value.content,
-  //   doctype: form.value.doctype
-  // };
+  console.log('userId:', userId.value);
+  console.log('projectId:', projectId);
 
   formData.append('projectId', projectId);
   formData.append('userId', userId.value);
@@ -51,12 +51,12 @@ const submit = async () => {
 
   // formData.append('document', new Blob([JSON.stringify(docData)], { type: 'application/json' }));
 
-  attachedFiles.value.forEach((file) => {
+  form.value.attachments.forEach((file) => {
     formData.append('files', file);
   });
 
   try {
-    await docStore.writeDocument(formData);
+    await docStore.writeDocument(projectId, formData);
     alert('등록되었습니다.');
     goToList();
   } catch (err) {
@@ -121,10 +121,10 @@ const goToList = () => {
 
       <input ref="fileInput" type="file" multiple style="display: none" @change="onFileChange" />
       <div class="attach-area">
-        <span v-if="!attachedFiles.length" class="attach-placeholder">파일을 첨부해주세요</span>
+        <span v-if="!form.attachments.length" class="attach-placeholder">파일을 첨부해주세요</span>
 
         <ul v-else class="file-list">
-          <li v-for="(f, i) in attachedFiles" :key="i">
+          <li v-for="(f, i) in form.attachments" :key="i">
             {{ f.name }}
             <button class="btn-remove" @click="removeFile(i)">✕</button>
           </li>

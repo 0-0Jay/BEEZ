@@ -12,7 +12,7 @@ public interface DocumentMapper {
   
   // 등록 관련
     //파일 마스터 생성 - 파일들을 하나로 묶는 파일 바구니 생성 = 파일 테이블
-    void insertFileMaster(CreateRequest request, List<MultipartFile> files );
+    void insertFileMaster(CreateRequest request );
   
     //파일 상세 정보 저장 - 실제 파일 정보를 하나씩 집어 넣음 = 파일 디테일 테이블
     void insertFileDetail(FileDetailRequest fileDetail);

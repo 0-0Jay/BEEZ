@@ -24,7 +24,7 @@ export const useDocumentStore = defineStore('document', {
     async writeDocument(projectId, formData) {
       try {
         // 컨트롤러의 @PostMapping("/document/write/{projectId}")와 매칭
-        const response = await axios.post(`/document/write/${projectId}`, formData, {
+        const response = await axios.post(`/document/write`, formData, {
           // headers: { 'Content-Type': 'multipart/form-data' }
         });
         return response.data;
