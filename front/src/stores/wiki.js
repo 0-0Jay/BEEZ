@@ -41,25 +41,25 @@ export const useWikiStore = defineStore('wiki', {
       return response.data;
     },
 
-    //위키 신규 등록 또는 편집 저장
     async saveWiki(saveData) {
-      const isNew = !saveData.wikiRequest.id; // wikiId 없으면 신규
+      const isNew = !saveData.wikiRequest.id;
 
       if (isNew) {
-        // 신규 → insert
-        const response = await axios.post('/wiki/insert', saveData);
+        await axios.post('/wiki/insert', saveData);
+        // 신규 저장 후 projectId로 최신 위키 조회해서 wikiId 가져오기
+        const latest = await axios.get(`/wiki/latest/${saveData.wikiRequest.projectId}`);
+        const newWikiId = latest.data?.wikiId;
         if (saveData.versionRequest) {
           this.wikiDetail.content = saveData.versionRequest.content;
-          this.wikiDetail.id = saveData.wikiRequest.id;
+          this.wikiDetail.id = newWikiId;
         }
-        return response.data;
+        return newWikiId; // ← wikiId 반환
       } else {
-        // 수정 → update
-        const response = await axios.post('/wiki/update', saveData);
+        await axios.post('/wiki/update', saveData);
         if (saveData.versionRequest) {
           this.wikiDetail.content = saveData.versionRequest.content;
         }
-        return response.data;
+        return saveData.wikiRequest.id; // ← 기존 wikiId 반환
       }
     },
 

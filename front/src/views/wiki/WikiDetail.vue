@@ -100,9 +100,7 @@ watch(
           <div>
             <div class="wiki-header-left">
               <span class="badge-wiki">wiki</span>
-              <!-- <span class="wiki-title">{{ projectInfo.title }}</span> -->
-              <!-- 이거 백처리랑 wiki.js파일 작업 안되어 있음-->
-              <!-- <span class="badge-version">{{ projectInfo. }}</span> -->
+              <span class="badge-version">{{ wikiDetail.versionName || '-' }}</span>
             </div>
             <p class="wiki-subtitle">{{ wikiStore.wikiDetail.wikiInfo }}</p>
           </div>
@@ -146,31 +144,36 @@ watch(
         <br />
         <div class="info-row">
           <span class="info-label">상태 : </span>
-          <span class="badge-status">{{ projectInfo.status }}</span>
+          <span class="badge-status">{{ projectInfo.status || '데이터가 없습니다' }}</span>
         </div>
 
         <div class="info-row">
           <span class="info-label">프로젝트번호 :</span>
-          <span class="info-value status-badge">{{ projectInfo.id }}</span>
+          <span class="info-value status-badge">{{ projectInfo.id || '데이터가 없습니다' }}</span>
         </div>
 
         <div class="info-row">
           <span class="info-label">프로젝트 설명 :</span>
-          <span class="info-value status-badge">{{ projectInfo.description }}</span>
+          <span class="info-value status-badge">{{ projectInfo.description || '데이터가 없습니다' }}</span>
         </div>
 
         <div class="info-row">
           <span class="info-label">프로젝트 생성자명 :</span>
-          <span class="info-value status-badge">{{ projectInfo.userName }}</span>
+          <span class="info-value status-badge">{{ projectInfo.userName || '데이터가 없습니다' }}</span>
         </div>
 
         <div class="info-row">
           <span class="info-label">시작일 :</span>
-          <span class="info-value status-badge">{{ projectInfo.startDate ? projectInfo.startDate.replace('T', ' ').substring(0, 10) : '-' }}</span>
+          <span class="info-value status-badge">
+            {{ projectInfo.startDate ? projectInfo.startDate.replace('T', ' ').substring(0, 10) : '데이터가 없습니다' }}
+          </span>
         </div>
+
         <div class="info-row">
           <span class="info-label">종료일 :</span>
-          <span class="info-value status-badge">{{ projectInfo.endDate ? projectInfo.endDate.replace('T', ' ').substring(0, 10) : '-' }}</span>
+          <span class="info-value status-badge">
+            {{ projectInfo.endDate ? projectInfo.endDate.replace('T', ' ').substring(0, 10) : '데이터가 없습니다' }}
+          </span>
         </div>
       </div>
 
@@ -191,7 +194,7 @@ watch(
     </div>
 
     <div class="section-marker">
-      <div class="section" id="section1">
+      <div class="content-card">
         <div class="body-text" v-html="wikiDetail.content"></div>
       </div>
     </div>
@@ -259,11 +262,11 @@ watch(
 }
 .badge-version {
   font-size: 11px;
-  background: #c4780625;
-  border: 1px solid #f5a623;
+  background: #06c4523d;
+  border: 1px solid #0aeb19;
   border-radius: 20px;
   padding: 2px 10px;
-  color: #e8920e;
+  color: #27a33c;
   font-weight: bold;
 }
 .wiki-subtitle {
@@ -669,5 +672,13 @@ watch(
   min-height: 100vh;
   /* 내용이 많아지면 자동으로 늘어남 */
   padding-bottom: 770x; /* 하단 여백을 주면 스크롤 확인이 더 쉽습니다 */
+}
+
+.content-card {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 24px 30px;
+  min-height: 200px;
 }
 </style>

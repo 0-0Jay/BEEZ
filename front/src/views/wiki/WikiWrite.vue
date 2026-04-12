@@ -156,7 +156,6 @@ async function confirmEdit() {
 
   //신규 위키는ID생성하고, 기존위키면 기존ID 사용
   const isNewWiki = !wikiStore.wikiDetail.id;
-  // ✅ 수정 - route.params의 wikiId를 우선 사용
   const currentWikiId = isEditMode.value ? wikiId.value : (wikiStore.wikiDetail.id ?? null);
   console.log('currentWikiId:', currentWikiId); // 확인용
 
@@ -194,13 +193,18 @@ async function confirmEdit() {
     showEditModal.value = false;
     saveSuccess.value = true;
     editReason.value = '';
-
-    //입력값 초기화
     userId.value = '';
 
     setTimeout(() => {
       saveSuccess.value = false;
-    }, 3000);
+      router.push({
+        name: 'WikiDetail',
+        params: {
+          projectId: route.params.projectId,
+          wikiId: result // store에서 반환된 wikiId
+        }
+      });
+    }, 1500);
   }
 }
 
@@ -295,7 +299,9 @@ function handleCancel() {
     <!-- ① 상단 헤더 영역 -->
     <div class="flex justify-between items-end">
       <div class="header-left">
-        <h1 class="text-2xl font-bold text-[#1A1816]">WIKI</h1>
+        <h1 class="text-2xl font-bold text-[#1A1816]">
+          {{ isEditMode ? 'WIKI - 수정' : 'WIKI - 작성' }}
+        </h1>
         <input v-model="wikiStore.wikiDetail.wikiInfo" type="text" class="project-desc-input" placeholder="위키 관련 한 줄 설명을 입력하세요" />
       </div>
 
@@ -309,7 +315,7 @@ function handleCancel() {
       <div class="header-actions">
         <!-- 저장 성공 토스트 -->
         <transition name="fade">
-          <div v-if="saveSuccess" class="toast-success">편집 성공<br />위키 등록을 성공하였습니다.</div>
+          <div v-if="saveSuccess" class="toast-fixed">{{ isEditMode ? '수정되었습니다.' : '작성되었습니다.' }}<br />잠시 후 조회 페이지로 이동합니다.</div>
         </transition>
         <div class="link-form-actions">
           <button class="btn btn-cancel" @click="handleCancel">취소</button>
@@ -341,30 +347,30 @@ function handleCancel() {
         <div class="info-rows">
           <div class="info-row">
             <span class="info-label">프로젝트번호 :</span>
-            <span class="info-value status-badge">{{ projectInfo.id }}</span>
+            <span class="info-value status-badge">{{ projectInfo.id || '데이터가 없습니다' }}</span>
           </div>
 
           <div class="info-row">
             <span class="info-label">프로젝트 설명 :</span>
-            <span class="info-value status-badge">{{ projectInfo.description }}</span>
+            <span class="info-value status-badge">{{ projectInfo.description || '데이터가 없습니다' }}</span>
           </div>
 
           <div class="info-row">
             <span class="info-label">프로젝트 생성자명 :</span>
-            <span class="info-value status-badge">{{ projectInfo.userName }}</span>
+            <span class="info-value status-badge">{{ projectInfo.userName || '데이터가 없습니다' }}</span>
           </div>
 
           <div class="info-row">
             <span class="info-label">시작일 :</span>
-            <span class="info-value status-badge">{{ projectInfo.startDate ? projectInfo.startDate.replace('T', ' ').substring(0, 10) : '-' }}</span>
+            <span class="info-value status-badge">{{ projectInfo.startDate ? projectInfo.startDate.replace('T', ' ').substring(0, 10) : '데이터가 없습니다' }}</span>
           </div>
           <div class="info-row">
             <span class="info-label">종료일 :</span>
-            <span class="info-value status-badge">{{ projectInfo.endDate ? projectInfo.endDate.replace('T', ' ').substring(0, 10) : '-' }}</span>
+            <span class="info-value status-badge">{{ projectInfo.endDate ? projectInfo.endDate.replace('T', ' ').substring(0, 10) : '데이터가 없습니다' }}</span>
           </div>
           <div class="info-row">
             <span class="info-label">상태값 :</span>
-            <span class="info-value status-badge">{{ projectInfo.status }}</span>
+            <span class="info-value status-badge">{{ projectInfo.status || '데이터가 없습니다' }}</span>
           </div>
         </div>
       </div>
@@ -916,5 +922,21 @@ h6 {
 h1 {
   margin-top: 0 !important;
   margin-bottom: 0 !important;
+}
+
+/* 기존 toast-success 유지하고 아래 추가 */
+.toast-fixed {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  padding: 16px 28px;
+  border-radius: 8px;
+  font-size: 14px;
+  text-align: center;
+  z-index: 9999;
+  white-space: nowrap;
 }
 </style>
