@@ -1,10 +1,12 @@
 <script setup>
 import { useWikiStore } from '@/stores/wiki';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
 const wikiStore = useWikiStore(); //스토어 연결
 const route = useRoute();
+const router = useRouter();
+
 //스토어랑 연결
 const projectInfo = computed(() => wikiStore.projectInfo);
 const wikiDetail = computed(() => wikiStore.wikiDetail);
@@ -22,7 +24,10 @@ const relatedLinks = computed(() => {
 });
 
 // 버튼 핸들러
-const handleEdit = () => console.log('편집 페이지로 이동');
+const handleEdit = () => {
+  const { projectId, wikiId } = route.params;
+  router.push({ name: 'WikiEdit', params: { projectId, wikiId } });
+};
 const handleHistory = () => console.log('히스토리 보기');
 
 //목차 데이터를 담을 상태

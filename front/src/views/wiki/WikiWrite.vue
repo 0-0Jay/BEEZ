@@ -1,14 +1,18 @@
 <script setup>
 import { useWikiStore } from '@/stores/wiki';
-import { computed, onMounted, ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { computed, nextTick, onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 const wikiStore = useWikiStore(); //스토어 연결
 
 const saveSuccess = ref(false); // 저장여부
 const route = useRoute();
+const router = useRouter();
 const userId = ref(''); //입력받을 작성자명
 const wikiInfo = ref(''); //작성창 한줄 설명
+
+const wikiId = computed(() => route.params.wikiId ?? null);
+const isEditMode = computed(() => !!wikiId.value);
 
 //version id 별로,  wikiId별로 겹치지 않도록
 //###### 필요 없는 코드 - 정리예정
@@ -27,6 +31,23 @@ onMounted(async () => {
   const projectId = route.params.projectId;
   if (projectId) {
     await wikiStore.fetchProjectData(projectId);
+
+    if (isEditMode.value) {
+      //기존 데이터 불러오기
+      await wikiStore.fetchWikiDetail(wikiId.value);
+
+      //에디터에 기존 내용 세팅
+      editorContent.value = wikiStore.wikiDetail.content ?? '';
+      await nextTick();
+      if (editorRef.value) {
+        editorRef.value.innerHTML = editorContent.value;
+        updateTOC(editorRef.value);
+      } //링크 데이터 복원
+      const links = wikiStore.wikiDetail.links;
+      if (links) {
+        linkItems.value = typeof links === 'string' ? JSON.parse(links) : links;
+      }
+    }
   }
 });
 
@@ -275,7 +296,9 @@ function applyFormat(command, value = null) {
         </transition>
         <div class="link-form-actions">
           <button class="btn btn-cancel" @click="handleCancel">취소</button>
-          <button class="btn btn-edit" @click="handleEdit">등록</button>
+          <button class="btn btn-edit" @click="handleEdit">
+            {{ isEditMode ? '수정' : '등록' }}
+          </button>
         </div>
       </div>
     </div>
@@ -394,8 +417,9 @@ function applyFormat(command, value = null) {
       </div>
 
       <!-- 에디터 본문 -->
-      <div ref="editorRef" class="editor-body" contenteditable="true" @input="onEditorInput" @keydown="onEditorKeydown">
-        <p v-if="!editorContent" class="editor-placeholder"></p>
+      <div style="position: relative">
+        <p v-if="!editorContent" class="editor-placeholder">내용을 입력하세요.</p>
+        <div ref="editorRef" class="editor-body" contenteditable="true" @input="onEditorInput" @keydown="onEditorKeydown"></div>
       </div>
     </div>
   </div>
@@ -825,7 +849,9 @@ function applyFormat(command, value = null) {
   top: 20px;
   left: 20px;
   font-size: 15px;
+  z-index: 1;
 }
+
 /* 활성화된 버튼 스타일 (확실한 눌림 표시) */
 .toolbar-btn.is-active {
   /* 1. 배경색을 더 어둡고 푸른 계열로 바꿔서 강조 (선택사항) */

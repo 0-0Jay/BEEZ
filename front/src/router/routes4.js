@@ -15,6 +15,13 @@ const Routes4 = [
     name: 'WikiHistory',
     component: () => import('@/views/wiki/WikiHistory.vue')
   },
+
+  {
+    path: '/wiki/edit/:projectId/:wikiId',
+    name: 'WikiEdit',
+    component: () => import('@/views/wiki/WikiWrite.vue')
+  },
+
   {
     path: '/document/list/:projectId',
     name: 'DocumentList',
