@@ -107,7 +107,7 @@ const fetchProjects = async () => {
     }
   );
 
-  // 만약 현재 선택된 프로젝트가 바뀐 목록에 없다면 선택 해제 (디테일)
+  // 만약 현재 선택된 프로젝트가 바뀐 목록에 없다면 선택 해제
   if (filters.id && !projectStore.projects.some((p) => p.id === filters.id)) {
     filters.id = null;
   }

@@ -16,7 +16,9 @@ export const useProjectStore = defineStore('project', {
     },
     roles: [],
     users: [],
-    groups: []
+    groups: [],
+    logs: [],
+    logTotal: 0
   }),
   // getters
   // actions
@@ -117,14 +119,15 @@ export const useProjectStore = defineStore('project', {
       };
     },
 
-    // 프로젝트 구성원 삭제
     async deleteProjectMember(projectMemberId) {
-      await axios.delete(`/project/member/${projectMemberId}`);
+      await axios.delete(`/project/member/${projectMemberId}`, {
+        params: { projectId: this.selectedProject.id }
+      });
     },
 
     // 프로젝트 구성원 수정
     async updateProjectMember(projectMemberId, roleIds) {
-      await axios.put(`/project/member/${projectMemberId}`, { roleIds });
+      await axios.put(`/project/member/${projectMemberId}`, { roleIds, projectId: this.selectedProject.id });
     },
 
     // 역할 조회
@@ -146,6 +149,23 @@ export const useProjectStore = defineStore('project', {
     async insertProjectMember(requestBody) {
       const response = await axios.post(`/project/members`, requestBody);
       return response.data;
+    },
+
+    // 로그 목록 조회(필터링)
+    async fetchLogs(filters = {}) {
+      this.loading = true;
+      try {
+        const response = await axios.get('/log/list', {
+          params: {
+            ...filters,
+            projectId: this.selectedProject.id
+          }
+        });
+        this.logs = response.data.list;
+        this.logTotal = response.data.total;
+      } finally {
+        this.loading = false;
+      }
     }
   },
   persist: {

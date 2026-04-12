@@ -86,8 +86,8 @@ public class ProjectController {
   
   //프로젝트 구성원 삭제
   @DeleteMapping("/member/{projectMemberId}")
-  public ResponseEntity<Void> deleteProjectMember(@PathVariable String projectMemberId) {
-    projectService.deleteProjectMember(projectMemberId);
+  public ResponseEntity<Void> deleteProjectMember(@PathVariable String projectMemberId, @RequestParam String projectId) {
+    projectService.deleteProjectMember(projectMemberId, projectId);
     return ResponseEntity.ok().build();
   }
   
@@ -118,6 +118,14 @@ public class ProjectController {
     projectService.insertProjectMember(dto);
     return ResponseEntity.ok().build();
   }
-  
+
+  //로드맵 목록 조회
+  @GetMapping("/{projectId}/roadmap")
+  public ResponseEntity<List<RoadmapListResponse>> findRoadmapList(
+          @PathVariable String projectId,
+          @ModelAttribute RoadmapFilterRequest filter) {
+    filter.setProjectId(projectId);
+    return ResponseEntity.ok(projectService.findRoadmapList(filter));
+  }
   
 }

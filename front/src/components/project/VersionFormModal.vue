@@ -134,7 +134,7 @@ onMounted(async () => {
 
       <!-- 상태 -->
       <div class="flex items-start px-8 py-4">
-        <label class="form-label w-32 pt-2 shrink-0">상태 <span class="text-red-500">*</span></label>
+        <label class="form-label w-32 pt-2 shrink-0">상태<span class="text-red-500">*</span></label>
         <Select v-model="form.status" :options="statusOptions" optionLabel="name" optionValue="id" placeholder="선택" class="form-input w-50" />
       </div>
 

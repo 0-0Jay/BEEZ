@@ -39,6 +39,7 @@
            com_value AS id,
            com_name AS name
     FROM common_code
+    WHERE is_use = 1
   </select>
   
   <select id="findVersionList" resultType="VersionResponse">
