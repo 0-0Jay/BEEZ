@@ -131,6 +131,9 @@ function closeEditModal() {
 
 //--------------------------------------------------------------
 async function confirmEdit() {
+  console.log('isEditMode:', isEditMode.value);
+  console.log('wikiStore.wikiDetail.id:', wikiStore.wikiDetail.id);
+  console.log('wikiId (route):', wikiId.value);
   if (!editReason.value.trim()) return;
 
   //## 필요 없는 코드
@@ -153,7 +156,9 @@ async function confirmEdit() {
 
   //신규 위키는ID생성하고, 기존위키면 기존ID 사용
   const isNewWiki = !wikiStore.wikiDetail.id;
-  const currentWikiId = isNewWiki ? null : wikiStore.wikiDetail.id;
+  // ✅ 수정 - route.params의 wikiId를 우선 사용
+  const currentWikiId = isEditMode.value ? wikiId.value : (wikiStore.wikiDetail.id ?? null);
+  console.log('currentWikiId:', currentWikiId); // 확인용
 
   const commentRegex = new RegExp('<!--v-if-->', 'g'); // 에디터로 본문 작성하면 생기는 주석 삭제하고 DB에 저장하려함
   const cleanContent = editorContent.value ? editorContent.value.replace(commentRegex, '') : '';
@@ -270,6 +275,18 @@ function applyFormat(command, value = null) {
   }
 
   onEditorInput({ target: editorRef.value });
+}
+
+// WikiWrite.vue script에 추가
+function handleCancel() {
+  const projectId = route.params.projectId;
+  if (isEditMode.value) {
+    // 편집 모드면 → 상세 페이지로 돌아가기
+    router.push({ name: 'WikiDetail', params: { projectId, wikiId: wikiId.value } });
+  } else {
+    // 신규 작성 모드면 → 이전 페이지로
+    router.back();
+  }
 }
 </script>
 

@@ -11,7 +11,7 @@ const Routes4 = [
     component: () => import('@/views/wiki/WikiDetail.vue')
   },
   {
-    path: '/wiki/history/:projectId/:wikiId/:version',
+    path: '/wiki/history/:projectId/:wikiId',
     name: 'WikiHistory',
     component: () => import('@/views/wiki/WikiHistory.vue')
   },

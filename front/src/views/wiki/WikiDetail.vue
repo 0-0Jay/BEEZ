@@ -28,7 +28,10 @@ const handleEdit = () => {
   const { projectId, wikiId } = route.params;
   router.push({ name: 'WikiEdit', params: { projectId, wikiId } });
 };
-const handleHistory = () => console.log('히스토리 보기');
+const handleHistory = () => {
+  const { projectId, wikiId } = route.params;
+  router.push({ name: 'WikiHistory', params: { projectId, wikiId } });
+};
 
 //목차 데이터를 담을 상태
 const tocList = ref([]);

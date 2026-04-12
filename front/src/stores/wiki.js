@@ -43,14 +43,24 @@ export const useWikiStore = defineStore('wiki', {
 
     //위키 신규 등록 또는 편집 저장
     async saveWiki(saveData) {
-      const response = await axios.post('/wiki/insert', saveData);
-      this.wikiDetail.content = saveData.versionRequest.content;
-      //저장 후 상태 업데이트
-      if (saveData.versionRequest) {
-        this.wikiDetail.content = saveData.versionRequest.content;
-        this.wikiDetail.id = saveData.wikiRequest.id; // 위키 ID상태 저장
+      const isNew = !saveData.wikiRequest.id; // wikiId 없으면 신규
+
+      if (isNew) {
+        // 신규 → insert
+        const response = await axios.post('/wiki/insert', saveData);
+        if (saveData.versionRequest) {
+          this.wikiDetail.content = saveData.versionRequest.content;
+          this.wikiDetail.id = saveData.wikiRequest.id;
+        }
+        return response.data;
+      } else {
+        // 수정 → update
+        const response = await axios.post('/wiki/update', saveData);
+        if (saveData.versionRequest) {
+          this.wikiDetail.content = saveData.versionRequest.content;
+        }
+        return response.data;
       }
-      return response.data;
     },
 
     // 특정 위키의 본문 내용 가져오기
@@ -83,9 +93,37 @@ export const useWikiStore = defineStore('wiki', {
       } finally {
         this.loading = false;
       }
+    },
+    // fetchWikiDetail 아래에 추가
+    async fetchWikiByProject(projectId) {
+      this.loading = true;
+      try {
+        const response = await axios.get(`/wiki/project/${projectId}/wiki`);
+        return response.data; // { id, ... } 또는 null
+      } catch (error) {
+        // 위키가 없을 때 404로 오는 경우 null 반환
+        if (error.response && error.response.status === 404) {
+          return null;
+        }
+        console.error('위키 존재 여부 확인 실패:', error);
+        return null;
+      } finally {
+        this.loading = false;
+      }
+    },
+    async fetchWikiVersionList(wikiId) {
+      this.loading = true;
+      try {
+        const response = await axios.get(`/wiki/history/${wikiId}`);
+        return response.data;
+      } catch (error) {
+        console.error('위키 히스토리 조회 실패:', error);
+        return [];
+      } finally {
+        this.loading = false;
+      }
     }
-  },
-
+  }, //#### action end
   // 새로고침 시 데이터 유지를 위한 persist 설정
   persist: {
     storage: sessionStorage
