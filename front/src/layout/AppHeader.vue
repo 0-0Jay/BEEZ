@@ -1,14 +1,17 @@
 <script setup>
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import Notification from '@/components/notification/NotificationComponent.vue';
+import UserDetailModal from '@/components/users/UserDetailModal.vue';
 import { useAuthStore } from '@/stores/auth';
 import { useProjectStore } from '@/stores/project';
+import { useToast } from 'primevue';
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 const projectStore = useProjectStore();
 const authStore = useAuthStore();
 const router = useRouter();
+const toast = useToast();
 
 const selectedProject = computed(() => projectStore.selectedProject);
 
@@ -28,6 +31,32 @@ const handleLogoutConfirm = () => {
   visible.value = false;
   router.push('/');
 };
+
+const isModalVisible = ref(false);
+
+const openMyProfile = () => {
+  if (authStore.user) {
+    isModalVisible.value = true;
+  }
+};
+
+const handleUserSaved = () => {
+  isModalVisible.value = false;
+
+  // 로그아웃
+  authStore.logout();
+  projectStore.selectedProject = null;
+
+  router.push('/');
+
+  toast.add({
+    severity: 'info',
+    summary: '재로그인 필요',
+    detail: '보안을 위해 다시 로그인해 주세요.',
+    life: 3000,
+    closable: false
+  });
+};
 </script>
 
 <template>
@@ -43,7 +72,7 @@ const handleLogoutConfirm = () => {
 
     <!-- 우측 -->
     <div class="flex items-center gap-4 pr-10">
-      <Button icon="pi pi-user" :label="authStore.user?.name || '사용자명'" plain text size="large" />
+      <Button icon="pi pi-user" :label="authStore.user?.name || '사용자명'" plain text size="large" @click="openMyProfile" />
       <div class="relative inline-flex">
         <Notification :user-id="userId" />
       </div>
@@ -54,6 +83,8 @@ const handleLogoutConfirm = () => {
   <ConfirmDialog v-model:visible="visible" confirmLabel="확인" @confirm="handleLogoutConfirm">
     <span class="text-gray-700 font-medium">{{ confirmMsg }}</span>
   </ConfirmDialog>
+
+  <UserDetailModal v-model:visible="isModalVisible" :user-data="authStore.user" @saved="handleUserSaved"></UserDetailModal>
 </template>
 
 <style scope>

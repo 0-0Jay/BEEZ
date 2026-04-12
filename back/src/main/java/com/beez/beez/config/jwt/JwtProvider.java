@@ -53,6 +53,7 @@ public class JwtProvider {
     return Jwts.builder()
       .subject(user.getId()) // 사원번호를 식별
       .claim("name", user.getName())
+      .claim("email", user.getEmail())
       .claim("auth", authorities) // 어떤 권한을 가졌는지 토큰에 넣음
       .claim("role", user.getRole()) // 역할
       .issuedAt(now) // 발급시간

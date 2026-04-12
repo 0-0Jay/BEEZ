@@ -1,4 +1,5 @@
 <script setup>
+import { useAuthStore } from '@/stores/auth';
 import { useUsersStore } from '@/stores/users';
 import { useToast } from 'primevue';
 import { reactive, ref, watch } from 'vue';
@@ -10,13 +11,14 @@ const props = defineProps({
 
 const emit = defineEmits(['update:visible', 'saved']);
 const usersStore = useUsersStore();
+const authStore = useAuthStore();
 const toast = useToast();
 
 const userForm = reactive({
   id: '',
   name: '',
   email: '',
-  status: 'F0',
+  status: 'H1',
   newPassword: '',
   confirmPassword: ''
 });
@@ -38,7 +40,7 @@ watch(
       userForm.id = props.userData.id;
       userForm.name = props.userData.name;
       userForm.email = props.userData.email;
-      userForm.status = props.userData.status || 'F0';
+      userForm.status = props.userData.status || 'H1';
       userForm.newPassword = '';
       userForm.confirmPassword = '';
       submitted.value = false;
@@ -116,7 +118,7 @@ const validate = () => {
     errors.email = '이메일 형식이 올바르지 않습니다.';
     isValid = false;
   } else if (!isEmailChecked.value) {
-    // 이메일 형식은 맞는데 중복체크를 안 한 경우
+    // 중복체크를 안 한 경우
     isValid = false;
   }
 
@@ -148,23 +150,31 @@ const onSave = async () => {
   }
 
   try {
-    // TODO: 실제 API 호출 (newPassword가 있으면 포함해서 전송)
-    // await usersStore.updateUser(userForm);
+    const payload = {
+      name: userForm.name,
+      email: userForm.email,
+      status: userForm.status,
+      newPassword: userForm.newPassword
+    };
+
+    await usersStore.updateUser(payload, userForm.id);
 
     toast.add({
       severity: 'success',
       summary: '수정 완료',
-      detail: '정보가 수정되었습니다.',
+      detail: '사용자 정보 수정이 완료되었습니다.',
       life: 3000,
       closable: false
     });
     emit('saved');
     close();
   } catch (err) {
+    const errorMsg = err.response?.data?.message || err.response?.data || '사용자 정보 수정 중 오류가 발생했습니다.';
+
     toast.add({
       severity: 'error',
       summary: '수정 실패',
-      detail: '수정 중 오류 발생',
+      detail: errorMsg,
       life: 3000,
       closable: false
     });
@@ -216,10 +226,10 @@ const onSave = async () => {
       <div class="flex items-center justify-between p-4 rounded-xl border border-stone-200 bg-stone-50 mt-2">
         <div class="flex flex-col">
           <span class="text-sm font-bold text-stone-900">계정 활성화 상태</span>
-          <span class="text-xs text-stone-400 font-medium">현재: {{ userForm.status === 'F0' ? '활성' : '비활성' }}</span>
+          <span class="text-xs text-stone-400 font-medium">현재: {{ userForm.status === 'H1' ? '활성' : '비활성' }}</span>
         </div>
         <div class="flex items-center gap-3">
-          <ToggleSwitch v-model="userForm.status" trueValue="F0" falseValue="F1" />
+          <ToggleSwitch v-model="userForm.status" trueValue="H1" falseValue="H0" />
         </div>
       </div>
     </div>
@@ -251,6 +261,10 @@ const onSave = async () => {
 
 :deep(.p-inputtext.p-invalid) {
   border-color: #e8920e !important;
+}
+
+:deep(.p-inputtext.p-invalid::placeholder) {
+  color: #736f68;
 }
 
 :deep(.p-password),

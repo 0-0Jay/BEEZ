@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.beez.beez.gits.mapper.GitMapper">
+
+  <select id="getNextPk" resultType="string">
+    SELECT BEEZ.generate_pk_auto(#{tableName}) FROM dual
+  </select>
+
+  <insert id="insertRepository">
+    INSERT INTO repositories(id,
+                             project_id,
+                             repo_url,
+                             local_path)
+                     VALUES(#{id},
+                            #{projectId},
+                            #{repoUrl},
+                            #{localPath})
+  </insert>
+
+  <update id="updateCommitLog">
+    MERGE INTO git_commit_logs g
+    USING DUAL
+      ON (g.commit_sha = #{commitSha} AND g.task_id = #{taskId})
+    WHEN NOT MATCHED THEN
+      INSERT(commit_sha, repo_id, task_id, message, author, commit_date)
+      VALUES(#{commitSha}, #{repoId}, #{taskId}, #{message}, #{author}, #{commitDate})
+  </update>
+
+  <select id="selectCommitsByTaskId" resultType="com.beez.beez.gits.dto.GitCommitResponse">
+    SELECT commit_sha, message, author, commit_date
+    FROM git_commit_logs
+    WHERE task_id = #{taskId}
+    ORDER BY commit_date DESC
+  </select>
+
+</mapper>
