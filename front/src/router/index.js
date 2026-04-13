@@ -30,7 +30,7 @@ const router = createRouter({
         {
           path: '/main',
           name: 'dashboard',
-          component: () => import('@/views/Dashboard.vue')
+          component: () => import('@/views/dashboard/MainDashBoardPage.vue')
         },
         {
           path: '/project/list',
