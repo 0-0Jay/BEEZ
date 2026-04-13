@@ -110,7 +110,7 @@ const toggleAdminMenu = () => {
           {{ selectedProject.title }}
         </div>
         <div class="mt-1 space-y-0.5">
-          <router-link to="" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
+          <router-link to="/project" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
             <span>개요</span>
           </router-link>
           <router-link
@@ -155,6 +155,13 @@ const toggleAdminMenu = () => {
           </router-link>
           <router-link
             :to="`/project/${selectedProject.id}/log`"
+            class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between"
+          >
+            <span>로그</span>
+          </router-link>
+          <router-link
+            v-if="authStore.user?.role.includes('ROLE0001') || authStore.user?.role.includes('ROLE0002')"
+            :to="`/project/setting/${selectedProject.id}`"
             class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between"
           >
             <span>로그</span>

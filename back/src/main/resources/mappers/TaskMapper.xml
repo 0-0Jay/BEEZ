@@ -10,6 +10,7 @@
            t.category,
            t.workflow,
            t.priority,
+           t.planned_start,
            t.planned_end,
            CASE
              WHEN EXISTS (
@@ -43,12 +44,20 @@
     WHERE is_use = 1
   </select>
   
-  <select id="findVersionList" resultType="VersionResponse">
-    SELECT v.id, v.name, p.id AS default_version
-    FROM version v
-    LEFT JOIN project p ON p.default_version_id = v.id
-    WHERE v.project_id = #{projectId} AND v.is_delete = 'F0' AND v.status = 'N1'
+  <select id="findVersionList" statementType="CALLABLE">
+    {
+      CALL proc_find_version(
+      #{projectId,     mode=IN,  jdbcType=VARCHAR},
+      #{version,       mode=OUT, jdbcType=CURSOR,  javaType=java.sql.ResultSet, resultMap=versionResultMap,  typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler}
+           )
+      }
   </select>
+  
+  <resultMap id="versionResultMap" type="com.beez.beez.task.dto.VersionResponse">
+    <result property="id" column="id" />
+    <result property="name" column="name" />
+    <result property="defaultVersion" column="default_version" />
+  </resultMap>
   
   <select id="insertTask" parameterType="TaskRequest" statementType="CALLABLE">
     {

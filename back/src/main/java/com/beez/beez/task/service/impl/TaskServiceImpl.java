@@ -83,7 +83,9 @@ public class TaskServiceImpl implements TaskService {
   // 버전 목록
   @Override
   public List<VersionResponse> findVersionList(String projectId) {
-    return taskMapper.findVersionList(projectId);
+    List<VersionResponse> version = new ArrayList<>();
+    taskMapper.findVersionList(projectId, version);
+    return version;
   }
   
   // 일감 등록 / 복사
@@ -92,7 +94,7 @@ public class TaskServiceImpl implements TaskService {
     List<FileDetailRequest> fileDetails = fileService.saveFile(files);
     task.setFileDetails(fileDetails);
     taskMapper.insertTask(task);
-    
+    taskMapper.calcSubProgress(task.getId());
     // 복사관계 연결
     if (Boolean.TRUE.equals(task.getLinkCopied())) {
        insertTaskRelation(TaskRelationRequest.builder()
@@ -126,6 +128,7 @@ public class TaskServiceImpl implements TaskService {
     List<FileDetailRequest> fileDetails = fileService.saveFile(files);
     task.setFileDetails(fileDetails);
     taskMapper.updateTask(task);
+    taskMapper.calcSubProgress(task.getId());
     
     // 반려 또는 완료일경우 담당자에게 알림
     boolean isWorkflowChanged = task.getJournals().stream().anyMatch(journal -> "workflow".equals(journal.getFieldName()));
@@ -187,6 +190,8 @@ public class TaskServiceImpl implements TaskService {
   @Override
   public void deleteTask(String id) {
     taskMapper.deleteTask(id);
+    // 진척도 계산
+    taskMapper.calcSubProgress(id);
   }
   
   // 소요시간 기록
@@ -194,7 +199,7 @@ public class TaskServiceImpl implements TaskService {
   public void insertTaskTime(TaskTimeRequest taskTimeRequest) {
     taskMapper.insertTaskTime(taskTimeRequest);
     // 진척도 계산
-    taskMapper.calcSubProgress(taskTimeRequest.getTaskId(), taskTimeRequest.getProgress());
+    taskMapper.calcSubProgress(taskTimeRequest.getTaskId());
   }
   
   // 일감 연결 끊기
