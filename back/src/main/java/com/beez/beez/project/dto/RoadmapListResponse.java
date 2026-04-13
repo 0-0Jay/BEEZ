@@ -13,11 +13,13 @@ public class RoadmapListResponse {
   private Date endDate;
   private String description;
   private String projectId;
+  private String projectName;
 
   // 일감 정보
   private String taskId;
   private String taskTitle;
   private String taskType;
+  private String taskTypeName;
   private String taskWorkflow;
   private String taskStatus;
   private Integer progress;
