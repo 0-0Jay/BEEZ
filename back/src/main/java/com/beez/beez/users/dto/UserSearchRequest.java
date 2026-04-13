@@ -13,4 +13,7 @@ public class UserSearchRequest {
   private LocalDate startDate;
   @DateTimeFormat(pattern = "yyyy-MM-dd")
   private LocalDate endDate;
+
+  // 구성원 등록 모달용
+  private String excludeRoleId;
 }

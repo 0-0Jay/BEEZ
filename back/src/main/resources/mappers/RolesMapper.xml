@@ -40,7 +40,7 @@
 
   <!-- 프로젝트별 역할 권한 조회 -->
   <select id="findPermissionsByProject" resultType="String">
-    SELECT pm.perm_id
+    SELECT DISTINCT pm.perm_id
     FROM   role_mapping rm
     JOIN   project_member pmbr ON pmbr.id = rm.member_id
     JOIN   permission_mapping pm ON rm.role_id = pm.role_id

@@ -1,4 +1,5 @@
 <script setup>
+import UserDetailModal from '@/components/users/UserDetailModal.vue';
 import UserFormModal from '@/components/users/UserFormModal.vue';
 import { useUsersStore } from '@/stores/users';
 import { computed, onMounted, reactive, ref } from 'vue';
@@ -6,7 +7,9 @@ import { computed, onMounted, reactive, ref } from 'vue';
 const usersStore = useUsersStore();
 
 const loading = ref(false);
-const visible = ref(false);
+const showAddModal = ref(false);
+const showEditModal = ref(false);
+const selectedUser = ref(null);
 const emit = defineEmits(['selectProject']); // 콘솔창에 경고 떠서 넣음
 
 const search = reactive({
@@ -52,8 +55,15 @@ const formatDate = (date) => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
+// 사용자 등록 모달 열기
 const openUserFormModal = () => {
-  visible.value = true;
+  showAddModal.value = true;
+};
+
+// 사용자 수정 모달 열기 (행 클릭 이벤트)
+const onRowClick = (event) => {
+  selectedUser.value = { ...event.data }; // 클릭한 행의 데이터 복사
+  showEditModal.value = true;
 };
 </script>
 
@@ -91,7 +101,17 @@ const openUserFormModal = () => {
 
     <!-- 테이블 -->
     <div class="bg-white rounded-xl shadow-sm border border-[#5B6E96] overflow-hidden mb-6">
-      <DataTable :value="usersStore.userList" :loading="loading" dataKey="id" :rowHover="true" paginator :rows="10" paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown">
+      <DataTable
+        :value="usersStore.userList"
+        :loading="loading"
+        dataKey="id"
+        :rowHover="true"
+        paginator
+        :rows="10"
+        @row-click="onRowClick"
+        class="cursor-pointer"
+        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+      >
         <template #empty>
           <div class="flex flex-col items-center justify-center py-10">
             <i class="pi pi-search text-4xl text-[#C7C7C2] mb-3"></i>
@@ -99,8 +119,21 @@ const openUserFormModal = () => {
           </div>
         </template>
 
-        <Column field="id" header="사원번호" headerClass="table-header" style="width: 160px" />
-        <Column field="name" header="이름" headerClass="table-header" style="width: 120px" />
+        <Column field="id" header="사원번호" headerClass="table-header" style="width: 160px">
+          <template #body="{ data }">
+            <span class="cursor-pointer hover:underline font-medium">
+              {{ data.id }}
+            </span>
+          </template>
+        </Column>
+
+        <Column field="name" header="이름" headerClass="table-header" style="width: 120px">
+          <template #body="{ data }">
+            <span class="cursor-pointer hover:underline">
+              {{ data.name }}
+            </span>
+          </template>
+        </Column>
         <Column field="email" header="이메일" headerClass="table-header" style="width: 220px" />
 
         <Column header="관리자 여부" headerClass="table-header" style="width: 120px">
@@ -124,7 +157,8 @@ const openUserFormModal = () => {
     </div>
   </div>
 
-  <UserFormModal v-model:visible="visible" />
+  <UserFormModal v-model:visible="showAddModal" @saved="findUsers" />
+  <UserDetailModal v-model:visible="showEditModal" :user-data="selectedUser" @saved="findUsers" />
 </template>
 
 <style scoped>

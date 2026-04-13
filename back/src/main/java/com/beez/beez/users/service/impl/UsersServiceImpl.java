@@ -3,11 +3,14 @@ package com.beez.beez.users.service.impl;
 import com.beez.beez.users.dto.UserListResponse;
 import com.beez.beez.users.dto.UserRegisterRequest;
 import com.beez.beez.users.dto.UserSearchRequest;
+import com.beez.beez.users.dto.UserUpdateRequest;
 import com.beez.beez.users.mapper.UsersMapper;
 import com.beez.beez.users.repository.Users;
 import com.beez.beez.users.service.MailService;
 import com.beez.beez.users.service.UsersService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -81,6 +84,31 @@ public class UsersServiceImpl implements UsersService {
 
     // 메일 발송
     mailService.sendWelcomeEmail(user.getEmail(), dto.getName(), rawPassword);
+  }
+
+  @Override
+  public void updateUser(UserUpdateRequest dto, String id) {
+    // 로그인 정보 가져오기
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    String loginId = auth.getName();
+
+    // 관리자인지
+    boolean isAdmin = auth.getAuthorities().stream()
+      .anyMatch(a->a.getAuthority().equals("ROLE0001"));
+
+    if(!loginId.equals(id) && !isAdmin){
+      throw new RuntimeException("수정 권한이 없습니다.");
+    }
+
+    // 비밀번호가 입력되었을 때만 암호화
+    if (dto.getNewPassword() != null && !dto.getNewPassword().trim().isEmpty()) {
+      String encodedPw = passwordEncoder.encode(dto.getNewPassword());
+      dto.setNewPassword(encodedPw);
+    } else {
+      dto.setNewPassword(null);
+    }
+
+    usersMapper.updateUser(dto, id);
   }
 
 }

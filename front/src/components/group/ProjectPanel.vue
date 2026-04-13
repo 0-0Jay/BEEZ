@@ -1,49 +1,88 @@
-<!-- ProjectPanel.vue -->
 <script setup>
 import { useGroupStore } from '@/stores/group';
-import { ref } from 'vue';
+import { useRolesStore } from '@/stores/roles';
+import { onMounted, ref } from 'vue';
+import ProjectAddModal from './ProjectAddModal.vue';
 
 const groupStore = useGroupStore();
+const roleStore = useRolesStore();
+const visible = ref(false);
 
-const roleOptions = ['개발자', '디자이너', 'QA'];
-const confirmVisible = ref(false);
-const pendingDeleteId = ref(null);
+const roleOptions = ref([]);
+const isLoaded = ref(false);
 
-const openDeleteConfirm = (id) => {
-  pendingDeleteId.value = id;
-  confirmVisible.value = true;
-};
-
-const onDeleteConfirm = () => {
-  groupStore.removeProject(pendingDeleteId.value);
-  pendingDeleteId.value = null;
-  confirmVisible.value = false;
-};
+onMounted(async () => {
+  try {
+    await roleStore.findRoles();
+    if (roleStore.roleList) {
+      roleOptions.value = roleStore.roleList.map((role) => ({
+        name: role.name,
+        id: role.id
+      }));
+      isLoaded.value = true;
+    }
+  } catch (error) {
+    console.error('역할 목록 로드 실패:', error);
+  }
+});
 </script>
 
 <template>
   <div class="border border-[#5B6E96] rounded-xl p-6 h-[600px] overflow-y-auto">
     <div class="flex justify-between items-center border-b border-[#C7C7C2] pb-3 mb-4">
       <h2 class="text-sm font-medium text-[#1A1816]">프로젝트</h2>
-      <Button label="프로젝트 추가" icon="pi pi-plus" size="small" :style="{ background: '#2D8FAD', borderColor: '#2D8FAD' }" />
+      <Button label="프로젝트 추가" icon="pi pi-plus" size="medium" :style="{ background: '#2D8FAD', borderColor: '#2D8FAD' }" @click="visible = true" />
     </div>
 
-    <div class="flex flex-col items-center justify-center h-48">
-      <i class="pi pi-folder text-3xl text-[#C7C7C2] mb-2" />
-      <p class="text-xs text-[#6B6B63]">추가된 프로젝트가 없습니다.</p>
+    <div v-if="groupStore.selectedProjects.length === 0" class="flex flex-col items-center justify-center h-48 text-[#6B6B63]">
+      <i class="pi pi-folder text-3xl mb-2" />
+      <p class="text-xs">추가된 프로젝트가 없습니다.</p>
     </div>
 
-    <div class="grid grid-cols-2 gap-2">
-      <div v-for="project in groupStore.selectedProjects" :key="project.id" class="border border-[#E0E0DA] rounded-lg p-3 relative">
-        <button class="absolute top-2 right-2 text-[#6B6B63] hover:text-red-500 text-base leading-none" @click="openDeleteConfirm(project.id)">×</button>
-        <p class="text-xs font-medium text-[#1A1816] mb-2">{{ project.name }}</p>
-        <label class="block text-[10px] text-[#6B6B63] mb-1">역할</label>
-        <Select :modelValue="project.role" :options="roleOptions" class="w-full text-xs" @update:modelValue="groupStore.updateProjectRole(project.id, $event)" />
+    <div v-else class="grid grid-cols-2 gap-2">
+      <div v-for="project in groupStore.selectedProjects" :key="project.id" class="border border-[#E0E0DA] rounded-lg p-3 relative bg-white">
+        <button class="absolute top-2 right-2 text-[#6B6B63] hover:text-red-500" @click="groupStore.removeProject(project.id)">×</button>
+
+        <p class="text-xs font-medium text-[#1A1816] mb-2 truncate" :title="project.title">
+          {{ project.title }}
+        </p>
+
+        <label class="block text-[10px] text-[#6B6B63] mb-1">역할(다중 선택 가능)</label>
+        <MultiSelect v-if="isLoaded" v-model="project.role" :options="roleOptions" optionLabel="name" optionValue="id" placeholder="역할 선택" display="chip" :maxSelectedLabels="999" class="w-full text-xs custom-multi" />
+        <div v-else class="h-8 bg-stone-100 animate-pulse rounded"></div>
       </div>
     </div>
   </div>
 
-  <ConfirmDialog v-model:visible="confirmVisible" confirmLabel="삭제" @confirm="onDeleteConfirm">
-    <span class="text-gray-700 font-medium">해당 프로젝트를 삭제하시겠습니까?</span>
-  </ConfirmDialog>
+  <ProjectAddModal v-model:visible="visible" />
 </template>
+
+<style scoped>
+:deep(.custom-multi .p-multiselect-label) {
+  padding: 0.25rem;
+}
+
+:deep(.p-multiselect) {
+  border-radius: 8px;
+}
+
+:deep(.p-multiselect:hover) {
+  border-color: #c8c4b8;
+}
+
+:deep(.p-multiselect.p-focus) {
+  border-color: #f5a623;
+  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.15);
+}
+
+:deep(.p-multiselect-chip) {
+  background-color: #fef3c7;
+  color: #92400e;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+:deep(.p-multiselect.p-invalid) {
+  border-color: #e8920e;
+}
+</style>

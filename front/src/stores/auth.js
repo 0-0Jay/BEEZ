@@ -9,6 +9,7 @@ export const useAuthStore = defineStore('auth', {
     user: {
       id: '',
       name: '',
+      email: '',
       role: '',
       authorities: []
     } // 사용자 정보
@@ -40,14 +41,12 @@ export const useAuthStore = defineStore('auth', {
           this.user = {
             id: decoded.sub,
             name: decoded.name,
+            email: decoded.email,
             authorities: decoded.auth ? decoded.auth.split(',') : [],
             role: decoded.role
           };
 
-          // console.log(this.user);
-
-          // localStorage.setItem('accessToken', token);
-          // localStorage.setItem('user', JSON.stringify(this.user));
+          console.log(this.user.authorities);
           return true;
         }
       } catch (error) {

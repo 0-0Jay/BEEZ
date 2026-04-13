@@ -18,8 +18,11 @@ public class ArrayTypeHandler implements TypeHandler<List<String>> {
   public void setParameter(PreparedStatement ps, int i,
                            List<String> ids, JdbcType jdbcType) throws SQLException {
     OracleConnection conn = ps.getConnection().unwrap(OracleConnection.class);
-    Object[] data = (ids == null || ids.isEmpty()) ? new Object[0] : ids.toArray();
-    ps.setArray(i, conn.createOracleArray("USER_ID_TAB", data));
+    if (ids == null || ids.isEmpty()) {
+      ps.setNull(i, java.sql.Types.ARRAY, "USER_ID_TAB");
+    } else {
+      ps.setArray(i, conn.createOracleArray("USER_ID_TAB", ids.toArray()));
+    }
   }
 
   @Override public List<String> getResult(ResultSet rs, String col) { return null; }

@@ -34,6 +34,11 @@ export const useUsersStore = defineStore('users', {
     async insertUser(payload) {
       await axios.post('/users/create', payload);
       // console.log(response);
+    },
+
+    // 사용자 수정
+    async updateUser(payload, id) {
+      await axios.put(`/user/${id}`, payload);
     }
   }
   // persist: true

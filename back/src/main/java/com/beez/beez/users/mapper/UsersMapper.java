@@ -1,10 +1,8 @@
 package com.beez.beez.users.mapper;
 
-import com.beez.beez.users.dto.PasswordResetRequest;
-import com.beez.beez.users.dto.UserListResponse;
-import com.beez.beez.users.dto.UserSearchRequest;
-import com.beez.beez.users.dto.UserTokenDto;
+import com.beez.beez.users.dto.*;
 import com.beez.beez.users.repository.Users;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 import java.util.Map;
@@ -23,6 +21,9 @@ public interface UsersMapper {
 
   // 사용자 등록
   void insertUser(Users user);
+
+  // 사용자 정보 수정
+  void updateUser(@Param("dto") UserUpdateRequest dto, String id);
 
   // 비밀번호 재설정 정보 조회
   UserListResponse findUserForPasswordReset(PasswordResetRequest dto);
