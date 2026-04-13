@@ -62,9 +62,9 @@ const projectStats = computed(() => [
 ]);
 
 // ──────────────────────── 반응형 데이터 ────────────────────────
-const projects = computed(() => mapProjects(dashboard.value.projectList).sort((a, b) => a.id - b.id));
-const myTasks = computed(() => mapTasks(dashboard.value.taskList).sort((a, b) => a.id - b.id));
-const memos = computed(() => mapMemos(dashboard.value.memoList).sort((a, b) => a.id - b.id));
+const projects = computed(() => mapProjects(dashboard.value?.projectList).sort((a, b) => a.id - b.id));
+const myTasks = computed(() => mapTasks(dashboard.value?.taskList).sort((a, b) => a.id - b.id));
+const memos = computed(() => mapMemos(dashboard.value?.memoList).sort((a, b) => a.id - b.id));
 
 // ──────────────────────── 일감 상태 ────────────────────────
 const statusOrder = ['신규', '실행', '해결', '완료', '반려'];
