@@ -16,14 +16,14 @@ const wikiInfo = ref(''); //작성창 한줄 설명
 const wikiId = computed(() => route.params.wikiId ?? null);
 const isEditMode = computed(() => !!wikiId.value);
 
-//version id 별로,  wikiId별로 겹치지 않도록
-//###### 필요 없는 코드 - 정리예정
-const generateId = (prefix) => {
-  const now = new Date();
-  const timestamp =
-    now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0') + String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0') + String(now.getSeconds()).padStart(2, '0');
-  return `${prefix}_${timestamp}`;
-};
+const isSameContent = computed(() => {
+  if (!isEditMode.value) return false; // 신규 작성은 비교 불필요
+  const originalContent = (wikiStore.wikiDetail.content ?? '').replace(/<!--v-if-->/g, '').trim();
+  const currentContent = (editorContent.value ?? '').replace(/<!--v-if-->/g, '').trim();
+  return originalContent === currentContent;
+});
+
+const showSameContentModal = ref(false);
 
 //스토어랑 연결
 const projectInfo = computed(() => wikiStore.projectInfo);
@@ -49,6 +49,9 @@ onMounted(async () => {
       if (links) {
         linkItems.value = typeof links === 'string' ? JSON.parse(links) : links;
       }
+    } else {
+      // 신규 작성 시 스토어 초기화
+      wikiStore.wikiDetail = {};
     }
   }
 });
@@ -68,6 +71,13 @@ function validateForm() {
 function handleEdit() {
   // 작성자명 안쓰면 안되고 쓰면 모달창 출력
   if (!validateForm()) return;
+
+  // 수정 모드이고 본문 내용이 동일하면 경고 모달 출력
+  if (isEditMode.value && isSameContent.value) {
+    showSameContentModal.value = true;
+    return;
+  }
+
   showEditModal.value = true;
 }
 //--------------------------------------------------
@@ -83,26 +93,38 @@ function onEditorInput(e) {
 }
 
 function updateTOC(container) {
-  // 목차 추출로직
-  // 에디터 내의 h1, h2, h3 태그만 추출
-  const headings = container.querySelectorAll('h2, h3'); //h1은 일부러 제외함
+  const headings = container.querySelectorAll('h2, h3');
   const tempToc = [];
+  let h2Count = 0;
+  let h3Count = 0;
 
   headings.forEach((heading, index) => {
-    // 목차 클릭 시 이동을 위해 ID가 없으면 생성
-    if (!heading.id) heading.id = `section-${index}`;
+    const id = `section-${index}`;
+    heading.setAttribute('id', id);
 
-    tempToc.push({
-      //id부여
-      id: heading.id,
-      title: heading.innerText,
-      level: heading.tagName // 'H1', 'H2' 등
-    });
+    const rawTitle = heading.innerText;
+    const cleanTitle = rawTitle.replace(/^[\d.]+\s*/, '').trim();
+
+    if (heading.tagName === 'H2') {
+      h2Count++;
+      h3Count = 0;
+      tempToc.push({ id, title: cleanTitle, number: `${h2Count}.`, sub: [] });
+    } else if (heading.tagName === 'H3') {
+      h3Count++;
+      const number = `${h2Count}.${h3Count}`;
+      if (tempToc.length > 0) {
+        tempToc[tempToc.length - 1].sub.push({ id, title: cleanTitle, number });
+      } else {
+        tempToc.push({ id, title: cleanTitle, number, sub: [] });
+      }
+    }
   });
 
-  tocItems.value = tempToc; //목차 리스트 반영
+  tocItems.value = tempToc;
 }
+
 //----------------------------------------------------
+
 // 링크
 const linkItems = ref([
   { title: '', url: '' },
@@ -139,26 +161,7 @@ async function confirmEdit() {
   console.log('wikiId (route):', wikiId.value);
   if (!editReason.value.trim()) return;
 
-  //## 필요 없는 코드
-  //1. 버전 번호 계산 로직
-  let nextVersion = '1.0'; //기본값 최초 생성시
-
-  // 기존 버전 이름 있는지 확인
-  if (wikiStore.wikiDetail && wikiStore.wikiDetail.versionName) {
-    const currentName = wikiStore.wikiDetail.versionName;
-    const versionMatch = currentName.match(/v(\d+\.\d+)/); // 숫자 추출
-
-    if (versionMatch) {
-      const currentNum = parseFloat(versionMatch[1]);
-      nextVersion = (currentNum + 0.1).toFixed(1);
-    }
-  }
-  //## 필요 없는 코드
-  const finalVersionName = `${projectInfo.value.title} v${nextVersion}`;
-  const newVersionId = generateId('VER');
-
   //신규 위키는ID생성하고, 기존위키면 기존ID 사용
-  const isNewWiki = !wikiStore.wikiDetail.id;
   const currentWikiId = isEditMode.value ? wikiId.value : (wikiStore.wikiDetail.id ?? null);
   console.log('currentWikiId:', currentWikiId); // 확인용
 
@@ -177,14 +180,12 @@ async function confirmEdit() {
       projectId: route.params.projectId
     },
     versionRequest: {
-      versionId: newVersionId,
       content: cleanContent,
       userId: authStore.user.id,
       wikiId: currentWikiId,
       description: editReason.value, //수정이유
-      versionName: finalVersionName,
       links: linksJson, //JSON 문자열로 전송할 예정
-      wikiInfo: wikiInfo.value //이건 back작업 마저 해야함
+      wikiInfo: wikiStore.wikiDetail.wikiInfo
     }
   }; // saveData end
 
@@ -245,34 +246,57 @@ function applyFormat(command, value = null) {
     if (container.nodeType === 3) container = container.parentNode;
     const blockElement = container.closest('h1, h2, h3, p') || container;
 
-    // 공통 로직: 새로운 태그 생성 (p 또는 h1, h2, h3)
     const newElement = document.createElement(value);
 
-    // 제목일 경우에만 ID 부여 (목차용)
     if (value !== 'p') {
       newElement.id = `section-${Date.now()}`;
+
+      // ✅ 현재 에디터에서 번호 계산
+      const allHeadings = Array.from(editorRef.value.querySelectorAll('h2, h3'));
+      let h2Count = 0;
+      let h3Count = 0;
+      let prefix = '';
+
+      // 기존 제목들 순회해서 현재 위치의 번호 계산
+      for (const h of allHeadings) {
+        if (h === blockElement) break; // 교체 대상 직전까지만
+        if (h.tagName === 'H2') {
+          h2Count++;
+          h3Count = 0;
+        } else if (h.tagName === 'H3') {
+          h3Count++;
+        }
+      }
+
+      if (value === 'h2') {
+        h2Count++;
+        h3Count = 0;
+        prefix = `${h2Count}. `;
+      } else if (value === 'h3') {
+        h3Count++;
+        prefix = `${h2Count}.${h3Count} `;
+      }
+
+      // 기존 텍스트에서 번호 제거 후 새 번호 붙이기
+      const rawText = blockElement.innerText?.replace(/^[\d.]+\s*/, '').trim() || '';
+      newElement.innerText = prefix + rawText;
+    } else {
+      newElement.innerHTML = blockElement.innerHTML && blockElement.innerHTML !== '<br>' ? blockElement.innerHTML : '<br>';
     }
 
-    // 기존 내용을 새 엘리먼트로 옮기기 (비어있으면 공백 삽입)
-    newElement.innerHTML = blockElement.innerHTML && blockElement.innerHTML !== '<br>' ? blockElement.innerHTML : '<br>';
-
-    // 핵심: 기존 요소를 새 요소로 교체 (복사가 아니라 '교체'입니다)
     if (blockElement !== editorRef.value && blockElement.parentNode) {
       blockElement.parentNode.replaceChild(newElement, blockElement);
     } else {
-      // 부모가 에디터 자체인 경우 안전하게 삽입
       range.deleteContents();
       range.insertNode(newElement);
     }
 
-    // 작성 편의를 위해 제목(h) 뒤에 본문(p) 줄이 없다면 추가
     if (value !== 'p' && !newElement.nextSibling) {
       const nextLine = document.createElement('p');
       nextLine.innerHTML = '<br>';
       newElement.after(nextLine);
     }
 
-    // 커서 위치를 새 요소 내부로 이동
     range.selectNodeContents(newElement);
     range.collapse(false);
     selection.removeAllRanges();
@@ -308,14 +332,6 @@ function handleCancel() {
         <input v-model="wikiStore.wikiDetail.wikiInfo" type="text" class="project-desc-input" placeholder="위키 관련 한 줄 설명을 입력하세요" />
       </div>
 
-      <!-- 작성자명 -->
-      <!--id그대로 받아올거라서 굳이 없어도 됨-->
-      <!-- <div class="field-group">
-        <label class="field-label required">작성자명</label>
-        <input v-model="userId" type="text" class="field-input" :class="{ 'is-error': errors.userId }" placeholder="성함을 입력해 주세요." />
-        <span v-if="errors.userId" class="error-msg">성함입력은 필수 입니다.</span>
-      </div> -->
-
       <div class="header-actions">
         <!-- 저장 성공 토스트 -->
         <transition name="fade">
@@ -336,9 +352,16 @@ function handleCancel() {
       <div class="panel info-panel">
         <h3 class="panel-title">목차 - 자동생성</h3>
         <ul class="toc-list">
-          <li v-for="(item, index) in tocItems" :key="index" :class="['toc-item', item.level]">
-            <a :href="`#${item.id}`">{{ index + 1 }}. {{ item.title }}</a>
-          </li>
+          <template v-for="item in tocItems" :key="item.id">
+            <li class="toc-item">
+              <a :href="`#${item.id}`">{{ item.number }} {{ item.title }}</a>
+            </li>
+            <ul v-if="item.sub && item.sub.length > 0" class="toc-list toc-sub">
+              <li v-for="sub in item.sub" :key="sub.id" class="toc-item toc-sub">
+                <a :href="`#${sub.id}`">{{ sub.number }} {{ sub.title }}</a>
+              </li>
+            </ul>
+          </template>
           <!-- 빈 항목 placeholder -->
           <li v-for="n in emptyTocSlots" :key="`empty-${n}`" class="toc-item empty">·</li>
         </ul>
@@ -392,8 +415,9 @@ function handleCancel() {
           <button class="btn btn-add-link" @click="addLinkItem">링크 추가</button>
 
           <div class="link-form-actions">
-            <button class="btn btn-cancel" @click="cancelLink">취소</button>
-            <button class="btn btn-primary" @click="registerLink">등록</button>
+            <!--없어도 되는 코드들임-->
+            <!-- <button class="btn btn-cancel" @click="cancelLink">취소</button> -->
+            <!-- <button class="btn btn-primary" @click="registerLink">등록</button> -->
           </div>
         </div>
 
@@ -415,6 +439,35 @@ function handleCancel() {
             </div>
           </div>
         </transition>
+
+        <!-- 내용 동일 경고 모달 -->
+        <transition name="fade">
+          <div v-if="showSameContentModal" class="modal-overlay" @click.self="showSameContentModal = false">
+            <div class="modal-box">
+              <div class="modal-header">
+                <span>내용 변경 없음</span>
+                <button class="modal-close" @click="showSameContentModal = false">×</button>
+              </div>
+              <div class="modal-body" style="text-align: center; padding: 24px 16px">
+                <p style="font-size: 14px; color: #333; line-height: 1.6">본문의 내용이 동일합니다.<br />버전업을 하시겠습니까?</p>
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-cancel" @click="showSameContentModal = false">취소</button>
+                <button
+                  class="btn btn-primary"
+                  @click="
+                    () => {
+                      showSameContentModal = false;
+                      showEditModal = true;
+                    }
+                  "
+                >
+                  버전업 진행
+                </button>
+              </div>
+            </div>
+          </div>
+        </transition>
       </div>
     </div>
 
@@ -423,9 +476,9 @@ function handleCancel() {
       <!-- 툴바 -->
       <div class="editor-toolbar">
         <select v-model="textStyle" class="toolbar-select" @change="applyFormat('formatBlock', textStyle)">
+          <option value="h2">제목 (1. 2. 3. 형태)</option>
+          <option value="h3">부제목(1.1 / 1.2 / 1.3형태)</option>
           <option value="p">본문</option>
-          <option value="h2">제목1</option>
-          <option value="h3">제목2</option>
         </select>
 
         <div class="toolbar-divider" />
@@ -434,18 +487,12 @@ function handleCancel() {
         <button class="toolbar-btn italic" title="기울게" @click="applyFormat('italic')"><i>I</i></button>
         <button class="toolbar-btn underline" title="밑줄" @click="applyFormat('underline')"><u>U</u></button>
         <button class="toolbar-btn strikethrough" title="취소선" @click="applyFormat('strikeThrough')"><s>S</s></button>
-        <button class="toolbar-btn" title="글자색" @click="applyFormat('foreColor')">A</button>
-
-        <button class="toolbar-btn" title="글머리 기호" @click="applyFormat('insertUnorderedList')">:=</button>
-        <button class="toolbar-btn" title="번호 목록" @click="applyFormat('insertOrderedList')">1=</button>
-        <button class="toolbar-btn" title="체크리스트" @click="applyFormat('checklist')">☑</button>
-
         <div class="toolbar-divider" />
       </div>
 
       <!-- 에디터 본문 -->
       <div style="position: relative">
-        <p v-if="!editorContent" class="editor-placeholder">내용을 입력하세요.</p>
+        <p v-if="!editorContent" class="editor-placeholder">제목은 툴바에서 "제목1/제목2"를 선택해 입력하세요. (번호는 자동 생성됩니다)</p>
         <div ref="editorRef" class="editor-body" contenteditable="true" @input="onEditorInput" @keydown="onEditorKeydown"></div>
       </div>
     </div>
@@ -942,5 +989,11 @@ h1 {
   text-align: center;
   z-index: 9999;
   white-space: nowrap;
+}
+
+.toc-item.toc-sub a {
+  padding-left: 16px;
+  font-size: 12px;
+  color: #555;
 }
 </style>

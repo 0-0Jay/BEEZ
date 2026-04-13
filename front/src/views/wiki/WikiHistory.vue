@@ -1,4 +1,5 @@
 <script setup>
+import { useAuthStore } from '@/stores/auth';
 import { useWikiStore } from '@/stores/wiki';
 import * as Diff from 'diff';
 import { onMounted, ref } from 'vue';
@@ -7,20 +8,18 @@ import { useRoute, useRouter } from 'vue-router';
 const route = useRoute();
 const router = useRouter();
 const wikiStore = useWikiStore();
+const authStore = useAuthStore();
 
 const versions = ref([]);
 const openIndex = ref(null);
+const showRollbackModal = ref(false);
+const targetVersion = ref(null);
 
-// WikiHistory.vue onMounted에 console.log 추가
 onMounted(async () => {
   const { wikiId } = route.params;
   versions.value = await wikiStore.fetchWikiVersionList(wikiId);
-  console.log('wikiId:', wikiId);
-  console.log('버전 개수:', versions.value.length);
   // 각 버전의 wiki_id 확인
-  versions.value.forEach((v, i) => {
-    console.log(`버전 ${i}:`, v.versionId, '/ wikiId:', v.wikiId);
-  });
+  versions.value.forEach((v, i) => {});
 });
 
 const toggleAccordion = (index) => {
@@ -28,9 +27,21 @@ const toggleAccordion = (index) => {
 };
 
 const stripHtml = (html) => {
-  const div = document.createElement('div');
-  div.innerHTML = html ?? '';
-  return div.innerText;
+  if (!html) return '';
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<\/h[1-6]>/gi, '\n')
+    .replace(/<\/div>/gi, '\n')
+    .replace(/<[^>]+>/g, '') // 나머지 태그 제거
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .join('\n');
 };
 
 const getDiff = (index) => {
@@ -38,6 +49,54 @@ const getDiff = (index) => {
   const oldContent = stripHtml(versions.value[index + 1].content);
   const newContent = stripHtml(versions.value[index].content);
   return Diff.diffLines(oldContent, newContent);
+};
+
+const confirmRollback = (version) => {
+  targetVersion.value = version;
+  showRollbackModal.value = true;
+};
+
+const executeRollback = async () => {
+  const { wikiId, projectId } = route.params;
+
+  // ✅ 현재 최신 버전에서 버전명 계산
+  const latestVersion = versions.value[0];
+  let nextVersionNum = '1.0';
+  if (latestVersion?.versionName) {
+    const match = latestVersion.versionName.match(/v(\d+\.\d+)/);
+    if (match) {
+      nextVersionNum = (parseFloat(match[1]) + 0.1).toFixed(1);
+    }
+  }
+
+  // 프로젝트명 추출 (versionName에서 v숫자 앞부분)
+  const projectTitle = latestVersion?.versionName?.replace(/v[\d.]+$/, '').trim() ?? '';
+  const newVersionName = `${projectTitle} v${nextVersionNum}`;
+
+  const saveData = {
+    wikiRequest: {
+      id: wikiId,
+      projectId
+    },
+    versionRequest: {
+      content: targetVersion.value.content,
+      userId: authStore.user.id,
+      wikiId: wikiId,
+      description: `${targetVersion.value.versionName} 버전으로 롤백`,
+      versionName: newVersionName, // ✅ 빈 문자열 대신 계산된 버전명
+      links: targetVersion.value.links ?? '[]',
+      wikiInfo: targetVersion.value.wikiInfo ?? ''
+    }
+  };
+
+  const result = await wikiStore.saveWiki(saveData);
+
+  if (result) {
+    showRollbackModal.value = false;
+    alert('롤백이 완료되었습니다.');
+    // 버전 목록 새로고침
+    versions.value = await wikiStore.fetchWikiVersionList(wikiId);
+  }
 };
 
 const goBack = () => router.back();
@@ -53,12 +112,16 @@ const goBack = () => router.back();
       <!-- 카드 헤더 (클릭 시 아코디언) -->
       <div class="version-header" @click="toggleAccordion(index)">
         <div class="version-left">
-          <span class="badge-version">{{ version.versionName }}</span>
-          <div>
-            <div class="version-title">{{ version.description }}</div>
-          </div>
+          <span :class="['badge-version', index === 0 ? 'badge-latest' : 'badge-old']">
+            {{ version.versionName.match(/v[\d.]+/)?.[0] ?? version.versionName }}
+          </span>
+          <div class="version-description">{{ version.description }}</div>
         </div>
-        <div class="version-right">작성자 : {{ version.userName }} / 작성일 : {{ version.createdOn?.substring(0, 10) }}</div>
+        <div class="version-right">
+          작성자 : {{ version.userName }} / 작성일 : {{ version.createdOn?.substring(0, 10) }}
+          <!-- ✅ 최신 버전 제외하고 롤백 버튼 표시 -->
+          <button v-if="index !== 0" class="btn-rollback" @click.stop="confirmRollback(version)">이 버전으로 롤백</button>
+        </div>
       </div>
 
       <!-- diff 뷰 (아코디언 펼침) -->
@@ -66,12 +129,24 @@ const goBack = () => router.back();
         <div class="diff-header">변경된 내용 (diff)</div>
         <div class="diff-body">
           <template v-for="(part, i) in getDiff(index)" :key="i">
-            <div v-if="part.added" class="diff-added">
-              <span v-for="line in part.value.split('\n').filter((l) => l)" :key="line"> + {{ line }} </span>
-            </div>
-            <div v-else-if="part.removed" class="diff-removed">
-              <span v-for="line in part.value.split('\n').filter((l) => l)" :key="line"> - {{ line }} </span>
-            </div>
+            <template v-if="part.added">
+              <div v-for="(line, li) in part.value.split('\n').filter((l) => l.trim())" :key="`add-${i}-${li}`" class="diff-line diff-added">
+                <span class="diff-prefix">+</span>
+                <span class="diff-text">{{ line }}</span>
+              </div>
+            </template>
+            <template v-else-if="part.removed">
+              <div v-for="(line, li) in part.value.split('\n').filter((l) => l.trim())" :key="`rem-${i}-${li}`" class="diff-line diff-removed">
+                <span class="diff-prefix">-</span>
+                <span class="diff-text">{{ line }}</span>
+              </div>
+            </template>
+            <template v-else>
+              <div v-for="(line, li) in part.value.split('\n').filter((l) => l.trim())" :key="`ctx-${i}-${li}`" class="diff-line diff-context">
+                <span class="diff-prefix"> </span>
+                <span class="diff-text">{{ line }}</span>
+              </div>
+            </template>
           </template>
         </div>
       </div>
@@ -79,6 +154,24 @@ const goBack = () => router.back();
       <!-- 최초 버전은 diff 없이 안내 문구 -->
       <div v-else-if="openIndex === index" class="diff-view">
         <div class="diff-body" style="color: #aaa; text-align: center">최초 작성된 버전입니다.</div>
+      </div>
+    </div>
+
+    <!--롤백기능-->
+    <div v-if="showRollbackModal" class="modal-overlay" @click.self="showRollbackModal = false">
+      <div class="modal-box">
+        <div class="modal-header">
+          <span>롤백 확인</span>
+          <button class="modal-close" @click="showRollbackModal = false">×</button>
+        </div>
+        <div class="modal-body">
+          <p>{{ targetVersion?.versionName }} 버전으로 롤백하시겠습니까?</p>
+          <p style="font-size: 12px; color: #999; margin-top: 8px">현재 내용이 새 버전으로 저장되고, 선택한 버전의 내용으로 되돌아갑니다.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showRollbackModal = false">취소</button>
+          <button class="btn-rollback-confirm" @click="executeRollback">롤백</button>
+        </div>
       </div>
     </div>
   </div>
@@ -124,39 +217,6 @@ const goBack = () => router.back();
   color: #aaa;
   border-bottom: 1px solid #333;
 }
-.diff-body {
-  padding: 12px 16px;
-  font-family: monospace;
-  font-size: 13px;
-  max-height: 300px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.diff-added {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-.diff-added span {
-  color: #4caf50;
-  background: #4caf5015;
-  padding: 1px 8px;
-  border-radius: 2px;
-}
-.diff-removed {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-.diff-removed span {
-  color: #f44336;
-  background: #f4433615;
-  padding: 1px 8px;
-  border-radius: 2px;
-}
-
 .history-page {
   padding: 20px;
   background: #f5f5f5;
@@ -172,6 +232,146 @@ const goBack = () => router.back();
   border: 1px solid #bbb;
   border-radius: 4px;
   background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.diff-body {
+  padding: 12px 0;
+  font-family: monospace;
+  font-size: 13px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+.diff-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 2px 16px;
+  line-height: 1.6;
+}
+.diff-prefix {
+  min-width: 12px;
+  font-weight: bold;
+  user-select: none;
+}
+.diff-text {
+  white-space: pre-wrap;
+  word-break: break-all;
+  flex: 1;
+}
+.diff-added {
+  background: #4caf5018;
+  color: #4caf50;
+}
+.diff-removed {
+  background: #f4433618;
+  color: #f44336;
+}
+.diff-context {
+  color: #888;
+}
+
+.version-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.version-description {
+  font-size: 18px; /* 큰 글씨 */
+  font-weight: 700; /* 볼드 */
+  color: #1a1a1a;
+}
+
+.badge-version {
+  border-radius: 20px;
+  padding: 2px 12px;
+  font-weight: bold;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.badge-latest {
+  background: #e8f5e9;
+  border: 1px solid #4caf50;
+  color: #2e7d32;
+}
+
+.badge-old {
+  background: #e8eaf6;
+  border: 1px solid #3949ab;
+  color: #1a237e;
+}
+
+/* 롤백 모달 */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal-box {
+  background: #fff;
+  border-radius: 8px;
+  min-width: 320px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+  font-weight: 600;
+  font-size: 14px;
+}
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #888;
+}
+.modal-body {
+  padding: 16px;
+  font-size: 14px;
+}
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid #eee;
+}
+.btn-cancel {
+  padding: 6px 16px;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+}
+.btn-rollback {
+  padding: 4px 12px;
+  border: 1px solid #3949ab;
+  border-radius: 4px;
+  background: #fff;
+  color: #3949ab;
+  cursor: pointer;
+  font-size: 12px;
+  margin-left: 12px;
+}
+.btn-rollback-confirm {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 4px;
+  background: #e8920e;
+  color: #fff;
   cursor: pointer;
   font-size: 13px;
 }
