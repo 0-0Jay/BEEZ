@@ -30,7 +30,7 @@ public class ProjectServiceImpl implements ProjectService {
   @Loggable(
     logType = "A1",
     logCategory = "B0",
-    content = "프로젝트 생성(프로젝트명: {id})",
+    content = "프로젝트 생성({id})",
     link = "/project/setting/{id}/info"
   )
   @Override
@@ -66,7 +66,7 @@ public class ProjectServiceImpl implements ProjectService {
   @Loggable(
     logType = "A0",
     logCategory = "B0",
-    content = "프로젝트 잠금보관(프로젝트명: {id})",
+    content = "프로젝트 잠금보관({id})",
     link = "/project/setting/{id}/info"
   )
   @Override
@@ -78,7 +78,7 @@ public class ProjectServiceImpl implements ProjectService {
   @Loggable(
     logType = "A0",
     logCategory = "B0",
-    content = "프로젝트 잠금보관 해제(프로젝트명: {id})",
+    content = "프로젝트 잠금보관 해제({id})",
     link = "/project/setting/{id}/info"
   )
   @Override
@@ -90,7 +90,7 @@ public class ProjectServiceImpl implements ProjectService {
   @Loggable(
     logType = "A3",
     logCategory = "B0",
-    content = "프로젝트 삭제(프로젝트명: {id})",
+    content = "프로젝트 삭제({id})",
     link = "/project/list"
   )
   @Override
@@ -108,7 +108,7 @@ public class ProjectServiceImpl implements ProjectService {
   @Loggable(
     logType = "A2",
     logCategory = "B0",
-    content = "프로젝트 수정(프로젝트명: {id})",
+    content = "프로젝트 수정({id})",
     link = "/project/setting/{id}/info"
   )
   @Override
@@ -131,7 +131,7 @@ public class ProjectServiceImpl implements ProjectService {
   @Loggable(
     logType = "A0",
     logCategory = "B0",
-    content = "프로젝트 구성원 추가(프로젝트명: {projectId})",
+    content = "프로젝트 구성원 추가({projectId})",
     link = "/project/setting/{projectId}/members",
     idField = "projectId"
   )
@@ -144,12 +144,12 @@ public class ProjectServiceImpl implements ProjectService {
   @Loggable(
     logType = "A3",
     logCategory = "B0",
-    content = "프로젝트 구성원 삭제(프로젝트명: {projectId})",
+    content = "프로젝트 구성원 삭제({projectId})",
     link = "/project/setting/{projectId}/members",
     idField = "projectId"
   )
   @Override
-  public void deleteProjectMember(String projectMemberId) {
+  public void deleteProjectMember(String projectMemberId, String projectId) {
     projectMapper.deleteProjectMember(projectMemberId);
   }
   
@@ -157,7 +157,7 @@ public class ProjectServiceImpl implements ProjectService {
   @Loggable(
     logType = "A2",
     logCategory = "B0",
-    content = "프로젝트 구성원 역할수정(프로젝트명: {projectId})",
+    content = "프로젝트 구성원 역할수정({projectId})",
     link = "/project/setting/{projectId}/members",
     idField = "projectId"
   )
@@ -183,6 +183,12 @@ public class ProjectServiceImpl implements ProjectService {
       .users(users)
       .groups(groups)
       .build();
+  }
+
+  // 로드맵 목록 조회
+  @Override
+  public List<RoadmapListResponse> findRoadmapList(RoadmapFilterRequest filter) {
+    return projectMapper.findRoadmapList(filter);
   }
   
 }

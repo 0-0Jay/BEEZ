@@ -68,5 +68,8 @@ public interface ProjectMapper {
   
   //프로젝트 구성원 추가
   void insertProjectMember(ProjectMemberRequest dto);
+
+  //로드맵 목록 조회
+  List<RoadmapListResponse> findRoadmapList(RoadmapFilterRequest filter);
   
 }

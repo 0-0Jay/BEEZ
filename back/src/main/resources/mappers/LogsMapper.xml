@@ -28,4 +28,118 @@
     )
   </insert>
 
+<!--  <select id="findLogList" resultType="com.beez.beez.logs.dto.LogListResponse">-->
+<!--    SELECT l.log_id,-->
+<!--           l.project_id,-->
+<!--           l.type,-->
+<!--           c.com_name AS type_name,-->
+<!--           l.category,-->
+<!--           cc.com_name AS category_name,-->
+<!--           l.content,-->
+<!--           l.created_on,-->
+<!--           l.link,-->
+<!--           l.user_id,-->
+<!--           u.name-->
+<!--    FROM logs l-->
+<!--    LEFT JOIN users u ON l.user_id = u.id-->
+<!--    LEFT JOIN common_code c ON l.type = c.com_value-->
+<!--    AND c.group_value = '0A'-->
+<!--    AND c.is_use = 1-->
+<!--    LEFT JOIN common_code cc ON l.category = cc.com_value-->
+<!--    AND cc.group_value = '0B'-->
+<!--    AND cc.is_use = 1-->
+<!--    WHERE l.project_id = #{projectId}-->
+<!--      <if test="type != null and type != ''">-->
+<!--        AND l.type = #{type}-->
+<!--      </if>-->
+<!--      <if test="category != null and category != ''">-->
+<!--        AND l.category = #{category}-->
+<!--      </if>-->
+<!--      <if test="userId != null and userId != ''">-->
+<!--        AND l.user_id = #{userId}-->
+<!--      </if>-->
+<!--      <if test="startDate != null">-->
+<!--        AND l.created_on >= #{startDate}-->
+<!--      </if>-->
+<!--      <if test="endDate != null">-->
+<!--        AND l.created_on &lt; #{endDate} +1-->
+<!--      </if>-->
+<!--      <if test="content != null and content != ''">-->
+<!--        AND l.content LIKE '%' || #{content} || '%'-->
+<!--      </if>-->
+<!--    ORDER BY created_on DESC-->
+<!--    OFFSET #{offset} ROWS FETCH NEXT #{size} ROWS ONLY-->
+<!--  </select>-->
+
+  <select id="findLogList" resultType="com.beez.beez.logs.dto.LogListResponse">
+    SELECT *
+    FROM (
+    SELECT l.log_id,
+    l.project_id,
+    l.type,
+    c.com_name AS type_name,
+    l.category,
+    cc.com_name AS category_name,
+    l.content,
+    l.created_on,
+    l.link,
+    l.user_id,
+    u.name,
+    ROW_NUMBER() OVER (ORDER BY l.created_on DESC) AS rn
+    FROM logs l
+    LEFT JOIN users u ON l.user_id = u.id
+    LEFT JOIN common_code c ON l.type = c.com_value
+    AND c.group_value = '0A'
+    AND c.is_use = 1
+    LEFT JOIN common_code cc ON l.category = cc.com_value
+    AND cc.group_value = '0B'
+    AND cc.is_use = 1
+    WHERE l.project_id = #{projectId}
+    <if test="type != null and type != ''">
+      AND l.type = #{type}
+    </if>
+    <if test="category != null and category != ''">
+      AND l.category = #{category}
+    </if>
+    <if test="userId != null and userId != ''">
+      AND l.user_id = #{userId}
+    </if>
+    <if test="startDate != null">
+      AND l.created_on >= #{startDate}
+    </if>
+    <if test="endDate != null">
+      AND l.created_on &lt; #{endDate} + 1
+    </if>
+    <if test="content != null and content != ''">
+      AND l.content LIKE '%' || #{content} || '%'
+    </if>
+    )
+    WHERE rn BETWEEN #{offset} + 1 AND #{offset} + #{size}
+  </select>
+
+  <!-- count 쿼리 -->
+  <select id="countLogList" resultType="int">
+    SELECT COUNT(*)
+    FROM logs l
+    WHERE l.project_id = #{projectId}
+    <if test="type != null and type != ''">
+      AND l.type = #{type}
+    </if>
+    <if test="category != null and category != ''">
+      AND l.category = #{category}
+    </if>
+    <if test="userId != null and userId != ''">
+      AND l.user_id = #{userId}
+    </if>
+    <if test="startDate != null">
+      AND l.created_on >= #{startDate}
+    </if>
+    <if test="endDate != null">
+      AND l.created_on &lt; #{endDate} + 1
+    </if>
+    <if test="content != null and content != ''">
+      AND l.content LIKE '%' || #{content} || '%'
+    </if>
+  </select>
+
 </mapper>

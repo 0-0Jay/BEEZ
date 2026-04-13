@@ -37,7 +37,7 @@ public interface ProjectService {
   ProjectMemberResponse findProjectMember(String projectId);
   
   //프로젝트 구성원 삭제
-  void deleteProjectMember(String projectMemberId);
+  void deleteProjectMember(String projectMemberId, String projectId);
   
   //프로젝트 구성원 수정
   void updateProjectMember(String projectMemberId, ProjectMemberUpdateRequest dto);
@@ -50,5 +50,8 @@ public interface ProjectService {
   
   //프로젝트 구성원 추가
   void insertProjectMember(ProjectMemberRequest dto);
+
+  //로드맵 목록 조회
+  List<RoadmapListResponse> findRoadmapList(RoadmapFilterRequest filter);
   
 }

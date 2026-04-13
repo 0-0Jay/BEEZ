@@ -261,4 +261,51 @@
     }
   </insert>
 
+  <!-- 로드맵 목록 조회 -->
+  <select id="findRoadmapList"
+          parameterType="com.beez.beez.project.dto.RoadmapFilterRequest"
+          resultType="com.beez.beez.project.dto.RoadmapListResponse">
+    SELECT v.id AS versionId,
+           v.name AS versionName,
+           v.status AS versionStatus,
+           v.end_date AS endDate,
+           v.description,
+           v.project_id AS projectId,
+           t.id AS taskId,
+           t.title AS taskTitle,
+           t.type AS taskType,
+           t.workflow AS taskWorkflow,
+           t.status AS taskStatus,
+           t.progress
+    FROM version v
+    LEFT JOIN task t ON t.version_id = v.id
+    AND t.status = 'T1'
+    WHERE v.project_id IN (
+      SELECT p.id
+      FROM project p
+      WHERE p.status = 'K1'
+      AND p.is_lock = 'L0'
+      <choose>
+        <when test="includeSubProject == true">
+          START WITH p.id = #{projectId}
+          CONNECT BY PRIOR p.id = p.parent_id
+        </when>
+        <otherwise>
+          AND p.id = #{projectId}
+        </otherwise>
+      </choose>
+    )
+    AND v.is_delete = 'F0'
+    <if test="versionStatus != null and versionStatus != 'ALL'">
+      AND v.status = #{versionStatus}
+    </if>
+    <if test="versionId != null and versionId != ''">
+      AND v.id = #{versionId}
+    </if>
+    <if test="taskType != null and taskType != ''">
+      AND t.type = #{taskType}
+    </if>
+    ORDER BY v.end_date ASC
+  </select>
+
 </mapper>

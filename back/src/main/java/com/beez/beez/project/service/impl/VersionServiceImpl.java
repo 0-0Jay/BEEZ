@@ -30,7 +30,7 @@ public class VersionServiceImpl implements VersionService {
   @Loggable(
     logType = "A1",
     logCategory = "B1",
-    content = "버전 생성(버전명: {name})",
+    content = "버전 생성({id})",
     link = "/project/setting/{projectId}/versions",
     idField = "projectId"
   )
@@ -57,7 +57,7 @@ public class VersionServiceImpl implements VersionService {
   @Loggable(
     logType = "A2",
     logCategory = "B1",
-    content = "버전 수정(버전명: {name})",
+    content = "버전 수정({id})",
     link = "/project/setting/{projectId}/versions",
     idField = "projectId"
   )
@@ -92,7 +92,7 @@ public class VersionServiceImpl implements VersionService {
   @Loggable(
     logType = "A3",
     logCategory = "B1",
-    content = "버전 삭제(버전명: {versionName})",
+    content = "버전 삭제({id})",
     link = "/project/setting/{projectId}/versions",
     idField = "projectId"
   )

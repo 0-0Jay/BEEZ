@@ -29,6 +29,16 @@ const Routes3 = [
         component: () => import('@/views/project/tabs/ProjectVersionTab.vue')
       }
     ]
+  },
+  {
+    path: '/project/:id/log',
+    name: 'LogList',
+    component: () => import('@/views/project/LogListPage.vue')
+  },
+  {
+    path: '/project/:id/roadmap',
+    name: 'RoadMapList',
+    component: () => import('@/views/project/RoadMapListPage.vue')
   }
 ];
 export default Routes3;
