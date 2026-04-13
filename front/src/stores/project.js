@@ -18,7 +18,9 @@ export const useProjectStore = defineStore('project', {
     users: [],
     groups: [],
     logs: [],
-    logTotal: 0
+    logTotal: 0,
+    roadmapList: [],
+    taskTypes: []
   }),
   // getters
   // actions
@@ -166,6 +168,23 @@ export const useProjectStore = defineStore('project', {
       } finally {
         this.loading = false;
       }
+    },
+
+    // 로드맵 목록 조회
+    async fetchRoadmaps(filters = {}) {
+      this.loading = true;
+      try {
+        const response = await axios.get(`/project/${this.selectedProject.id}/roadmap`, { params: filters });
+        this.roadmapList = response.data;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // 일감 유형 조회
+    async fetchTaskTypes() {
+      const response = await axios.get('/type');
+      this.taskTypes = response.data;
     }
   },
   persist: {
