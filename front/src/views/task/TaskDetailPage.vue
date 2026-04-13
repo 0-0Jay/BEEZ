@@ -3,6 +3,7 @@ import SubTaskAlertModal from '@/components/task/SubTaskAlertModal.vue';
 import TaskTimeModal from '@/components/task/TaskTimeModal.vue';
 import TaskUnlinkModal from '@/components/task/TaskUnlinkModal.vue';
 import { useAuthStore } from '@/stores/auth';
+import { useGitStore } from '@/stores/gits';
 import { useTaskStore } from '@/stores/task';
 import Button from 'primevue/button';
 import { computed, onMounted, ref, watch } from 'vue';
@@ -10,6 +11,7 @@ import { useRoute, useRouter } from 'vue-router';
 
 const taskStore = useTaskStore();
 const authStore = useAuthStore();
+const gitStore = useGitStore();
 const router = useRouter();
 const route = useRoute();
 const timeLogVisible = ref(false);
@@ -54,6 +56,7 @@ const timeLogs = computed(() => task.value?.timeList ?? []);
 const category = computed(() => taskStore.cateList);
 const type = computed(() => taskStore.typeList);
 const commonCodes = computed(() => taskStore.commonCodeList);
+const commitList = computed(() => gitStore.commitList);
 const priority = computed(() => commonCodes.value.filter((p) => p.cgroup === '0S'));
 const workflow = computed(() => commonCodes.value.filter((w) => w.cgroup === '0Q'));
 const relation = computed(() => commonCodes.value.filter((r) => r.cgroup === '0W'));
@@ -295,6 +298,7 @@ onMounted(async () => {
   await taskStore.findCateList();
   await taskStore.findTypeList();
   await taskStore.findCommonCodeList();
+  await gitStore.findCommitsByTaskId(taskId.value);
 });
 </script>
 
@@ -597,7 +601,7 @@ onMounted(async () => {
       <!-- 탭 헤더 -->
       <div class="flex border-b border-[#C7C7C2] bg-[#F2F0EB] rounded-t-lg overflow-hidden">
         <button
-          v-for="tab in [{ key: 'comments', label: '댓글' }, { key: 'history', label: '수정 이력' }, ...(subTasks.length === 0 ? [{ key: 'timelog', label: '소요 시간' }] : [])]"
+          v-for="tab in [{ key: 'comments', label: '댓글' }, { key: 'history', label: '수정 이력' }, ...(subTasks.length === 0 ? [{ key: 'timelog', label: '소요 시간' }] : []), { key: 'commits', label: '커밋 내역' }]"
           :key="tab.key"
           class="px-6 py-3 text-base font-semibold transition-colors relative"
           :class="activeTab === tab.key ? 'text-[#E8920E] bg-white border-b-2 border-[#E8920E]' : 'text-[#6B6B63] hover:text-[#3A3B35] hover:bg-[#F8F7F4]'"
@@ -796,6 +800,55 @@ onMounted(async () => {
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <!-- 커밋 로그 -->
+      <div v-if="activeTab === 'commits'" class="p-6">
+        <DataTable
+          :value="commitList"
+          paginator
+          :rows="5"
+          :rowsPerPageOptions="[5, 10, 20]"
+          paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+          stripedRows
+          class="text-base"
+          table-style="table-layout: fixed; width: 100%"
+        >
+          <template #empty>
+            <div class="flex flex-col items-center justify-center py-10">
+              <i class="pi pi-github text-4xl text-[#C7C7C2] mb-3"></i>
+              <p class="text-[#6B6B63]">이 일감과 관련된 커밋 이력이 없습니다.</p>
+            </div>
+          </template>
+
+          <Column field="repoName" header="저장소" :style="{ width: '120px' }">
+            <template #body="{ data }">
+              <span class="text-[#1A1816]">{{ data.repoName }}</span>
+            </template>
+          </Column>
+          <Column field="commitSha" header="커밋 ID" :style="{ width: '100px' }">
+            <template #body="{ data }">
+              <code class="text-sm bg-[#F2F0EB] px-1.5 py-0.5 rounded text-[#E8920E] font-mono">
+                {{ data.commitSha.substring(0, 7) }}
+              </code>
+            </template>
+          </Column>
+          <Column field="message" header="커밋 메시지" :style="{ width: '250px' }">
+            <template #body="{ data }">
+              <span class="text-[#3A3B35]">{{ data.message }}</span>
+            </template>
+          </Column>
+          <Column field="author" header="작성자" :style="{ width: '200px' }">
+            <template #body="{ data }">
+              <span class="text-[#3A3B35]">{{ data.author }}</span>
+            </template>
+          </Column>
+          <Column field="commitDate" header="커밋 날짜" :style="{ width: '200px' }">
+            <template #body="{ data }">
+              <span class="text-[#3A3B35]">{{ data.commitDate }}</span>
+            </template>
+          </Column>
+        </DataTable>
       </div>
     </div>
 

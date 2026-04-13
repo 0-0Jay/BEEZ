@@ -39,6 +39,17 @@
     WHERE group_id = #{id}
   </select>
 
+  <!-- 그룹 이름 중복 체크 -->
+  <select id="checkGroupNameExists" resultType="int">
+    SELECT COUNT(*)
+    FROM   groups
+    WHERE  name = #{name}
+    AND  is_delete = 'F0'
+    <if test="id != null and id != ''">
+      AND  id != #{id}
+    </if>
+  </select>
+
   <!-- 그룹 기본 정보 단건 조회 -->
   <select id="findByIdGroups" resultType="map">
     SELECT id,

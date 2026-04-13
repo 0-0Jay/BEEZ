@@ -34,16 +34,29 @@ public class GroupController {
   // 그룹 등록
   @PostMapping("/create")
   public ResponseEntity<String> insertGroup(@RequestBody GroupInsertRequest dto) {
-    groupService.insertGroup(dto);
-    return ResponseEntity.ok("그룹 등록이 완료되었습니다.");
+    try {
+      groupService.insertGroup(dto);
+      return ResponseEntity.ok("그룹 등록이 완료되었습니다.");
+    } catch (RuntimeException e) {
+      return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+    } catch (Exception e) {
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 오류");
+    }
   }
 
   // 그룹 수정
   @PutMapping("/{id}")
   public ResponseEntity<String> updateGroup(@PathVariable String id, @RequestBody GroupUpdateRequest dto) {
-    dto.setId(id);
-    groupService.updateGroup(dto);
-    return ResponseEntity.ok("그룹 수정이 완료되었습니다.");
+    try{
+      dto.setId(id);
+      groupService.updateGroup(dto);
+      return ResponseEntity.ok("그룹 수정이 완료되었습니다.");
+    }catch (RuntimeException e) {
+      return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+    } catch (Exception e) {
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 오류");
+    }
+
   }
 
   // 그룹 삭제
