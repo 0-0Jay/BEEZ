@@ -25,6 +25,5 @@ public interface DocumentService {
                       List<MultipartFile> newFiles,
                       String userId);
 
-  //파일 다운로드 기능
-  ResponseEntity<Resource> downloadFile(String fileDetailId);
+  
 }

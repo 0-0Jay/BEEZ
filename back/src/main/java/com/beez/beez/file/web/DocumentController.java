@@ -18,6 +18,7 @@ import java.util.List;
 public class DocumentController {
   
   private final DocumentService documentService;
+  private final FileService fileService;
   
 //  @PostMapping("/document/write/{projectId}")
 //  public ResponseEntity<String> registerDocument(
@@ -72,7 +73,7 @@ public class DocumentController {
   //파일 다운로드 기능
   @GetMapping("/document/download/{fileDetailId}")
   public ResponseEntity<Resource> downloadFile(@PathVariable String fileDetailId) {
-    return documentService.downloadFile(fileDetailId);
+    return fileService.downloadFile(fileDetailId);
   }
 
 } //CLASS END
