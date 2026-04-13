@@ -65,16 +65,18 @@
   <!--히스토리 기능 : 프로젝트당 위키아이디 별로 버전 목록 조회 -->
   <select id="findWikiVersionList" >
     SELECT
-        VERSION_ID,
-        CONTENT,
-        USER_ID,
-        CREATED_ON,
-        WIKI_ID,
-        DESCRIPTION,
-        VERSION_NAME,
-        LINKS,
-        WIKI_INFO
-    FROM WIKI_VERSION
+    V.VERSION_ID,
+    V.CONTENT,
+    V.USER_ID,
+    U.NAME AS USER_NAME,
+    V.CREATED_ON,
+    V.WIKI_ID,
+    V.DESCRIPTION,
+    V.VERSION_NAME,
+    V.LINKS,
+    V.WIKI_INFO
+    FROM WIKI_VERSION V
+    LEFT JOIN USERS U ON V.USER_ID = U.ID
     WHERE WIKI_ID = #{wikiId}
     ORDER BY CREATED_ON DESC
   </select>
@@ -105,6 +107,7 @@
         V.VERSION_ID,
         V.CONTENT,
         V.USER_ID,
+        U.NAME AS USER_NAME,
         V.CREATED_ON,
         V.WIKI_ID,
         V.DESCRIPTION,
@@ -113,6 +116,7 @@
         V.WIKI_INFO
     FROM WIKI W
     JOIN WIKI_VERSION V ON W.VERSION_ID = V.VERSION_ID
+    LEFT JOIN USERS U ON V.USER_ID = U.ID
     WHERE W.ID = #{wikiId}
   </select>
   

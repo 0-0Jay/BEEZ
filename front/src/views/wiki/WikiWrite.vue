@@ -1,9 +1,11 @@
 <script setup>
+import { useAuthStore } from '@/stores/auth';
 import { useWikiStore } from '@/stores/wiki';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 const wikiStore = useWikiStore(); //스토어 연결
+const authStore = useAuthStore();
 
 const saveSuccess = ref(false); // 저장여부
 const route = useRoute();
@@ -58,8 +60,9 @@ const errors = ref({
 
 function validateForm() {
   //작성자명 작성해야함
-  errors.value.userId = !userId.value || !userId.value.trim();
-  return !errors.value.userId;
+  // errors.value.userId = !userId.value || !userId.value.trim();
+  // return !errors.value.userId;
+  return true;
 }
 
 function handleEdit() {
@@ -176,7 +179,7 @@ async function confirmEdit() {
     versionRequest: {
       versionId: newVersionId,
       content: cleanContent,
-      userId: userId.value,
+      userId: authStore.user.id,
       wikiId: currentWikiId,
       description: editReason.value, //수정이유
       versionName: finalVersionName,
@@ -306,11 +309,12 @@ function handleCancel() {
       </div>
 
       <!-- 작성자명 -->
-      <div class="field-group">
+      <!--id그대로 받아올거라서 굳이 없어도 됨-->
+      <!-- <div class="field-group">
         <label class="field-label required">작성자명</label>
         <input v-model="userId" type="text" class="field-input" :class="{ 'is-error': errors.userId }" placeholder="성함을 입력해 주세요." />
         <span v-if="errors.userId" class="error-msg">성함입력은 필수 입니다.</span>
-      </div>
+      </div> -->
 
       <div class="header-actions">
         <!-- 저장 성공 토스트 -->

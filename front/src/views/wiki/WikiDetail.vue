@@ -100,7 +100,8 @@ watch(
           <div>
             <div class="wiki-header-left">
               <span class="badge-wiki">wiki</span>
-              <span class="badge-version">{{ wikiDetail.versionName || '-' }}</span>
+              <p>설명 들어가면 좋을 것 같음</p>
+              <span class="badge-status">{{ wikiDetail.versionName || '-' }}</span>
             </div>
             <p class="wiki-subtitle">{{ wikiStore.wikiDetail.wikiInfo }}</p>
           </div>
@@ -110,7 +111,7 @@ watch(
               <button class="btn btn-secondary" @click="handleHistory">히스토리</button>
             </div>
             <div class="wiki-meta">
-              <span>👤 작성자 {{ projectInfo.userId }} </span>
+              <span>👤 작성자 - {{ projectInfo.userName }} </span>
               <!-- 수정일 관련 데이터 처리 안해놓음-->
               <!-- <span>📅 {{ wikiData.updatedDate }} 수정</span> -->
             </div>
@@ -142,10 +143,10 @@ watch(
       <div class="info-card">
         <div class="info-card-title">프로젝트 - 기본정보</div>
         <br />
-        <div class="info-row">
+        <!-- <div class="info-row">
           <span class="info-label">상태 : </span>
           <span class="badge-status">{{ projectInfo.status || '데이터가 없습니다' }}</span>
-        </div>
+        </div> -->
 
         <div class="info-row">
           <span class="info-label">프로젝트번호 :</span>

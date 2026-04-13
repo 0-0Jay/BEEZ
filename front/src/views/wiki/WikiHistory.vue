@@ -58,7 +58,7 @@ const goBack = () => router.back();
             <div class="version-title">{{ version.description }}</div>
           </div>
         </div>
-        <div class="version-right">작성자: {{ version.userId }} / 작성일: {{ version.createdOn?.substring(0, 10) }}</div>
+        <div class="version-right">작성자 : {{ version.userName }} / 작성일 : {{ version.createdOn?.substring(0, 10) }}</div>
       </div>
 
       <!-- diff 뷰 (아코디언 펼침) -->

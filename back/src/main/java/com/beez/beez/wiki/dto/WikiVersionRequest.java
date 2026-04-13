@@ -12,6 +12,7 @@ public class WikiVersionRequest {
   private String versionId;
   private String content;
   private String userId;
+  private String userName;
   private Timestamp createdOn;  //작성일시
   private String wikiId;       //연결된 위키번호
   private String description;  //버전설명 - 수정이유
