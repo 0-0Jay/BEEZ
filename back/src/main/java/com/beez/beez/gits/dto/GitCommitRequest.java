@@ -2,7 +2,7 @@ package com.beez.beez.gits.dto;
 
 import lombok.Data;
 
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
 
 @Data
 public class GitCommitRequest {
@@ -12,5 +12,5 @@ public class GitCommitRequest {
   private String taskId;
   private String message;
   private String author;
-  private LocalDateTime commitDate;
+  private Timestamp commitDate;
 }

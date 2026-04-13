@@ -6,31 +6,89 @@
     SELECT BEEZ.generate_pk_auto(#{tableName}) FROM dual
   </select>
 
-  <insert id="insertRepository">
-    INSERT INTO repositories(id,
-                             project_id,
-                             repo_url,
-                             local_path)
-                     VALUES(#{id},
-                            #{projectId},
-                            #{repoUrl},
-                            #{localPath})
+  <!-- 중복 체크 -->
+  <select id="checkRepoExists" parameterType="com.beez.beez.gits.dto.GitRepoDto" resultType="int">
+    SELECT COUNT(*)
+    FROM repositories
+    WHERE project_id = #{projectId}
+    AND (repo_name = #{repoName} OR repo_url = #{repoUrl})
+  </select>
+
+  <insert id="insertRepository" statementType="CALLABLE" parameterType="com.beez.beez.gits.dto.GitRepoDto">
+    { CALL PROC_INSERT_GIT_REPO(
+      #{id, mode=IN},
+      #{projectId, mode=IN},
+      #{repoUrl, mode=IN},
+      #{localPath, mode=IN},
+      #{repoName, mode=IN},
+      #{repoType, mode=IN} )
+    }
   </insert>
 
   <update id="updateCommitLog">
     MERGE INTO git_commit_logs g
     USING DUAL
-      ON (g.commit_sha = #{commitSha} AND g.task_id = #{taskId})
+      ON (g.commit_sha = #{commitSha}
+      AND g.repo_id = #{repoId}
+      AND NVL(g.task_id, 'NONE') = NVL(#{taskId}, 'NONE'))
     WHEN NOT MATCHED THEN
-      INSERT(commit_sha, repo_id, task_id, message, author, commit_date)
-      VALUES(#{commitSha}, #{repoId}, #{taskId}, #{message}, #{author}, #{commitDate})
+    INSERT (commit_sha, repo_id, task_id, message, author, commit_date)
+    VALUES (#{commitSha}, #{repoId}, #{taskId}, #{message}, #{author}, #{commitDate})
   </update>
 
-  <select id="selectCommitsByTaskId" resultType="com.beez.beez.gits.dto.GitCommitResponse">
-    SELECT commit_sha, message, author, commit_date
-    FROM git_commit_logs
-    WHERE task_id = #{taskId}
-    ORDER BY commit_date DESC
+  <select id="findReposById" parameterType="string" resultType="com.beez.beez.gits.dto.GitRepoDto">
+    SELECT
+    id,
+    project_id,
+    repo_url,
+    local_path,
+    repo_name,
+    repo_type,
+    create_date
+    FROM repositories
+    WHERE id = #{id}
   </select>
+
+  <select id="findCommitsByTaskId" resultType="com.beez.beez.gits.dto.GitCommitResponse">
+    SELECT g.commit_sha,
+           g.repo_id,
+           r.repo_name,
+           g.task_id,
+           g.message,
+           g.author,
+           TO_CHAR(g.commit_date, 'YYYY-MM-DD HH24:MI') AS commit_date
+    FROM git_commit_logs g
+    LEFT OUTER JOIN repositories r ON g.repo_id = r.id
+    WHERE g.task_id = #{taskId}
+    ORDER BY g.commit_date DESC
+  </select>
+
+  <!-- 프로젝트별 저장소 조회 -->
+  <select id="findReposByProjectId" parameterType="string" resultType="com.beez.beez.gits.dto.GitRepoDto">
+    SELECT r.id,
+           r.repo_name,
+           r.repo_url,
+           r.local_path,
+           r.project_id,
+           r.repo_type,
+           c.com_name AS repo_type_name,
+           TO_CHAR(r.create_date, 'YYYY-MM-DD') AS create_date,
+           TO_CHAR(MAX(g.commit_date), 'YYYY-MM-DD') AS last_sync_date,
+           COUNT(g.commit_sha) AS total_commit_count
+    FROM repositories r
+    LEFT OUTER JOIN common_code c ON r.repo_type = c.com_value
+    LEFT OUTER JOIN git_commit_logs g ON r.id = g.repo_id
+    WHERE r.project_id = #{projectId}
+    GROUP BY r.id, r.repo_name, r.repo_url, r.local_path, r.project_id, r.repo_type, c.com_name, r.create_date
+    ORDER BY r.repo_type DESC, r.create_date DESC
+  </select>
+
+  <delete id="deleteCommitLogsByRepoId">
+    DELETE FROM git_commit_logs WHERE repo_id = #{id}
+  </delete>
+
+  <delete id="deleteRepository">
+    DELETE FROM repositories WHERE id = #{id}
+  </delete>
 
 </mapper>
