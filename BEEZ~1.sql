@@ -546,3 +546,48 @@ WHERE p.status = 'K1'
 START WITH p.parent_id IS NULL
 CONNECT BY PRIOR p.id = p.parent_id
 ORDER SIBLINGS BY p.id DESC;
+
+
+
+SELECT v.id AS versionId,
+       v.name AS versionName,
+       v.description,
+       v.end_date,     
+       v.status AS versionStatus, 
+       c.com_name AS versionStatusName,
+       
+       p.title AS projectName,
+       
+       t.id AS taskId,
+       t.title AS taskName,
+       t.user_id AS taskUserId,
+       u.name AS taskUserName,
+       t.type AS taskType,
+       tt.name AS taskTypeName,
+       t.category AS taskCategory,
+       tc.name AS taskCategoryName,
+       t.workflow AS taskStatus,
+       c2.com_name AS taskStatusName,
+       t.priority,
+       c3.com_name AS priorityName,
+       t.planned_start,
+       t.planned_end,
+       t.estimated_time,
+       t.progress,
+       t.sub_progress,   
+       t.creator AS taskCreator       
+FROM version v
+LEFT JOIN common_code c ON c.com_value = v.status AND c.group_value = '0N'
+LEFT JOIN project p ON p.id = v.project_id
+LEFT JOIN task t ON t.version_id = v.id
+LEFT JOIN users u ON u.id = t.user_id
+LEFT JOIN task_type tt ON tt.id = t.type
+LEFT JOIN task_category tc ON tc.id = t.category
+LEFT JOIN common_code c2 ON c2.com_value = t.workflow AND c2.group_value = '0Q'
+LEFT JOIN common_code c3 ON c3.com_value = t.priority AND c3.group_value = '0S'
+LEFT JOIN users u2 ON u2.id = t.creator
+
+WHERE v.project_id = 'PROJ2604012' 
+AND v.is_delete = 'F0'
+AND t.status = 'T1'
+AND t.is_public = 'J1';
