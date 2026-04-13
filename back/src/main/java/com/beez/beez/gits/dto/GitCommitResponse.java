@@ -9,8 +9,9 @@ public class GitCommitResponse {
 
   private String commitSha;
   private String repoId;
+  private String repoName;
   private String taskId;
   private String message;
   private String author;
-  private LocalDateTime commitDate;
+  private String commitDate;
 }

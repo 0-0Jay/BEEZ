@@ -1,65 +1,80 @@
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { useProjectStore } from '@/stores/project';
+import { useVersionStore } from '@/stores/version';
+import { storeToRefs } from 'pinia';
+import { computed, onMounted, reactive } from 'vue';
+import { useRouter } from 'vue-router';
 
-const loading = ref(false);
+const projectStore = useProjectStore();
+const versionStore = useVersionStore();
+const { loading, roadmapList, taskTypes } = storeToRefs(projectStore);
+const { commonCodeList } = storeToRefs(versionStore);
+const router = useRouter();
 
-const filter = reactive({
-  issueType: '',
+// 데이터 -----------------------------------------
+onMounted(async () => {
+  await versionStore.findCommonCodeList();
+  await projectStore.fetchTaskTypes();
+  await projectStore.fetchRoadmaps(filters);
+});
+
+const fetchRoadmaps = async () => {
+  console.log(filters);
+  await projectStore.fetchRoadmaps(filters);
+};
+
+// 그룹핑 -------------------------------
+const groupedRoadmap = computed(() => {
+  const grouped = {};
+  projectStore.roadmapList.forEach((row) => {
+    if (!grouped[row.versionId]) {
+      grouped[row.versionId] = {
+        versionId: row.versionId,
+        versionName: row.versionName,
+        versionStatus: row.versionStatus,
+        endDate: row.endDate,
+        description: row.description,
+        projectId: row.projectId,
+        tasks: []
+      };
+    }
+
+    if (row.taskId) {
+      grouped[row.versionId].tasks.push({
+        taskId: row.taskId,
+        taskTitle: row.taskTitle,
+        taskType: row.taskType,
+        taskTypeName: row.taskTypeName,
+        taskWorkflow: row.taskWorkflow,
+        progress: row.progress,
+        projectName: row.projectName
+      });
+    }
+  });
+  return Object.values(grouped);
+});
+
+// 필터 -----------------------------------------
+const filters = reactive({
   versionId: '',
-  versionStatus: 'ALL',
+  versionStatus: '',
   includeSubProject: true
 });
 
-const issueTypeOptions = [
-  { label: '새기능', value: 'TYPE01' },
-  { label: '버그', value: 'TYPE02' }
-];
+const versionStatusOptions = computed(() => commonCodeList.value.filter((c) => c.cgroup === '0N'));
 
-const versionStatusOptions = [
-  { label: '전체', value: 'ALL' },
-  { label: '진행중', value: 'N1' },
-  { label: '닫힘', value: 'N0' }
-];
-
-// 버전 목록은 조회된 roadmapList에서 추출
+// 버전 드롭다운 옵션 (조회된 결과에서 추출)
 const versionOptions = computed(() => {
-  const seen = new Set();
-  return roadmapList.value
-    .filter((v) => {
-      if (seen.has(v.versionId)) return false;
-      seen.add(v.versionId);
-      return true;
-    })
-    .map((v) => ({ label: v.versionName, value: v.versionId }));
+  return groupedRoadmap.value.map((v) => ({
+    label: v.versionName,
+    value: v.versionId
+  }));
 });
 
-// 목업 데이터
-const roadmapList = ref([
-  {
-    versionId: 'VER001',
-    versionName: 'Ver3.4',
-    versionStatus: 'N1',
-    endDate: '2026-03-18',
-    description: '버전 설명이 들어가는 자리.',
-    projectId: 'PROJ001',
-    projectName: '테스트프로젝트',
-    tasks: [
-      { taskId: 'T001', taskNumber: 25, taskTitle: '일감명', taskType: '새기능', taskWorkflow: 'Q1', projectName: '테스트프로젝트' },
-      { taskId: 'T002', taskNumber: 28, taskTitle: '일감명2', taskType: '새기능', taskWorkflow: 'Q2', projectName: '테스트프로젝트' },
-      { taskId: 'T003', taskNumber: 12, taskTitle: '로그인 오류', taskType: '버그', taskWorkflow: 'Q3', projectName: '하위프로젝트A' }
-    ]
-  },
-  {
-    versionId: 'VER002',
-    versionName: 'Ver1.1',
-    versionStatus: 'N0',
-    endDate: '2025-01-23',
-    description: null,
-    projectId: 'PROJ001',
-    projectName: '테스트프로젝트',
-    tasks: []
-  }
-]);
+const resetFilters = () => {
+  Object.assign(filters, { versionId: '', versionStatus: '', includeSubProject: true });
+  fetchRoadmaps();
+};
 
 // 진척률 계산 (완료 Q3 / 전체)
 const calcProgress = (tasks) => {
@@ -76,7 +91,9 @@ const calcDelay = (endDate) => {
   const end = new Date(endDate);
   end.setHours(0, 0, 0, 0);
   const diff = Math.floor((today - end) / (1000 * 60 * 60 * 24));
-  return diff > 0 ? diff : null;
+  if (diff > 0) return { type: 'delay', days: diff };
+  if (diff < 0) return { type: 'remain', days: Math.abs(diff) };
+  return { type: 'today', days: 0 };
 };
 
 const formatDate = (date) => {
@@ -94,26 +111,6 @@ const workflowSeverity = (workflow) => {
   const map = { Q0: 'secondary', Q1: 'info', Q2: 'success', Q3: 'contrast', Q4: 'danger' };
   return map[workflow] || 'secondary';
 };
-
-const resetFilters = () => {
-  Object.assign(filter, { issueType: '', versionId: '', versionStatus: 'ALL', includeSubProject: true });
-  // findRoadmapList();
-};
-
-// API 연동 시 사용
-// const findRoadmapList = async () => {
-//   loading.value = true;
-//   try {
-//     const res = await axios.get(`/api/project/${projectId}/roadmap`, { params: filter });
-//     // 그룹핑 처리
-//   } finally {
-//     loading.value = false;
-//   }
-// };
-
-// onMounted(() => {
-//   findRoadmapList();
-// });
 </script>
 
 <template>
@@ -121,35 +118,31 @@ const resetFilters = () => {
     <h1 class="text-2xl font-bold text-[#1A1816] mb-6">로드맵</h1>
 
     <!-- 상단 버튼 -->
-    <div class="flex justify-end gap-2 mb-4">
+    <!-- <div class="flex justify-end gap-2 mb-4">
       <Button label="버전 추가" severity="secondary" raised />
       <Button label="버전 관리" :style="{ background: '#5B6E96', borderColor: '#5B6E96' }" />
-    </div>
+    </div> -->
 
     <!-- 필터 -->
     <div class="bg-[#F2F3F8] px-6 py-4 rounded-lg mb-6 shadow-sm border border-[#ECEEF4] flex items-center flex-wrap gap-4">
       <div class="flex items-center gap-2">
-        <label class="filter-label">일감유형</label>
-        <Select v-model="filter.issueType" :options="issueTypeOptions" optionLabel="label" optionValue="value" placeholder="선택" class="filter-input w-36" />
-      </div>
-
-      <div class="flex items-center gap-2">
         <label class="filter-label">버전</label>
-        <Select v-model="filter.versionId" :options="versionOptions" optionLabel="label" optionValue="value" placeholder="선택" class="filter-input w-36" />
+        <Select v-model="filters.versionId" :options="versionOptions" optionLabel="label" optionValue="value" placeholder="선택" class="filter-input w-36" showClear />
       </div>
 
       <div class="flex items-center gap-2">
         <label class="filter-label">버전 상태</label>
-        <Select v-model="filter.versionStatus" :options="versionStatusOptions" optionLabel="label" optionValue="value" class="filter-input w-36" />
+        <Select v-model="filters.versionStatus" :options="versionStatusOptions" optionLabel="name" optionValue="id" placeholder="선택" class="filter-input w-36" showClear />
       </div>
 
       <div class="flex items-center gap-2">
-        <Checkbox v-model="filter.includeSubProject" :binary="true" inputId="subProject" />
-        <label for="subProject" class="filter-label cursor-pointer">하위 프로젝트 보기</label>
+        <Checkbox v-model="filters.includeSubProject" :binary="true" inputId="subProject" />
+        <label for="subProject" class="filter-label cursor-pointer">하위 프로젝트 일감 포함</label>
       </div>
 
-      <div class="ml-auto">
+      <div class="ml-auto flex gap-2">
         <Button label="초기화" severity="secondary" raised @click="resetFilters" />
+        <Button label="조회" icon="pi pi-search" raised @click="fetchRoadmaps" />
       </div>
     </div>
 
@@ -159,21 +152,23 @@ const resetFilters = () => {
     </div>
 
     <div v-else class="flex flex-col gap-4">
-      <div v-for="version in roadmapList" :key="version.versionId" class="bg-white rounded-xl border border-[#ECEEF4] shadow-sm overflow-hidden">
+      <div v-for="version in groupedRoadmap" :key="version.versionId" class="bg-white rounded-xl border border-[#ECEEF4] shadow-sm overflow-hidden">
         <!-- 버전 헤더 -->
         <div class="bg-[#F2F3F8] px-5 py-3 flex items-center justify-between border-b border-[#ECEEF4]">
           <div class="flex items-center gap-3">
             <span class="text-base font-semibold text-[#1A1816]"> {{ version.projectName }} {{ version.versionName }} </span>
             <Tag :value="version.versionStatus === 'N1' ? '진행' : '닫힘'" :severity="version.versionStatus === 'N1' ? 'success' : 'secondary'" />
           </div>
-          <Button label="편집" icon="pi pi-pencil" severity="secondary" size="small" text />
+          <!-- <Button label="편집" icon="pi pi-pencil" severity="secondary" size="small" text /> -->
         </div>
 
         <!-- 버전 바디 -->
         <div class="px-5 py-4">
           <!-- 날짜 / 지연 -->
           <div class="text-sm text-[#6B6B63] mb-1">
-            <span v-if="calcDelay(version.endDate)" class="text-[#D85A30] font-semibold mr-1"> {{ calcDelay(version.endDate) }}일 지연 </span>
+            <span v-if="calcDelay(version.endDate)?.type === 'delay'" class="text-[#D85A30] font-semibold mr-1"> {{ calcDelay(version.endDate).days }}일 지연 </span>
+            <span v-else-if="calcDelay(version.endDate)?.type === 'remain'" class="text-[#0f6e56] font-semibold mr-1"> {{ calcDelay(version.endDate).days }}일 남음 </span>
+            <span v-else-if="calcDelay(version.endDate)?.type === 'today'" class="text-[#185fa5] font-semibold mr-1"> 오늘 마감 </span>
             <span v-if="version.endDate">({{ formatDate(version.endDate) }})</span>
           </div>
 
@@ -200,13 +195,13 @@ const resetFilters = () => {
             <div class="flex flex-col gap-2">
               <div v-for="task in version.tasks" :key="task.taskId" class="flex items-center justify-between px-4 py-2 bg-[#F2F3F8] rounded-lg border border-[#ECEEF4]">
                 <div class="flex items-center gap-3">
-                  <Tag :value="task.taskType" severity="info" />
+                  <Tag :value="task.taskTypeName" severity="info" />
                   <div>
-                    <div class="text-sm text-[#1A1816]">{{ task.projectName }} - {{ task.taskType }} #{{ task.taskNumber }}: {{ task.taskTitle }}</div>
+                    <div class="text-sm text-[#1A1816] cursor-pointer hover:underline hover:text-[#185fa5]" @click="router.push(`/task/${task.taskId}`)">{{ task.projectName }} - #{{ task.taskId }}: {{ task.taskTitle }}</div>
                   </div>
                 </div>
                 <div class="flex items-center gap-2">
-                  <Tag :value="workflowLabel(task.taskWorkflow)" :severity="workflowSeverity(task.taskWorkflow)" />
+                  <!-- <Tag :value="workflowLabel(task.taskWorkflow)" :severity="workflowSeverity(task.taskWorkflow)" /> -->
                   <Button icon="pi pi-ellipsis-h" severity="secondary" text size="small" />
                 </div>
               </div>

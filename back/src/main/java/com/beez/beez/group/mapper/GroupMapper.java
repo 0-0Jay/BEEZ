@@ -21,6 +21,9 @@ public interface GroupMapper {
   // 참여 프로젝트 및 역할 조회
   List<GroupProjectResponse> findGroupProjects(String groupId);
 
+  // 그룹 이름 중복 체크
+  int checkGroupNameExists(String name, String id);
+
   // 그룹 등록
   void insertGroup(GroupInsertRequest dto);
 

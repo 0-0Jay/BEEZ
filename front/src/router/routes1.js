@@ -46,6 +46,11 @@ const Routes1 = [
     name: 'groupManage',
     component: () => import('@/views/group/GroupManagePage.vue'),
     meta: { requiresAuth: true, role: 'ROLE0001' }
+  },
+  {
+    path: '/gits/list/:projectId',
+    name: 'gitsList',
+    component: () => import('@/views/gits/GitListPage.vue')
   }
 ];
 export default Routes1;

@@ -267,7 +267,7 @@ const onCancel = () => {
 
 :deep(.perm-body-cell) {
   text-align: center !important;
-  padding: 10px 0 !important;
+  padding: 15px 0 !important;
   border-bottom: 1px solid #f2f0eb !important;
 }
 

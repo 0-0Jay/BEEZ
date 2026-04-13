@@ -44,6 +44,17 @@ const parentTaskName = computed(() => {
   return null;
 });
 
+// 상위 일감 전체 객체 (날짜 범위 검증용)
+const parentTask = computed(() => {
+  const pid = fixedParentId ?? form.parentId ?? null;
+  if (!pid) return null;
+  // taskList에서 먼저 찾고, 없으면 현재 로드된 task 활용 (하위 일감 추가 진입 시)
+  return taskStore.taskList.find((t) => t.id == pid) ?? (String(taskStore.task?.id) === String(pid) ? taskStore.task : null);
+});
+
+const parentPlannedStart = computed(() => parseDate(parentTask.value?.plannedStart));
+const parentPlannedEnd = computed(() => parseDate(parentTask.value?.plannedEnd));
+
 // 기본 버전
 const defaultVersionId = computed(() => taskStore.versionList.find((v) => v.defaultVersion !== null)?.id);
 
@@ -243,6 +254,18 @@ const validate = () => {
   }
   if (!form.plannedEnd) {
     errors.plannedEnd = '예상 마감일을 선택해주세요.';
+    valid = false;
+  }
+  if (form.plannedStart && parentPlannedStart.value && form.plannedStart < parentPlannedStart.value) {
+    errors.plannedStart = `상위 일감 시작일(${formatDate(parentPlannedStart.value)}) 이후여야 합니다.`;
+    valid = false;
+  }
+  if (form.plannedEnd && parentPlannedEnd.value && form.plannedEnd > parentPlannedEnd.value) {
+    errors.plannedEnd = `상위 일감 마감일(${formatDate(parentPlannedEnd.value)}) 이전이어야 합니다.`;
+    valid = false;
+  }
+  if (form.plannedStart && form.plannedEnd && form.plannedStart > form.plannedEnd) {
+    errors.plannedEnd = '예상 마감일은 시작일 이후여야 합니다.';
     valid = false;
   }
   if (form.workflow === 'Q4' && !form.reject?.trim()) {
@@ -520,6 +543,13 @@ onMounted(async () => {
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">상위 일감</td>
             <td colspan="3" class="px-6 py-3">
               <span class="inline-flex items-center gap-1.5 text-base font-medium">{{ parentTaskName }}</span>
+              <!-- 상위 일감 날짜 범위 힌트 -->
+              <p v-if="parentPlannedStart || parentPlannedEnd" class="mt-1 text-xs text-[#9A9B90]">
+                기간:
+                <span class="font-medium text-[#6B6B63]">{{ formatDate(parentPlannedStart) || '??' }}</span>
+                ~
+                <span class="font-medium text-[#6B6B63]">{{ formatDate(parentPlannedEnd) || '??' }}</span>
+              </p>
             </td>
           </tr>
 
