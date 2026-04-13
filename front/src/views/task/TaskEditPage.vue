@@ -276,12 +276,6 @@ const validate = () => {
   return valid;
 };
 
-const isSaveDisabled = computed(() => {
-  const base = !form.title.trim() || !form.type || !form.workflow || !form.priority || !form.category || !form.userId || !form.plannedStart || !form.plannedEnd;
-  if (form.workflow === 'Q4') return base || !form.reject?.trim();
-  return base;
-});
-
 const handleFileChange = ({ files }) => {
   const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -379,7 +373,6 @@ onMounted(async () => {
   await taskStore.findVersionList(project.value.id);
   await taskStore.findWorkflow({ roleId: roleId.value, typeId: taskStore.task.type, conditionType: condition.value });
   console.log(taskStore.workflow);
-  validate();
 });
 </script>
 
@@ -631,7 +624,7 @@ onMounted(async () => {
 
     <!-- 버튼 -->
     <div class="flex justify-center gap-3">
-      <Button label="저장" class="px-8" raised :disabled="isSaveDisabled" @click="handleSubmit" />
+      <Button label="저장" class="px-8" raised @click="handleSubmit" />
       <Button label="취소" class="px-8" raised severity="secondary" @click="handleCancel" />
     </div>
   </div>
