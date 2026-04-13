@@ -44,20 +44,28 @@ public class GroupServiceImpl implements GroupService {
   // 그룹 등록
   @Override
   public void insertGroup(GroupInsertRequest dto) {
+    int count = groupMapper.checkGroupNameExists(dto.getName(), null);
+    if (count > 0) {
+      throw new RuntimeException("이미 사용 중인 그룹 이름입니다.");
+    }
     try {
       groupMapper.insertGroup(dto);
     } catch (Exception e) {
-      throw new RuntimeException(e.getMessage());
+      throw new RuntimeException("그룹 수정 중 오류가 발생했습니다." + e.getMessage());
     }
   }
 
   // 그룹 수정
   @Override
   public void updateGroup(GroupUpdateRequest dto) {
+    int count = groupMapper.checkGroupNameExists(dto.getName(), dto.getId());
+    if (count > 0) {
+      throw new RuntimeException("이미 사용 중인 그룹 이름입니다.");
+    }
     try {
       groupMapper.updateGroup(dto);
     } catch (Exception e) {
-      throw new RuntimeException(e.getMessage());
+      throw new RuntimeException("그룹 수정 중 오류가 발생했습니다." + e.getMessage());
     }
   }
 

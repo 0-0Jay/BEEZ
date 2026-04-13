@@ -23,24 +23,58 @@ public class WikiServiceImpl implements WikiService {
   @Override
   @Transactional // ##프로시저 처리 하면 성능 향상 가능 - TaskMapper 파일 제일 밑에 형태 참고
   public void insertWiki(WikiRequest wikiRequest, WikiVersionRequest versionRequest){
+    // versionId 생성
+    versionRequest.setVersionId(generateVersionId());
+    // 신규 위키는 항상 v1.0
+    WikiProjectRequest project = wikiMapper.findProjectById(wikiRequest.getProjectId());
+    versionRequest.setVersionName(project.getTitle() + " v1.0");
+    
     wikiMapper.insertWikiVersion(versionRequest);
     wikiRequest.setVersionId(versionRequest.getVersionId());
-    
     wikiMapper.insertWiki(wikiRequest);
-    System.out.println("생성된 위키 ID: " + wikiRequest.getId()); // 이게 null인지 확인!
+    
     //builder처리 하면 set작업 여러번 할필요 없음 -TaskServiceImpl 파일에 예시 있음
     versionRequest.setWikiId(wikiRequest.getId());
-    System.out.println("셋팅된 버전용 위키 ID: " + versionRequest.getWikiId()); // 이것도 확인!
     wikiMapper.updateWikiIdInVersion(versionRequest);
   }
   
   @Override
   @Transactional // 수정시 본문 추가랑 wiki테이블 최신 버전 갱신
   public void updateWikiContent(WikiVersionRequest wikiVersionRequest, WikiRequest wikiRequest){
+    // versionId 생성
+    wikiVersionRequest.setVersionId(generateVersionId());
+    WikiVersionRequest latest = wikiMapper.findLatestVersion(wikiVersionRequest.getWikiId());
+    
+    // 프로젝트명 가져오기
+    WikiProjectRequest project = wikiMapper.findProjectById(wikiRequest.getProjectId());
+    String nextVer = calcNextVersion(latest);  // "v1.1" 형태만 계산
+    wikiVersionRequest.setVersionName(project.getTitle() + " " + nextVer);
+    
     wikiMapper.insertWikiVersion(wikiVersionRequest);
-    // 2. 새로 생성된 PK를 위키 마스터 테이블용 객체에 전달
     wikiRequest.setVersionId(wikiVersionRequest.getVersionId());
     wikiMapper.updateWiki(wikiRequest);
+  }
+  
+  // versionId 생성 유틸
+  private String generateVersionId() {
+    String timestamp = java.time.LocalDateTime.now()
+      .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+    return "WVER" + timestamp;
+  }
+  
+  // 버전 번호 계산 유틸
+  private String calcNextVersion(WikiVersionRequest latest) {
+    if (latest == null || latest.getVersionName() == null) {
+      return "v1.0";
+    }
+    java.util.regex.Matcher m = java.util.regex.Pattern
+      .compile("v(\\d+\\.\\d+)")
+      .matcher(latest.getVersionName());
+    if (m.find()) {
+      double next = Double.parseDouble(m.group(1)) + 0.1;
+      return String.format("v%.1f", next);
+    }
+    return "v1.0";
   }
   
   @Override //projectId별로 위키목록 조회

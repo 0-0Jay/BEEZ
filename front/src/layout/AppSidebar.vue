@@ -164,7 +164,13 @@ const toggleAdminMenu = () => {
             :to="`/project/setting/${selectedProject.id}`"
             class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between"
           >
-            <span>로그</span>
+            <span>프로젝트 설정</span>
+          </router-link>
+          <router-link
+            :to="`/gits/list/${selectedProject.id}`"
+            class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between"
+          >
+            <span>저장소</span>
           </router-link>
         </div>
       </div>

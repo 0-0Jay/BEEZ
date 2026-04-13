@@ -33,7 +33,12 @@ const removeExistingFile = (index) => {
 };
 
 const fileInput = ref(null);
-const triggerFileInput = () => fileInput.value?.click();
+const triggerFileInput = (e) => {
+  e.stopPropagation();
+  e.preventDefault();
+  fileInput.value?.click();
+  document.activeElement?.blur();
+};
 
 // 기존 데이터 불러오기
 onMounted(async () => {
@@ -60,6 +65,9 @@ const removeNewFile = (index) => newFiles.value.splice(index, 1);
 const submit = async () => {
   if (!form.value.title) return alert('문서 제목을 입력해주세요.');
   if (!form.value.editReason) return alert('수정 사유를 입력해주세요.');
+
+  console.log('newFiles.value:', newFiles.value); // ← 파일이 담겨있는지
+  console.log('deletedFileIds.value:', deletedFileIds.value);
 
   // UpdateRequest 형태로 만들기
   const updateRequest = {
@@ -141,7 +149,7 @@ const goToDetail = () => {
     <!-- 섹션 3: 첨부 파일 -->
     <div class="panel">
       <div class="panel-title"><span class="badge-num">3</span> 첨부 파일</div>
-      <button class="btn btn-attach" @click="triggerFileInput">첨부파일 등록</button>
+      <button type="button" class="btn btn-attach" @click.stop.prevent="triggerFileInput">첨부파일 등록</button>
       <input ref="fileInput" type="file" multiple style="display: none" @change="onFileChange" />
 
       <!-- 기존 파일 -->
@@ -149,12 +157,14 @@ const goToDetail = () => {
         <span v-if="!form.attachments.length && !newFiles.length" class="attach-placeholder">파일을 첨부해주세요</span>
         <ul class="file-list">
           <li v-for="(f, i) in form.attachments" :key="'old-' + i">
-            {{ f.name }} <span class="file-badge">기존</span>
-            <button class="btn-remove" @click="removeExistingFile(i)">✕</button>
+            <span class="file-name">{{ f.name }}</span>
+            <span class="file-badge">기존</span>
+            <button type="button" class="btn-remove" @click="removeExistingFile(i)">✕</button>
           </li>
           <li v-for="(f, i) in newFiles" :key="'new-' + i">
-            {{ f.name }} <span class="file-badge new">신규</span>
-            <button class="btn-remove" @click="removeNewFile(i)">✕</button>
+            <span class="file-name">{{ f.name }}</span>
+            <span class="file-badge new">신규</span>
+            <button type="button" class="btn-remove" @click="removeNewFile(i)">✕</button>
           </li>
         </ul>
       </div>
@@ -162,8 +172,8 @@ const goToDetail = () => {
 
     <!-- 하단 버튼 -->
     <div class="footer-row">
-      <button class="btn btn-cancel" @click="goToDetail">취소</button>
-      <button class="btn btn-primary" @click="submit">문서수정</button>
+      <button type="button" class="btn btn-cancel" @click="goToDetail">취소</button>
+      <button type="button" class="btn btn-primary" @click="submit">문서수정</button>
     </div>
   </div>
 </template>
@@ -340,8 +350,13 @@ const goToDetail = () => {
 
 .file-list li {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
   font-size: 13px;
+}
+
+.file-name {
+  flex: 1; /* 파일명이 남은 공간 차지 */
 }
 
 .btn-remove {
@@ -405,5 +420,10 @@ const goToDetail = () => {
 .file-badge.new {
   background: #e8920e;
   color: #fff;
+}
+
+.btn-primary:disabled {
+  background: #ccc;
+  cursor: not-allowed;
 }
 </style>

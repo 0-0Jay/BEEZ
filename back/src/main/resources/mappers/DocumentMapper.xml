@@ -55,15 +55,31 @@
   </select>
   
   <select id="selectDocumentList" resultType="com.beez.beez.file.dto.ListResponse">
-    SELECT id, title, doc_type as doctype, user_id as userName, created_on as createdOn
-    FROM docs
-    ORDER BY created_on DESC
+    SELECT
+    D.ID,
+    D.TITLE,
+    D.DOC_TYPE AS DOCTYPE,
+    D.USER_ID,
+    U.NAME AS USERNAME,
+    D.CREATED_ON AS createdOn
+    FROM DOCS D
+    LEFT JOIN USERS U ON D.USER_ID = U.ID
+    WHERE D.PROJECT_ID = #{projectId}
+    ORDER BY D.CREATED_ON DESC
   </select>
   
   <select id="selectDocumentDetail" resultType="com.beez.beez.file.dto.DetailResponse">
-    SELECT id, title, doc_type as doctype, content, user_id as userName, created_on as createdOn
-    FROM docs
-    WHERE id = #{id}
+    SELECT
+    D.ID,
+    D.TITLE,
+    D.DOC_TYPE AS DOCTYPE,
+    D.CONTENT,
+    D.USER_ID,
+    U.NAME AS USERNAME,
+    D.CREATED_ON AS createdOn
+    FROM DOCS D
+    LEFT JOIN USERS U ON D.USER_ID = U.ID
+    WHERE D.ID = #{id}
   </select>
   
   <select id="selectLatestFilesByDocId" resultType="com.beez.beez.file.dto.FileDetailResponse">
@@ -72,7 +88,7 @@
     fd.original_name as name,
     fd.stored_name as storedName,
     fd.extension,
-    fd.file_size as fileSize
+    fd.file_size as "size"
     FROM file_detail fd
     INNER JOIN docs d ON fd.file_id = d.file_id
     WHERE d.id = #{id}
@@ -84,5 +100,11 @@
     AND is_delete = 'F0'
     )
   </select>
+  
+  <select id="selectFileIdByDocId" resultType="String">
+    SELECT file_id FROM docs WHERE id = #{id}
+  </select>
+
+
 
 </mapper>

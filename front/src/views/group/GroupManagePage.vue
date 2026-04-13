@@ -44,8 +44,16 @@ const onUpdate = async () => {
 
     router.push('/group/list');
   } catch (err) {
-    const errorMsg = err.response?.data?.message || '수정 중 오류가 발생했습니다.';
-    toast.add({ severity: 'error', summary: '수정 실패', detail: errorMsg, life: 3000 });
+    const errorMsg = err.response?.data?.message || err.response?.data || '수정 중 오류가 발생했습니다.';
+    const isDuplicate = errorMsg.includes('이미 사용 중');
+
+    toast.add({
+      severity: isDuplicate ? 'warn' : 'error',
+      summary: isDuplicate ? '이름 중복' : '수정 실패',
+      detail: errorMsg,
+      life: 3000,
+      closable: false
+    });
   }
 };
 

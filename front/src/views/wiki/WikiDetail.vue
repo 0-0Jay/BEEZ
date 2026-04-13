@@ -43,22 +43,37 @@ const generateTOC = () => {
   const contentEL = document.createElement('div');
   contentEL.innerHTML = wikiDetail.value.content;
 
-  const headings = contentEL.querySelectorAll('h3, h4');
+  const headings = contentEL.querySelectorAll('h2, h3');
   const newToc = [];
+  let h2Count = 0;
+  let h3Count = 0;
 
   headings.forEach((heading, index) => {
     const id = `section-${index}`;
     heading.setAttribute('id', id);
 
-    if (heading.tagName === 'H3') {
-      newToc.push({ id, title: heading.innerText, sub: [] });
-    } else if (heading.tagName === 'H4' && newToc.length > 0) {
-      newToc[newToc.length - 1].sub.push({ id, title: heading.innerText });
+    const rawTitle = heading.innerText;
+    const cleanTitle = rawTitle.replace(/^[\d.]+\s*/, '').trim();
+
+    if (heading.tagName === 'H2') {
+      h2Count++;
+      h3Count = 0; //제목 1 바뀌면 제목 2카운터 초기화
+      newToc.push({ id, title: cleanTitle, number: `${h2Count}.`, sub: [] });
+    } else if (heading.tagName === 'H3') {
+      h3Count++;
+      const number = `${h2Count}.${h3Count}`;
+      if (newToc.length > 0) {
+        newToc[newToc.length - 1].sub.push({ id, title: cleanTitle, number });
+      } else {
+        newToc.push({ id, title: cleanTitle, number, sub: [] });
+      }
     }
   });
+
   tocList.value = newToc;
   wikiDetail.value.content = contentEL.innerHTML;
 };
+
 //페이지 로드 될 때 실행
 onMounted(async () => {
   const { projectId, wikiId } = route.params;
@@ -99,10 +114,11 @@ watch(
         <div class="wiki-header-top">
           <div>
             <div class="wiki-header-left">
-              <span class="badge-wiki">wiki</span>
-              <span class="badge-version">{{ wikiDetail.versionName || '-' }}</span>
+              <h1 class="text-2xl font-bold text-[#1A1816]">WIKI</h1>
+              <!-- <p>설명 들어가면 좋을 것 같음 - wikiInfo 백단 처리</p> -->
+              <span class="badge-status">{{ wikiDetail.versionName || '-' }}</span>
             </div>
-            <p class="wiki-subtitle">{{ wikiStore.wikiDetail.wikiInfo }}</p>
+            <p class="wiki-subtitle">{{ wikiDetail.wikiInfo || '위키 한 줄 설명 데이터가 없습니다' }}</p>
           </div>
           <div class="wiki-header-right">
             <div class="btn-group">
@@ -110,9 +126,8 @@ watch(
               <button class="btn btn-secondary" @click="handleHistory">히스토리</button>
             </div>
             <div class="wiki-meta">
-              <span>👤 작성자 {{ projectInfo.userId }} </span>
-              <!-- 수정일 관련 데이터 처리 안해놓음-->
-              <!-- <span>📅 {{ wikiData.updatedDate }} 수정</span> -->
+              <span>작성자 - {{ projectInfo.userName }}</span>
+              <span>작성일 - {{ wikiDetail.createdOn ? wikiDetail.createdOn.toString().substring(0, 10) : '-' }}</span>
             </div>
           </div>
         </div>
@@ -126,11 +141,11 @@ watch(
           <ul class="toc-list" v-if="tocList.length > 0">
             <template v-for="item in tocList" :key="item.id">
               <li>
-                <a :href="`#${item.id}`">{{ item.title }}</a>
+                <a :href="`#${item.id}`">{{ item.number }} {{ item.title }}</a>
               </li>
               <ul v-if="item.sub && item.sub.length > 0" class="toc-list toc-sub">
                 <li v-for="sub in item.sub" :key="sub.id">
-                  <a :href="`#${sub.id}`">{{ sub.title }}</a>
+                  <a :href="`#${sub.id}`">{{ sub.number }} {{ sub.title }}</a>
                 </li>
               </ul>
             </template>
@@ -142,10 +157,10 @@ watch(
       <div class="info-card">
         <div class="info-card-title">프로젝트 - 기본정보</div>
         <br />
-        <div class="info-row">
+        <!-- <div class="info-row">
           <span class="info-label">상태 : </span>
           <span class="badge-status">{{ projectInfo.status || '데이터가 없습니다' }}</span>
-        </div>
+        </div> -->
 
         <div class="info-row">
           <span class="info-label">프로젝트번호 :</span>
@@ -234,6 +249,7 @@ watch(
   border: 1px solid #ddd;
   border-radius: 8px;
   padding: 14px 20px;
+  /* padding-bottom: 0px; */
 }
 .wiki-header-top {
   display: flex;
@@ -246,7 +262,7 @@ watch(
   gap: 10px;
   flex-wrap: wrap;
 }
-.badge-wiki {
+/* .badge-wiki {
   font-size: 20px;
   background: #e8f0fe;
   border: 1px solid #90b8f8;
@@ -254,7 +270,7 @@ watch(
   padding: 2px 10px;
   color: #1a56c4;
   font-weight: bold;
-}
+} */
 .wiki-title {
   font-size: 20px;
   font-weight: bold;
@@ -271,8 +287,8 @@ watch(
 }
 .wiki-subtitle {
   font-size: 12px;
-  color: #666;
-  margin-top: 6px;
+  font-weight: 600;
+  color: #444;
 }
 
 .wiki-header-right {
@@ -680,5 +696,15 @@ watch(
   border-radius: 8px;
   padding: 24px 30px;
   min-height: 200px;
+}
+
+.content-card :deep(h1),
+.content-card :deep(h2),
+.content-card :deep(h3),
+.content-card :deep(h4),
+.content-card :deep(h5),
+.content-card :deep(h6) {
+  margin: 0 !important;
+  padding: 0 !important;
 }
 </style>
