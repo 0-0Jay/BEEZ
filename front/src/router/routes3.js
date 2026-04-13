@@ -5,6 +5,11 @@ const Routes3 = [
     component: () => import('@/views/project/ProjectCreatePage.vue')
   },
   {
+    path: '/project/copy/:id',
+    name: 'ProjectCopy',
+    component: () => import('@/views/project/ProjectCopyPage.vue')
+  },
+  {
     path: '/project/setting/:id',
     component: () => import('@/views/project/ProjectSettingPage.vue'),
     children: [
