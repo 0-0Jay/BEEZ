@@ -1,5 +1,6 @@
 package com.beez.beez.file.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,5 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class FileUpdateInfo {
   private String targetFileDetailId;
   private MultipartFile newFile;
+
+  @JsonProperty("isDeleted")
   private boolean isDeleted;
 }

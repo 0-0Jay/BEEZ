@@ -4,13 +4,15 @@ import com.beez.beez.file.dto.CreateRequest;
 import com.beez.beez.file.dto.DetailResponse;
 import com.beez.beez.file.dto.ListResponse;
 import com.beez.beez.file.dto.UpdateRequest;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 public interface DocumentService {
   //문서 등록
-  void registerDocument(CreateRequest request);
+  String registerDocument(CreateRequest request, List<MultipartFile> files);
   
   //문서 목록 조회
   List<ListResponse> getDocumentList(String projectId);
@@ -22,4 +24,7 @@ public interface DocumentService {
   void updateDocument(UpdateRequest request,
                       List<MultipartFile> newFiles,
                       String userId);
+
+  //파일 다운로드 기능
+  ResponseEntity<Resource> downloadFile(String fileDetailId);
 }

@@ -6,19 +6,34 @@ import { computed, inject, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
+const showToast = ref(false); //0412곽현우 추가 - 위키 분기 처리하기 위함
+const toastMessage = ref('');
 
 const goWiki = async (projectId) => {
   try {
     const res = await axios.get(`/wiki/latest/${projectId}`);
 
-    if (res.data) {
+    if (res.data && res.data.wikiId) {
+      // ✅ 위키 있음 → 조회 페이지
       const wikiId = res.data.wikiId;
       router.push(`/wiki/detail/${projectId}/${wikiId}`);
     } else {
-      router.push(`/wiki/write/${projectId}`);
+      // ❌ 위키 없음 → 토스트 후 작성 페이지 이동
+      toastMessage.value = '작성된 위키가 없습니다. 작성 페이지로 이동합니다.';
+      showToast.value = true;
+      setTimeout(() => {
+        showToast.value = false;
+        router.push(`/wiki/write/${projectId}`);
+      }, 2000);
     }
   } catch (e) {
-    console.error(e);
+    // API 에러(404 등)도 위키 없음으로 처리
+    toastMessage.value = '작성된 위키가 없습니다. 작성 페이지로 이동합니다.';
+    showToast.value = true;
+    setTimeout(() => {
+      showToast.value = false;
+      router.push(`/wiki/write/${projectId}`);
+    }, 2000);
   }
 };
 const isOpen = inject('menuState');
@@ -54,6 +69,10 @@ const toggleAdminMenu = () => {
 </script>
 
 <template>
+  <!-- 토스트 알림 -->
+  <transition name="fade">
+    <div v-if="showToast" class="toast-message">{{ toastMessage }}</div>
+  </transition>
   <div :class="['bg-gray-900 text-white h-full transition-all duration-300 overflow-hidden flex flex-col shrink-0', isOpen ? 'w-64' : 'w-20']">
     <!-- 펼쳐진 상태 사이드바 상단 -->
     <div v-if="isOpen" class="flex items-center justify-between h-20 px-5 shrink-0">
@@ -128,14 +147,9 @@ const toggleAdminMenu = () => {
             <span>위키 조회</span>
           </router-link> -->
           <div @click="goWiki(selectedProject.id)" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
-            <span>위키 조회</span>
+            <span>위키</span>
           </div>
-          <router-link
-            :to="`/wiki/write/${selectedProject.id}`"
-            class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between"
-          >
-            <span>위키 등록 - 조회와 합칠예정</span>
-          </router-link>
+
           <router-link to="/spent" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
             <span>소요시간</span>
           </router-link>
@@ -203,5 +217,18 @@ const toggleAdminMenu = () => {
 }
 .sub-menu-item:hover {
   border-left-color: #f5a623;
+}
+.toast-message {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 13px;
+  z-index: 9999;
+  white-space: nowrap;
 }
 </style>

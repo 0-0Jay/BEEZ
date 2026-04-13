@@ -43,7 +43,7 @@ public interface WikiMapper {
     @Param("projectId") String projectId,
     @Param("wikiId") String wikiId
   );
-  
+    
   //--------------------------------------------------------------------------
   //위키 페이지 헤드부분에에 프로젝트 관련 정보를 뿌려주기 위함
   WikiProjectRequest findProjectById(String projectId);

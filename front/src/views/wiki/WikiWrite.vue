@@ -1,14 +1,18 @@
 <script setup>
 import { useWikiStore } from '@/stores/wiki';
-import { computed, onMounted, ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { computed, nextTick, onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 const wikiStore = useWikiStore(); //스토어 연결
 
 const saveSuccess = ref(false); // 저장여부
 const route = useRoute();
+const router = useRouter();
 const userId = ref(''); //입력받을 작성자명
 const wikiInfo = ref(''); //작성창 한줄 설명
+
+const wikiId = computed(() => route.params.wikiId ?? null);
+const isEditMode = computed(() => !!wikiId.value);
 
 //version id 별로,  wikiId별로 겹치지 않도록
 //###### 필요 없는 코드 - 정리예정
@@ -27,6 +31,23 @@ onMounted(async () => {
   const projectId = route.params.projectId;
   if (projectId) {
     await wikiStore.fetchProjectData(projectId);
+
+    if (isEditMode.value) {
+      //기존 데이터 불러오기
+      await wikiStore.fetchWikiDetail(wikiId.value);
+
+      //에디터에 기존 내용 세팅
+      editorContent.value = wikiStore.wikiDetail.content ?? '';
+      await nextTick();
+      if (editorRef.value) {
+        editorRef.value.innerHTML = editorContent.value;
+        updateTOC(editorRef.value);
+      } //링크 데이터 복원
+      const links = wikiStore.wikiDetail.links;
+      if (links) {
+        linkItems.value = typeof links === 'string' ? JSON.parse(links) : links;
+      }
+    }
   }
 });
 
@@ -110,6 +131,9 @@ function closeEditModal() {
 
 //--------------------------------------------------------------
 async function confirmEdit() {
+  console.log('isEditMode:', isEditMode.value);
+  console.log('wikiStore.wikiDetail.id:', wikiStore.wikiDetail.id);
+  console.log('wikiId (route):', wikiId.value);
   if (!editReason.value.trim()) return;
 
   //## 필요 없는 코드
@@ -132,7 +156,8 @@ async function confirmEdit() {
 
   //신규 위키는ID생성하고, 기존위키면 기존ID 사용
   const isNewWiki = !wikiStore.wikiDetail.id;
-  const currentWikiId = isNewWiki ? null : wikiStore.wikiDetail.id;
+  const currentWikiId = isEditMode.value ? wikiId.value : (wikiStore.wikiDetail.id ?? null);
+  console.log('currentWikiId:', currentWikiId); // 확인용
 
   const commentRegex = new RegExp('<!--v-if-->', 'g'); // 에디터로 본문 작성하면 생기는 주석 삭제하고 DB에 저장하려함
   const cleanContent = editorContent.value ? editorContent.value.replace(commentRegex, '') : '';
@@ -168,13 +193,18 @@ async function confirmEdit() {
     showEditModal.value = false;
     saveSuccess.value = true;
     editReason.value = '';
-
-    //입력값 초기화
     userId.value = '';
 
     setTimeout(() => {
       saveSuccess.value = false;
-    }, 3000);
+      router.push({
+        name: 'WikiDetail',
+        params: {
+          projectId: route.params.projectId,
+          wikiId: result // store에서 반환된 wikiId
+        }
+      });
+    }, 1500);
   }
 }
 
@@ -250,6 +280,18 @@ function applyFormat(command, value = null) {
 
   onEditorInput({ target: editorRef.value });
 }
+
+// WikiWrite.vue script에 추가
+function handleCancel() {
+  const projectId = route.params.projectId;
+  if (isEditMode.value) {
+    // 편집 모드면 → 상세 페이지로 돌아가기
+    router.push({ name: 'WikiDetail', params: { projectId, wikiId: wikiId.value } });
+  } else {
+    // 신규 작성 모드면 → 이전 페이지로
+    router.back();
+  }
+}
 </script>
 
 <template>
@@ -257,7 +299,9 @@ function applyFormat(command, value = null) {
     <!-- ① 상단 헤더 영역 -->
     <div class="flex justify-between items-end">
       <div class="header-left">
-        <h1 class="text-2xl font-bold text-[#1A1816]">WIKI</h1>
+        <h1 class="text-2xl font-bold text-[#1A1816]">
+          {{ isEditMode ? 'WIKI - 수정' : 'WIKI - 작성' }}
+        </h1>
         <input v-model="wikiStore.wikiDetail.wikiInfo" type="text" class="project-desc-input" placeholder="위키 관련 한 줄 설명을 입력하세요" />
       </div>
 
@@ -271,11 +315,13 @@ function applyFormat(command, value = null) {
       <div class="header-actions">
         <!-- 저장 성공 토스트 -->
         <transition name="fade">
-          <div v-if="saveSuccess" class="toast-success">편집 성공<br />위키 등록을 성공하였습니다.</div>
+          <div v-if="saveSuccess" class="toast-fixed">{{ isEditMode ? '수정되었습니다.' : '작성되었습니다.' }}<br />잠시 후 조회 페이지로 이동합니다.</div>
         </transition>
         <div class="link-form-actions">
           <button class="btn btn-cancel" @click="handleCancel">취소</button>
-          <button class="btn btn-edit" @click="handleEdit">등록</button>
+          <button class="btn btn-edit" @click="handleEdit">
+            {{ isEditMode ? '수정' : '등록' }}
+          </button>
         </div>
       </div>
     </div>
@@ -301,30 +347,30 @@ function applyFormat(command, value = null) {
         <div class="info-rows">
           <div class="info-row">
             <span class="info-label">프로젝트번호 :</span>
-            <span class="info-value status-badge">{{ projectInfo.id }}</span>
+            <span class="info-value status-badge">{{ projectInfo.id || '데이터가 없습니다' }}</span>
           </div>
 
           <div class="info-row">
             <span class="info-label">프로젝트 설명 :</span>
-            <span class="info-value status-badge">{{ projectInfo.description }}</span>
+            <span class="info-value status-badge">{{ projectInfo.description || '데이터가 없습니다' }}</span>
           </div>
 
           <div class="info-row">
             <span class="info-label">프로젝트 생성자명 :</span>
-            <span class="info-value status-badge">{{ projectInfo.userName }}</span>
+            <span class="info-value status-badge">{{ projectInfo.userName || '데이터가 없습니다' }}</span>
           </div>
 
           <div class="info-row">
             <span class="info-label">시작일 :</span>
-            <span class="info-value status-badge">{{ projectInfo.startDate ? projectInfo.startDate.replace('T', ' ').substring(0, 10) : '-' }}</span>
+            <span class="info-value status-badge">{{ projectInfo.startDate ? projectInfo.startDate.replace('T', ' ').substring(0, 10) : '데이터가 없습니다' }}</span>
           </div>
           <div class="info-row">
             <span class="info-label">종료일 :</span>
-            <span class="info-value status-badge">{{ projectInfo.endDate ? projectInfo.endDate.replace('T', ' ').substring(0, 10) : '-' }}</span>
+            <span class="info-value status-badge">{{ projectInfo.endDate ? projectInfo.endDate.replace('T', ' ').substring(0, 10) : '데이터가 없습니다' }}</span>
           </div>
           <div class="info-row">
             <span class="info-label">상태값 :</span>
-            <span class="info-value status-badge">{{ projectInfo.status }}</span>
+            <span class="info-value status-badge">{{ projectInfo.status || '데이터가 없습니다' }}</span>
           </div>
         </div>
       </div>
@@ -394,8 +440,9 @@ function applyFormat(command, value = null) {
       </div>
 
       <!-- 에디터 본문 -->
-      <div ref="editorRef" class="editor-body" contenteditable="true" @input="onEditorInput" @keydown="onEditorKeydown">
-        <p v-if="!editorContent" class="editor-placeholder"></p>
+      <div style="position: relative">
+        <p v-if="!editorContent" class="editor-placeholder">내용을 입력하세요.</p>
+        <div ref="editorRef" class="editor-body" contenteditable="true" @input="onEditorInput" @keydown="onEditorKeydown"></div>
       </div>
     </div>
   </div>
@@ -825,7 +872,9 @@ function applyFormat(command, value = null) {
   top: 20px;
   left: 20px;
   font-size: 15px;
+  z-index: 1;
 }
+
 /* 활성화된 버튼 스타일 (확실한 눌림 표시) */
 .toolbar-btn.is-active {
   /* 1. 배경색을 더 어둡고 푸른 계열로 바꿔서 강조 (선택사항) */
@@ -873,5 +922,21 @@ h6 {
 h1 {
   margin-top: 0 !important;
   margin-bottom: 0 !important;
+}
+
+/* 기존 toast-success 유지하고 아래 추가 */
+.toast-fixed {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  padding: 16px 28px;
+  border-radius: 8px;
+  font-size: 14px;
+  text-align: center;
+  z-index: 9999;
+  white-space: nowrap;
 }
 </style>

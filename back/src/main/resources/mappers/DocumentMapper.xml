@@ -21,7 +21,7 @@
     )
     VALUES (
     #{id}, #{fileId}, #{originalName}, #{storedName}, #{extension}, #{fileSize},
-    'N', 1, #{rootId}
+    'F0', 1, #{rootId}
     )
   </insert>
   
@@ -44,7 +44,7 @@
   
   <update id="deleteFileDetail">
     UPDATE file_detail
-    SET is_delete = 'Y'
+    SET is_delete = 'F1'
     WHERE id = #{id}
   </update>
   
@@ -76,12 +76,12 @@
     FROM file_detail fd
     INNER JOIN docs d ON fd.file_id = d.file_id
     WHERE d.id = #{id}
-    AND fd.is_delete = 'N'
+    AND fd.is_delete = 'F0'
     AND fd.version = (
     SELECT MAX(version)
     FROM file_detail
-    WHERE root_id = fd.root_id
-    AND is_delete = 'N'
+    WHERE file_id = fd.file_id
+    AND is_delete = 'F0'
     )
   </select>
 

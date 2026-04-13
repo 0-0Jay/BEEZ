@@ -12,6 +12,8 @@ const docId = route.params.docId;
 
 onMounted(async () => {
   await docStore.fetchDocumentDetail(docId);
+  console.log('currentDocument:', docStore.currentDocument);
+  console.log('fileList:', JSON.stringify(docStore.currentDocument?.fileList));
 });
 
 const goToList = () => {
@@ -46,6 +48,10 @@ const formatDate = (dateStr) => {
   const day = String(date.getDate()).padStart(2, '0');
 
   return `${year}-${month}-${day}`;
+};
+
+const downloadFile = (fileDetailId) => {
+  window.location.href = `/api/document/download/${fileDetailId}`;
 };
 </script>
 
@@ -86,10 +92,11 @@ const formatDate = (dateStr) => {
       <div class="panel">
         <div class="panel-label">첨부파일</div>
         <div class="file-list">
-          <template v-if="docStore.currentDocument.files?.length">
-            <div v-for="(file, i) in docStore.currentDocument.files" :key="i" class="file-row">
+          <template v-if="docStore.currentDocument.fileList?.length">
+            <div v-for="(file, i) in docStore.currentDocument.fileList" :key="i" class="file-row">
               <span class="file-name">{{ file.name }}</span>
-              <span class="file-meta">용량 {{ file.size }} &nbsp; {{ file.uploadedAt }} 업로드</span>
+              <span class="file-meta">용량 {{ (file.fileSize / 1024).toFixed(1) }}KB</span>
+              <button class="btn-download" @click="downloadFile(file.id)">다운로드</button>
             </div>
           </template>
           <div v-else class="file-empty">첨부파일이 없습니다.</div>
@@ -220,7 +227,7 @@ const formatDate = (dateStr) => {
 
 .file-row {
   display: grid;
-  grid-template-columns: 200px 1fr;
+  grid-template-columns: 200px 1fr auto;
   align-items: center;
   padding: 12px 0;
   border-bottom: 1px solid #eee;
@@ -266,6 +273,21 @@ const formatDate = (dateStr) => {
 }
 
 .btn-list:hover {
+  background: #e5e5e5;
+}
+
+.btn-download {
+  background: #f0f0f0;
+  border: 1px solid #bbb;
+  color: #555;
+  height: 26px;
+  padding: 0 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.btn-download:hover {
   background: #e5e5e5;
 }
 </style>

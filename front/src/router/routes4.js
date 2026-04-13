@@ -11,10 +11,17 @@ const Routes4 = [
     component: () => import('@/views/wiki/WikiDetail.vue')
   },
   {
-    path: '/wiki/history/:projectId/:wikiId/:version',
+    path: '/wiki/history/:projectId/:wikiId',
     name: 'WikiHistory',
     component: () => import('@/views/wiki/WikiHistory.vue')
   },
+
+  {
+    path: '/wiki/edit/:projectId/:wikiId',
+    name: 'WikiEdit',
+    component: () => import('@/views/wiki/WikiWrite.vue')
+  },
+
   {
     path: '/document/list/:projectId',
     name: 'DocumentList',
@@ -33,7 +40,7 @@ const Routes4 = [
   {
     path: '/document/edit/:projectId/:docId',
     name: 'DocumentEdit',
-    component: () => import('@/views/document/DocumentWrite.vue')
+    component: () => import('@/views/document/DocumentEdit.vue')
   }
 ]; //router end
 export default Routes4;

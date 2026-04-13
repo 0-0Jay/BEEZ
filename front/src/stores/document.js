@@ -24,7 +24,7 @@ export const useDocumentStore = defineStore('document', {
     async writeDocument(projectId, formData) {
       try {
         // 컨트롤러의 @PostMapping("/document/write/{projectId}")와 매칭
-        const response = await axios.post(`/document/write/${projectId}`, formData, {
+        const response = await axios.post(`/document/write`, formData, {
           // headers: { 'Content-Type': 'multipart/form-data' }
         });
         return response.data;
@@ -48,12 +48,28 @@ export const useDocumentStore = defineStore('document', {
     },
 
     //문서 수정
-    async updateDocument(updateFormData) {
+    async updateDocument(updateRequest, newFiles, deletedFileIds) {
       try {
-        // 컨트롤러의 @PutMapping("/document/update")와 매칭
-        const response = await axios.put('/document/update', updateFormData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        const formData = new FormData();
+
+        const fileUpdates = (deletedFileIds || []).map((id) => ({
+          targetFileDetailId: id,
+          isDeleted: true
+        }));
+        console.log('deletedFileIds:', deletedFileIds); // ← 추가
+        console.log('fileUpdates:', fileUpdates); // ← 추가
+
+        updateRequest.fileUpdates = fileUpdates;
+
+        formData.append('document', new Blob([JSON.stringify(updateRequest)], { type: 'application/json' }));
+
+        //새파일 담기
+        if (newFiles && newFiles.length > 0) {
+          newFiles.forEach((file) => {
+            formData.append('newFile', file);
+          });
+        }
+        const response = await axios.put('/document/update', formData);
         return response.data;
       } catch (error) {
         console.error('문서 수정 실패:', error);
