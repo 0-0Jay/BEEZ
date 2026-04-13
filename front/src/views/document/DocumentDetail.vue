@@ -1,4 +1,5 @@
 <script setup>
+import axios from '@/stores/AxiosInstance';
 import { useDocumentStore } from '@/stores/document';
 import { onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -24,34 +25,37 @@ const goToEdit = () => {
   router.push({ name: 'DocumentEdit', params: { projectId, docId } });
 };
 
-// 날짜 포맷 함수 추가 (YYYY-MM-DD)
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
-
-  // 문자열이 '26/04/10 14:27:18...' 형식이거나 ISO 형식일 때를 모두 대응
-  // 만약 DB에서 26/04/10 처럼 오면 연도 처리가 필요할 수 있습니다.
   const date = new Date(dateStr);
-
-  // 날짜 객체가 유효하지 않을 경우 (예: '26/04/10' 형식이 Date에서 안 읽힐 때)
-  // 단순 문자열 슬라이싱으로 처리하는 방법이 더 확실할 수 있습니다.
   if (isNaN(date)) {
-    // '26/04/10 14:27:18' -> '2026-04-10' (필요시 조정)
     const parts = dateStr.split(' ')[0].split('/');
-    if (parts.length === 3) {
-      return `20${parts[0]}-${parts[1]}-${parts[2]}`;
-    }
+    if (parts.length === 3) return `20${parts[0]}-${parts[1]}-${parts[2]}`;
     return dateStr;
   }
-
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
-
   return `${year}-${month}-${day}`;
 };
 
-const downloadFile = (fileDetailId) => {
-  window.location.href = `/api/document/download/${fileDetailId}`;
+const downloadFile = async (fileDetailId) => {
+  const response = await axios.get(`/document/download/${fileDetailId}`, {
+    responseType: 'blob'
+  });
+
+  const url = window.URL.createObjectURL(new Blob([response.data]));
+  const link = document.createElement('a');
+  link.href = url;
+
+  const disposition = response.headers['content-disposition'];
+  const fileName = decodeURIComponent(disposition.split('filename="')[1].replace('"', ''));
+
+  link.setAttribute('download', fileName);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
 };
 </script>
 
@@ -74,7 +78,7 @@ const downloadFile = (fileDetailId) => {
             <div class="panel-label">{{ docStore.currentDocument.doctype }}</div>
             <div class="doc-title">{{ docStore.currentDocument.title }}</div>
             <div class="doc-meta">
-              <span>작성자 {{ docStore.currentDocument.userName }}</span>
+              <span>작성자 - {{ docStore.currentDocument.userName }}</span>
               <span>작성일 {{ formatDate(docStore.currentDocument.createdOn) }}</span>
             </div>
           </div>
@@ -95,7 +99,7 @@ const downloadFile = (fileDetailId) => {
           <template v-if="docStore.currentDocument.fileList?.length">
             <div v-for="(file, i) in docStore.currentDocument.fileList" :key="i" class="file-row">
               <span class="file-name">{{ file.name }}</span>
-              <span class="file-meta">용량 {{ (file.fileSize / 1024).toFixed(1) }}KB</span>
+              <span class="file-meta">용량 {{ (file.size / 1024).toFixed(1) }}KB</span>
               <button class="btn-download" @click="downloadFile(file.id)">다운로드</button>
             </div>
           </template>

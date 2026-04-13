@@ -36,7 +36,9 @@ public interface DocumentMapper {
     
   // 조회 관련
     // 목록 조회
-  List<ListResponse> selectDocumentList();
+  List<ListResponse> selectDocumentList(String projectId);
+  
+  String selectFileIdByDocId(String id);
   
     // 상세 조회
   DetailResponse selectDocumentDetail(String id);

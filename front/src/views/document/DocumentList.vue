@@ -147,7 +147,10 @@ const formatDate = (dateStr) => {
       </template>
 
       <template v-else-if="pagedList.length === 0">
-        <div class="board-empty">등록된 문서가 없습니다.</div>
+        <div class="board-empty">
+          <div class="empty-title">등록된 문서가 없습니다.</div>
+          <div class="empty-sub">문서등록 버튼을 눌러 문서를 작성할 수 있습니다.</div>
+        </div>
       </template>
 
       <div v-for="(doc, index) in pagedList" :key="doc.id" class="board-row">
@@ -378,5 +381,30 @@ const formatDate = (dateStr) => {
   background: #e8920e;
   color: #fff;
   border-color: #e8920e;
+}
+
+.board-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 0;
+  gap: 8px;
+}
+
+.empty-icon {
+  font-size: 40px;
+  margin-bottom: 8px;
+}
+
+.empty-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #555;
+}
+
+.empty-sub {
+  font-size: 13px;
+  color: #aaa;
 }
 </style>
