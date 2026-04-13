@@ -28,5 +28,6 @@
     FROM notifications n
     JOIN project p ON n.project_id = p.id
     WHERE n.user_id = #{userId}
+    ORDER BY n.id DESC
   </select>
 </mapper>

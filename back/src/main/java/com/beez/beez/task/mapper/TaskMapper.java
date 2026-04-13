@@ -10,7 +10,7 @@ public interface TaskMapper {
   
   List<MemberResponse> findMemberList(String projectId);
   
-  List<VersionResponse> findVersionList(String projectId);
+  void findVersionList(@Param("projectId") String projectId, @Param("versionList") List<VersionResponse> version);
   
   void insertTask(TaskRequest task);
   
@@ -34,7 +34,7 @@ public interface TaskMapper {
   
   void deleteTaskLink(String id);
   
-  void calcSubProgress(@Param("taskId") String taskId,@Param("progress") int progress);
+  void calcSubProgress(@Param("taskId") String taskId);
   
   List<TaskOverviewResponse> findTaskOverview(String id);
   

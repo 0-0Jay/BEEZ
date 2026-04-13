@@ -22,7 +22,9 @@ public class TaskListResponse {
   private String category;
   private String workflow;
   private String priority;
+  private String plannedStart;
   private Timestamp plannedEnd;
   private int progress;
   private String parentId;
+  private String versionName;
 }

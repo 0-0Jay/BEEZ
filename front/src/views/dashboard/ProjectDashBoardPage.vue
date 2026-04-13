@@ -1,11 +1,37 @@
 <script setup>
+// 프로젝트 대시보드
+import { useAuthStore } from '@/stores/auth';
+import { useDashboardStore } from '@/stores/dashboard';
+import { useProjectStore } from '@/stores/project';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import FullCalendar from '@fullcalendar/vue3';
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
-// ──────────────────────── 유틸 ────────────────────────
+const authStore = useAuthStore();
+const dashboardStore = useDashboardStore();
+const projectStore = useProjectStore();
+
+const user = computed(() => authStore.user);
+const dashboard = computed(() => dashboardStore.projectDashboard);
+const project = computed(() => projectStore.selectedProject);
+
+// ──────────────────────── 날짜 유틸 ────────────────────────
+function formatDate(dateStr) {
+  if (!dateStr) return '-';
+  return String(dateStr).replaceAll('-', '.');
+}
+
+function formatShortDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${mm}.${dd}`;
+}
+
 function calcDday(dateStr) {
+  if (!dateStr) return 0;
   const target = new Date(dateStr);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -13,39 +39,34 @@ function calcDday(dateStr) {
 }
 
 // ──────────────────────── 현재 프로젝트 ────────────────────────
-// TODO: 실제로는 route params 또는 store에서 주입
-const currentProject = ref({
-  title: '사내 프로젝트 관리 시스템 개편',
-  status: '진행중',
-  pm: '김철수',
-  startDate: '2025.01.06',
-  endDate: '2025.07.31',
-  progress: 72,
-  dday: calcDday('2025-07-31'),
-  totalTasks: 18,
-  doneTasks: 11,
-  inProgressTasks: 5
-});
-
-// 프로젝트 상태 배지 색상
-function projectStatusCls(status) {
-  const map = {
-    진행중: 'bg-blue-100 text-blue-700',
-    닫힘: 'bg-slate-200 text-slate-600',
-    완료: 'bg-emerald-100 text-emerald-700',
-    보류: 'bg-yellow-100 text-yellow-700'
+const currentProject = computed(() => {
+  return {
+    title: project.value?.title,
+    status: dashboard.value?.endDate ? '진행중' : '마감',
+    pm: dashboard.value?.pmpl,
+    startDate: formatDate(dashboard.value?.startDate),
+    endDate: formatDate(dashboard.value?.endDate),
+    progress: dashboard.value?.process ?? 0,
+    dday: calcDday(dashboard.value?.endDate),
+    totalTasks: (dashboard.value?.taskList ?? []).length,
+    doneTasks: (dashboard.value?.taskList ?? []).filter((t) => t.workflow === '완료').length,
+    inProgressTasks: (dashboard.value?.taskList ?? []).filter((t) => t.workflow !== '완료').length
   };
-  return map[status] ?? 'bg-slate-200 text-slate-600';
-}
+});
 
 // 상단 통계 3개
 const projectStats = computed(() => [
-  { label: '총 일감', value: currentProject.value.totalTasks, icon: 'pi pi-list' },
-  { label: '완료된 일감', value: currentProject.value.doneTasks, icon: 'pi pi-check-circle' },
-  { label: '진행중 일감', value: currentProject.value.inProgressTasks, icon: 'pi pi-spinner' }
+  { label: '총 일감', value: currentProject.value?.totalTasks ?? 0, icon: 'pi pi-list' },
+  { label: '완료된 일감', value: currentProject.value?.doneTasks ?? 0, icon: 'pi pi-check-circle' },
+  { label: '진행중 일감', value: currentProject.value?.inProgressTasks ?? 0, icon: 'pi pi-spinner' }
 ]);
 
-// ──────────────────────── 일감 공통 ────────────────────────
+// ──────────────────────── 반응형 데이터 ────────────────────────
+const projects = computed(() => mapProjects(dashboard.value.projectList).sort((a, b) => a.id - b.id));
+const myTasks = computed(() => mapTasks(dashboard.value.taskList).sort((a, b) => a.id - b.id));
+const memos = computed(() => mapMemos(dashboard.value.memoList).sort((a, b) => a.id - b.id));
+
+// ──────────────────────── 일감 상태 ────────────────────────
 const statusOrder = ['신규', '실행', '해결', '완료', '반려'];
 const statusColorMap = {
   신규: { cls: 'bg-slate-200 text-slate-700', severity: 'secondary' },
@@ -58,35 +79,6 @@ function statusSeverity(s) {
   return statusColorMap[s]?.severity ?? 'secondary';
 }
 
-// ──────────────────────── 전체 일감 ────────────────────────
-const allTasks = ref([
-  { id: 1, title: 'Gantt 차트 반응형 구현', assignee: '홍길동', status: '실행', progress: 60, deadline: '2025.04.25' },
-  { id: 2, title: '일감 보고서 페이지 개발', assignee: '홍길동', status: '실행', progress: 40, deadline: '2025.05.01' },
-  { id: 3, title: 'WebSocket 알림 버그 수정', assignee: '홍길동', status: '해결', progress: 100, deadline: '2025.04.15' },
-  { id: 4, title: 'Oracle JOIN 쿼리 최적화', assignee: '홍길동', status: '완료', progress: 100, deadline: '2025.04.10' },
-  { id: 5, title: 'API 명세서 작성', assignee: '김영희', status: '신규', progress: 0, deadline: '2025.05.10' },
-  { id: 6, title: '로그인 페이지 UI 개선', assignee: '김영희', status: '실행', progress: 75, deadline: '2025.04.28' },
-  { id: 7, title: '알림 센터 컴포넌트', assignee: '이민준', status: '신규', progress: 0, deadline: '2025.05.15' },
-  { id: 8, title: '권한 관리 기능 리팩토링', assignee: '이민준', status: '반려', progress: 30, deadline: '2025.04.20' }
-]);
-
-const allTaskStatusCounts = computed(() =>
-  statusOrder.map((s) => ({
-    label: s,
-    count: allTasks.value.filter((t) => t.status === s).length,
-    cls: statusColorMap[s].cls
-  }))
-);
-
-// ──────────────────────── 나의 일감 ────────────────────────
-const myTasks = ref([
-  { id: 1, title: 'Gantt 차트 반응형 구현', project: '사내 PM 개편', status: '실행', progress: 60, deadline: '2025.04.25' },
-  { id: 2, title: '일감 보고서 페이지 개발', project: '사내 PM 개편', status: '실행', progress: 40, deadline: '2025.05.01' },
-  { id: 3, title: 'WebSocket 알림 버그 수정', project: '사내 PM 개편', status: '해결', progress: 100, deadline: '2025.04.15' },
-  { id: 4, title: 'Oracle JOIN 쿼리 최적화', project: '데이터 마이그레이션', status: '완료', progress: 100, deadline: '2025.04.10' },
-  { id: 5, title: 'API 명세서 작성', project: 'ERP 연동', status: '신규', progress: 0, deadline: '2025.05.10' }
-]);
-
 const myTaskStatusCounts = computed(() =>
   statusOrder.map((s) => ({
     label: s,
@@ -95,18 +87,40 @@ const myTaskStatusCounts = computed(() =>
   }))
 );
 
-// ──────────────────────── 메모 ────────────────────────
-const now = new Date();
-let memoIdSeq = ref(3);
-const memos = ref([
-  { id: 1, title: 'FullCalendar 이벤트 색상 커스텀', content: 'eventColor 또는 backgroundColor/borderColor로 per-event 색상 지정 가능.\ntheme 옵션 확인 필요.', date: '04.10' },
-  { id: 2, title: 'PrimeVue DataTable 정렬 버그', content: '다중 컬럼 정렬 시 removableSort 옵션 활성화 필요. sortMode="multiple" 설정 확인.', date: '04.11' },
-  { id: 3, title: 'Spring @Transactional 주의사항', content: '동일 클래스 내 self-invocation 은 프록시를 거치지 않아 트랜잭션이 적용되지 않음.', date: '04.12' }
-]);
+// ──────────────────────── 달력 ────────────────────────
+const EVENT_COLORS = ['#F59E0B', '#FCD34D', '#D97706', '#92400E', '#78350F', '#FDE68A', '#B45309'];
 
+// 일정 클릭 모달
+const scheduleDialogVisible = ref(false);
+const selectedSchedule = ref({ title: '', projectTitle: '', content: '', start: '', end: '' });
+
+const calendarOptions = ref({
+  plugins: [dayGridPlugin, interactionPlugin],
+  initialView: 'dayGridMonth',
+  locale: 'ko',
+  height: 380,
+  headerToolbar: { left: 'prev', center: 'title', right: 'next' },
+  buttonText: { today: '오늘' },
+  events: [],
+  eventDisplay: 'block',
+  dayMaxEvents: 2,
+  fixedWeekCount: false,
+  eventClick(info) {
+    selectedSchedule.value = {
+      title: info.event.title,
+      projectTitle: info.event.extendedProps.projectTitle ?? '-',
+      content: info.event.extendedProps.content ?? '',
+      start: formatDate(info.event.startStr?.slice(0, 10)),
+      end: formatDate(info.event.endStr?.slice(0, 10) || info.event.startStr?.slice(0, 10))
+    };
+    scheduleDialogVisible.value = true;
+  }
+});
+
+// ──────────────────────── 메모 다이얼로그 ────────────────────────
 const memoDialogVisible = ref(false);
-const memoDialogMode = ref('view');
-const activeMemo = ref({ id: null, title: '', content: '', date: '' });
+const memoDialogMode = ref('view'); // 'view' | 'edit' | 'new'
+const activeMemo = ref({ id: null, title: '', content: '' });
 
 function openMemo(memo) {
   activeMemo.value = { ...memo };
@@ -114,201 +128,241 @@ function openMemo(memo) {
   memoDialogVisible.value = true;
 }
 function openNewMemo() {
-  activeMemo.value = { id: null, title: '', content: '', date: '' };
+  activeMemo.value = { id: null, title: '', content: '' };
   memoDialogMode.value = 'new';
   memoDialogVisible.value = true;
 }
-function saveMemo() {
-  const today = now.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' }).replace('. ', '.').replace('.', '');
+
+async function saveMemo() {
+  const payload = {
+    id: activeMemo.value.id ?? null,
+    userId: user.value?.id,
+    projectId: project.value?.id ?? null,
+    title: activeMemo.value.title,
+    content: activeMemo.value.content
+  };
+
   if (activeMemo.value.id) {
+    await dashboardStore.updateMemo(payload);
     const idx = memos.value.findIndex((m) => m.id === activeMemo.value.id);
-    if (idx !== -1) memos.value[idx] = { ...activeMemo.value };
+    if (idx !== -1) memos.value[idx] = { ...memos.value[idx], ...activeMemo.value };
   } else {
-    memos.value.push({ ...activeMemo.value, id: ++memoIdSeq.value, date: today });
+    await dashboardStore.insertMemo(payload);
+    await dashboardStore.findProjectDashboard(project.value?.id, user.value?.id);
   }
   memoDialogVisible.value = false;
 }
-function deleteMemo(id) {
-  memos.value = memos.value.filter((m) => m.id !== id);
+
+async function deleteMemo(id) {
+  await dashboardStore.deleteMemo(id);
+  await dashboardStore.findProjectDashboard(project.value?.id, user.value?.id);
 }
 
-// ──────────────────────── 달력 ────────────────────────
-const calendarOptions = ref({
-  plugins: [dayGridPlugin, interactionPlugin],
-  initialView: 'dayGridMonth',
-  locale: 'ko',
-  height: 280,
-  headerToolbar: { left: 'prev', center: 'title', right: 'next' },
-  buttonText: { today: '오늘' },
-  events: [
-    { title: 'Gantt 개발', start: '2025-04-14', end: '2025-04-18', color: '#6366f1' },
-    { title: '일감 보고서', start: '2025-04-16', end: '2025-04-20', color: '#10b981' },
-    { title: '스프린트 회의', start: '2025-04-17', allDay: true, color: '#f59e0b' },
-    { title: 'API 설계', start: '2025-04-21', end: '2025-04-25', color: '#6366f1' },
-    { title: '코드 리뷰', start: '2025-04-24', allDay: true, color: '#ef4444' },
-    { title: '릴리즈 준비', start: '2025-04-28', end: '2025-05-02', color: '#8b5cf6' }
-  ],
-  eventDisplay: 'block',
-  dayMaxEvents: 2,
-  fixedWeekCount: false
+// ──────────────────────── DTO 매핑 ────────────────────────
+function mapProjects(list) {
+  return (list ?? []).map((p) => ({
+    id: p.id,
+    title: p.title,
+    progress: p.process ?? 0,
+    deadline: formatDate(p.endDate),
+    dday: calcDday(p.endDate)
+  }));
+}
+
+function mapTasks(list) {
+  return (list ?? []).map((t) => ({
+    id: t.id,
+    title: t.title,
+    project: t.projectTitle,
+    status: t.workflow,
+    progress: t.process ?? 0,
+    deadline: formatDate(t.plannedEnd)
+  }));
+}
+
+function mapMemos(list) {
+  return (list ?? []).map((m) => ({
+    id: m.id,
+    title: m.title,
+    content: m.content,
+    date: formatShortDate(m.editedOn)
+  }));
+}
+
+function mapScheduleEvents(list) {
+  return (list ?? []).map((s, i) => ({
+    id: s.id,
+    title: s.title,
+    start: s.startDate,
+    end: s.endDate,
+    color: EVENT_COLORS[i % EVENT_COLORS.length],
+    extendedProps: {
+      projectTitle: s.projectTitle,
+      content: s.content
+    }
+  }));
+}
+
+// ──────────────────────── 마운트 ────────────────────────
+onMounted(async () => {
+  await dashboardStore.findProjectDashboard(project.value?.id, user.value?.id);
+  const d = dashboard.value;
+  if (d) {
+    calendarOptions.value = {
+      ...calendarOptions.value,
+      events: mapScheduleEvents(d.scheduleList)
+    };
+  }
 });
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-50 p-5 flex flex-col gap-5">
+  <div class="min-h-screen bg-white p-5 flex flex-col gap-5">
     <!-- ──────────────────────────────────────────────
-         상단 프로젝트 정보 카드
+         상단 프로젝트 정보
     ────────────────────────────────────────────── -->
-    <Card class="rounded-2xl border-0 shadow-md overflow-hidden">
-      <template #content>
-        <div class="bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-500 px-8 py-6 rounded-xl">
-          <!-- 상단: 프로젝트명 + 상태 배지 + PM + 기간 -->
-          <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-5">
-            <div class="flex flex-col gap-1.5">
-              <div class="flex items-center gap-3 flex-wrap">
-                <h1 class="text-white text-2xl font-bold leading-tight">
-                  {{ currentProject.title }}
-                </h1>
-                <span class="text-xs font-semibold px-3 py-1 rounded-full" :class="projectStatusCls(currentProject.status)">
-                  {{ currentProject.status }}
-                </span>
-              </div>
-              <div class="flex items-center gap-4 flex-wrap mt-1">
-                <span class="text-indigo-200 text-sm"> <i class="pi pi-user mr-1.5" />PM : {{ currentProject.pm }} </span>
-                <span class="text-indigo-200 text-sm"> <i class="pi pi-calendar mr-1.5" />{{ currentProject.startDate }} ~ {{ currentProject.endDate }} </span>
-              </div>
-            </div>
-
-            <!-- D-Day 배지 -->
-            <div class="flex flex-col items-center justify-center bg-white/15 backdrop-blur-sm rounded-2xl px-6 py-4 shrink-0 min-w-[96px]">
-              <span class="text-indigo-100 text-xs mb-1">마감 D-Day</span>
-              <span class="text-2xl font-bold" :class="currentProject.dday <= 0 ? 'text-red-300' : currentProject.dday <= 7 ? 'text-yellow-300' : 'text-white'">
-                {{ currentProject.dday === 0 ? 'D-day' : currentProject.dday > 0 ? `D-${currentProject.dday}` : `D+${Math.abs(currentProject.dday)}` }}
-              </span>
-            </div>
+    <div class="bg-[#F2F3F8] px-8 py-6 rounded-xl">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center gap-3 flex-wrap">
+            <span class="text-amber-600 text-base font-semibold tracking-wide">
+              {{ currentProject.status }}
+            </span>
           </div>
-
-          <!-- 진척도 바 -->
-          <div class="flex items-center gap-3 mb-5">
-            <span class="text-indigo-100 text-xs w-14 shrink-0">진척도</span>
-            <div class="flex-1 bg-white/20 rounded-full h-2.5 overflow-hidden">
-              <div class="h-full bg-white rounded-full transition-all" :style="{ width: currentProject.progress + '%' }" />
-            </div>
-            <span class="text-white font-bold text-sm w-10 text-right">{{ currentProject.progress }}%</span>
+          <span class="text-gray-700 text-3xl font-bold leading-tight">
+            {{ currentProject.title }}
+          </span>
+          <div class="flex items-center gap-4 flex-wrap">
+            <span class="text-gray-500 text-base"> <i class="pi pi-user mr-1.5" />PM : {{ currentProject.pm }} </span>
+            <span class="text-gray-500 text-base"> <i class="pi pi-calendar mr-1.5" />{{ currentProject.startDate }} ~ {{ currentProject.endDate }} </span>
           </div>
-
-          <!-- 통계 3개 -->
-          <div class="grid grid-cols-3 gap-3">
-            <div v-for="stat in projectStats" :key="stat.label" class="flex flex-col items-center justify-center bg-white/15 backdrop-blur-sm rounded-xl px-4 py-3">
-              <i :class="[stat.icon, 'text-white text-lg mb-1']" />
-              <span class="text-white text-xl font-bold">{{ stat.value }}</span>
-              <span class="text-indigo-100 text-xs text-center mt-0.5">{{ stat.label }}</span>
-            </div>
+          <div class="flex items-center gap-3 mt-1">
+            <span class="text-gray-500 text-base w-12 shrink-0">진척도</span>
+            <ProgressBar :value="currentProject.progress" class="flex-1 min-w-200" />
+            <span class="text-[#5B6E96] font-semibold text-base w-10 text-right"> {{ currentProject.progress }}% </span>
           </div>
         </div>
-      </template>
-    </Card>
+
+        <!-- 통계 3개 + D-Day -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div v-for="stat in projectStats" :key="stat.label" class="flex flex-col items-center justify-center rounded-xl px-5 py-4 min-w-[110px]">
+            <span class="text-gray-700 text-2xl font-bold">{{ stat.value }}</span>
+            <span class="text-gray-700 text-base text-center mt-1 leading-tight">{{ stat.label }}</span>
+          </div>
+          <div class="flex flex-col items-center justify-center rounded-xl px-5 py-4 min-w-[110px]">
+            <span class="text-2xl font-bold" :class="currentProject.dday <= 0 ? 'text-red-500' : currentProject.dday <= 7 ? 'text-amber-600' : 'text-gray-700'">
+              {{ currentProject.dday === 0 ? 'D-day' : currentProject.dday > 0 ? `D-${currentProject.dday}` : `D+${Math.abs(currentProject.dday)}` }}
+            </span>
+            <span class="text-gray-700 text-base text-center mt-1 leading-tight">마감 D-Day</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- ──────────────────────────────────────────────
          2 × 2 그리드
     ────────────────────────────────────────────── -->
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-5 flex-1">
-      <!-- ① 전체 일감 현황 -->
-      <Card class="rounded-2xl border-0 shadow-md flex flex-col">
+      <!-- ① 하위 프로젝트 현황 ──────────── -->
+      <Card class="rounded-2xl border-0 shadow-md overflow-hidden flex flex-col">
         <template #header>
-          <div class="flex items-center gap-2 px-6 pt-5 pb-0">
-            <span class="w-1 h-5 bg-indigo-500 rounded-full inline-block" />
-            <h2 class="text-slate-700 font-bold text-base">전체 일감 현황</h2>
+          <div class="flex items-center gap-3 px-5 pt-3">
+            <span class="text-gray-700 font-bold text-lg flex-1">하위 프로젝트 현황</span>
+            <span>총 {{ projects.length }}개 프로젝트</span>
           </div>
         </template>
         <template #content>
-          <!-- 상태별 카운트 뱃지 -->
-          <div class="flex flex-wrap gap-2 mb-3 px-2">
-            <div v-for="st in allTaskStatusCounts" :key="st.label" class="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold" :class="st.cls">
-              <span>{{ st.label }}</span>
-              <span class="bg-white/40 rounded-full px-1.5 py-0.5">{{ st.count }}</span>
-            </div>
-          </div>
-
-          <!-- 일감 목록 -->
-          <div class="overflow-y-auto max-h-52 px-2 flex flex-col gap-2">
-            <div v-for="task in allTasks" :key="task.id" class="flex items-center gap-3 bg-slate-50 hover:bg-indigo-50 transition-colors rounded-xl px-4 py-3">
-              <div class="flex-1 min-w-0">
-                <p class="text-slate-800 text-sm font-medium truncate">
-                  {{ task.title }}
-                  <span class="text-slate-400 font-normal text-xs">({{ task.assignee }})</span>
-                </p>
-                <div class="flex items-center gap-2 mt-1">
-                  <ProgressBar :value="task.progress" :style="{ height: '5px', width: '80px' }" />
-                  <span class="text-slate-400 text-xs">{{ task.progress }}%</span>
-                  <span class="text-slate-400 text-xs ml-auto">{{ task.deadline }}</span>
-                </div>
+          <div class="flex flex-col gap-3 overflow-y-auto max-h-91 p-4 bg-white">
+            <div v-for="proj in projects" :key="proj.id" class="flex flex-col gap-2 bg-white hover:bg-amber-100 transition-colors rounded-xl p-4 cursor-pointer shadow-sm">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-slate-800 font-semibold text-base truncate max-w-[200px]">{{ proj.title }}</span>
+                <Tag :value="proj.dday === 0 ? 'D-day' : proj.dday > 0 ? `D-${proj.dday}` : `D+${Math.abs(proj.dday)}`" :severity="proj.dday <= 0 ? 'danger' : proj.dday <= 7 ? 'warning' : 'info'" />
               </div>
-              <Tag :value="task.status" :severity="statusSeverity(task.status)" class="text-xs shrink-0" />
+              <ProgressBar :value="proj.progress" />
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500 text-base">마감 {{ proj.deadline }}</span>
+                <span class="text-[#5B6E96] font-semibold text-base">{{ proj.progress }}%</span>
+              </div>
+            </div>
+
+            <div v-if="projects.length === 0" class="text-center text-slate-400 text-base py-8">
+              <i class="pi pi-briefcase text-3xl block mb-2 opacity-40" />
+              하위 프로젝트가 없습니다.
             </div>
           </div>
         </template>
       </Card>
 
-      <!-- ② 나의 일감 현황 -->
-      <Card class="rounded-2xl border-0 shadow-md flex flex-col">
+      <!-- ② 나의 일감 현황 ──────────── -->
+      <Card class="rounded-2xl border-0 shadow-md overflow-hidden flex flex-col">
         <template #header>
-          <div class="flex items-center gap-2 px-6 pt-5 pb-0">
-            <span class="w-1 h-5 bg-emerald-500 rounded-full inline-block" />
-            <h2 class="text-slate-700 font-bold text-base">나의 일감 현황</h2>
+          <div class="flex items-center gap-3 px-5 pt-3">
+            <span class="text-gray-700 font-bold text-lg flex-1">나의 일감</span>
+            <span>총 {{ myTasks.length }}개 일감 작업 중</span>
           </div>
         </template>
         <template #content>
-          <div class="flex flex-wrap gap-2 mb-3 px-2">
-            <div v-for="st in myTaskStatusCounts" :key="st.label" class="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold" :class="st.cls">
-              <span>{{ st.label }}</span>
-              <span class="bg-white/40 rounded-full px-1.5 py-0.5">{{ st.count }}</span>
-            </div>
-          </div>
-
-          <div class="overflow-y-auto max-h-52 px-2 flex flex-col gap-2">
-            <div v-for="task in myTasks" :key="task.id" class="flex items-center gap-3 bg-slate-50 hover:bg-emerald-50 transition-colors rounded-xl px-4 py-3">
-              <div class="flex-1 min-w-0">
-                <p class="text-slate-800 text-sm font-medium truncate">
-                  {{ task.title }}
-                  <span class="text-slate-400 font-normal text-xs">({{ task.project }})</span>
-                </p>
-                <div class="flex items-center gap-2 mt-1">
-                  <ProgressBar :value="task.progress" :style="{ height: '5px', width: '80px' }" />
-                  <span class="text-slate-400 text-xs">{{ task.progress }}%</span>
-                  <span class="text-slate-400 text-xs ml-auto">{{ task.deadline }}</span>
-                </div>
+          <div class="flex flex-col bg-white">
+            <!-- 상태별 카운트 -->
+            <div class="flex flex-wrap gap-2 px-4 pb-2">
+              <div v-for="st in myTaskStatusCounts" :key="st.label" class="flex items-center gap-1.5 rounded-full px-3 py-1 text-base font-semibold" :class="st.cls">
+                <span>{{ st.label }}</span>
+                <span class="bg-white/50 rounded-full px-1.5 py-0.5 text-base">{{ st.count }}</span>
               </div>
-              <Tag :value="task.status" :severity="statusSeverity(task.status)" class="text-xs shrink-0" />
+            </div>
+
+            <!-- 일감 목록 -->
+            <div class="overflow-y-auto max-h-80 px-4 pb-4 flex flex-col gap-2">
+              <div v-for="task in myTasks" :key="task.id" class="flex items-start gap-3 bg-white hover:bg-amber-100 transition-colors rounded-xl px-4 py-3 shadow-sm">
+                <div class="flex-1 min-w-0">
+                  <p class="text-slate-800 text-base font-semibold truncate">
+                    {{ task.title }}
+                    <span class="text-slate-400 font-normal text-base">({{ task.project }})</span>
+                  </p>
+                  <div class="flex items-center gap-2 mt-2">
+                    <div class="flex-1">
+                      <ProgressBar :value="task.progress" />
+                    </div>
+                    <span class="text-[#5B6E96] font-semibold text-base w-8 text-right shrink-0"> {{ task.progress }}% </span>
+                  </div>
+                  <span class="text-slate-500 text-base mt-1 block">마감 {{ task.deadline }}</span>
+                </div>
+                <Tag :value="task.status" :severity="statusSeverity(task.status)" class="shrink-0 mt-0.5" />
+              </div>
+
+              <div v-if="myTasks.length === 0" class="text-center text-slate-400 text-base py-8">
+                <i class="pi pi-list text-3xl block mb-2 opacity-40" />
+                담당 일감이 없습니다.
+              </div>
             </div>
           </div>
         </template>
       </Card>
 
-      <!-- ③ 메모 -->
-      <Card class="rounded-2xl border-0 shadow-md flex flex-col">
+      <!-- ③ 메모 ──────────── -->
+      <Card class="rounded-2xl border-0 shadow-md overflow-hidden flex flex-col">
         <template #header>
-          <div class="flex items-center gap-2 px-6 pt-5 pb-0">
-            <span class="w-1 h-5 bg-amber-400 rounded-full inline-block" />
-            <h2 class="text-slate-700 font-bold text-base">메모</h2>
-            <Button icon="pi pi-plus" label="메모 추가" size="small" severity="secondary" class="ml-auto text-xs py-1 px-3" @click="openNewMemo" />
+          <div class="flex items-center gap-3 px-5 pt-3">
+            <span class="text-gray-700 font-bold text-lg flex-1">메모</span>
+            <Button label="메모 추가" size="small" raised @click="openNewMemo" />
           </div>
         </template>
         <template #content>
-          <div class="overflow-y-auto max-h-64 px-2 flex flex-col gap-2">
+          <div class="overflow-y-auto max-h-100 p-4 flex flex-col gap-2 bg-white">
             <TransitionGroup name="memo-list">
-              <div v-for="memo in memos" :key="memo.id" class="flex items-center justify-between gap-2 bg-amber-50 hover:bg-amber-100 transition-colors rounded-xl px-4 py-3 cursor-pointer group" @click="openMemo(memo)">
+              <div v-for="memo in memos" :key="memo.id" class="bg-amber-100 flex items-center justify-between gap-2 hover:bg-amber-400 transition-colors rounded-xl px-4 py-3 cursor-pointer group shadow-sm" @click="openMemo(memo)">
                 <div class="flex items-center gap-2 min-w-0">
-                  <i class="pi pi-file text-amber-400 text-sm shrink-0" />
-                  <span class="text-slate-700 text-sm font-medium truncate">{{ memo.title }}</span>
+                  <i class="pi pi-file-edit text-[#5B6E96] text-base shrink-0" />
+                  <span class="text-slate-700 text-base font-medium truncate">{{ memo.title }}</span>
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
-                  <span class="text-slate-400 text-xs hidden group-hover:inline">{{ memo.date }}</span>
-                  <Button icon="pi pi-times" text rounded severity="danger" size="small" class="w-6 h-6 p-0" @click.stop="deleteMemo(memo.id)" />
+                  <span class="text-gray-700 text-base hidden group-hover:inline">{{ memo.date }}</span>
+                  <Button icon="pi pi-times" text rounded severity="danger" size="small" class="w-7 h-7 p-0" @click.stop="deleteMemo(memo.id)" />
                 </div>
               </div>
             </TransitionGroup>
-            <div v-if="memos.length === 0" class="text-center text-slate-400 text-sm py-8">
+
+            <div v-if="memos.length === 0" class="text-center text-slate-400 text-base py-8">
               <i class="pi pi-inbox text-3xl block mb-2 opacity-40" />
               메모가 없습니다.
             </div>
@@ -316,16 +370,10 @@ const calendarOptions = ref({
         </template>
       </Card>
 
-      <!-- ④ 달력 -->
-      <Card class="rounded-2xl border-0 shadow-md flex flex-col">
-        <template #header>
-          <div class="flex items-center gap-2 px-6 pt-5 pb-0">
-            <span class="w-1 h-5 bg-rose-400 rounded-full inline-block" />
-            <h2 class="text-slate-700 font-bold text-base">내 일정</h2>
-          </div>
-        </template>
+      <!-- ④ 달력 ──────────── -->
+      <Card class="rounded-2xl border-0 shadow-md overflow-hidden flex flex-col">
         <template #content>
-          <div class="px-1 overflow-hidden dashboard-calendar">
+          <div class="bg-white dashboard-calendar h-110">
             <FullCalendar :options="calendarOptions" />
           </div>
         </template>
@@ -335,22 +383,76 @@ const calendarOptions = ref({
     <!-- ──────────────────────────────────────────────
          메모 다이얼로그
     ────────────────────────────────────────────── -->
-    <Dialog v-model:visible="memoDialogVisible" :header="memoDialogMode === 'new' ? '새 메모' : '메모 보기'" modal :style="{ width: '480px' }" class="rounded-2xl">
-      <div class="flex flex-col gap-4 pt-2">
-        <div class="flex flex-col gap-1">
-          <label class="text-slate-500 text-xs font-semibold uppercase tracking-wide">제목</label>
-          <InputText v-model="activeMemo.title" placeholder="메모 제목" :readonly="memoDialogMode === 'view'" class="w-full" />
-        </div>
-        <div class="flex flex-col gap-1">
-          <label class="text-slate-500 text-xs font-semibold uppercase tracking-wide">내용</label>
-          <Textarea v-model="activeMemo.content" rows="6" placeholder="메모 내용을 입력하세요..." :readonly="memoDialogMode === 'view'" class="w-full resize-none" />
-        </div>
+    <Dialog v-model:visible="memoDialogVisible" :header="memoDialogMode === 'new' ? '새 메모' : memoDialogMode === 'edit' ? '메모 수정' : '메모'" modal :style="{ width: '500px' }">
+      <div class="flex flex-col gap-5 pt-2">
+        <!-- view 모드 -->
+        <template v-if="memoDialogMode === 'view'">
+          <div class="flex flex-col gap-1">
+            <label class="text-[#5B6E96] text-base font-bold">제목</label>
+            <p class="text-slate-800 text-base font-semibold px-1">{{ activeMemo.title }}</p>
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-[#5B6E96] text-base font-bold">내용</label>
+            <p class="text-slate-700 text-base whitespace-pre-wrap leading-relaxed px-1 min-h-[80px]">
+              {{ activeMemo.content || '내용 없음' }}
+            </p>
+          </div>
+        </template>
+
+        <!-- edit / new 모드 -->
+        <template v-else>
+          <div class="flex flex-col gap-1">
+            <label class="text-[#5B6E96] text-base font-bold">제목</label>
+            <InputText v-model="activeMemo.title" placeholder="메모 제목" class="w-full" />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-[#5B6E96] text-base font-bold">내용</label>
+            <Textarea v-model="activeMemo.content" rows="7" placeholder="메모 내용을 입력하세요..." class="w-full resize-none" />
+          </div>
+        </template>
       </div>
       <template #footer>
         <div class="flex justify-end gap-2">
-          <Button v-if="memoDialogMode === 'view'" label="편집" icon="pi pi-pencil" severity="secondary" @click="memoDialogMode = 'edit'" />
-          <Button v-if="memoDialogMode !== 'view'" label="저장" icon="pi pi-check" @click="saveMemo" />
-          <Button label="닫기" severity="secondary" text @click="memoDialogVisible = false" />
+          <Button v-if="memoDialogMode === 'view'" label="편집" raised @click="memoDialogMode = 'edit'" />
+          <Button v-if="memoDialogMode !== 'view'" label="저장" raised @click="saveMemo" />
+          <Button label="닫기" severity="secondary" raised @click="memoDialogVisible = false" />
+        </div>
+      </template>
+    </Dialog>
+
+    <!-- ──────────────────────────────────────────────
+         일정 상세 다이얼로그
+    ────────────────────────────────────────────── -->
+    <Dialog v-model:visible="scheduleDialogVisible" header="일정 상세" modal :style="{ width: '480px' }">
+      <div class="flex flex-col gap-5 pt-2">
+        <div class="flex flex-col gap-1">
+          <label class="text-[#5B6E96] text-base font-bold">프로젝트</label>
+          <p class="text-slate-800 text-base font-semibold px-1">{{ selectedSchedule.projectTitle }}</p>
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-[#5B6E96] text-base font-bold">일정 제목</label>
+          <p class="text-slate-800 text-base font-semibold px-1">{{ selectedSchedule.title }}</p>
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-[#5B6E96] text-base font-bold">내용</label>
+          <p class="text-slate-700 text-base whitespace-pre-wrap leading-relaxed px-1 min-h-[60px]">
+            {{ selectedSchedule.content || '내용 없음' }}
+          </p>
+        </div>
+        <div class="flex gap-6">
+          <div class="flex flex-col gap-1">
+            <label class="text-[#5B6E96] text-base font-bold">시작일</label>
+            <p class="text-slate-800 text-base px-1">{{ selectedSchedule.start }}</p>
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-[#5B6E96] text-base font-bold">종료일</label>
+            <p class="text-slate-800 text-base px-1">{{ selectedSchedule.end }}</p>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <div class="flex justify-end">
+          <Button label="닫기" severity="secondary" raised @click="scheduleDialogVisible = false" />
         </div>
       </template>
     </Dialog>
@@ -358,51 +460,62 @@ const calendarOptions = ref({
 </template>
 
 <style>
+/* 변경 전 전체 삭제 후 아래로 교체 */
 .dashboard-calendar .fc-toolbar-title {
-  font-size: 0.9rem !important;
+  font-size: 1rem !important;
   font-weight: 700;
-  color: #374151;
+  color: #5b6e96;
 }
 .dashboard-calendar .fc-button {
-  background: #f1f5f9 !important;
+  background: #dde3f0 !important;
   border: none !important;
-  color: #64748b !important;
-  font-size: 0.75rem !important;
-  padding: 2px 8px !important;
+  color: #5b6e96 !important;
+  font-size: 0.875rem !important;
+  padding: 3px 10px !important;
   border-radius: 8px !important;
   box-shadow: none !important;
 }
 .dashboard-calendar .fc-button:hover {
-  background: #e2e8f0 !important;
+  background: #5b6e96 !important;
+  color: #dde3f0 !important;
 }
 .dashboard-calendar .fc-daygrid-day-number,
 .dashboard-calendar .fc-col-header-cell-cushion {
-  font-size: 0.72rem;
-  color: #6b7280;
+  font-size: 0.8rem;
+  color: #5b6e96;
   text-decoration: none !important;
+  font-weight: 600;
+}
+.dashboard-calendar .fc-col-header-cell {
+  background: #dde3f0;
 }
 .dashboard-calendar .fc-daygrid-day.fc-day-today {
-  background: #eff6ff !important;
+  background: #f2f0eb !important;
+}
+.dashboard-calendar .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+  color: #b45309 !important;
+  font-weight: 700;
 }
 .dashboard-calendar .fc-event {
   border-radius: 4px !important;
-  font-size: 0.65rem !important;
-  padding: 1px 4px !important;
+  font-size: 0.75rem !important;
+  padding: 1px 5px !important;
+  cursor: pointer;
 }
 .dashboard-calendar .fc-daygrid-event-harness {
-  margin-top: 1px;
+  margin-top: 2px;
 }
-
-.memo-list-enter-active,
-.memo-list-leave-active {
-  transition: all 0.25s ease;
+.dashboard-calendar .fc-scrollgrid {
+  border-color: #dde3f0 !important;
 }
-.memo-list-enter-from {
-  opacity: 0;
-  transform: translateY(-8px);
+.dashboard-calendar td,
+.dashboard-calendar th {
+  border-color: #dde3f0 !important;
 }
-.memo-list-leave-to {
-  opacity: 0;
-  transform: translateX(16px);
+.fc-day-sun .fc-daygrid-day-number {
+  color: #ef4444 !important;
+}
+.fc-day-sat .fc-daygrid-day-number {
+  color: #3b82f6 !important;
 }
 </style>

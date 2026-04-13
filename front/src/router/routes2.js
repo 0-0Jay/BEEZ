@@ -48,6 +48,11 @@ const Routes2 = [
     path: '/calendar',
     name: 'calendar',
     component: () => import('@/views/calendar/CalendarPage.vue')
+  },
+  {
+    path: '/project',
+    name: 'project',
+    component: () => import('@/views/dashboard/ProjectDashBoardPage.vue')
   }
 ];
 export default Routes2;
