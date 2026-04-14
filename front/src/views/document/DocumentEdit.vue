@@ -1,6 +1,7 @@
 <script setup>
 import { useAuthStore } from '@/stores/auth';
 import { useDocumentStore } from '@/stores/document';
+import { useToast } from 'primevue';
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -12,6 +13,8 @@ const docStore = useDocumentStore();
 const userId = computed(() => authstore.user?.id);
 const projectId = route.params.projectId;
 const docId = route.params.docId;
+const toast = useToast();
+const submitted = ref(false);
 
 const form = ref({
   title: '',
@@ -63,11 +66,8 @@ const onFileChange = (e) => {
 const removeNewFile = (index) => newFiles.value.splice(index, 1);
 
 const submit = async () => {
-  if (!form.value.title) return alert('문서 제목을 입력해주세요.');
-  if (!form.value.editReason) return alert('수정 사유를 입력해주세요.');
-
-  console.log('newFiles.value:', newFiles.value); // ← 파일이 담겨있는지
-  console.log('deletedFileIds.value:', deletedFileIds.value);
+  submitted.value = true;
+  if (!form.value.title || !form.value.editReason) return;
 
   // UpdateRequest 형태로 만들기
   const updateRequest = {
@@ -81,11 +81,13 @@ const submit = async () => {
 
   try {
     await docStore.updateDocument(updateRequest, newFiles.value, deletedFileIds.value);
-    alert('수정되었습니다.');
-    router.push({ name: 'DocumentDetail', params: { projectId, docId } });
+    toast.add({ severity: 'success', summary: '수정 완료', detail: '문서가 수정되었습니다.', life: 1500 });
+    setTimeout(() => {
+      router.push({ name: 'DocumentDetail', params: { projectId, docId } });
+    }, 1500);
   } catch (err) {
     console.error(err);
-    alert('수정에 실패했습니다.');
+    toast.add({ severity: 'error', summary: '수정 실패', detail: '수정에 실패했습니다.', life: 3000 });
   }
 };
 
@@ -100,10 +102,14 @@ const goToDetail = () => {
     <div class="panel">
       <div class="panel-title"><span class="badge-num">1</span> 문서 편집</div>
 
+      <!-- 문서 제목 -->
       <div class="form-row">
         <div class="form-group full">
           <label class="form-label">문서 제목<span class="required">*</span></label>
-          <input v-model="form.title" type="text" class="form-input" placeholder="문서 글 제목을 입력해 주세요." />
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
+            <input v-model="form.title" type="text" class="form-input" :class="{ 'is-error': submitted && !form.title }" placeholder="문서 글 제목을 입력해 주세요." />
+            <span v-if="submitted && !form.title" class="inline-error">문서 제목을 입력해주세요.</span>
+          </div>
         </div>
       </div>
 
@@ -139,9 +145,13 @@ const goToDetail = () => {
     <div class="panel">
       <div class="panel-title"><span class="badge-num">2</span> 수정 사유</div>
       <div class="form-row">
+        <!-- 수정 사유 -->
         <div class="form-group full align-top">
           <span class="form-label pt">수정 사유<span class="required">*</span></span>
-          <textarea v-model="form.editReason" class="textarea" placeholder="수정 사유를 입력해주세요." />
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
+            <textarea v-model="form.editReason" class="textarea" :class="{ 'is-error': submitted && !form.editReason }" placeholder="수정 사유를 입력해주세요." />
+            <span v-if="submitted && !form.editReason" class="inline-error">수정 사유를 입력해주세요.</span>
+          </div>
         </div>
       </div>
     </div>
@@ -425,5 +435,14 @@ const goToDetail = () => {
 .btn-primary:disabled {
   background: #ccc;
   cursor: not-allowed;
+}
+
+.inline-error {
+  font-size: 11px;
+  color: #e74c3c;
+}
+
+.is-error {
+  border-color: #e74c3c !important;
 }
 </style>

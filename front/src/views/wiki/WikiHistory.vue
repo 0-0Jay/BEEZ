@@ -59,7 +59,6 @@ const confirmRollback = (version) => {
 const executeRollback = async () => {
   const { wikiId, projectId } = route.params;
 
-  // ✅ 현재 최신 버전에서 버전명 계산
   const latestVersion = versions.value[0];
   let nextVersionNum = '1.0';
   if (latestVersion?.versionName) {
@@ -83,7 +82,7 @@ const executeRollback = async () => {
       userId: authStore.user.id,
       wikiId: wikiId,
       description: `${targetVersion.value.versionName} 버전으로 롤백`,
-      versionName: newVersionName, // ✅ 빈 문자열 대신 계산된 버전명
+      versionName: newVersionName,
       links: targetVersion.value.links ?? '[]',
       wikiInfo: targetVersion.value.wikiInfo ?? ''
     }
@@ -119,7 +118,6 @@ const goBack = () => router.back();
         </div>
         <div class="version-right">
           작성자 : {{ version.userName }} / 작성일 : {{ version.createdOn?.substring(0, 10) }}
-          <!-- ✅ 최신 버전 제외하고 롤백 버튼 표시 -->
           <button v-if="index !== 0" class="btn-rollback" @click.stop="confirmRollback(version)">이 버전으로 롤백</button>
         </div>
       </div>
@@ -229,11 +227,17 @@ const goBack = () => router.back();
 }
 .btn-back {
   padding: 6px 16px;
-  border: 1px solid #bbb;
-  border-radius: 4px;
-  background: #fff;
+  border: none;
+  border-radius: 6px;
+  background: #e8920e;
+  color: #fff;
   cursor: pointer;
   font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+.btn-back:hover {
+  background: #aa6f16;
 }
 
 .diff-body {
@@ -356,15 +360,20 @@ const goBack = () => router.back();
   cursor: pointer;
   font-size: 13px;
 }
+/* 이 버전으로 롤백 버튼 → '프로젝트 등록' 버튼 스타일 */
 .btn-rollback {
-  padding: 4px 12px;
-  border: 1px solid #3949ab;
-  border-radius: 4px;
+  padding: 6px 16px;
+  border: 1px solid #1a1816;
+  border-radius: 6px;
   background: #fff;
-  color: #3949ab;
+  color: #1a1816;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 600;
   margin-left: 12px;
+}
+.btn-rollback:hover {
+  background: #f2f0eb;
 }
 .btn-rollback-confirm {
   padding: 6px 16px;

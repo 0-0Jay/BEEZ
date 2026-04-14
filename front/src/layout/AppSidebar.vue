@@ -2,38 +2,37 @@
 import { useAuthStore } from '@/stores/auth';
 import axios from '@/stores/AxiosInstance';
 import { useProjectStore } from '@/stores/project';
+import { useToast } from 'primevue';
 import { computed, inject, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
-const showToast = ref(false); //0412곽현우 추가 - 위키 분기 처리하기 위함
-const toastMessage = ref('');
+const toast = useToast();
 
 const goWiki = async (projectId) => {
   try {
     const res = await axios.get(`/wiki/latest/${projectId}`);
 
     if (res.data && res.data.wikiId) {
-      // ✅ 위키 있음 → 조회 페이지
       const wikiId = res.data.wikiId;
       router.push(`/wiki/detail/${projectId}/${wikiId}`);
     } else {
-      // ❌ 위키 없음 → 토스트 후 작성 페이지 이동
-      toastMessage.value = '작성된 위키가 없습니다. 작성 페이지로 이동합니다.';
-      showToast.value = true;
+      toast.add({
+        severity: 'warn',
+        summary: '위키 없음',
+        detail: '작성된 위키가 없습니다. 작성 페이지로 이동합니다.',
+        life: 2000
+      });
       setTimeout(() => {
-        showToast.value = false;
         router.push(`/wiki/write/${projectId}`);
-      }, 2000);
+      }, 1500);
     }
   } catch (e) {
     // API 에러(404 등)도 위키 없음으로 처리
     toastMessage.value = '작성된 위키가 없습니다. 작성 페이지로 이동합니다.';
-    showToast.value = true;
     setTimeout(() => {
-      showToast.value = false;
       router.push(`/wiki/write/${projectId}`);
-    }, 2000);
+    }, 1500);
   }
 };
 const isOpen = inject('menuState');
@@ -70,9 +69,6 @@ const toggleAdminMenu = () => {
 
 <template>
   <!-- 토스트 알림 -->
-  <transition name="fade">
-    <div v-if="showToast" class="toast-message">{{ toastMessage }}</div>
-  </transition>
   <div :class="['bg-gray-900 text-white h-full transition-all duration-300 overflow-hidden flex flex-col shrink-0', isOpen ? 'w-64' : 'w-20']">
     <!-- 펼쳐진 상태 사이드바 상단 -->
     <div v-if="isOpen" class="flex items-center justify-between h-20 px-5 shrink-0">

@@ -2,6 +2,7 @@
 //내코드
 import { useAuthStore } from '@/stores/auth';
 import { useDocumentStore } from '@/stores/document';
+import { useToast } from 'primevue';
 import { computed, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -12,6 +13,8 @@ const authstore = useAuthStore();
 const docStore = useDocumentStore();
 const userId = computed(() => authstore.user?.id);
 const projectId = route.params.projectId;
+const toast = useToast();
+const submitted = ref(false);
 
 const form = ref({
   title: '',
@@ -37,11 +40,9 @@ const removeFile = (index) => form.value.attachments.splice(index, 1);
 
 //문서 등록 실행
 const submit = async () => {
-  if (!form.value.title) return alert('문서 제목을 선택해주세요.');
+  submitted.value = true;
+  if (!form.value.title || !form.value.content) return;
   const formData = new FormData();
-
-  console.log('userId:', userId.value);
-  console.log('projectId:', projectId);
 
   formData.append('projectId', projectId);
   formData.append('userId', userId.value);
@@ -57,11 +58,11 @@ const submit = async () => {
 
   try {
     await docStore.writeDocument(projectId, formData);
-    alert('등록되었습니다.');
-    goToList();
+    toast.add({ severity: 'success', summary: '등록 완료', detail: '작성한 문서가 등록되었습니다.', life: 1500 });
+    setTimeout(() => goToList(), 1500);
   } catch (err) {
     console.error(err);
-    alert('등록에 실패했습니다.');
+    toast.add({ severity: 'error', summary: '등록 실패', detail: '등록에 실패했습니다.', life: 3000 });
   }
 };
 
@@ -79,7 +80,8 @@ const goToList = () => {
       <div class="form-row">
         <div class="form-group full">
           <label class="form-label">문서 제목<span class="required">*</span></label>
-          <input v-model="form.title" type="text" class="form-input" :class="{ 'is-error': !form.title }" placeholder="문서 글 제목을 입력해 주세요." />
+          <input v-model="form.title" type="text" class="form-input" :class="{ 'is-error': submitted && !form.title }" placeholder="문서 글 제목을 입력해 주세요." />
+          <span v-if="submitted && !form.title" class="inline-error">문서 제목을 입력해주세요.</span>
         </div>
       </div>
 
@@ -109,7 +111,10 @@ const goToList = () => {
       <div class="form-row">
         <div class="form-group full align-top">
           <span class="form-label pt">문서 설명</span>
-          <textarea v-model="form.content" class="textarea" />
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
+            <textarea v-model="form.content" class="textarea" :class="{ 'is-error': submitted && !form.content }" />
+            <span v-if="submitted && !form.content" class="inline-error">문서 설명을 입력해주세요.</span>
+          </div>
         </div>
       </div>
     </div>
@@ -364,5 +369,14 @@ const goToList = () => {
   justify-content: flex-end;
   gap: 8px;
   margin-top: 8px;
+}
+
+.inline-error {
+  font-size: 11px;
+  color: #e74c3c;
+}
+
+.is-error {
+  border-color: #e74c3c !important;
 }
 </style>
