@@ -20,14 +20,17 @@
                THEN t.sub_progress
              ELSE t.progress
              END AS progress,
-           t.parent_id
+           t.parent_id,
+           t.version_id,
+           t.is_public,
+           t.creator
     FROM task t
-           JOIN users u ON t.user_id = u.id
+    JOIN users u ON t.user_id = u.id
     WHERE t.project_id = #{projectId} AND t.status = 'T1'
   </select>
   
   <select id="findMemberList" resultType="MemberResponse">
-    SELECT p.user_id AS id,
+    SELECT DISTINCT p.user_id AS id,
            u.name
     FROM project_member p
     JOIN users u ON p.user_id = u.id
@@ -44,7 +47,7 @@
     WHERE is_use = 1
   </select>
   
-  <select id="findVersionList" statementType="CALLABLE">
+  <select id="findVersionList" parameterType="TaskVersionResponse" statementType="CALLABLE">
     {
       CALL proc_find_version(
       #{projectId,     mode=IN,  jdbcType=VARCHAR},
@@ -92,6 +95,7 @@
         #{id,            mode=IN,  jdbcType=VARCHAR},
         #{status,        mode=OUT, jdbcType=VARCHAR},
         #{versionId,     mode=OUT, jdbcType=VARCHAR},
+        #{versionName,   mode=OUT, jdbcType=VARCHAR},
         #{title,         mode=OUT, jdbcType=VARCHAR},
         #{description,   mode=OUT, jdbcType=VARCHAR},
         #{userId,        mode=OUT, jdbcType=VARCHAR},
@@ -187,6 +191,17 @@
       INSERT INTO task_reply(id, task_id, user_id, content, created_on, parent_id)
       VALUES(#{id}, #{taskId}, #{userId}, #{content}, SYSTIMESTAMP, #{parentId})
   </insert>
+  
+  <update id="updateTaskReply" parameterType="TaskReplyRequest">
+    UPDATE task_reply
+    SET content = #{content}, edited_on = SYSTIMESTAMP
+    WHERE id=#{id}
+  </update>
+  
+  <delete id="deleteTaskReply">
+    DELETE FROM task_reply
+    WHERE id=#{id}
+  </delete>
   
   <select id="updateTask" parameterType="TaskRequest" statementType="CALLABLE">
     {

@@ -85,6 +85,12 @@ export const useTaskStore = defineStore('task', {
     async insertTaskReply(data) {
       const res = await axios.post(`/task/reply`, data);
     },
+    async updateTaskReply(data) {
+      const res = await axios.put(`/task/reply`, data);
+    },
+    async deleteTaskReply(id) {
+      const res = await axios.delete(`/task/reply/${id}`);
+    },
     async findJournalDetail(id) {
       const res = await axios.get(`/task/${id}/journal`);
       this.journalList = res.data;

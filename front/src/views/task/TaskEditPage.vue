@@ -2,8 +2,9 @@
 import { useAuthStore } from '@/stores/auth';
 import { useProjectStore } from '@/stores/project';
 import { useTaskStore } from '@/stores/task';
+import { useToast } from 'primevue';
 import DatePicker from 'primevue/datepicker';
-import { computed, nextTick, onMounted, reactive } from 'vue';
+import { computed, onMounted, reactive } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -15,6 +16,7 @@ const project = computed(() => projectStore.selectedProject);
 const userId = computed(() => authStore.user.id);
 const roleId = computed(() => authStore.user.role);
 const condition = computed(() => (taskStore.task.creator == userId.value ? 'Z1' : taskStore.task.userId == userId.value ? 'Z2' : 'Z0'));
+const toast = useToast();
 
 const isEditMode = route.path.includes('/task/edit');
 const isCopyMode = route.path.includes('/task/copy');
@@ -54,6 +56,7 @@ const parentTask = computed(() => {
 
 const parentPlannedStart = computed(() => parseDate(parentTask.value?.plannedStart));
 const parentPlannedEnd = computed(() => parseDate(parentTask.value?.plannedEnd));
+const parentVersionId = computed(() => parentTask.value?.versionId ?? null);
 
 // 기본 버전
 const defaultVersionId = computed(() => taskStore.versionList.find((v) => v.defaultVersion !== null)?.id);
@@ -197,6 +200,8 @@ const errors = reactive({
   userId: '',
   plannedStart: '',
   plannedEnd: '',
+  actualStart: '',
+  actualEnd: '',
   reject: ''
 });
 
@@ -209,10 +214,14 @@ const touched = reactive({
   userId: true,
   plannedStart: true,
   plannedEnd: true,
+  actualStart: true,
+  actualEnd: true,
   reject: true
 });
 
 const validate = () => {
+  const projectStart = parseDate(project.value?.startDate);
+  const projectEnd = parseDate(project.value?.endDate);
   let valid = true;
   errors.title = '';
   errors.type = '';
@@ -256,6 +265,14 @@ const validate = () => {
     errors.plannedEnd = '예상 마감일을 선택해주세요.';
     valid = false;
   }
+  if (form.plannedStart && projectStart && form.plannedStart < projectStart) {
+    errors.plannedStart = `프로젝트 시작일(${formatDate(projectStart)}) 이후여야 합니다.`;
+    valid = false;
+  }
+  if (form.plannedEnd && projectEnd && form.plannedEnd > projectEnd) {
+    errors.plannedEnd = `프로젝트 마감일(${formatDate(projectEnd)}) 이전이어야 합니다.`;
+    valid = false;
+  }
   if (form.plannedStart && parentPlannedStart.value && form.plannedStart < parentPlannedStart.value) {
     errors.plannedStart = `상위 일감 시작일(${formatDate(parentPlannedStart.value)}) 이후여야 합니다.`;
     valid = false;
@@ -266,6 +283,10 @@ const validate = () => {
   }
   if (form.plannedStart && form.plannedEnd && form.plannedStart > form.plannedEnd) {
     errors.plannedEnd = '예상 마감일은 시작일 이후여야 합니다.';
+    valid = false;
+  }
+  if (form.actualStart && form.actualEnd && form.actualStart > form.actualEnd) {
+    errors.actualEnd = '실제 마감일은 시작일 이후여야 합니다.';
     valid = false;
   }
   if (form.workflow === 'Q4' && !form.reject?.trim()) {
@@ -342,15 +363,36 @@ const handleSubmit = async () => {
     form.attachments.filter((f) => f instanceof File).forEach((file) => formData.append('attachments', file));
     await taskStore.updateTask(formData);
     nextId = task.value?.id;
+    toast.add({
+      severity: 'success',
+      summary: '수정 완료',
+      detail: '일감이 수정되었습니다.',
+      life: 3000,
+      closable: false
+    });
   } else if (isCopyMode) {
     formData.append('linkCopied', form.linkCopied);
     formData.append('copySubTasks', form.copySubTasks);
     formData.append('originTask', task.value?.id);
     form.attachments.forEach((file) => formData.append('attachments', file));
     nextId = await taskStore.insertTask(formData);
+    toast.add({
+      severity: 'success',
+      summary: '복사 완료',
+      detail: '일감이 복사되었습니다.',
+      life: 3000,
+      closable: false
+    });
   } else {
     form.attachments.forEach((file) => formData.append('attachments', file));
     nextId = await taskStore.insertTask(formData);
+    toast.add({
+      severity: 'success',
+      summary: '등록 완료',
+      detail: '새 일감이 등록되었습니다.',
+      life: 3000,
+      closable: false
+    });
   }
   await taskStore.findTaskDetail(nextId);
   router.push(`/task/${nextId}`);
@@ -365,14 +407,8 @@ const handleCancel = () => {
 };
 
 onMounted(async () => {
-  await taskStore.findCateList();
-  await taskStore.findTypeList();
-  await taskStore.findCommonCodeList();
-  await taskStore.findMember(project.value.id);
-  await taskStore.findTaskList(project.value.id, userId.value);
   await taskStore.findVersionList(project.value.id);
   await taskStore.findWorkflow({ roleId: roleId.value, typeId: taskStore.task.type, conditionType: condition.value });
-  console.log(taskStore.workflow);
 });
 </script>
 
@@ -423,7 +459,7 @@ onMounted(async () => {
               <span class="flex items-center gap-1">일감명<span class="text-red-500 inline-block text-xl">*</span></span>
             </td>
             <td colspan="3" class="px-6 py-3">
-              <InputText v-model="form.title" placeholder="일감명을 입력해주세요." class="w-full" @input="validate()" />
+              <InputText v-model="form.title" placeholder="일감명을 입력해주세요." class="w-full" />
               <small v-if="touched.title && errors.title" class="text-red-500 mt-1 block text-xs">{{ errors.title }}</small>
             </td>
           </tr>
@@ -434,14 +470,14 @@ onMounted(async () => {
               <span class="flex items-center gap-1">일감유형<span class="text-red-500 inline-block text-xl">*</span></span>
             </td>
             <td class="px-6 py-3">
-              <Select v-model="form.type" :options="typeOptions" optionLabel="name" optionValue="id" placeholder="선택" class="w-full" @change="nextTick(validate)" />
+              <Select v-model="form.type" :options="typeOptions" optionLabel="name" optionValue="id" placeholder="선택" class="w-full" />
               <small v-if="touched.type && errors.type" class="text-red-500 mt-1 block text-xs">{{ errors.type }}</small>
             </td>
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">
               <span class="flex items-center gap-1">일감상태<span class="text-red-500 inline-block text-xl">*</span></span>
             </td>
             <td class="px-6 py-3">
-              <Select v-model="form.workflow" :options="workflowOptions" optionLabel="name" optionValue="id" placeholder="선택" class="w-full" @change="nextTick(validate)" />
+              <Select v-model="form.workflow" :options="workflowOptions" optionLabel="name" optionValue="id" placeholder="선택" class="w-full" />
               <small v-if="touched.workflow && errors.workflow" class="text-red-500 mt-1 block text-xs">{{ errors.workflow }}</small>
             </td>
           </tr>
@@ -452,14 +488,14 @@ onMounted(async () => {
               <span class="flex items-center gap-1">우선순위<span class="text-red-500 inline-block text-xl">*</span></span>
             </td>
             <td class="px-6 py-3">
-              <Select v-model="form.priority" :options="priorityOptions" optionLabel="name" optionValue="id" placeholder="선택" class="w-full" @change="nextTick(validate)" />
+              <Select v-model="form.priority" :options="priorityOptions" optionLabel="name" optionValue="id" placeholder="선택" class="w-full" />
               <small v-if="touched.priority && errors.priority" class="text-red-500 mt-1 block text-xs">{{ errors.priority }}</small>
             </td>
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">
               <span class="flex items-center gap-1">일감 범주<span class="text-red-500 inline-block text-xl">*</span></span>
             </td>
             <td class="px-6 py-3">
-              <Select v-model="form.category" :options="categoryOptions" optionLabel="name" optionValue="id" placeholder="선택" class="w-full" @change="nextTick(validate)" />
+              <Select v-model="form.category" :options="categoryOptions" optionLabel="name" optionValue="id" placeholder="선택" class="w-full" />
               <small v-if="touched.category && errors.category" class="text-red-500 mt-1 block text-xs">{{ errors.category }}</small>
             </td>
           </tr>
@@ -468,7 +504,8 @@ onMounted(async () => {
           <tr class="divide-x divide-[#F2F0EB]">
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">목표 버전</td>
             <td class="px-6 py-3">
-              <Select v-model="form.versionId" :options="versionOptions" optionLabel="name" optionValue="id" placeholder="선택" class="w-full" />
+              <span v-if="parentTask" class="text-base font-medium text-[#1A1816]"> {{ versionOptions.find((v) => v.id === parentVersionId)?.name ?? '-' }}</span>
+              <Select v-else v-model="form.versionId" :options="versionOptions" optionLabel="name" optionValue="id" placeholder="선택" class="w-full" />
             </td>
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">추정 시간 (분)</td>
             <td colspan="3" class="px-6 py-3">
@@ -482,7 +519,7 @@ onMounted(async () => {
               <span class="flex items-center gap-1">담당자<span class="text-red-500 inline-block text-xl">*</span></span>
             </td>
             <td class="px-6 py-3">
-              <Select v-model="form.userId" :options="userOptions" optionLabel="name" optionValue="id" placeholder="검색 또는 선택" filter class="w-full" @change="nextTick(validate)">
+              <Select v-model="form.userId" :options="userOptions" optionLabel="name" optionValue="id" placeholder="검색 또는 선택" filter class="w-full">
                 <template #option="data"> {{ data.option.name }}({{ data.option.id }}) </template>
               </Select>
               <small v-if="touched.userId && errors.userId" class="text-red-500 mt-1 block text-xs">{{ errors.userId }}</small>
@@ -507,14 +544,14 @@ onMounted(async () => {
               <span class="flex items-center gap-1">예상 시작일<span class="text-red-500 inline-block text-xl">*</span></span>
             </td>
             <td class="px-6 py-3">
-              <DatePicker v-model="form.plannedStart" date-format="yy-mm-dd" placeholder="날짜 선택" show-button-bar class="w-full" input-class="w-full" @date-select="validate()" />
+              <DatePicker v-model="form.plannedStart" date-format="yy-mm-dd" placeholder="날짜 선택" show-button-bar class="w-full" input-class="w-full" />
               <small v-if="touched.plannedStart && errors.plannedStart" class="text-red-500 mt-1 block text-xs">{{ errors.plannedStart }}</small>
             </td>
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">
               <span class="flex items-center gap-1">예상 마감일<span class="text-red-500 inline-block text-xl">*</span></span>
             </td>
             <td class="px-6 py-3">
-              <DatePicker v-model="form.plannedEnd" date-format="yy-mm-dd" placeholder="날짜 선택" show-button-bar class="w-full" input-class="w-full" @date-select="validate()" />
+              <DatePicker v-model="form.plannedEnd" date-format="yy-mm-dd" placeholder="날짜 선택" show-button-bar class="w-full" input-class="w-full" />
               <small v-if="touched.plannedEnd && errors.plannedEnd" class="text-red-500 mt-1 block text-xs">{{ errors.plannedEnd }}</small>
             </td>
           </tr>
@@ -524,10 +561,12 @@ onMounted(async () => {
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">실제 시작일</td>
             <td class="px-6 py-3">
               <DatePicker v-model="form.actualStart" date-format="yy-mm-dd" placeholder="날짜 선택" show-button-bar class="w-full" input-class="w-full" />
+              <small v-if="touched.actualStart && errors.actualStart" class="text-red-500 mt-1 block text-xs">{{ errors.actualStart }}</small>
             </td>
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">실제 마감일</td>
             <td class="px-6 py-3">
               <DatePicker v-model="form.actualEnd" date-format="yy-mm-dd" placeholder="날짜 선택" show-button-bar class="w-full" input-class="w-full" />
+              <small v-if="touched.actualEnd && errors.actualEnd" class="text-red-500 mt-1 block text-xs">{{ errors.actualEnd }}</small>
             </td>
           </tr>
 
@@ -552,7 +591,7 @@ onMounted(async () => {
               <span class="flex items-center gap-1">반려사유<span class="text-red-500 inline-block text-xl">*</span></span>
             </td>
             <td colspan="3" class="px-6 py-3">
-              <Textarea v-model="form.reject" placeholder="반려사유를 입력해주세요." class="w-full" rows="3" autoResize @input="validate()" />
+              <Textarea v-model="form.reject" placeholder="반려사유를 입력해주세요." class="w-full" rows="3" autoResize />
               <small v-if="touched.reject && errors.reject" class="text-red-500 mt-1 block text-xs">{{ errors.reject }}</small>
             </td>
           </tr>

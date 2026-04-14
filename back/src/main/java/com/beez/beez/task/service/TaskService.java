@@ -79,4 +79,8 @@ public interface TaskService {
   
   // 업무흐름
   List<TaskWorkflowResponse> findWorkflow(TaskWorkflowRequest taskWorkflowRequest);
+  
+  void deleteTaskReply(String id);
+  
+  void updateTaskReply(TaskReplyRequest taskReplyRequest);
 }

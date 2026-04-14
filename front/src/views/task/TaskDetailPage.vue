@@ -5,6 +5,7 @@ import TaskUnlinkModal from '@/components/task/TaskUnlinkModal.vue';
 import { useAuthStore } from '@/stores/auth';
 import { useGitStore } from '@/stores/gits';
 import { useTaskStore } from '@/stores/task';
+import { useToast } from 'primevue';
 import Button from 'primevue/button';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -17,6 +18,7 @@ const route = useRoute();
 const timeLogVisible = ref(false);
 const deleteModalVisible = ref(false);
 const linkModalVisible = ref(false);
+const toast = useToast();
 
 // 연결 끊기 모달
 const unlinkModalVisible = ref(false);
@@ -76,6 +78,12 @@ const canEdit = computed(() => {
   const role = authStore.user?.role;
   return task.value?.creator === uid || task.value?.userId === uid || role === 'ROLE0001' || role === 'ROLE0002';
 });
+
+// 댓글 수정 권한
+const canEditComment = (comment) => {
+  const role = authStore.user?.role;
+  return comment.userId === userId.value || role === 'ROLE0001';
+};
 
 // 최근 수정 정보
 const latestJournal = computed(() => {
@@ -216,6 +224,13 @@ const addComment = async () => {
   await taskStore.insertTaskReply(commentData.value);
   commentData.value.content = '';
   await taskStore.findTaskDetail(taskId.value);
+  toast.add({
+    severity: 'success',
+    summary: '작성 완료',
+    detail: '새 댓글을 작성되었습니다.',
+    life: 3000,
+    closable: false
+  });
 };
 
 const addReply = async (comment) => {
@@ -226,23 +241,52 @@ const addReply = async (comment) => {
   replyData.value.parentId = null;
   replyingTo.value = null;
   await taskStore.findTaskDetail(taskId.value);
+  toast.add({
+    severity: 'success',
+    summary: '작성 완료',
+    detail: '새 답글을 작성하였습니다.',
+    life: 3000,
+    closable: false
+  });
 };
 
 const startEdit = (item) => {
   item.editing = true;
   item.editContent = item.content;
 };
-const saveEdit = (item) => {
-  item.content = item.editContent;
+
+const saveEdit = async (item) => {
+  await taskStore.updateTaskReply({
+    id: item.id,
+    taskId: taskId.value,
+    userId: userId.value,
+    content: item.editContent
+  });
   item.editing = false;
+  await taskStore.findTaskDetail(taskId.value);
+  toast.add({
+    severity: 'success',
+    summary: '수정 완료',
+    detail: '댓글이 수정되었습니다.',
+    life: 3000,
+    closable: false
+  });
 };
+
 const cancelEdit = (item) => {
   item.editing = false;
 };
 
-const deleteComment = (list, id) => {
-  const idx = list.findIndex((c) => c.id === id);
-  if (idx > -1) list.splice(idx, 1);
+const deleteComment = async (id) => {
+  await taskStore.deleteTaskReply(id);
+  await taskStore.findTaskDetail(taskId.value);
+  toast.add({
+    severity: 'success',
+    summary: '삭제 완료',
+    detail: '댓글이 삭제되었습니다.',
+    life: 3000,
+    closable: false
+  });
 };
 
 const workflowClass = {
@@ -295,9 +339,6 @@ const handleAddSubTask = () => {
 };
 
 onMounted(async () => {
-  await taskStore.findCateList();
-  await taskStore.findTypeList();
-  await taskStore.findCommonCodeList();
   await gitStore.findCommitsByTaskId(taskId.value);
 });
 </script>
@@ -391,7 +432,7 @@ onMounted(async () => {
               </span>
             </td>
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">목표 버전</td>
-            <td class="px-6 py-3 text-base text-[#1A1816]">{{ task.versionId || '-' }}</td>
+            <td class="px-6 py-3 text-base text-[#1A1816]">{{ task.versionName || '-' }}</td>
           </tr>
 
           <!-- 진척도 -->
@@ -496,7 +537,7 @@ onMounted(async () => {
             완료 <span class="font-semibold text-emerald-600">{{ subTaskDone }}</span> · 진행중 <span class="font-semibold text-amber-600">{{ subTaskInProgress }}</span>
           </span>
         </div>
-        <Button label="하위 일감 추가" icon="pi pi-plus" severity="secondary" raised @click="handleAddSubTask" />
+        <Button v-if="canEdit" label="하위 일감 추가" icon="pi pi-plus" severity="secondary" raised @click="handleAddSubTask" />
       </div>
 
       <table class="w-full text-base">
@@ -544,7 +585,7 @@ onMounted(async () => {
             완료 <span class="font-semibold text-emerald-600">{{ linkedTaskDone }}</span> · 진행중 <span class="font-semibold text-amber-600">{{ linkedTaskInProgress }}</span>
           </span>
         </div>
-        <Button label="연결된 일감 추가" icon="pi pi-plus" severity="secondary" raised @click="linkModalVisible = true" />
+        <Button v-if="canEdit" label="연결된 일감 추가" icon="pi pi-plus" severity="secondary" raised @click="linkModalVisible = true" />
       </div>
 
       <table class="w-full text-base">
@@ -616,7 +657,7 @@ onMounted(async () => {
         <!-- 댓글 입력 -->
         <div class="mb-7 pb-6 border-b border-[#F2F0EB]">
           <div class="mb-2 flex items-baseline gap-1.5">
-            <span class="text-base font-semibold text-[#1A1816]">{{ authStore.user.name }}</span>
+            <span class="text-base font-semibold text-[#1A1816]">{{ authStore.user?.name }}</span>
             <span class="text-base text-[#9A9B90]">({{ userId }})</span>
           </div>
           <textarea
@@ -655,8 +696,10 @@ onMounted(async () => {
             <!-- 액션 -->
             <div class="flex items-center gap-2 mt-2">
               <Button label="답글" text raised size="small" @click="replyingTo = replyingTo === comment.id ? null : comment.id" />
-              <Button label="수정" text raised size="small" @click="startEdit(comment)" />
-              <Button label="삭제" text raised size="small" severity="danger" @click="deleteComment(localComments, comment.id)" />
+              <template v-if="canEditComment(comment)">
+                <Button label="수정" text raised size="small" @click="startEdit(comment)" />
+                <Button label="삭제" text raised size="small" severity="danger" @click="deleteComment(comment.id)" />
+              </template>
             </div>
 
             <!-- 답글 입력 -->
@@ -699,8 +742,10 @@ onMounted(async () => {
                   </div>
                 </div>
                 <div class="flex items-center gap-2 mt-2">
-                  <Button label="수정" text raised size="small" @click="startEdit(reply)" />
-                  <Button label="삭제" text raised size="small" severity="danger" @click="deleteComment(comment.replies, reply.id)" />
+                  <template v-if="canEditComment(reply)">
+                    <Button label="수정" text raised size="small" @click="startEdit(reply)" />
+                    <Button label="삭제" text raised size="small" severity="danger" @click="deleteComment(reply.id)" />
+                  </template>
                 </div>
               </div>
             </div>
@@ -765,41 +810,40 @@ onMounted(async () => {
           </div>
           <Button v-if="canEdit && subTasks.length == 0" label="소요 시간 기록" icon="pi pi-plus" severity="secondary" raised @click="timeLogVisible = true" />
         </div>
-        <table class="w-full text-base">
-          <thead>
-            <tr class="border-b border-[#F2F0EB]">
-              <th class="pb-3 text-left font-semibold text-[#6B6B63]">작업자</th>
-              <th class="pb-3 text-left font-semibold text-[#6B6B63]">작업 일시</th>
-              <th class="pb-3 text-left font-semibold text-[#6B6B63]">소요 시간</th>
-              <th class="pb-3 text-left font-semibold text-[#6B6B63]">설명</th>
-              <th class="pb-3 text-left font-semibold text-[#6B6B63]">진척도</th>
-              <th class="pb-3 text-left font-semibold text-[#6B6B63]">작업 종류</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-[#F2F0EB]">
-            <tr v-for="log in timeLogs" :key="log.id" class="hover:bg-[#FAFAF8]">
-              <td class="py-3 pr-4 text-base text-[#1A1816] font-medium">{{ log.name || '-' }}</td>
-              <td class="py-3 pr-4 text-base text-[#6B6B63]">{{ formatDateTime(log.taskStart) }}</td>
-              <td class="py-3 pr-4 text-base font-semibold text-[#E8920E]">{{ formatMinutes(log.spent) }}</td>
-              <td class="py-3 pr-4 text-base text-[#1A1816]">{{ log.description || '-' }}</td>
-              <td class="py-3 pr-4">
-                <ProgressBar
-                  :value="Number(log.progress)"
-                  :pt="{
-                    value: {
-                      style: {
-                        background: progressColor(log.progress)
-                      }
-                    }
-                  }"
-                ></ProgressBar>
-              </td>
-              <td class="py-3">
-                <span class="px-2 py-0.5 bg-[#F2F0EB] rounded text-base font-semibold text-[#3A3B35] border border-[#E5E4DF]">{{ activityMap[log.activityType] || '-' }}</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <DataTable :value="timeLogs" stripedRows class="text-base" table-style="table-layout: fixed; width: 100%">
+          <Column field="name" header="작업자" :style="{ width: '100px' }">
+            <template #body="{ data }">
+              <span class="font-medium text-[#1A1816] block">{{ data.name || '-' }}</span>
+            </template>
+          </Column>
+          <Column field="taskStart" header="작업 일시" :style="{ width: '180px' }">
+            <template #body="{ data }">
+              <span class="text-[#6B6B63]">{{ formatDateTime(data.taskStart) }}</span>
+            </template>
+          </Column>
+          <Column field="spent" header="소요 시간" :style="{ width: '100px' }">
+            <template #body="{ data }">
+              <span class="font-semibold text-[#E8920E] block">{{ formatMinutes(data.spent) }}</span>
+            </template>
+          </Column>
+          <Column field="description" header="설명">
+            <template #body="{ data }">
+              <p class="truncate" :title="data.description">{{ data.description || '-' }}</p>
+            </template>
+          </Column>
+          <Column field="progress" header="진척도" :style="{ width: '160px' }">
+            <template #body="{ data }">
+              <ProgressBar :value="Number(data.progress)" :pt="{ value: { style: { background: progressColor(data.progress) } } }" />
+            </template>
+          </Column>
+          <Column field="activityType" header="작업 종류" :style="{ width: '120px' }">
+            <template #body="{ data }">
+              <span class="px-2 py-0.5 bg-[#F2F0EB] rounded text-base font-semibold text-[#3A3B35] border border-[#E5E4DF]">
+                {{ activityMap[data.activityType] || '-' }}
+              </span>
+            </template>
+          </Column>
+        </DataTable>
       </div>
 
       <!-- 커밋 로그 -->

@@ -78,6 +78,29 @@ function resetFilters() {
   currentPage.value = 1;
 }
 
+// 종료일, 시작일 교체
+watch(
+  () => filters.value.plannedEnd,
+  (newEnd) => {
+    const start = filters.value.plannedStart;
+    if (start && newEnd && new Date(newEnd) < new Date(start)) {
+      filters.value.plannedStart = newEnd;
+      filters.value.plannedEnd = start;
+    }
+  }
+);
+
+watch(
+  () => filters.value.plannedStart,
+  (newStart) => {
+    const end = filters.value.plannedEnd;
+    if (end && newStart && new Date(newStart) > new Date(end)) {
+      filters.value.plannedEnd = newStart;
+      filters.value.plannedStart = end;
+    }
+  }
+);
+
 // 내 일감 보기 필터
 watch(
   () => filters.value.showMyTasks,
@@ -144,7 +167,7 @@ const flattenedTasks = computed(() => {
 
 // 필터 결과
 const processedTasks = computed(() => {
-  let list = [...flattenedTasks.value];
+  let list = flattenedTasks.value.filter((t) => t.isPublic === 'J1' || t.creator === userId.value || t.userId === userId.value);
 
   if (appliedFilters.value.showMyTasks) {
     list = list.filter((t) => t.userId === userId.value);
@@ -230,11 +253,8 @@ const priorityClass = {
 };
 
 onMounted(async () => {
-  await taskStore.findCateList();
-  await taskStore.findTypeList();
-  await taskStore.findMember(project.value.id);
-  await taskStore.findTaskList(project.value.id, userId.value);
-  await taskStore.findCommonCodeList();
+  Promise.all([taskStore.findCateList(), taskStore.findTypeList(), taskStore.findMember(project.value.id), taskStore.findTaskList(project.value.id, userId.value), taskStore.findCommonCodeList()]);
+  console.log(tasks.value);
 });
 </script>
 

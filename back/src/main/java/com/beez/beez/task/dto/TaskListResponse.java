@@ -26,5 +26,7 @@ public class TaskListResponse {
   private Timestamp plannedEnd;
   private int progress;
   private String parentId;
-  private String versionName;
+  private String versionId;
+  private String isPublic;
+  private String creator;
 }
