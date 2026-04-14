@@ -44,8 +44,6 @@ const goToWrite = () => {
   });
 };
 
-// [추가] 문서 상세 페이지 이동 함수  ###### 연결 테스트 떄문에 이렇게 적어 넣음
-//실제로 기능 구현 할때는 @click 과 v-bind 써야함
 const goToDetail = (docId) => {
   const projectId = route.params.projectId; // URL의 프로젝트 ID 사용
 
@@ -70,13 +68,8 @@ const pagedList = computed(() => {
 // 날짜 포맷 함수 추가 (YYYY-MM-DD)
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
-
-  // 문자열이 '26/04/10 14:27:18...' 형식이거나 ISO 형식일 때를 모두 대응
-  // 만약 DB에서 26/04/10 처럼 오면 연도 처리가 필요할 수 있습니다.
   const date = new Date(dateStr);
 
-  // 날짜 객체가 유효하지 않을 경우 (예: '26/04/10' 형식이 Date에서 안 읽힐 때)
-  // 단순 문자열 슬라이싱으로 처리하는 방법이 더 확실할 수 있습니다.
   if (isNaN(date)) {
     // '26/04/10 14:27:18' -> '2026-04-10' (필요시 조정)
     const parts = dateStr.split(' ')[0].split('/');

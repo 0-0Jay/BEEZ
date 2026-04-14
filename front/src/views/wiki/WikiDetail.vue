@@ -199,7 +199,7 @@ watch(
       <div class="section-marker">
         <div class="related-card">
           <div v-if="relatedLinks.length > 0" class="link-list-container">
-            <div class="toc-heading" style="margin-bottom: 12px">관련 문서 링크</div>
+            <div class="toc-heading" style="margin-bottom: 12px">관련 URL 링크</div>
             <ul class="related-link-list">
               <li v-for="(link, index) in relatedLinks" :key="index" class="link-item">
                 <i class="link-icon">🔗</i>
@@ -207,7 +207,7 @@ watch(
               </li>
             </ul>
           </div>
-          <span v-else class="related-placeholder">관련 문서 링크가 없습니다.</span>
+          <span v-else class="related-placeholder">관련 URL 링크가 없습니다.</span>
         </div>
       </div>
     </div>

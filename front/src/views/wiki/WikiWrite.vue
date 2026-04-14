@@ -57,16 +57,68 @@ onMounted(async () => {
 });
 
 const errors = ref({
-  //작성자명 작성해야 오류 안뜸
-  userId: false
+  wikiInfo: false,
+  content: false,
+  contentSpecialOnly: false,
+  editReason: false
 });
 
-function validateForm() {
-  //작성자명 작성해야함
-  // errors.value.userId = !userId.value || !userId.value.trim();
-  // return !errors.value.userId;
-  return true;
+const linkErrors = ref([]);
+
+// 특수문자만 있는지 체크 함수
+function isSpecialCharOnly(str) {
+  return /^[^a-zA-Z0-9가-힣\s]+$/.test(str.trim());
 }
+
+// URL 유효성 체크 함수
+function isValidUrl(str) {
+  try {
+    new URL(str);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// 기존 validateForm 교체
+function validateForm() {
+  let valid = true;
+
+  // 1. 한줄 설명 필수
+  errors.value.wikiInfo = !wikiStore.wikiDetail.wikiInfo?.trim();
+  if (errors.value.wikiInfo) valid = false;
+
+  // 2. 본문 필수
+  const plainText = editorRef.value?.innerText?.trim() ?? '';
+  errors.value.content = !plainText;
+  if (errors.value.content) valid = false;
+
+  // 3. 본문 특수문자만 입력 체크
+  if (!errors.value.content && isSpecialCharOnly(plainText)) {
+    errors.value.contentSpecialOnly = true;
+    valid = false;
+  } else {
+    errors.value.contentSpecialOnly = false;
+  }
+  // 4. 링크 유효성
+  linkErrors.value = linkItems.value.map((link) => {
+    const hasTitle = link.title.trim();
+    const hasUrl = link.url.trim();
+
+    if (!hasTitle && !hasUrl) return { title: false, url: false, invalidUrl: false }; // 둘 다 비어있으면 패스
+
+    return {
+      title: !hasTitle && !!hasUrl, // 주소만 있고 이름 없음
+      url: !!hasTitle && !hasUrl, // 이름만 있고 주소 없음
+      invalidUrl: !!hasUrl && !isValidUrl(link.url) // URL 형식 오류
+    };
+  });
+
+  const hasLinkError = linkErrors.value.some((e) => e.title || e.url || e.invalidUrl);
+  if (hasLinkError) valid = false;
+
+  return valid;
+} // validateForm end
 
 function handleEdit() {
   // 작성자명 안쓰면 안되고 쓰면 모달창 출력
@@ -79,6 +131,42 @@ function handleEdit() {
   }
 
   showEditModal.value = true;
+}
+//본문 - 텍스트 환경 복붙도 목차 생성 하도록
+function onEditorPaste(e) {
+  e.preventDefault();
+  const text = e.clipboardData.getData('text/plain');
+  const lines = text.split('\n');
+
+  const fragment = document.createDocumentFragment();
+
+  lines.forEach((line) => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+
+    let el;
+
+    // 1. / 2. / 3. 형태 → H2
+    if (/^\d+\.\s/.test(trimmed) && !/^\d+\.\d+/.test(trimmed)) {
+      el = document.createElement('h2');
+      el.innerText = trimmed;
+
+      // 1.1 / 1.2 / 2.1 형태 → H3
+    } else if (/^\d+\.\d+\s/.test(trimmed)) {
+      el = document.createElement('h3');
+      el.innerText = trimmed;
+
+      // 일반 텍스트 → p
+    } else {
+      el = document.createElement('p');
+      el.innerText = trimmed;
+    }
+
+    fragment.appendChild(el);
+  });
+
+  editorRef.value.appendChild(fragment);
+  onEditorInput({ target: editorRef.value });
 }
 //--------------------------------------------------
 
@@ -156,10 +244,11 @@ function closeEditModal() {
 
 //--------------------------------------------------------------
 async function confirmEdit() {
-  console.log('isEditMode:', isEditMode.value);
-  console.log('wikiStore.wikiDetail.id:', wikiStore.wikiDetail.id);
-  console.log('wikiId (route):', wikiId.value);
-  if (!editReason.value.trim()) return;
+  if (!editReason.value.trim()) {
+    errors.value.editReason = true;
+    return;
+  }
+  errors.value.editReason = false;
 
   //신규 위키는ID생성하고, 기존위키면 기존ID 사용
   const currentWikiId = isEditMode.value ? wikiId.value : (wikiStore.wikiDetail.id ?? null);
@@ -329,7 +418,11 @@ function handleCancel() {
         <h1 class="text-2xl font-bold text-[#1A1816]">
           {{ isEditMode ? 'WIKI - 수정' : 'WIKI - 작성' }}
         </h1>
-        <input v-model="wikiStore.wikiDetail.wikiInfo" type="text" class="project-desc-input" placeholder="위키 관련 한 줄 설명을 입력하세요" />
+        <div>
+          <label class="field-label required">위키 한 줄 설명</label>
+          <input v-model="wikiStore.wikiDetail.wikiInfo" type="text" class="project-desc-input" :class="{ 'is-error': errors.wikiInfo }" placeholder="위키 관련 한 줄 설명을 입력하세요" />
+          <p v-if="errors.wikiInfo" class="error-msg">한 줄 설명을 입력해주세요.</p>
+        </div>
       </div>
 
       <div class="header-actions">
@@ -406,9 +499,14 @@ function handleCancel() {
       <div class="panel link-panel">
         <div class="link-form">
           <div class="link-items-container">
+            <div class="toc-heading" style="margin-bottom: 12px">관련 URL 링크</div>
             <div v-for="(link, index) in linkItems" :key="index" class="link-item-group">
-              <input v-model="link.title" type="text" class="field-input" placeholder="연결할 링크 이름을 작성해주세요." />
-              <input v-model="link.url" type="text" class="field-input" placeholder="링크 주소" />
+              <input v-model="link.title" type="text" class="field-input" :class="{ 'is-error': linkErrors[index]?.title }" placeholder="연결할 링크 이름을 작성해주세요." />
+              <p v-if="linkErrors[index]?.title" class="error-msg">링크 이름을 입력해주세요.</p>
+
+              <input v-model="link.url" type="text" class="field-input" :class="{ 'is-error': linkErrors[index]?.url || linkErrors[index]?.invalidUrl }" placeholder="링크 주소" />
+              <p v-if="linkErrors[index]?.url" class="error-msg">링크 주소를 입력해주세요.</p>
+              <p v-if="linkErrors[index]?.invalidUrl" class="error-msg">URL 주소에 맞게 작성해주세요.</p>
             </div>
           </div>
 
@@ -430,7 +528,8 @@ function handleCancel() {
                 <button class="modal-close" @click="closeEditModal">×</button>
               </div>
               <div class="modal-body">
-                <textarea v-model="editReason" class="modal-textarea" placeholder="등록 사유를 입력해주세요." />
+                <textarea v-model="editReason" class="modal-textarea" :class="{ 'is-error': errors.editReason }" placeholder="등록 사유를 입력해주세요." />
+                <p v-if="errors.editReason" class="error-msg">버전 설명을 작성해주세요.</p>
               </div>
               <div class="modal-footer">
                 <button class="btn btn-cancel" @click="closeEditModal">취소</button>
@@ -492,8 +591,10 @@ function handleCancel() {
 
       <!-- 에디터 본문 -->
       <div style="position: relative">
-        <p v-if="!editorContent" class="editor-placeholder">제목은 툴바에서 "제목1/제목2"를 선택해 입력하세요. (번호는 자동 생성됩니다)</p>
-        <div ref="editorRef" class="editor-body" contenteditable="true" @input="onEditorInput" @keydown="onEditorKeydown"></div>
+        <p v-if="!editorContent" class="editor-placeholder">툴바에서 '제목 / 부제목' 을 선택하여 입력할 수 있습니다. (번호는 자동 생성됩니다)</p>
+        <div ref="editorRef" class="editor-body" contenteditable="true" @input="onEditorInput" @keydown="onEditorKeydown" @paste="onEditorPaste"></div>
+        <p v-if="errors.content" class="error-msg" style="padding: 0 20px 10px">본문 내용을 입력해주세요.</p>
+        <p v-if="errors.contentSpecialOnly" class="error-msg" style="padding: 0 20px 10px">특수문자만 입력하여 작성할 수 없습니다.</p>
       </div>
     </div>
   </div>
@@ -544,6 +645,10 @@ function handleCancel() {
   padding: 8px 12px;
   font-size: 14px;
   margin-top: 8px; /* WIKI 글자와의 간격 */
+}
+
+.project-desc-input.is-error {
+  border-color: #e74c3c !important;
 }
 
 .header-fields {
@@ -995,5 +1100,20 @@ h1 {
   padding-left: 16px;
   font-size: 12px;
   color: #555;
+}
+
+.field-label.required::after {
+  content: ' *';
+  color: #e74c3c;
+}
+
+.is-error {
+  border-color: #e74c3c !important;
+}
+
+.error-msg {
+  font-size: 11px;
+  color: #e74c3c;
+  margin-top: 2px;
 }
 </style>
