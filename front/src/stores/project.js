@@ -46,6 +46,7 @@ export const useProjectStore = defineStore('project', {
           identifier: p.identifier,
           pm: p.pmName,
           pmId: p.pmId,
+          startDate: p.startDate,
           endDate: p.endDate,
           isLock: p.isLock,
           parentId: p.parentId,
@@ -185,6 +186,12 @@ export const useProjectStore = defineStore('project', {
     async fetchTaskTypes() {
       const response = await axios.get('/type');
       this.taskTypes = response.data;
+    },
+
+    // 프로젝트 복사
+    async copyProject(payload) {
+      const { data } = await axios.post('/project/copy', payload);
+      return data;
     }
   },
   persist: {

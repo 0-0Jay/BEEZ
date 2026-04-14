@@ -79,7 +79,10 @@
       AND (
         v.project_id = #{projectId}
         OR (
-            v.project_id = (SELECT parent_id FROM project WHERE id = #{projectId})
+            v.project_id IN (
+                SELECT parent_id FROM project
+                START WITH id = #{projectId}
+                CONNECT BY NOCYCLE PRIOR parent_id = id)
             AND v.is_share = 'O1'
             )
         )

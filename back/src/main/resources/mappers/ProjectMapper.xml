@@ -86,6 +86,7 @@
            p.identifier,
            p.user_id AS pmId,
            u.name AS pmName,
+           p.start_date As startDate,
            p.end_date AS endDate,
            p.is_lock AS isLock,
            p.parent_id AS parentId,
@@ -338,6 +339,28 @@
     </if>
 
     ORDER BY v.end_date ASC, t.planned_start ASC
-
   </select>
+  
+  <!-- 프로젝트 복사 -->
+  <update id="copyProject" statementType="CALLABLE" parameterType="com.beez.beez.project.dto.ProjectCopyRequest">
+    {
+      CALL PROC_COPY_PROJECT(
+      #{sourceProjectId, mode=IN,  jdbcType=VARCHAR},
+      #{identifier,      mode=IN,  jdbcType=VARCHAR},
+      #{title,           mode=IN,  jdbcType=VARCHAR},
+      #{description,     mode=IN,  jdbcType=VARCHAR},
+      #{isPublic,        mode=IN,  jdbcType=VARCHAR},
+      #{parentId,        mode=IN,  jdbcType=VARCHAR},
+      #{startDate,       mode=IN,  jdbcType=DATE},
+      #{endDate,         mode=IN,  jdbcType=DATE},
+      #{userId,          mode=IN,  jdbcType=VARCHAR},
+      #{copyMembers,     mode=IN,  jdbcType=VARCHAR},
+      #{copyVersions,    mode=IN,  jdbcType=VARCHAR},
+      #{copyIssues,      mode=IN,  jdbcType=VARCHAR},
+      #{copyDocs,        mode=IN,  jdbcType=VARCHAR},
+      #{copyWiki,        mode=IN,  jdbcType=VARCHAR},
+      #{newProjectId,    mode=OUT, jdbcType=VARCHAR}
+      )
+    }
+  </update>
 </mapper>

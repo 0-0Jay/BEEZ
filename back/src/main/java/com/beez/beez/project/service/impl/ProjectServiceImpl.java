@@ -191,4 +191,12 @@ public class ProjectServiceImpl implements ProjectService {
     return projectMapper.findRoadmapList(filter);
   }
   
+  //프로젝트 복사
+  @Override
+  public String copyProject(ProjectCopyRequest dto) {
+    dto.setUserId(getCurrentUserId());
+    projectMapper.copyProject(dto);
+    return dto.getNewProjectId();
+  };
+  
 }
