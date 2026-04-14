@@ -362,8 +362,8 @@
   </select>
 
   <select id="findWorkflow" parameterType="TaskWorkflowRequest" resultType="TaskWorkflowResponse">
-    SELECT role_id, type_id, before, after, is_allow, condition_type
+    SELECT before, after, is_allow
     FROM workflow
-    WHERE role_id = #{roleId} OR type_id = #{typeId} OR condition_type = #{conditionType}
+    WHERE role_id = #{roleId} AND type_id = #{typeId} AND condition_type = #{conditionType}
   </select>
 </mapper>

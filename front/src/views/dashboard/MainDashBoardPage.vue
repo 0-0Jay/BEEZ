@@ -131,15 +131,34 @@ const activeMemo = ref({ id: null, title: '', content: '' });
 function openMemo(memo) {
   activeMemo.value = { ...memo };
   memoDialogMode.value = 'view';
+  memoErrors.value = { title: '', content: '' };
   memoDialogVisible.value = true;
 }
 function openNewMemo() {
   activeMemo.value = { id: null, title: '', content: '' };
   memoDialogMode.value = 'new';
+  memoErrors.value = { title: '', content: '' };
   memoDialogVisible.value = true;
 }
 
+const memoErrors = ref({ title: '', content: '' });
+
+function validateMemo() {
+  memoErrors.value.title = '';
+  memoErrors.value.content = '';
+  if (!activeMemo.value.title.trim()) {
+    memoErrors.value.title = '제목을 입력해주세요.';
+  } else if (activeMemo.value.title.length > 100) {
+    memoErrors.value.title = '제목은 100자를 초과할 수 없습니다.';
+  }
+  if (activeMemo.value.content.length > 500) {
+    memoErrors.value.content = '내용은 500자를 초과할 수 없습니다.';
+  }
+  return !memoErrors.value.title && !memoErrors.value.content;
+}
+
 async function saveMemo() {
+  if (!validateMemo()) return;
   const payload = {
     id: activeMemo.value.id ?? null,
     userId: user.value?.id,
@@ -390,11 +409,23 @@ onMounted(async () => {
         <template v-else>
           <div class="flex flex-col gap-1">
             <label class="text-[#5B6E96] text-base font-bold">제목</label>
-            <InputText v-model="activeMemo.title" placeholder="메모 제목" class="w-full" />
+            <InputText v-model="activeMemo.title" placeholder="메모 제목" class="w-full" :class="memoErrors.title ? 'p-invalid' : ''" />
+            <div class="flex items-center justify-between mt-1">
+              <small v-if="memoErrors.title" class="text-red-500 text-xs">
+                {{ memoErrors.title }}
+              </small>
+              <small class="ml-auto text-xs" :class="activeMemo.title.length > 100 ? 'text-red-500 font-semibold' : 'text-slate-400'"> {{ activeMemo.title.length }} / 100 </small>
+            </div>
           </div>
           <div class="flex flex-col gap-1">
             <label class="text-[#5B6E96] text-base font-bold">내용</label>
-            <Textarea v-model="activeMemo.content" rows="7" placeholder="메모 내용을 입력하세요..." class="w-full resize-none" />
+            <Textarea v-model="activeMemo.content" rows="7" placeholder="메모 내용을 입력하세요..." class="w-full resize-none" :class="memoErrors.content ? 'p-invalid' : ''" />
+            <div class="flex items-center justify-between mt-1">
+              <small v-if="memoErrors.content" class="text-red-500 text-xs">
+                {{ memoErrors.content }}
+              </small>
+              <small class="ml-auto text-xs" :class="activeMemo.content.length > 500 ? 'text-red-500 font-semibold' : 'text-slate-400'"> {{ activeMemo.content.length }} / 500 </small>
+            </div>
           </div>
         </template>
       </div>

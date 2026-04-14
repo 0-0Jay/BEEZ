@@ -255,7 +255,12 @@ public class TaskServiceImpl implements TaskService {
   // 업무 흐름
   @Override
   public List<TaskWorkflowResponse> findWorkflow(TaskWorkflowRequest taskWorkflowRequest) {
-    return taskMapper.findWorkflow(taskWorkflowRequest);
+    System.out.println(taskWorkflowRequest.getRoleId() +" "+ taskWorkflowRequest.getTypeId()+" "+ taskWorkflowRequest.getConditionType());
+    List<TaskWorkflowResponse> list = taskMapper.findWorkflow(taskWorkflowRequest);
+    for(TaskWorkflowResponse t : list) {
+      System.out.println(t.getBefore() + ", " + t.getAfter() + ", " + t.getIsAllow());
+    }
+    return list;
   }
   
   @Override

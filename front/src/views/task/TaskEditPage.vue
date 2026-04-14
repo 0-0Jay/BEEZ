@@ -4,7 +4,7 @@ import { useProjectStore } from '@/stores/project';
 import { useTaskStore } from '@/stores/task';
 import { useToast } from 'primevue';
 import DatePicker from 'primevue/datepicker';
-import { computed, onMounted, reactive } from 'vue';
+import { computed, onMounted, reactive, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -33,12 +33,12 @@ const fixedParentId = route.query.parentId ?? null;
 const fixedParentName = route.query.parentName ? decodeURIComponent(route.query.parentName) : null;
 
 const commonCodes = computed(() => taskStore.commonCodeList);
-const workflowOptions = computed(() => commonCodes.value.filter((w) => w.cgroup === '0Q'));
 const userOptions = computed(() => taskStore.memberList);
 const typeOptions = computed(() => taskStore.typeList);
 const categoryOptions = computed(() => taskStore.cateList);
 const priorityOptions = computed(() => commonCodes.value.filter((p) => p.cgroup === '0S'));
 const versionOptions = computed(() => taskStore.versionList);
+const workflowOptions = computed(() => commonCodes.value.filter((w) => w.cgroup === '0Q'));
 
 const parentTaskName = computed(() => {
   if (fixedParentId) return fixedParentName;
@@ -108,6 +108,31 @@ const form = reactive({
   attachments: isCopyMode ? [] : isPopulated ? (task.value?.fileList ?? []) : [],
   linkCopied: false,
   copySubTasks: false
+});
+
+// 일감유형 변경 시 defaultStatus로 workflow 자동 지정
+if (!isEditMode) {
+  watch(
+    () => form.type,
+    (newType) => {
+      const selectedType = typeOptions.value.find((t) => t.id === newType);
+      form.workflow = selectedType?.defaultStatus ?? null;
+    },
+    { immediate: true }
+  );
+}
+
+// 생성/복사 모드에서 workflow 텍스트 표시용
+const currentWorkflowName = computed(() => {
+  if (!form.workflow) return null;
+  return workflowOptions.value.find((w) => w.id === form.workflow)?.name ?? form.workflow;
+});
+
+const editWorkflowOptions = computed(() => {
+  const workflowList = taskStore.workflow ?? [];
+  const allowedAfters = workflowList.filter((w) => w.before === form.workflow && w.isAllow === 'R1').map((w) => w.after);
+  const allowedIds = new Set([form.workflow, ...allowedAfters]);
+  return workflowOptions.value.filter((w) => allowedIds.has(w.id));
 });
 
 // 수정 모드에서만 task.id 사용, 생성·복사는 null
@@ -202,7 +227,8 @@ const errors = reactive({
   plannedEnd: '',
   actualStart: '',
   actualEnd: '',
-  reject: ''
+  reject: '',
+  description: ''
 });
 
 const touched = reactive({
@@ -232,6 +258,7 @@ const validate = () => {
   errors.plannedStart = '';
   errors.plannedEnd = '';
   errors.reject = '';
+  errors.description = '';
 
   if (!form.title.trim()) {
     errors.title = '일감명을 입력해주세요.';
@@ -293,6 +320,10 @@ const validate = () => {
     errors.reject = '반려사유를 입력해주세요.';
     valid = false;
   }
+  if ((form.description ?? '').length > 500) {
+    errors.description = '설명은 500자를 초과할 수 없습니다.';
+    valid = false;
+  }
 
   return valid;
 };
@@ -302,7 +333,13 @@ const handleFileChange = ({ files }) => {
 
   files.forEach((newFile) => {
     if (newFile.size > MAX_SIZE) {
-      alert(`첨부파일 크기는 10MB를 넘길 수 없습니다!\n(${newFile.name})`);
+      toast.add({
+        severity: 'error',
+        summary: '파일 첨부 실패',
+        detail: `첨부파일 크기는 10MB를 넘길 수 없습니다!\n(실패한 파일 : ${newFile.name})`,
+        life: 3000,
+        closable: false
+      });
       return;
     }
 
@@ -325,8 +362,16 @@ const removeFile = (index) => {
 };
 
 const handleSubmit = async () => {
-  if (!validate()) return;
-
+  if (!validate()) {
+    toast.add({
+      severity: 'error',
+      summary: '저장 실패',
+      detail: '양식에 맞게 작성해주세요.',
+      life: 3000,
+      closable: false
+    });
+    return;
+  }
   const formData = new FormData();
 
   formData.append('isPublic', form.isPublic);
@@ -407,8 +452,8 @@ const handleCancel = () => {
 };
 
 onMounted(async () => {
-  await taskStore.findVersionList(project.value.id);
-  await taskStore.findWorkflow({ roleId: roleId.value, typeId: taskStore.task.type, conditionType: condition.value });
+  Promise.all([taskStore.findVersionList(project.value.id), taskStore.findCateList(), taskStore.findTypeList(), taskStore.findMember(project.value.id), taskStore.findCommonCodeList()]);
+  await taskStore.findWorkflow({ roleId: roleId.value, typeId: taskStore.task?.type, conditionType: condition.value });
 });
 </script>
 
@@ -465,20 +510,39 @@ onMounted(async () => {
           </tr>
 
           <!-- 일감유형 / 일감상태 -->
+          <!-- 일감유형 / 일감상태 -->
           <tr class="divide-x divide-[#F2F0EB]">
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">
-              <span class="flex items-center gap-1">일감유형<span class="text-red-500 inline-block text-xl">*</span></span>
+              <span class="flex items-center gap-1">일감유형<span v-if="!isEditMode" class="text-red-500 inline-block text-xl">*</span></span>
             </td>
             <td class="px-6 py-3">
-              <Select v-model="form.type" :options="typeOptions" optionLabel="name" optionValue="id" placeholder="선택" class="w-full" />
-              <small v-if="touched.type && errors.type" class="text-red-500 mt-1 block text-xs">{{ errors.type }}</small>
+              <!-- 수정 모드: 유형 변경 불가, 텍스트 표시 -->
+              <template v-if="isEditMode">
+                <span class="text-base font-medium text-[#1A1816]">
+                  {{ typeOptions.find((t) => t.id === form.type)?.name ?? '-' }}
+                </span>
+              </template>
+              <!-- 생성/복사 모드: Select -->
+              <template v-else>
+                <Select v-model="form.type" :options="typeOptions" optionLabel="name" optionValue="id" placeholder="선택" class="w-full" />
+                <small v-if="touched.type && errors.type" class="text-red-500 mt-1 block text-xs">{{ errors.type }}</small>
+              </template>
             </td>
+
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">
-              <span class="flex items-center gap-1">일감상태<span class="text-red-500 inline-block text-xl">*</span></span>
+              <span class="flex items-center gap-1">일감상태<span v-if="isEditMode" class="text-red-500 inline-block text-xl">*</span></span>
             </td>
             <td class="px-6 py-3">
-              <Select v-model="form.workflow" :options="workflowOptions" optionLabel="name" optionValue="id" placeholder="선택" class="w-full" />
-              <small v-if="touched.workflow && errors.workflow" class="text-red-500 mt-1 block text-xs">{{ errors.workflow }}</small>
+              <!-- 수정 모드: 허용된 전환 상태만 Select로 선택 -->
+              <template v-if="isEditMode">
+                <Select v-model="form.workflow" :options="editWorkflowOptions" optionLabel="name" optionValue="id" placeholder="선택" class="w-full" />
+                <small v-if="touched.workflow && errors.workflow" class="text-red-500 mt-1 block text-xs">{{ errors.workflow }}</small>
+              </template>
+              <!-- 생성/복사 모드: 유형 선택에 따라 자동 지정, 텍스트 표시 -->
+              <template v-else>
+                <span v-if="currentWorkflowName" class="text-base font-medium text-[#1A1816]">{{ currentWorkflowName }}</span>
+                <span v-else class="text-base text-[#9A9B90]">일감유형을 선택하면 자동 지정됩니다.</span>
+              </template>
             </td>
           </tr>
 
@@ -601,6 +665,12 @@ onMounted(async () => {
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35] align-top pt-4">설명</td>
             <td colspan="3" class="px-6 py-3">
               <Textarea v-model="form.description" placeholder="일감에 대한 설명을 입력해주세요." class="w-full" rows="5" autoResize />
+              <div class="flex items-center justify-between mt-1">
+                <small v-if="errors.description" class="text-red-500 text-xs">
+                  {{ errors.description }}
+                </small>
+                <small class="ml-auto text-xs" :class="(form.description ?? '').length > 500 ? 'text-red-500 font-semibold' : 'text-[#9A9B90]'"> {{ (form.description ?? '').length }} / 500 </small>
+              </div>
             </td>
           </tr>
 

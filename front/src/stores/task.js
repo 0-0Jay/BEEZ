@@ -123,10 +123,13 @@ export const useTaskStore = defineStore('task', {
     async findWorkflow(data) {
       const res = await axios.get('/task/workflow', { params: data });
       this.workflow = res.data;
+    },
+    async downloadFile(id) {
+      const res = await axios.get(`/document/download/${id}`, {
+        responseType: 'blob'
+      });
+      return res;
     }
-    // async downloadFile(file) {
-    //   const res = await axios.get(`/api/file/${file.storedName}`);
-    // }
   },
   persist: {
     storage: sessionStorage

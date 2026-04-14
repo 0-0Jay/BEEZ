@@ -12,10 +12,9 @@ const projectStore = useProjectStore();
 const authStore = useAuthStore();
 const router = useRouter();
 const toast = useToast();
+const userId = computed(() => authStore.user?.id);
 
 const selectedProject = computed(() => projectStore.selectedProject);
-
-const userId = '20261111';
 
 // 로그아웃
 const visible = ref(false);
@@ -64,10 +63,8 @@ const handleUserSaved = () => {
     <!-- 좌측 -->
     <div class="flex items-center gap-3">
       <!-- 프로젝트명 -->
-      <span v-if="selectedProject" class="ml-4 text-gray-600">
-        {{ selectedProject.title }}
-      </span>
-      <span v-else class="ml-4 text-gray-600">선택한 프로젝트 이름 나올 자리</span>
+      <span v-if="selectedProject" class="ml-4 text-gray-600"> {{ selectedProject.title }} ({{ selectedProject.startDate }} - {{ selectedProject.endDate }}) </span>
+      <span v-else class="ml-4 text-gray-600">프로젝트를 선택해주세요</span>
     </div>
 
     <!-- 우측 -->

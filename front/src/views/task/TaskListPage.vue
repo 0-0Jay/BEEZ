@@ -254,7 +254,6 @@ const priorityClass = {
 
 onMounted(async () => {
   Promise.all([taskStore.findCateList(), taskStore.findTypeList(), taskStore.findMember(project.value.id), taskStore.findTaskList(project.value.id, userId.value), taskStore.findCommonCodeList()]);
-  console.log(tasks.value);
 });
 </script>
 

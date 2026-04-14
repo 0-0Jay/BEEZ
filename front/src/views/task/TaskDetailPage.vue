@@ -221,13 +221,23 @@ const replyingTo = ref(null);
 
 const addComment = async () => {
   if (!commentData.value.content.trim()) return;
+  if (commentData.value.content.length > 500) {
+    toast.add({
+      severity: 'error',
+      summary: '입력 초과',
+      detail: '댓글은 500자를 초과할 수 없습니다.',
+      life: 3000,
+      closable: false
+    });
+    return;
+  }
   await taskStore.insertTaskReply(commentData.value);
   commentData.value.content = '';
   await taskStore.findTaskDetail(taskId.value);
   toast.add({
     severity: 'success',
     summary: '작성 완료',
-    detail: '새 댓글을 작성되었습니다.',
+    detail: '새 댓글을 작성하였습니다.',
     life: 3000,
     closable: false
   });
@@ -235,6 +245,16 @@ const addComment = async () => {
 
 const addReply = async (comment) => {
   if (!replyData.value.content.trim()) return;
+  if (replyData.value.content.length > 500) {
+    toast.add({
+      severity: 'error',
+      summary: '입력 초과',
+      detail: '댓글은 500자를 초과할 수 없습니다.',
+      life: 3000,
+      closable: false
+    });
+    return;
+  }
   replyData.value.parentId = comment.id;
   await taskStore.insertTaskReply(replyData.value);
   replyData.value.content = '';
@@ -259,7 +279,7 @@ const saveEdit = async (item) => {
   await taskStore.updateTaskReply({
     id: item.id,
     taskId: taskId.value,
-    userId: userId.value,
+    userId: item.userId,
     content: item.editContent
   });
   item.editing = false;
@@ -338,8 +358,25 @@ const handleAddSubTask = () => {
   }
 };
 
+// 파일 다운로드
+const downloadFile = async (id) => {
+  const data = await taskStore.downloadFile(id);
+  const url = window.URL.createObjectURL(new Blob([data]));
+  const link = document.createElement('a');
+  link.href = url;
+
+  const disposition = data.headers['content-disposition'];
+  const fileName = decodeURIComponent(disposition.split('filename="')[1].replace('"', ''));
+
+  link.setAttribute('download', fileName);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+};
+
 onMounted(async () => {
-  await gitStore.findCommitsByTaskId(taskId.value);
+  Promise.all([taskStore.findCateList(), taskStore.findTypeList(), gitStore.findCommitsByTaskId(taskId.value), taskStore.findCommonCodeList()]);
 });
 </script>
 
@@ -509,7 +546,7 @@ onMounted(async () => {
                 <a
                   v-for="file in fileList"
                   :key="file.id"
-                  :href="`/api/files/${file.storedName}`"
+                  @click="downloadFile(file.id)"
                   target="_blank"
                   class="inline-flex items-center gap-1.5 px-3 py-1.5 text-base rounded border border-[#C7C7C2] text-[#3A3B35] bg-[#FAFAF8] hover:bg-[#F2F0EB] transition-colors"
                 >
@@ -660,14 +697,20 @@ onMounted(async () => {
             <span class="text-base font-semibold text-[#1A1816]">{{ authStore.user?.name }}</span>
             <span class="text-base text-[#9A9B90]">({{ userId }})</span>
           </div>
+          <!-- 변경 후 -->
           <textarea
             v-model="commentData.content"
             placeholder="댓글을 입력해주세요..."
             rows="3"
             class="w-full px-4 py-2.5 bg-[#FAFAF8] border border-[#C7C7C2] rounded-lg text-base text-[#1A1816] outline-none focus:border-[#E8920E] focus:ring-2 focus:ring-[#E8920E]/15 transition-all resize-none placeholder-[#9A9B90]"
+            :class="{ '!border-red-400 focus:!border-red-400 focus:!ring-red-400/15': commentData.content.length > 500 }"
           ></textarea>
-          <div class="flex justify-end mt-2">
-            <Button label="댓글 작성" raised :disabled="!commentData.content.trim()" @click="addComment" />
+          <div class="flex items-center justify-between mt-2">
+            <small v-if="commentData.content.length > 500" class="text-red-500 text-xs">댓글은 500자를 초과할 수 없습니다.</small>
+            <small class="ml-auto text-xs" :class="commentData.content.length > 500 ? 'text-red-500 font-semibold' : 'text-[#9A9B90]'">{{ commentData.content.length }} / 500</small>
+          </div>
+          <div class="flex justify-end mt-1">
+            <Button label="댓글 작성" raised @click="addComment" />
           </div>
         </div>
 
@@ -686,8 +729,17 @@ onMounted(async () => {
             <!-- 본문 -->
             <div v-if="!comment.editing" class="text-base text-[#3A3B35] bg-[#FAFAF8] border border-[#F2F0EB] rounded-lg px-4 py-3 leading-relaxed">{{ comment.content }}</div>
             <div v-else>
-              <textarea v-model="comment.editContent" rows="2" class="w-full px-3 py-2 text-base border border-[#C7C7C2] rounded-lg outline-none focus:border-[#E8920E] resize-none bg-[#FAFAF8]"></textarea>
-              <div class="flex gap-2 mt-2 justify-end">
+              <textarea
+                v-model="comment.editContent"
+                rows="2"
+                class="w-full px-3 py-2 text-base border border-[#C7C7C2] rounded-lg outline-none focus:border-[#E8920E] resize-none bg-[#FAFAF8]"
+                :class="{ '!border-red-400 focus:!border-red-400': comment.editContent.length > 500 }"
+              ></textarea>
+              <div class="flex items-center justify-between mt-1">
+                <small v-if="comment.editContent.length > 500" class="text-red-500 text-xs">댓글은 500자를 초과할 수 없습니다.</small>
+                <small class="ml-auto text-xs" :class="comment.editContent.length > 500 ? 'text-red-500 font-semibold' : 'text-[#9A9B90]'">{{ comment.editContent.length }} / 500</small>
+              </div>
+              <div class="flex gap-2 mt-1 justify-end">
                 <Button label="저장" raised @click="saveEdit(comment)" />
                 <Button label="취소" severity="secondary" raised @click="cancelEdit(comment)" />
               </div>
@@ -708,9 +760,19 @@ onMounted(async () => {
                 <span class="text-base font-semibold text-[#1A1816]">나</span>
                 <span class="text-base text-[#9A9B90]">({{ userId }})</span>
               </div>
-              <textarea v-model="replyData.content" placeholder="답글을 입력해주세요..." rows="2" class="w-full px-3 py-2 text-base border border-[#C7C7C2] rounded-lg outline-none focus:border-[#E8920E] resize-none bg-[#FAFAF8]"></textarea>
-              <div class="flex gap-2 mt-2 justify-end">
-                <Button label="답글 작성" raised :disabled="!replyData.content.trim()" @click="addReply(comment)" />
+              <textarea
+                v-model="replyData.content"
+                placeholder="답글을 입력해주세요..."
+                rows="2"
+                class="w-full px-3 py-2 text-base border border-[#C7C7C2] rounded-lg outline-none focus:border-[#E8920E] resize-none bg-[#FAFAF8]"
+                :class="{ '!border-red-400 focus:!border-red-400': replyData.content.length > 500 }"
+              ></textarea>
+              <div class="flex items-center justify-between mt-1">
+                <small v-if="replyData.content.length > 500" class="text-red-500 text-xs">답글은 500자를 초과할 수 없습니다.</small>
+                <small class="ml-auto text-xs" :class="replyData.content.length > 500 ? 'text-red-500 font-semibold' : 'text-[#9A9B90]'">{{ replyData.content.length }} / 500</small>
+              </div>
+              <div class="flex gap-2 mt-1 justify-end">
+                <Button label="답글 작성" raised @click="addReply(comment)" />
                 <Button
                   label="취소"
                   severity="secondary"
