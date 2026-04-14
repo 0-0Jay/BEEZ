@@ -72,21 +72,34 @@ const ERROR_MESSAGES = {
   503: '서비스를 일시적으로 사용할 수 없습니다.'
 };
 
+let isRedirecting = false;
+
 function handleError(status, message) {
+  if (isRedirecting) return;
+
   const isLoginPage = window.location.pathname === '/';
+  const authStore = useAuthStore();
+
   switch (status) {
     case 401:
-      if (!isLoginPage) {
+      if (!isLoginPage && !isRedirecting) {
+        isRedirecting = true;
         alert('세션이 만료되었습니다. 다시 로그인해주세요.');
-        const authStore = useAuthStore();
         authStore.logout();
         window.location.href = '/';
       }
       break;
 
     case 403:
+      isRedirecting = true;
       alert(ERROR_MESSAGES[403]);
-      router.push('/main');
+
+      router.push('/main').then(() => {
+        setTimeout(() => {
+          isRedirecting = false;
+        }, 500); // 이동 완료 후 다시 에러를 받을 수 있게 초기화
+      });
+
       break;
 
     case 400:

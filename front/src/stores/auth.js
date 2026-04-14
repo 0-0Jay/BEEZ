@@ -12,7 +12,8 @@ export const useAuthStore = defineStore('auth', {
       email: '',
       role: '',
       authorities: []
-    } // 사용자 정보
+    }, // 사용자 정보
+    projectPermissions: []
   }),
 
   // getters
@@ -85,6 +86,24 @@ export const useAuthStore = defineStore('auth', {
         const errorMsg = err.response?.data?.message || '서버 오류가 발생했습니다.';
         return { success: false, message: errorMsg };
       }
+    },
+
+    hasPermissions(targetCode) {
+      if (this.user?.role === 'ROLE0001') {
+        return true;
+      }
+
+      if (!this.projectPermissions || this.projectPermissions.length === 0) {
+        return false;
+      }
+
+      return this.projectPermissions.includes(targetCode);
+    },
+
+    async findPermissionsByProject(projectId) {
+      this.projectPermissions = [];
+      const response = await axios.get(`/project-auth/permissions/${projectId}`);
+      this.projectPermissions = response.data;
     }
   },
   persist: true

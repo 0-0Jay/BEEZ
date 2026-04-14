@@ -2,12 +2,14 @@ const Routes3 = [
   {
     path: '/project/create',
     name: 'ProjectCreate',
-    component: () => import('@/views/project/ProjectCreatePage.vue')
+    component: () => import('@/views/project/ProjectCreatePage.vue'),
+    meta: { permission: 'PER260403002' }
   },
   {
     path: '/project/copy/:id',
     name: 'ProjectCopy',
-    component: () => import('@/views/project/ProjectCopyPage.vue')
+    component: () => import('@/views/project/ProjectCopyPage.vue'),
+    meta: { permission: 'PER260403002' }
   },
   {
     path: '/project/setting/:id',
