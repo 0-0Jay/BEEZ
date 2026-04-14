@@ -1,3 +1,4 @@
+import router from '@/router';
 import axios from 'axios';
 import { useAuthStore } from './auth';
 
@@ -73,7 +74,6 @@ const ERROR_MESSAGES = {
 
 function handleError(status, message) {
   const isLoginPage = window.location.pathname === '/';
-
   switch (status) {
     case 401:
       if (!isLoginPage) {

@@ -80,10 +80,12 @@ const verifyEmail = async () => {
     return;
   }
 
-  // 내 원래 이메일인 경우 체크 통과
-  if (userForm.email === props.userData.email) {
+  // 중복 체크 시작 전 기존 에러 초기화
+  emailError.value = '';
+  errors.email = '';
+
+  if (userForm.email === props.userData?.email) {
     isEmailChecked.value = true;
-    emailError.value = '';
     return;
   }
 
@@ -93,11 +95,11 @@ const verifyEmail = async () => {
       emailError.value = '이미 사용 중인 이메일입니다.';
       isEmailChecked.value = false;
     } else {
-      emailError.value = '';
       isEmailChecked.value = true;
+      emailError.value = '';
     }
   } catch (err) {
-    emailError.value = '중복 체크 중 오류가 발생했습니다.';
+    emailError.value = '중복 체크 중 오류 발생';
   }
 };
 
@@ -118,18 +120,8 @@ const validate = () => {
     errors.email = '이메일 형식이 올바르지 않습니다.';
     isValid = false;
   } else if (!isEmailChecked.value) {
-    // 중복체크를 안 한 경우
+    // 이메일 형식은 맞는데 중복 체크를 안 한 경우
     isValid = false;
-  }
-
-  if (userForm.newPassword) {
-    if (userForm.newPassword.length < 4) {
-      errors.password = '비밀번호는 최소 4자 이상이어야 합니다.';
-      isValid = false;
-    } else if (userForm.newPassword !== userForm.confirmPassword) {
-      errors.password = '비밀번호가 일치하지 않습니다.';
-      isValid = false;
-    }
   }
 
   return isValid;
@@ -154,7 +146,7 @@ const onSave = async () => {
       name: userForm.name,
       email: userForm.email,
       status: userForm.status,
-      newPassword: userForm.newPassword
+      newPassword: userForm.newPassword === '' ? null : userForm.newPassword
     };
 
     await usersStore.updateUser(payload, userForm.id);
@@ -192,28 +184,37 @@ const onSave = async () => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-sm font-semibold text-stone-700"> 이름 <span class="text-red-500">*</span> </label>
-        <InputText v-model="userForm.name" placeholder="이름을 입력해 주세요." class="w-full" :class="{ 'p-invalid': submitted && errors.name }" />
-        <small v-if="submitted && errors.name" class="flex items-center gap-1 text-red-500 text-xs"> <i class="pi pi-exclamation-circle text-xs" /> {{ errors.name }} </small>
+        <InputText v-model="userForm.name" placeholder="이름을 입력해 주세요." class="w-full" />
+        <small v-if="submitted && errors.name" class="flex items-center gap-1 text-red-500 text-xs"> {{ errors.name }} </small>
       </div>
 
       <div class="flex flex-col gap-1.5">
         <label class="text-sm font-semibold text-stone-700"> 이메일 <span class="text-red-500">*</span> </label>
         <div class="flex gap-2">
-          <InputText v-model="userForm.email" placeholder="example@example.com" class="w-full" :class="{ 'p-invalid': submitted && (errors.email || !isEmailChecked) }" />
+          <InputText v-model="userForm.email" placeholder="example@example.com" class="w-full" />
           <Button :label="isEmailChecked ? '확인됨' : '중복 확인'" :icon="isEmailChecked ? 'pi pi-check' : ''" :class="isEmailChecked ? 'p-button-success' : 'p-button-outlined'" class="text-xs whitespace-nowrap" @click="verifyEmail" />
         </div>
         <div class="flex flex-col gap-1">
-          <small v-if="submitted && !userForm.email" class="flex items-center gap-1 text-red-500 text-xs"> <i class="pi pi-exclamation-circle" /> 값을 입력해 주세요. </small>
-          <small v-else-if="submitted && errors.email" class="flex items-center gap-1 text-red-500 text-xs"> <i class="pi pi-exclamation-circle" /> {{ errors.email }} </small>
-          <small v-else-if="submitted && !isEmailChecked && !emailError" class="flex items-center gap-1 text-amber-600 text-xs font-medium"> <i class="pi pi-info-circle" /> 이메일 중복 확인을 진행해 주세요. </small>
-          <small v-else-if="emailError" class="flex items-center gap-1 text-red-500 text-xs"> <i class="pi pi-times-circle" /> {{ emailError }} </small>
-          <small v-else-if="isEmailChecked && userForm.email !== props.userData?.email" class="flex items-center gap-1 text-green-600 text-xs font-medium"> <i class="pi pi-check-circle" /> 사용 가능한 이메일입니다. </small>
+          <small v-if="submitted && !userForm.email" class="text-red-500 text-xs"> 이메일을 입력해 주세요. </small>
+
+          <small v-else-if="submitted && errors.email" class="text-red-500 text-xs">
+            {{ errors.email }}
+          </small>
+
+          <small v-else-if="emailError" class="text-red-500 text-xs">
+            {{ emailError }}
+          </small>
+
+          <small v-else-if="submitted && !isEmailChecked" class="text-amber-600 text-xs font-medium"> 이메일 중복 확인을 진행해 주세요. </small>
+
+          <small v-else-if="isEmailChecked && userForm.email !== props.userData?.email" class="text-green-600 text-xs font-medium"> 사용 가능한 이메일입니다. </small>
         </div>
       </div>
 
       <div class="flex flex-col gap-1.5">
         <label class="text-sm font-semibold text-stone-700">비밀번호 재설정</label>
         <Password v-model="userForm.newPassword" toggleMask :feedback="false" placeholder="새 비밀번호 입력" fluid :class="{ 'p-invalid': submitted && errors.password }" />
+        <small class="text-stone-400 text-xs font-medium">※ 비밀번호는 8자 이상 입력해주세요.</small>
       </div>
 
       <div class="flex flex-col gap-1.5">
@@ -244,36 +245,9 @@ const onSave = async () => {
 </template>
 
 <style scoped>
-:deep(.p-inputtext) {
-  background-color: #fafaf8;
-  border-color: #e5e2d9;
-  border-radius: 8px;
-}
-
-:deep(.p-inputtext:hover) {
-  border-color: #c8c4b8;
-}
-
-:deep(.p-inputtext:focus) {
-  border-color: #f5a623;
-  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.15);
-}
-
-:deep(.p-inputtext.p-invalid) {
-  border-color: #e8920e !important;
-}
-
-:deep(.p-inputtext.p-invalid::placeholder) {
-  color: #736f68;
-}
-
 :deep(.p-password),
 :deep(.p-password-input) {
   width: 100%;
-}
-
-:deep(.p-password.p-invalid .p-inputtext) {
-  border-color: #e8920e !important;
 }
 
 :deep(.p-toggleswitch.p-toggleswitch-checked .p-toggleswitch-slider) {

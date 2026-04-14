@@ -14,4 +14,6 @@ public class TaskTypeRequest {
   private String name;
   private String defaultStatus;
   private String description;
+
+  private String copyFromId;
 }

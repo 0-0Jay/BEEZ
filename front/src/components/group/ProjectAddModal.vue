@@ -140,11 +140,6 @@ onUnmounted(() => {
   border-color: #c8c4b8;
 }
 
-:deep(.p-multiselect.p-focus) {
-  border-color: #f5a623;
-  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.15);
-}
-
 :deep(.p-multiselect-chip) {
   background-color: #fef3c7;
   color: #92400e;

@@ -121,8 +121,8 @@ const handleCopy = async () => {
       </div>
 
       <div class="border border-stone-200 rounded-xl overflow-hidden">
-        <div class="bg-stone-50 border-b border-stone-200 px-4 py-2">
-          <span class="text-xs font-semibold text-stone-400 uppercase tracking-widest">원본</span>
+        <div class="border-b border-stone-200 px-4 py-2">
+          <span class="text-xs font-semibold uppercase tracking-widest">원본</span>
         </div>
         <div class="flex flex-col gap-4 px-5 py-4">
           <div class="flex items-center gap-4">
@@ -173,7 +173,7 @@ const handleCopy = async () => {
 
       <div class="flex items-center gap-3">
         <div class="flex-1 h-px bg-stone-200" />
-        <div class="flex items-center gap-1.5 text-xs text-stone-400 font-medium">
+        <div class="flex items-center gap-1.5 text-xs font-medium">
           <i class="pi pi-arrow-down text-amber-400 text-sm" />
           아래 대상에게 복사
         </div>
@@ -181,8 +181,8 @@ const handleCopy = async () => {
       </div>
 
       <div class="border border-stone-200 rounded-xl overflow-hidden">
-        <div class="bg-stone-50 border-b border-stone-200 px-4 py-2">
-          <span class="text-xs font-semibold text-stone-400 uppercase tracking-widest">대상</span>
+        <div class="border-b border-stone-200 px-4 py-2">
+          <span class="text-xs font-semibold uppercase tracking-widest">대상</span>
         </div>
         <div class="flex flex-col gap-4 px-5 py-4">
           <div class="flex items-start gap-4">

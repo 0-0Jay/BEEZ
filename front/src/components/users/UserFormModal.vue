@@ -155,36 +155,27 @@ const handleRegister = async () => {
       <!-- 이름 -->
       <div class="flex flex-col gap-1.5">
         <label for="name" class="text-sm font-semibold text-stone-700"> 이름 <span class="text-lg text-red-500">*</span> </label>
-        <InputText id="name" v-model="form.name" placeholder="이름을 입력해 주세요." class="w-full" :class="{ 'p-invalid': submitted && !form.name, '!border-[#E8920E]': submitted && !form.name }" />
-        <small v-if="submitted && !form.name" class="flex items-center gap-1 text-red-500 text-xs">
-          <i class="pi pi-exclamation-circle text-xs" />
-          값을 입력해 주세요.
-        </small>
+        <InputText id="name" v-model="form.name" placeholder="이름을 입력해 주세요." class="w-full" />
+        <small v-if="submitted && !form.name" class="flex items-center gap-1 text-red-500 text-xs"> 값을 입력해 주세요. </small>
       </div>
 
       <!-- 이메일 -->
       <div class="flex flex-col gap-1.5">
         <label for="email" class="text-sm font-semibold text-stone-700"> 이메일 <span class="text-lg text-red-500">*</span> </label>
         <div class="flex gap-2">
-          <InputText
-            id="email"
-            v-model="form.email"
-            placeholder="example@example.com"
-            class="w-full"
-            :class="{ 'p-invalid': submitted && (!form.email || !form.email.includes('@')), '!border-[#E8920E]': submitted && (!form.email || !form.email.includes('@')) }"
-          />
+          <InputText id="email" v-model="form.email" placeholder="example@example.com" class="w-full" />
           <Button :label="isEmailChecked ? '확인됨' : '중복 확인'" :icon="isEmailChecked ? 'pi pi-check' : ''" :class="isEmailChecked ? 'p-button-success' : 'p-button-outlined'" class="text-xs whitespace-nowrap" @click="verifyEmail" />
         </div>
         <div class="flex flex-col gap-1.5">
-          <small v-if="submitted && !form.email" class="flex items-center gap-1 text-red-500 text-xs"> <i class="pi pi-exclamation-circle" /> 값을 입력해 주세요. </small>
+          <small v-if="submitted && !form.email" class="flex items-center gap-1 text-red-500 text-xs"> 값을 입력해 주세요. </small>
 
-          <small v-else-if="submitted && !form.email.includes('@')" class="flex items-center gap-1 text-red-500 text-xs"> <i class="pi pi-exclamation-circle" /> 이메일 형식이 올바르지 않습니다. </small>
+          <small v-else-if="submitted && !form.email.includes('@')" class="flex items-center gap-1 text-red-500 text-xs"> 이메일 형식이 올바르지 않습니다. </small>
 
-          <small v-else-if="submitted && !isEmailChecked && !emailError" class="flex items-center gap-1 text-amber-600 text-xs font-medium"> <i class="pi pi-info-circle" /> 이메일 중복 확인을 진행해 주세요. </small>
+          <small v-else-if="submitted && !isEmailChecked && !emailError" class="flex items-center gap-1 text-amber-600 text-xs font-medium"> 이메일 중복 확인을 진행해 주세요. </small>
 
-          <small v-else-if="emailError" class="flex items-center gap-1 text-red-500 text-xs"> <i class="pi pi-times-circle" /> {{ emailError }} </small>
+          <small v-else-if="emailError" class="flex items-center gap-1 text-red-500 text-xs"> {{ emailError }} </small>
 
-          <small v-else-if="isEmailChecked" class="flex items-center gap-1 text-green-600 text-xs font-medium"> <i class="pi pi-check-circle" /> 사용 가능한 이메일입니다. </small>
+          <small v-else-if="isEmailChecked" class="flex items-center gap-1 text-green-600 text-xs font-medium"> 사용 가능한 이메일입니다. </small>
         </div>
       </div>
 
@@ -199,13 +190,7 @@ const handleRegister = async () => {
           </span>
         </div>
         <div class="grid grid-cols-2 gap-3">
-          <div
-            v-for="role in roleOptions"
-            :key="role.code"
-            class="flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-all duration-150"
-            :class="form.role === role.code ? 'border-amber-400 bg-amber-50 shadow-[0_0_0_3px_rgba(245,166,35,0.12)]' : 'border-stone-200 bg-stone-50'"
-            @click="form.role = form.role === role.code ? null : role.code"
-          >
+          <div v-for="role in roleOptions" :key="role.code" class="flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-all duration-150" @click="form.role = form.role === role.code ? null : role.code">
             <RadioButton v-model="form.role" :value="role.code" />
             <div class="flex flex-col gap-0.5">
               <span class="text-sm font-bold text-stone-900">{{ role.name }}</span>
@@ -232,31 +217,3 @@ const handleRegister = async () => {
     </template>
   </Dialog>
 </template>
-
-<style scoped>
-:deep(.p-inputtext) {
-  background-color: #fafaf8;
-  border-color: #e5e2d9;
-  border-radius: 8px;
-}
-
-:deep(.p-inputtext:hover) {
-  border-color: #c8c4b8;
-}
-:deep(.p-inputtext:focus) {
-  border-color: #f5a623;
-  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.15);
-}
-
-:deep(.p-inputtext.p-invalid::placeholder) {
-  color: #736f68;
-}
-
-:deep(.p-radiobutton .p-radiobutton-box.p-highlight) {
-  border-color: #f5a623;
-  background: #f5a623;
-}
-:deep(.p-radiobutton .p-radiobutton-box:not(.p-highlight):hover) {
-  border-color: #f5a623;
-}
-</style>
