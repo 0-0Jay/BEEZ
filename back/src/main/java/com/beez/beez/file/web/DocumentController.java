@@ -18,6 +18,7 @@ import java.util.List;
 public class DocumentController {
   
   private final DocumentService documentService;
+  private final FileService fileService;
   
 //  @PostMapping("/document/write/{projectId}")
 //  public ResponseEntity<String> registerDocument(
@@ -53,9 +54,9 @@ public class DocumentController {
   // 특정 프로젝트의 문서 목록 조회
   @GetMapping("/document/list/{projectId}")
   public ResponseEntity<List<ListResponse>> getDocumentList(
-    @PathVariable String projectId) {
-    List<ListResponse> list = documentService.getDocumentList(projectId);
-    return ResponseEntity.ok(list);
+    @PathVariable String projectId,
+    @RequestParam String userId) {
+    return ResponseEntity.ok(documentService.getDocumentList(projectId, userId));
   }
   
   // 문서 상세 조회
@@ -72,7 +73,15 @@ public class DocumentController {
   //파일 다운로드 기능
   @GetMapping("/document/download/{fileDetailId}")
   public ResponseEntity<Resource> downloadFile(@PathVariable String fileDetailId) {
-    return documentService.downloadFile(fileDetailId);
+    return fileService.downloadFile(fileDetailId);
   }
-
+  
+  //즐겨찾기 기능
+  @PostMapping("/document/favorite")
+  public ResponseEntity<String> toggleFavorite(@RequestBody FavoriteRequest request) {
+    documentService.toggleFavorite(request.getUserId(), request.getDocumentId());
+    return ResponseEntity.ok("즐겨찾기 처리 완료");
+  }
+  
+  
 } //CLASS END

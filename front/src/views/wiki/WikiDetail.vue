@@ -48,12 +48,13 @@ const generateTOC = () => {
   let h2Count = 0;
   let h3Count = 0;
 
+  //목차 생성용
   headings.forEach((heading, index) => {
     const id = `section-${index}`;
     heading.setAttribute('id', id);
 
-    const rawTitle = heading.innerText;
-    const cleanTitle = rawTitle.replace(/^[\d.]+\s*/, '').trim();
+    const rawTitle = heading.textContent;
+    const cleanTitle = rawTitle.replace(/^[\d.]+\s*/, '').trim(); // 1.1.1. 방지 하기 위함
 
     if (heading.tagName === 'H2') {
       h2Count++;
@@ -61,11 +62,14 @@ const generateTOC = () => {
       newToc.push({ id, title: cleanTitle, number: `${h2Count}.`, sub: [] });
     } else if (heading.tagName === 'H3') {
       h3Count++;
-      const number = `${h2Count}.${h3Count}`;
-      if (newToc.length > 0) {
-        newToc[newToc.length - 1].sub.push({ id, title: cleanTitle, number });
+      if (newToc.length === 0) {
+        // 부모 H2 없으면 → H3를 그냥 최상위 항목으로 올려버림
+        h2Count++;
+        h3Count = 0;
+        newToc.push({ id, title: cleanTitle, number: `${h2Count}.`, sub: [] });
       } else {
-        newToc.push({ id, title: cleanTitle, number, sub: [] });
+        const number = `${h2Count}.${h3Count}`;
+        newToc[newToc.length - 1].sub.push({ id, title: cleanTitle, number });
       }
     }
   });
@@ -195,7 +199,7 @@ watch(
       <div class="section-marker">
         <div class="related-card">
           <div v-if="relatedLinks.length > 0" class="link-list-container">
-            <div class="toc-heading" style="margin-bottom: 12px">관련 문서 링크</div>
+            <div class="toc-heading" style="margin-bottom: 12px">관련 URL 링크</div>
             <ul class="related-link-list">
               <li v-for="(link, index) in relatedLinks" :key="index" class="link-item">
                 <i class="link-icon">🔗</i>
@@ -203,7 +207,7 @@ watch(
               </li>
             </ul>
           </div>
-          <span v-else class="related-placeholder">관련 문서 링크가 없습니다.</span>
+          <span v-else class="related-placeholder">관련 URL 링크가 없습니다.</span>
         </div>
       </div>
     </div>

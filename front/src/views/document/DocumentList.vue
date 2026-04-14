@@ -1,4 +1,5 @@
 <script setup>
+import { useAuthStore } from '@/stores/auth';
 import { useDocumentStore } from '@/stores/document';
 import { computed, onMounted, ref } from 'vue'; // 1. ref 임포트 추가
 import { useRoute, useRouter } from 'vue-router';
@@ -6,15 +7,17 @@ import { useRoute, useRouter } from 'vue-router';
 const router = useRouter();
 const route = useRoute();
 const docStore = useDocumentStore();
+const authStore = useAuthStore(); // 즐겨찾기 정보 위함
 
 const projectId = route.params.projectId;
+const userId = authStore.user.id; //즐겨찾기 위함
 
 const activeFav = ref(null);
 const searchKeyword = ref('');
 const searchDoctype = ref('');
 
 onMounted(async () => {
-  await docStore.fetchDocumentList(projectId);
+  await docStore.fetchDocumentList(projectId, userId);
 });
 
 const filteredList = computed(() => {
@@ -26,7 +29,12 @@ const filteredList = computed(() => {
 });
 
 //즐겨찾기 문서만
-const favList = computed(() => docStore.documentList.filter((doc) => doc.isFavorite));
+const favList = computed(() => docStore.documentList.filter((doc) => doc.isMarked === 'Y'));
+
+// 즐겨찾기 토글
+const toggleFavorite = async (docId) => {
+  await docStore.toggleFavorite(userId, docId);
+};
 
 // 문서 등록 페이지로 이동하는 함수
 const goToWrite = () => {
@@ -36,8 +44,6 @@ const goToWrite = () => {
   });
 };
 
-// [추가] 문서 상세 페이지 이동 함수  ###### 연결 테스트 떄문에 이렇게 적어 넣음
-//실제로 기능 구현 할때는 @click 과 v-bind 써야함
 const goToDetail = (docId) => {
   const projectId = route.params.projectId; // URL의 프로젝트 ID 사용
 
@@ -62,13 +68,8 @@ const pagedList = computed(() => {
 // 날짜 포맷 함수 추가 (YYYY-MM-DD)
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
-
-  // 문자열이 '26/04/10 14:27:18...' 형식이거나 ISO 형식일 때를 모두 대응
-  // 만약 DB에서 26/04/10 처럼 오면 연도 처리가 필요할 수 있습니다.
   const date = new Date(dateStr);
 
-  // 날짜 객체가 유효하지 않을 경우 (예: '26/04/10' 형식이 Date에서 안 읽힐 때)
-  // 단순 문자열 슬라이싱으로 처리하는 방법이 더 확실할 수 있습니다.
   if (isNaN(date)) {
     // '26/04/10 14:27:18' -> '2026-04-10' (필요시 조정)
     const parts = dateStr.split(' ')[0].split('/');
@@ -118,7 +119,7 @@ const formatDate = (dateStr) => {
     <template v-if="favList.length">
       <div class="section-title">즐겨찾기 문서</div>
       <div class="fav-grid">
-        <div v-for="doc in favList" :key="doc.id" class="panel fav-card" :class="{ active: activeFav === doc.id }" @click="activeFav = doc.id">
+        <div v-for="doc in favList" :key="doc.id" class="panel fav-card" :class="{ active: activeFav === doc.id }" @click="goToDetail(doc.id)">
           <div class="fav-icon">
             <span class="radio-dot" :class="{ active: activeFav === doc.id }"></span>
           </div>
@@ -155,8 +156,8 @@ const formatDate = (dateStr) => {
 
       <div v-for="(doc, index) in pagedList" :key="doc.id" class="board-row">
         <span class="num">
-          <span class="star" :class="{ active: doc.isFavorite }">
-            {{ doc.isFavorite ? '★' : '☆' }}
+          <span class="star" :class="{ active: doc.isMarked === 'Y' }" @click.stop="toggleFavorite(doc.id)">
+            {{ doc.isMarked === 'Y' ? '★' : '☆' }}
           </span>
           {{ filteredList.length - ((currentPage - 1) * pageSize + index) }}
         </span>
@@ -172,10 +173,11 @@ const formatDate = (dateStr) => {
     </div>
 
     <div class="pagination">
-      <div class="page-btn arrow">‹</div>
-      <div class="page-btn active">1</div>
-      <div v-for="p in 4" :key="p + 1" class="page-btn">{{ p + 1 }}</div>
-      <div class="page-btn arrow">›</div>
+      <div class="page-btn arrow" @click="currentPage > 1 && currentPage--">‹</div>
+      <div v-for="p in totalPages" :key="p" class="page-btn" :class="{ active: currentPage === p }" @click="currentPage = p">
+        {{ p }}
+      </div>
+      <div class="page-btn arrow" @click="currentPage < totalPages && currentPage++">›</div>
     </div>
   </div>
 </template>
@@ -354,13 +356,25 @@ const formatDate = (dateStr) => {
   border-radius: 4px;
   font-size: 12px;
 }
-.badge.기획안 {
-  background: #eaf3de;
-  color: #3b6d11;
-}
 .badge.기획서 {
+  background: #fde8e8;
+  color: #c0392b;
+}
+.badge.설계서 {
   background: #e6f1fb;
   color: #185fa5;
+}
+.badge.회의록 {
+  background: #fef0e0;
+  color: #c47000;
+}
+.badge.보고서 {
+  background: #eaf6ee;
+  color: #1e7e34;
+}
+.badge.기타 {
+  background: #f0e8fb;
+  color: #6b3fa0;
 }
 
 /* 페이지네이션 */

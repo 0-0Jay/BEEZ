@@ -99,8 +99,8 @@ public class DocumentServiceImpl implements DocumentService {
   }
   
   @Override //목록 조회
-  public List<ListResponse> getDocumentList(String projectId) {
-    return documentMapper.selectDocumentList(projectId);
+  public List<ListResponse> getDocumentList(String projectId, String userId) {
+    return documentMapper.selectDocumentList(projectId, userId);
   }
   
   //상세 조회
@@ -115,34 +115,17 @@ public class DocumentServiceImpl implements DocumentService {
     return detail;
   }
   
-  //파일 다운로드
-  @Value("D:/beezfile")
-  private String uploadPath;
-  
-  @Override
-  public ResponseEntity<Resource> downloadFile(String fileDetailId){
-    //DB에서 파일 정보 조회
-    FileDetailRequest file = documentMapper.selectFileDetailById(fileDetailId);
-    
-    System.out.println("storedName: " + file.getStoredName());  // ← 추가
-    System.out.println("uploadPath: " + uploadPath);            // ← 추가
-    
-    //실제 파일 경로
-    Path filePath = Paths.get(uploadPath, file.getStoredName());
-    System.out.println("fullPath: " + filePath.toAbsolutePath()); // ← 추가
-    Resource resource = new FileSystemResource(filePath);
-    
-    if(!resource.exists()){
-      throw new RuntimeException("파일을 찾을 수 없습니다.");
+  // 즐겨찾기 기능
+  public void toggleFavorite(String userId, String documentId) {
+    String existingId = documentMapper.selectFavoriteId(userId, documentId);
+    if (existingId != null) {
+      documentMapper.deleteFavorite(userId, documentId);
+    } else {
+      FavoriteRequest request = new FavoriteRequest();
+      request.setUserId(userId);
+      request.setDocumentId(documentId);
+      documentMapper.insertFavorite(request);
     }
-    
-    //한글 파일명 깨짐 방지
-    String encodedName = UriUtils.encode(file.getOriginalName(), StandardCharsets.UTF_8);
-    
-    return ResponseEntity.ok()
-      .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + encodedName + "\"")
-      .contentType(MediaType.APPLICATION_OCTET_STREAM)
-      .body(resource);
   }
   
 } //end

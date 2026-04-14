@@ -61,9 +61,11 @@
     D.DOC_TYPE AS DOCTYPE,
     D.USER_ID,
     U.NAME AS USERNAME,
-    D.CREATED_ON AS createdOn
+    D.CREATED_ON AS createdOn,
+    CASE WHEN M.MARK_ID IS NOT NULL THEN 'Y' ELSE 'N' END AS isMarked
     FROM DOCS D
     LEFT JOIN USERS U ON D.USER_ID = U.ID
+    LEFT JOIN DOCS_MARK M ON D.ID = M.DOCUMENT_ID AND M.USER_ID = #{userId}
     WHERE D.PROJECT_ID = #{projectId}
     ORDER BY D.CREATED_ON DESC
   </select>
@@ -105,6 +107,25 @@
     SELECT file_id FROM docs WHERE id = #{id}
   </select>
 
-
+  <!--즐겨 찾기 기능-->
+  <insert id="insertFavorite" parameterType="com.beez.beez.file.dto.FavoriteRequest">
+    <selectKey keyProperty="markId" resultType="string" order="BEFORE">
+      SELECT BEEZ.generate_pk_auto('docs_mark') FROM dual
+    </selectKey>
+    INSERT INTO docs_mark (mark_id, user_id, document_id, created_on)
+    VALUES (#{markId}, #{userId}, #{documentId}, SYSTIMESTAMP)
+  </insert>
+  
+  <delete id="deleteFavorite">
+    DELETE FROM docs_mark
+    WHERE user_id = #{userId}
+    AND document_id = #{documentId}
+  </delete>
+  
+  <select id="selectFavoriteId" resultType="String">
+    SELECT mark_id FROM docs_mark
+    WHERE user_id = #{userId}
+    AND document_id = #{documentId}
+  </select>
 
 </mapper>

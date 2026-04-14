@@ -36,7 +36,7 @@ public interface DocumentMapper {
     
   // 조회 관련
     // 목록 조회
-  List<ListResponse> selectDocumentList(String projectId);
+  List<ListResponse> selectDocumentList(@Param("projectId") String projectId, @Param("userId") String userId);
   
   String selectFileIdByDocId(String id);
   
@@ -45,4 +45,13 @@ public interface DocumentMapper {
   
     // 특정 문서에 걸린 최신 파일 리스트 조회
     List<com.beez.beez.file.dto.FileDetailResponse> selectLatestFilesByDocId(String id);
+    
+    
+    //즐겨찾기 기능
+    // DocumentMapper.java에 추가
+    void insertFavorite(FavoriteRequest request);
+  
+    void deleteFavorite(@Param("userId") String userId, @Param("documentId") String documentId);
+  
+    String selectFavoriteId(@Param("userId") String userId, @Param("documentId") String documentId);
 }
