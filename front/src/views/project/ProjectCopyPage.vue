@@ -2,22 +2,42 @@
 import { useProjectStore } from '@/stores/project';
 import { useToast } from 'primevue';
 import { onMounted, reactive, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
 const router = useRouter();
+const route = useRoute();
 const projectStore = useProjectStore();
 const toast = useToast();
+const copyOptions = ref([]);
 
 // 상위 프로젝트 옵션 - 기존 프로젝트 목록 활용
 const projectOptions = ref([]);
 
 onMounted(async () => {
+  await projectStore.findProject(route.params.id);
+  const project = projectStore.projectInfo;
   await projectStore.fetchProjects({});
   projectOptions.value = projectStore.projects.map((p) => ({
     label: p.title,
     value: p.id
   }));
+
+  form.title = `복사본 - ${project.title}`;
+  form.identifier = '';
+  form.description = project.description;
+  form.startDate = project.startDate ? new Date(project.startDate) : null;
+  form.endDate = project.endDate ? new Date(project.endDate) : null;
+  form.isPublic = project.isPublic === 'J1';
+  form.parentId = project.parentId;
 });
+
+const copyOptionList = [
+  { value: 'members', label: '구성원' },
+  { value: 'versions', label: '버전' },
+  { value: 'issues', label: '일감' },
+  { value: 'docs', label: '문서' },
+  { value: 'wiki', label: '위키' }
+];
 
 const form = reactive({
   title: '',
@@ -237,13 +257,14 @@ const handleCancel = () => {
       <div class="bg-[#F2F0EB] px-8 py-3 border-b border-[#C7C7C2]">
         <span class="text-lg font-bold text-[#1A1816]">복사</span>
       </div>
-      <div class="px-8 py-4 flex flex-col gap-3">
-        <label>함께 복사할 항목을 선택하세요.</label>
-        <Checkbox v-model="copyOptions" value="members" label="구성원" />
-        <Checkbox v-model="copyOptions" value="versions" label="버전" />
-        <Checkbox v-model="copyOptions" value="issues" label="일감" />
-        <Checkbox v-model="copyOptions" value="docs" label="문서" />
-        <Checkbox v-model="copyOptions" value="wiki" label="위키" />
+      <div class="px-8 py-4">
+        <div class="flex gap-20 py-3 px-2">
+          <div v-for="option in copyOptionList" :key="option.value" class="flex items-center gap-2">
+            <Checkbox v-model="copyOptions" :value="option.value" :inputId="option.value" />
+            <label :for="option.value" class="text-m text-[#3A3B35] cursor-pointer">{{ option.label }}</label>
+          </div>
+        </div>
+        <small class="text-red-500 mt-1">함께 복사할 항목을 선택하세요.</small>
       </div>
     </div>
 
