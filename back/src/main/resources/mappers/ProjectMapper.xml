@@ -90,7 +90,38 @@
            p.end_date AS endDate,
            p.is_lock AS isLock,
            p.parent_id AS parentId,
-           (LEVEL - 1) AS "level"
+           (LEVEL - 1) AS "level",
+           (
+             SELECT COUNT(*)
+             FROM task t
+             WHERE t.project_id = p.id
+             AND t.status = 'T1'
+           ) AS totalTaskCount,
+           (
+             SELECT COUNT(*)
+             FROM task t
+             WHERE t.project_id = p.id
+             AND t.status = 'T1'
+             AND t.workflow = 'Q3'
+           ) AS completedTaskCount,
+           (
+           SELECT ROUND(
+             SUM(
+                 (t.planned_end - t.planned_start + 1)
+                 * CASE
+                 WHEN EXISTS (
+                 SELECT 1 FROM task ch
+                 WHERE ch.parent_id = t.id
+                 AND ch.status = 'T1'
+               ) THEN t.sub_progress
+                 ELSE t.progress
+                 END
+                 ) / NULLIF(SUM(t.planned_end - t.planned_start + 1), 0)
+           )
+           FROM task t
+           WHERE t.project_id = p.id
+           AND t.status = 'T1'
+           ) AS progressRate
       FROM project p
       LEFT JOIN users u ON u.id = p.user_id
       WHERE p.status = 'K1'

@@ -51,8 +51,9 @@ export const useProjectStore = defineStore('project', {
           isLock: p.isLock,
           parentId: p.parentId,
           level: p.level,
-          issueCount: '0/0', // 아직 DB 연동 전이라 하드코딩
-          progress: 0 // 아직 로직 전이라 하드코딩
+          totalTaskCount: p.totalTaskCount,
+          completedTaskCount: p.completedTaskCount,
+          progressRate: p.progressRate ?? 0
         }));
 
         return response.data;
