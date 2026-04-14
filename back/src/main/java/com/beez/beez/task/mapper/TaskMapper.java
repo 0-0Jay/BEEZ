@@ -10,7 +10,7 @@ public interface TaskMapper {
   
   List<MemberResponse> findMemberList(String projectId);
   
-  void findVersionList(@Param("projectId") String projectId, @Param("versionList") List<VersionResponse> version);
+  void findVersionList(TaskVersionResponse version);
   
   void insertTask(TaskRequest task);
   
@@ -45,4 +45,8 @@ public interface TaskMapper {
   List<GanttRelationResponse> findGanttRelation(String id);
   
   List<TaskWorkflowResponse> findWorkflow(TaskWorkflowRequest taskWorkflowRequest);
+  
+  void deleteTaskReply(String id);
+  
+  void updateTaskReply(TaskReplyRequest taskReplyRequest);
 }

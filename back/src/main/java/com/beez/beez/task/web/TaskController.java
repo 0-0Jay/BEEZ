@@ -72,6 +72,19 @@ public class TaskController {
     return ResponseEntity.ok().build();
   }
   
+  // 댓글 수정
+  @PutMapping("/reply")
+  public ResponseEntity<Void> updateTaskReply(@RequestBody TaskReplyRequest taskReplyRequest) {
+    taskService.updateTaskReply(taskReplyRequest);
+    return ResponseEntity.ok().build();
+  }
+  // 댓글 삭제
+  @DeleteMapping("/reply/{id}")
+  public ResponseEntity<Void> deleteTaskReply(@PathVariable String id) {
+    taskService.deleteTaskReply(id);
+    return ResponseEntity.ok().build();
+  }
+  
   // 공통코드 조회
   @GetMapping("/common")
   public ResponseEntity<List<CommonCodeResponse>> findCommonCodeList() {

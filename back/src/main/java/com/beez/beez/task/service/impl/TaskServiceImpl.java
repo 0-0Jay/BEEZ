@@ -102,9 +102,9 @@ public class TaskServiceImpl implements TaskService {
   // 버전 목록
   @Override
   public List<VersionResponse> findVersionList(String projectId) {
-    List<VersionResponse> version = new ArrayList<>();
-    taskMapper.findVersionList(projectId, version);
-    return version;
+    TaskVersionResponse version = TaskVersionResponse.builder().projectId(projectId).build();
+    taskMapper.findVersionList(version);
+    return version.getVersion();
   }
   
   // 일감 등록 / 복사
@@ -256,6 +256,16 @@ public class TaskServiceImpl implements TaskService {
   @Override
   public List<TaskWorkflowResponse> findWorkflow(TaskWorkflowRequest taskWorkflowRequest) {
     return taskMapper.findWorkflow(taskWorkflowRequest);
+  }
+  
+  @Override
+  public void deleteTaskReply(String id) {
+    taskMapper.deleteTaskReply(id);
+  }
+  
+  @Override
+  public void updateTaskReply(TaskReplyRequest taskReplyRequest) {
+    taskMapper.updateTaskReply(taskReplyRequest);
   }
   
 }

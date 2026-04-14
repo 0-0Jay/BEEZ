@@ -9,8 +9,8 @@ import { computed, ref, watch } from 'vue';
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
-  task: { type: Object, default: null }, // task.title
-  activityList: { type: Array, default: () => [] } // [{ id, name }]
+  task: { type: Object, default: null },
+  activityList: { type: Array, default: () => [] }
 });
 
 const emit = defineEmits(['update:visible', 'confirm', 'cancel']);
@@ -26,6 +26,30 @@ const form = ref({
   description: ''
 });
 
+const touched = ref({
+  taskStart: true,
+  spent: true,
+  activityType: true,
+  progress: true,
+  description: true
+});
+
+const errors = ref({
+  taskStart: '',
+  spent: '',
+  activityType: '',
+  progress: '',
+  description: ''
+});
+
+function validate() {
+  errors.value.taskStart = form.value.taskStart === null ? '작업 일시를 입력해주세요.' : '';
+  errors.value.spent = form.value.spent === null ? '소요시간을 입력해주세요.' : '';
+  errors.value.activityType = form.value.activityType === null ? '작업 유형을 선택해주세요.' : '';
+  errors.value.progress = form.value.progress === null ? '진척도를 입력해주세요.' : '';
+  errors.value.description = form.value.description.length > 300 ? '설명은 300자를 초과할 수 없습니다.' : '';
+}
+
 watch(
   () => props.visible,
   (val) => {
@@ -34,19 +58,22 @@ watch(
         taskStart: null,
         spent: null,
         activityType: null,
-        progress: props.task?.progress,
+        progress: props.task?.progress ?? null,
         description: ''
       };
+      errors.value = { taskStart: '', spent: '', activityType: '', progress: '' };
     }
   }
 );
 
 const activityOptions = computed(() => props.activityList.map((a) => ({ label: a.name, value: a.id })));
 
-const isValid = computed(() => form.value.taskStart && form.value.spent !== null && form.value.activityType !== null && form.value.progress !== null);
-
 function handleConfirm() {
-  if (!isValid.value) return;
+  validate();
+
+  const hasError = Object.values(errors.value).some((e) => e);
+  if (hasError) return;
+
   emit('confirm', {
     taskId: props.task?.id,
     userId: user.value?.id,
@@ -56,6 +83,7 @@ function handleConfirm() {
     progress: form.value.progress,
     description: form.value.description
   });
+  emit('update:visible', false);
 }
 
 function handleCancel() {
@@ -106,9 +134,12 @@ function handleCancel() {
         <div class="flex flex-col gap-1.5">
           <label class="flex items-center gap-1 text-base font-semibold text-stone-600">
             작업 일시
-            <span class="text-red-500 text-base leading-none">•</span>
+            <span class="text-red-500">*</span>
           </label>
           <DatePicker v-model="form.taskStart" showTime hourFormat="24" dateFormat="yy-mm-dd" placeholder="작업 일시를 선택하세요" class="w-full" input-class="w-full" />
+          <small v-if="touched.taskStart && errors.taskStart" class="text-red-500 mt-1 block text-xs">
+            {{ errors.taskStart }}
+          </small>
         </div>
 
         <!-- 소요 시간 / 진척도 (2열) -->
@@ -117,18 +148,24 @@ function handleCancel() {
           <div class="flex flex-col gap-1.5">
             <label class="flex items-center gap-1 text-base font-semibold text-stone-600">
               소요 시간 (분)
-              <span class="text-red-500 text-base leading-none">•</span>
+              <span class="text-red-500">*</span>
             </label>
             <InputNumber v-model="form.spent" :min="0" placeholder="분 단위로 입력" class="w-full" />
+            <small v-if="touched.spent && errors.spent" class="text-red-500 mt-1 block text-xs">
+              {{ errors.spent }}
+            </small>
           </div>
 
           <!-- 진척도 -->
           <div class="flex flex-col gap-1.5">
             <label class="flex items-center gap-1 text-base font-semibold text-stone-600">
               진척도 (%)
-              <span class="text-red-500 text-base leading-none">•</span>
+              <span class="text-red-500">*</span>
             </label>
             <InputNumber v-model="form.progress" :min="0" :max="100" showButtons mode="decimal" :step="10" placeholder="0 ~ 100" class="w-full" />
+            <small v-if="touched.progress && errors.progress" class="text-red-500 mt-1 block text-xs">
+              {{ errors.progress }}
+            </small>
           </div>
         </div>
 
@@ -136,7 +173,7 @@ function handleCancel() {
         <div class="flex flex-col gap-1.5">
           <label class="flex items-center gap-1 text-base font-semibold text-stone-600">
             작업 종류
-            <span class="text-red-500 text-base leading-none">•</span>
+            <span class="text-red-500">*</span>
           </label>
           <Select
             v-model="form.activityType"
@@ -151,6 +188,9 @@ function handleCancel() {
               trigger: { class: 'px-3' }
             }"
           />
+          <small v-if="touched.activityType && errors.activityType" class="text-red-500 mt-1 block text-xs">
+            {{ errors.activityType }}
+          </small>
         </div>
 
         <!-- 설명 -->
@@ -158,18 +198,26 @@ function handleCancel() {
           <label class="text-base font-semibold text-stone-600">설명</label>
           <Textarea
             v-model="form.description"
-            placeholder="작업 내용을 입력하세요..."
+            placeholder="작업 내용을 입력하세요... (최대 300자)"
             :rows="3"
             :autoResize="false"
-            class="w-full resize-none px-3 py-2.5 text-base border border-stone-200 rounded-lg outline-none focus:border-orange-400 bg-stone-50 text-stone-700 placeholder-stone-400"
+            class="w-full resize-none px-3 py-2.5 text-base border rounded-lg outline-none bg-stone-50 text-stone-700 placeholder-stone-400"
+            :class="touched.description && errors.description ? 'border-red-400 focus:border-red-400' : 'border-stone-200 focus:border-orange-400'"
+            @input="touched.description = true"
           />
+          <div class="flex items-center justify-between">
+            <small v-if="touched.description && errors.description" class="text-red-500 block text-xs">
+              {{ errors.description }}
+            </small>
+            <small class="ml-auto text-xs" :class="form.description.length > 300 ? 'text-red-500 font-semibold' : 'text-stone-400'"> {{ form.description.length }} / 300 </small>
+          </div>
         </div>
       </div>
 
       <!-- 푸터 -->
       <div class="flex items-center justify-end gap-2.5 px-7 py-5 border-t border-stone-100 bg-stone-50">
+        <Button label="저장" raised @click="handleConfirm" />
         <Button label="취소" severity="secondary" raised @click="handleCancel" />
-        <Button label="저장" raised :disabled="!isValid" @click="handleConfirm" />
       </div>
     </div>
   </Dialog>
