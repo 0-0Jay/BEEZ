@@ -99,8 +99,8 @@ public class DocumentServiceImpl implements DocumentService {
   }
   
   @Override //목록 조회
-  public List<ListResponse> getDocumentList(String projectId) {
-    return documentMapper.selectDocumentList(projectId);
+  public List<ListResponse> getDocumentList(String projectId, String userId) {
+    return documentMapper.selectDocumentList(projectId, userId);
   }
   
   //상세 조회
@@ -115,6 +115,17 @@ public class DocumentServiceImpl implements DocumentService {
     return detail;
   }
   
-  
+  // 즐겨찾기 기능
+  public void toggleFavorite(String userId, String documentId) {
+    String existingId = documentMapper.selectFavoriteId(userId, documentId);
+    if (existingId != null) {
+      documentMapper.deleteFavorite(userId, documentId);
+    } else {
+      FavoriteRequest request = new FavoriteRequest();
+      request.setUserId(userId);
+      request.setDocumentId(documentId);
+      documentMapper.insertFavorite(request);
+    }
+  }
   
 } //end

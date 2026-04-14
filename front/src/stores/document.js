@@ -10,12 +10,27 @@ export const useDocumentStore = defineStore('document', {
 
   actions: {
     //문서 목록 조회
-    async fetchDocumentList(projectId) {
+    async fetchDocumentList(projectId, userId) {
       try {
-        const response = await axios.get(`/document/list/${projectId}`);
+        const response = await axios.get(`/document/list/${projectId}`, {
+          params: { userId }
+        });
         this.documentList = response.data;
       } catch (error) {
         console.error('목록 조회 실패:', error);
+        throw error;
+      }
+    },
+
+    // 즐겨찾기 토글 추가
+    async toggleFavorite(userId, documentId) {
+      try {
+        await axios.post('/document/favorite', { userId, documentId });
+        // 목록에서 해당 문서의 isMarked 즉시 반전 (API 재호출 없이)
+        const doc = this.documentList.find((d) => d.id === documentId);
+        if (doc) doc.isMarked = doc.isMarked === 'Y' ? 'N' : 'Y';
+      } catch (error) {
+        console.error('즐겨찾기 실패:', error);
         throw error;
       }
     },

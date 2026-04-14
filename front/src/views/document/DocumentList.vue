@@ -1,4 +1,5 @@
 <script setup>
+import { useAuthStore } from '@/stores/auth';
 import { useDocumentStore } from '@/stores/document';
 import { computed, onMounted, ref } from 'vue'; // 1. ref 임포트 추가
 import { useRoute, useRouter } from 'vue-router';
@@ -6,15 +7,17 @@ import { useRoute, useRouter } from 'vue-router';
 const router = useRouter();
 const route = useRoute();
 const docStore = useDocumentStore();
+const authStore = useAuthStore(); // 즐겨찾기 정보 위함
 
 const projectId = route.params.projectId;
+const userId = authStore.user.id; //즐겨찾기 위함
 
 const activeFav = ref(null);
 const searchKeyword = ref('');
 const searchDoctype = ref('');
 
 onMounted(async () => {
-  await docStore.fetchDocumentList(projectId);
+  await docStore.fetchDocumentList(projectId, userId);
 });
 
 const filteredList = computed(() => {
@@ -26,7 +29,12 @@ const filteredList = computed(() => {
 });
 
 //즐겨찾기 문서만
-const favList = computed(() => docStore.documentList.filter((doc) => doc.isFavorite));
+const favList = computed(() => docStore.documentList.filter((doc) => doc.isMarked === 'Y'));
+
+// 즐겨찾기 토글
+const toggleFavorite = async (docId) => {
+  await docStore.toggleFavorite(userId, docId);
+};
 
 // 문서 등록 페이지로 이동하는 함수
 const goToWrite = () => {
@@ -118,7 +126,7 @@ const formatDate = (dateStr) => {
     <template v-if="favList.length">
       <div class="section-title">즐겨찾기 문서</div>
       <div class="fav-grid">
-        <div v-for="doc in favList" :key="doc.id" class="panel fav-card" :class="{ active: activeFav === doc.id }" @click="activeFav = doc.id">
+        <div v-for="doc in favList" :key="doc.id" class="panel fav-card" :class="{ active: activeFav === doc.id }" @click="goToDetail(doc.id)">
           <div class="fav-icon">
             <span class="radio-dot" :class="{ active: activeFav === doc.id }"></span>
           </div>
@@ -155,8 +163,8 @@ const formatDate = (dateStr) => {
 
       <div v-for="(doc, index) in pagedList" :key="doc.id" class="board-row">
         <span class="num">
-          <span class="star" :class="{ active: doc.isFavorite }">
-            {{ doc.isFavorite ? '★' : '☆' }}
+          <span class="star" :class="{ active: doc.isMarked === 'Y' }" @click.stop="toggleFavorite(doc.id)">
+            {{ doc.isMarked === 'Y' ? '★' : '☆' }}
           </span>
           {{ filteredList.length - ((currentPage - 1) * pageSize + index) }}
         </span>
@@ -172,10 +180,11 @@ const formatDate = (dateStr) => {
     </div>
 
     <div class="pagination">
-      <div class="page-btn arrow">‹</div>
-      <div class="page-btn active">1</div>
-      <div v-for="p in 4" :key="p + 1" class="page-btn">{{ p + 1 }}</div>
-      <div class="page-btn arrow">›</div>
+      <div class="page-btn arrow" @click="currentPage > 1 && currentPage--">‹</div>
+      <div v-for="p in totalPages" :key="p" class="page-btn" :class="{ active: currentPage === p }" @click="currentPage = p">
+        {{ p }}
+      </div>
+      <div class="page-btn arrow" @click="currentPage < totalPages && currentPage++">›</div>
     </div>
   </div>
 </template>
@@ -354,13 +363,25 @@ const formatDate = (dateStr) => {
   border-radius: 4px;
   font-size: 12px;
 }
-.badge.기획안 {
-  background: #eaf3de;
-  color: #3b6d11;
-}
 .badge.기획서 {
+  background: #fde8e8;
+  color: #c0392b;
+}
+.badge.설계서 {
   background: #e6f1fb;
   color: #185fa5;
+}
+.badge.회의록 {
+  background: #fef0e0;
+  color: #c47000;
+}
+.badge.보고서 {
+  background: #eaf6ee;
+  color: #1e7e34;
+}
+.badge.기타 {
+  background: #f0e8fb;
+  color: #6b3fa0;
 }
 
 /* 페이지네이션 */

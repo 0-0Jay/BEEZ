@@ -54,9 +54,9 @@ public class DocumentController {
   // 특정 프로젝트의 문서 목록 조회
   @GetMapping("/document/list/{projectId}")
   public ResponseEntity<List<ListResponse>> getDocumentList(
-    @PathVariable String projectId) {
-    List<ListResponse> list = documentService.getDocumentList(projectId);
-    return ResponseEntity.ok(list);
+    @PathVariable String projectId,
+    @RequestParam String userId) {
+    return ResponseEntity.ok(documentService.getDocumentList(projectId, userId));
   }
   
   // 문서 상세 조회
@@ -75,5 +75,13 @@ public class DocumentController {
   public ResponseEntity<Resource> downloadFile(@PathVariable String fileDetailId) {
     return fileService.downloadFile(fileDetailId);
   }
-
+  
+  //즐겨찾기 기능
+  @PostMapping("/document/favorite")
+  public ResponseEntity<String> toggleFavorite(@RequestBody FavoriteRequest request) {
+    documentService.toggleFavorite(request.getUserId(), request.getDocumentId());
+    return ResponseEntity.ok("즐겨찾기 처리 완료");
+  }
+  
+  
 } //CLASS END
