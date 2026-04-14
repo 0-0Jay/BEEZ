@@ -1,6 +1,7 @@
 package com.beez.beez.task.service;
 
 import com.beez.beez.task.dto.*;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -17,6 +18,9 @@ public interface TaskService {
   
   // 일감 유형 삭제
   void deleteTaskType(String id);
+
+  // 일감 유형 생성 및 수정(+ 업무 흐름 복사)
+  void saveTaskType(TaskTypeRequest dto);
   
   // 일감 범주 목록
   List<TaskCategoryResponse> findTaskCategory();

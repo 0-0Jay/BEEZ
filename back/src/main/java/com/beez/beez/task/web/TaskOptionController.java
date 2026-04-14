@@ -26,14 +26,14 @@ public class TaskOptionController {
   // 일감 유형 생성
   @PostMapping("/type")
   public ResponseEntity<Void> insertTaskType(@RequestBody TaskTypeRequest request) {
-    taskService.insertTaskType(request);
+    taskService.saveTaskType(request);
     return ResponseEntity.ok().build();
   }
   
   // 일감 유형 수정
   @PutMapping("/type")
   public ResponseEntity<Void> updateTaskType(@RequestBody TaskTypeRequest request) {
-    taskService.updateTaskType(request);
+    taskService.saveTaskType(request);
     return ResponseEntity.ok().build();
   }
   

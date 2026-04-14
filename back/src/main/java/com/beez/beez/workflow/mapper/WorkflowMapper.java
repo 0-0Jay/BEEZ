@@ -1,5 +1,6 @@
 package com.beez.beez.workflow.mapper;
 
+import com.beez.beez.task.dto.TaskTypeRequest;
 import com.beez.beez.workflow.dto.WorkflowCopyRequest;
 import com.beez.beez.workflow.dto.WorkflowResponse;
 import com.beez.beez.workflow.dto.WorkflowSaveRequest;
@@ -23,6 +24,15 @@ public interface WorkflowMapper {
 
   // 업무흐름 복사
   void copyWorkflow(WorkflowCopyRequest dto);
+
+  // 일감 유형 등록
+  void insertTaskType(TaskTypeRequest dto);
+
+  // 일감 유형 수정
+  void updateTaskType(TaskTypeRequest dto);
+
+  // 일감 유형에 따른 업무흐름 복사
+  void copyWorkflowByType(TaskTypeRequest dto);
 
   // 일감 상태 공통 코드 조회
   List<Map<String,Object>> findTaskStatusCode(String groupValue);

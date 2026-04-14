@@ -8,8 +8,10 @@ import com.beez.beez.task.repository.*;
 import com.beez.beez.task.service.TaskService;
 import com.beez.beez.websocket.dto.NotificationRequest;
 import com.beez.beez.websocket.service.NotificationService;
+import com.beez.beez.workflow.mapper.WorkflowMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
@@ -23,13 +25,14 @@ public class TaskServiceImpl implements TaskService {
   private final FileService fileService;
   private final TaskMapper taskMapper;
   private final NotificationService notificationService;
+  private final WorkflowMapper workflowMapper;
   
   // 일감 유형 목록
   public List<TaskTypeResponse> findTaskType() {
     return taskTypeRepository.findAll().stream().map(TaskTypeResponse::toDto).toList();
   }
-  
-  // 일감 유형 추가
+
+  // 일감 유형 생성
   public void insertTaskType(TaskTypeRequest dto) {
     taskTypeRepository.insertTaskType(dto.getName(), dto.getDefaultStatus(), dto.getDescription());
   }
@@ -42,6 +45,22 @@ public class TaskServiceImpl implements TaskService {
   // 일감 유형 삭제
   public void deleteTaskType(String id) {
     taskTypeRepository.deleteById(id);
+  }
+
+  // 기존의 insert랑 구분하려고 save 썼습니다!
+  // 일감 유형 생성 및 수정(+ 업무 흐름 복사)
+  @Transactional
+  public void saveTaskType(TaskTypeRequest dto){
+    if(dto.getId() == null || dto.getId().isEmpty()){
+      workflowMapper.insertTaskType(dto);
+    }else{
+      workflowMapper.updateTaskType(dto);
+    }
+
+    // 업무 흐름 복사
+    if (dto.getCopyFromId() != null && !dto.getCopyFromId().isEmpty()) {
+      workflowMapper.copyWorkflowByType(dto);
+    }
   }
   
   // 일감 범주 목록

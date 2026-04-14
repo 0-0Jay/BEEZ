@@ -16,7 +16,7 @@ const taskStore = useTaskStore();
 const commonCodes = computed(() => taskStore.commonCodeList);
 const workflowOptions = computed(() => commonCodes.value.filter((w) => w.cgroup === '0Q'));
 
-const workflowCopyOptions = computed(() => props.existingTypes.filter((t) => props.mode === 'add' || t.id !== form.value.id).map((t) => ({ name: t.name, value: t.name })));
+const workflowCopyOptions = computed(() => props.existingTypes.filter((t) => props.mode === 'add' || t.id !== form.value.id).map((t) => ({ name: t.name, value: t.id })));
 
 // ── 폼 상태 ──────────────────────────────────────────────────
 const form = ref({ id: null, name: '', defaultStatus: null, description: '', copyFrom: null });
@@ -35,7 +35,13 @@ const modalTitle = computed(() => (props.mode === 'add' ? '일감 유형 추가'
 
 function handleSave() {
   if (isSaveDisabled.value) return;
-  const { copyFrom, ...payload } = form.value;
+  const payload = {
+    id: form.value.id,
+    name: form.value.name,
+    defaultStatus: form.value.defaultStatus,
+    description: form.value.description,
+    copyFromId: form.value.copyFrom
+  };
   emit('save', payload);
 }
 function handleCancel() {
@@ -76,7 +82,7 @@ function handleCancel() {
       <!-- 업무흐름 복사하기 -->
       <div class="flex flex-col gap-1.5">
         <label class="text-base font-semibold text-stone-600">업무흐름 복사하기</label>
-        <Select v-model="form.copyFrom" :options="[{ name: '복사 안 함', value: null }, ...workflowCopyOptions]" option-label="name" option-value="value" class="w-full" />
+        <Select v-model="form.copyFrom" :options="[{ name: '복사 안 함', value: null }, ...workflowCopyOptions]" option-label="name" option-value="value" class="w-full" placeholder="복사 안 함" />
         <p class="text-base text-stone-400 mt-0.5">기존 유형의 업무흐름 설정을 가져옵니다.</p>
       </div>
 
