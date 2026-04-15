@@ -14,7 +14,6 @@ export const setupAuthGuard = async (to, from, next) => {
   }
 
   if (to.name === 'login' && isAuthenticated) {
-    alertStore.setAlert('이미 로그인되어 있습니다.');
     return next({ name: 'dashboard' });
   }
 
@@ -49,6 +48,8 @@ export const setupAuthGuard = async (to, from, next) => {
   // 프로젝트별 권한 확인
   if (to.meta.permission) {
     let projectId = to.params.id || to.params.projectId;
+    // 관리자는 무조건 통과
+    if (authStore.user.role === 'ROLE0001') return next();
 
     if (!projectId) {
       const projectData = sessionStorage.getItem('project');
@@ -60,7 +61,9 @@ export const setupAuthGuard = async (to, from, next) => {
     console.log(`[Guard] 현재 페이지: ${to.name}, 찾은 ID: ${projectId}`);
 
     if (!projectId) {
+      if (authStore.user.role === 'ROLE0002') return next();
       alertStore.setAlert('프로젝트 정보가 유효하지 않습니다.');
+      alertStore.setAlert('프로젝트를 선택해주세요.');
       return next({ name: 'projectList' });
     }
 

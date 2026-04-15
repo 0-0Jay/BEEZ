@@ -1,8 +1,12 @@
 <script setup>
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import TaskCategoryModal from '@/components/task/TaskCategoryModal.vue';
 import TaskTypeModal from '@/components/task/TaskTypeModal.vue';
 import { useTaskStore } from '@/stores/task';
+import { useToast } from 'primevue';
 import { computed, onMounted, ref } from 'vue';
+
+const toast = useToast();
 
 const taskStore = useTaskStore();
 
@@ -24,6 +28,10 @@ const typeModalData = ref(null);
 const cateModalVisible = ref(false);
 const cateModalMode = ref('add');
 const cateModalData = ref(null);
+const confirmVisible = ref(false);
+const confirmMsg = ref('');
+const deleteId = ref(null);
+const deleteTarget = ref('');
 
 // 일감 유형 추가
 function openTypeAdd() {
@@ -46,13 +54,14 @@ async function saveType(payload) {
   }
   await taskStore.findTypeList();
   typeModalVisible.value = false;
-}
-// 일감 유형 삭제
-async function deleteType(id) {
-  if (confirm('해당 일감 유형을 삭제하시겠습니까?')) {
-    await taskStore.deleteType(id);
-    await taskStore.findTypeList();
-  }
+
+  toast.add({
+    severity: 'success',
+    summary: '저장 성공',
+    detail: '일감 유형이 저장되었습니다.',
+    life: 3000,
+    closable: false
+  });
 }
 
 // 일감 범주 추가
@@ -76,13 +85,53 @@ async function saveCate(payload) {
   }
   await taskStore.findCateList();
   cateModalVisible.value = false;
+
+  toast.add({
+    severity: 'success',
+    summary: '저장 성공',
+    detail: '일감 범주가 저장되었습니다.',
+    life: 3000,
+    closable: false
+  });
 }
-// 일감 범주 삭제
-async function deleteCate(id) {
-  if (confirm('해당 일감 범주를 삭제하시겠습니까?')) {
-    await taskStore.deleteCate(id);
+
+// 일감 유형 / 범주 삭제 모달
+const openDeleteConfirm = (id, target) => {
+  deleteId.value = id;
+  deleteTarget.value = target;
+  confirmMsg.value = target === 'TYPE' ? '해당 일감 유형을 삭제하시겠습니까?' : '해당 일감 범주를 삭제하시겠습니까?';
+  confirmVisible.value = true;
+};
+
+// 일감 유형 / 범주 삭제
+async function handleDelete() {
+  if (!deleteId.value) return;
+
+  if (deleteTarget.value === 'TYPE') {
+    await taskStore.deleteType(deleteId.value);
+    await taskStore.findTypeList();
+    toast.add({
+      severity: 'success',
+      summary: '삭제',
+      detail: '일감 유형이 삭제되었습니다.',
+      life: 3000,
+      closable: false
+    });
+  } else {
+    await taskStore.deleteCate(deleteId.value);
     await taskStore.findCateList();
+    toast.add({
+      severity: 'success',
+      summary: '삭제',
+      detail: '일감 범주가 삭제되었습니다.',
+      life: 3000,
+      closable: false
+    });
   }
+
+  confirmVisible.value = false;
+  deleteId.value = null;
+  deleteTarget.value = '';
 }
 
 onMounted(async () => {
@@ -137,7 +186,7 @@ onMounted(async () => {
                 <td class="px-5 py-5">
                   <div class="flex items-center justify-center gap-1.5">
                     <Button icon="pi pi-pencil" text rounded class="!w-8 !h-8 !text-stone-400 hover:!text-amber-600 hover:!bg-amber-50 transition-colors" v-tooltip.top="'수정'" @click="openTypeEdit(item)" />
-                    <Button icon="pi pi-trash" text rounded class="!w-8 !h-8 !text-stone-400 hover:!text-red-500 hover:!bg-red-50 transition-colors" v-tooltip.top="'삭제'" @click="deleteType(item.id)" />
+                    <Button icon="pi pi-trash" text rounded class="!w-8 !h-8 !text-stone-400 hover:!text-red-500 hover:!bg-red-50 transition-colors" v-tooltip.top="'삭제'" @click="openDeleteConfirm(item.id, 'TYPE')" />
                   </div>
                 </td>
               </tr>
@@ -181,7 +230,7 @@ onMounted(async () => {
                 <td class="px-5 py-5">
                   <div class="flex items-center justify-center gap-1.5">
                     <Button icon="pi pi-pencil" text rounded class="!w-8 !h-8 !text-stone-400 hover:!text-amber-600 hover:!bg-amber-50 transition-colors" v-tooltip.top="'수정'" @click="openCateEdit(item)" />
-                    <Button icon="pi pi-trash" text rounded class="!w-8 !h-8 !text-stone-400 hover:!text-red-500 hover:!bg-red-50 transition-colors" v-tooltip.top="'삭제'" @click="deleteCate(item.id)" />
+                    <Button icon="pi pi-trash" text rounded class="!w-8 !h-8 !text-stone-400 hover:!text-red-500 hover:!bg-red-50 transition-colors" v-tooltip.top="'삭제'" @click="openDeleteConfirm(item.id, 'CATE')" />
                   </div>
                 </td>
               </tr>
@@ -196,6 +245,9 @@ onMounted(async () => {
 
     <TaskTypeModal v-model:visible="typeModalVisible" :mode="typeModalMode" :data="typeModalData" :existing-types="taskTypes" @save="saveType" @cancel="typeModalVisible = false" />
     <TaskCategoryModal v-model:visible="cateModalVisible" :mode="cateModalMode" :data="cateModalData" @save="saveCate" @cancel="cateModalVisible = false" />
+    <ConfirmDialog v-model:visible="confirmVisible" confirmLabel="확인" @confirm="handleDelete">
+      <span class="text-gray-700 font-medium">{{ confirmMsg }}</span>
+    </ConfirmDialog>
   </div>
 </template>
 

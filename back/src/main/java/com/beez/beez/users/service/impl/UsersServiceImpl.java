@@ -37,6 +37,11 @@ public class UsersServiceImpl implements UsersService {
   // 사용자 목록 조회
   @Override
   public List<UserListResponse> findAllUsers(UserSearchRequest search) {
+    if (search.getStartDate() != null && search.getEndDate() != null) {
+      if (search.getStartDate().isAfter(search.getEndDate())) {
+        throw new IllegalArgumentException("시작일이 종료일보다 늦을 수 없습니다.");
+      }
+    }
     return usersMapper.findAllUsers(search);
   }
 
@@ -83,7 +88,7 @@ public class UsersServiceImpl implements UsersService {
     usersMapper.insertUser(user);
 
     // 메일 발송
-    mailService.sendWelcomeEmail(user.getEmail(), dto.getName(), rawPassword);
+    mailService.sendWelcomeEmail(user.getId(), user.getEmail(), dto.getName(), rawPassword);
   }
 
   @Override

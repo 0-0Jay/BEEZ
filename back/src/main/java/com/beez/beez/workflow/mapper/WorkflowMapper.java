@@ -34,6 +34,9 @@ public interface WorkflowMapper {
   // 일감 유형에 따른 업무흐름 복사
   void copyWorkflowByType(TaskTypeRequest dto);
 
+  //일감 유형에 따른 업무흐름 삭제
+  void deleteWorkflowByTypeId(String typeId);
+
   // 일감 상태 공통 코드 조회
   List<Map<String,Object>> findTaskStatusCode(String groupValue);
 }

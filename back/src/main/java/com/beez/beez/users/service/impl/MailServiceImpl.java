@@ -70,7 +70,7 @@ public class MailServiceImpl implements MailService {
 
   @Async
   @Override
-  public void sendWelcomeEmail(String email, String name, String rawPassword) {
+  public void sendWelcomeEmail(String id, String email, String name, String rawPassword) {
     MimeMessage mimeMessage = mailSender.createMimeMessage();
     try {
       MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
@@ -93,7 +93,7 @@ public class MailServiceImpl implements MailService {
               아래의 초기 접속 정보를 확인해 주세요.
             </p>
             <div style="background-color: #fafaf8; padding: 25px; border-radius: 10px; margin: 25px 0; border: 1px solid #f0efeb;">
-              <p style="margin: 0 0 10px 0; color: #3a3835; font-size: 14px;"><strong>이메일(ID):</strong> %s</p>
+              <p style="margin: 0 0 10px 0; color: #3a3835; font-size: 14px;"><strong>사원번호(ID):</strong> <span style="color: #e8920e; font-weight: bold;">%s</span></p>
               <p style="margin: 0; color: #3a3835; font-size: 14px;"><strong>초기 비밀번호:</strong> <span style="color: #e8920e; font-weight: bold;">%s</span></p>
             </div>
             <p style="color: #f44336; font-size: 13px; margin-bottom: 30px;">* 보안을 위해 최초 로그인 후 반드시 비밀번호를 변경해 주세요.</p>
@@ -105,7 +105,7 @@ public class MailServiceImpl implements MailService {
             <p style="margin: 0; color: #9a9690; font-size: 12px;">본 메일은 발신 전용입니다. 문의사항은 관리자에게 연락해 주세요.</p>
           </div>
         </div>
-        """.formatted(name, email, rawPassword, frontendUrl);
+        """.formatted(name, id, rawPassword, frontendUrl);
 
       helper.setText(content, true);
 

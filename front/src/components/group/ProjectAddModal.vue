@@ -82,7 +82,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <Dialog :visible="visible" header="프로젝트 추가" modal :style="{ width: '750px' }" @update:visible="close">
+  <Dialog :visible="visible" header="프로젝트 추가" modal :style="{ width: '700px' }" @update:visible="close">
     <div class="flex flex-col gap-4 pt-1">
       <div class="relative">
         <InputText v-model="searchKeyword" placeholder="프로젝트명을 입력해주세요." class="w-full" />
@@ -90,17 +90,17 @@ onUnmounted(() => {
       </div>
 
       <DataTable :value="displayList" v-model:selection="selectedItems" dataKey="id" :paginator="true" :rows="5" class="p-datatable-sm custom-table">
-        <Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
-        <Column field="title" header="프로젝트명" style="width: 35%"></Column>
+        <Column selectionMode="multiple"></Column>
+        <Column field="title" header="프로젝트명" style="width: 50%"></Column>
 
         <Column header="역할" style="width: 45%">
           <template #body="slotProps">
-            <MultiSelect v-if="isRoleLoading" display="chip" v-model="slotProps.data.role" :options="roleOptions" optionLabel="name" optionValue="id" placeholder="역할 선택" :maxSelectedLabels="999" class="w-full text-xs" @click.stop />
+            <MultiSelect v-if="isRoleLoading" display="chip" v-model="slotProps.data.role" :options="roleOptions" optionLabel="name" optionValue="id" placeholder="역할 선택" :maxSelectedLabels="999" class="w-full" @click.stop />
           </template>
         </Column>
 
         <template #empty>
-          <div class="py-4 text-center text-stone-500 text-sm">조회된 프로젝트가 없습니다.</div>
+          <div class="py-4 text-center text-stone-500">조회된 프로젝트가 없습니다.</div>
         </template>
       </DataTable>
     </div>
@@ -115,12 +115,15 @@ onUnmounted(() => {
 
 <style scoped>
 :deep(.custom-table .p-datatable-thead > tr > th) {
+  padding: 10px 12px 10px 12px !important;
   background-color: #f8f8f7;
-  font-size: 0.8rem;
+  color: #57534e;
 }
-:deep(.custom-table .p-datatable-tbody > tr > td) {
-  font-size: 0.85rem;
+
+:deep(.p-datatable-tbody > tr > td) {
+  padding: 12px !important;
 }
+
 :deep(.p-paginator) {
   padding: 1rem 0 !important;
   justify-content: center;
