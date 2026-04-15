@@ -1,4 +1,5 @@
 <script setup>
+import { useProjectStore } from '@/stores/project';
 import { useVersionStore } from '@/stores/version';
 import { useToast } from 'primevue';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
@@ -9,13 +10,17 @@ const props = defineProps({
   editData: { type: Object, default: null }
 });
 
+const versionStore = useVersionStore();
+const projectStore = useProjectStore();
 const commonCodeList = computed(() => versionStore.commonCodeList);
 const isEdit = computed(() => !!props.editData);
 const emit = defineEmits(['update:visible', 'saved']);
-const versionStore = useVersionStore();
 const toast = useToast();
 const route = useRoute();
 const submitted = ref(false); // 등록 버튼 스위치
+
+const projectStart = computed(() => (projectStore.selectedProject?.startDate ? new Date(projectStore.selectedProject.startDate) : null));
+const projectEnd = computed(() => (projectStore.selectedProject?.endDate ? new Date(projectStore.selectedProject.endDate) : null));
 
 const formatDate = (date) => {
   if (!date) return null;
@@ -34,18 +39,28 @@ const form = reactive({
   isDefaultYn: false
 });
 
+const errors = reactive({
+  name: '',
+  startDate: '',
+  endDate: '',
+  status: ''
+});
+
 const statusOptions = computed(() => commonCodeList.value.filter((c) => c.cgroup === '0N'));
 
 watch(
   () => [props.visible, props.editData],
   ([newVisible, newEditData]) => {
     if (newVisible && newEditData) {
+      console.log('editData:', newEditData); // 👈 이거 추가
+      console.log('isDefault:', newEditData.isDefault);
+      console.log('isShare:', newEditData.isShare);
       Object.assign(form, {
         ...newEditData,
         startDate: newEditData.startDate ? new Date(newEditData.startDate) : null,
         endDate: newEditData.endDate ? new Date(newEditData.endDate) : null,
         isShareYn: newEditData.isShare === 'O1',
-        isDefaultYn: newEditData.isDefault === 'M1'
+        isDefaultYn: newEditData.isDefault === 'M1' || newEditData.isDefault === true
       });
     } else if (newVisible) {
       resetForm();
@@ -67,9 +82,44 @@ const resetForm = () => {
   submitted.value = false;
 };
 
+const validate = () => {
+  errors.name = '';
+  errors.startDate = '';
+  errors.endDate = '';
+  errors.status = '';
+  let valid = true;
+
+  if (!form.name.trim()) {
+    errors.name = '버전명을 입력해주세요.';
+    valid = false;
+  }
+  if (!form.status) {
+    errors.status = '상태를 선택해주세요.';
+    valid = false;
+  }
+  if (!form.startDate) {
+    errors.startDate = '시작일을 입력해주세요.';
+    valid = false;
+  } else if (projectStart.value && form.startDate < projectStart.value) {
+    errors.startDate = `프로젝트 시작일(${formatDate(projectStart.value)}) 이후여야 합니다.`;
+    valid = false;
+  }
+  if (!form.endDate) {
+    errors.endDate = '마감일을 입력해주세요.';
+    valid = false;
+  } else if (projectEnd.value && form.endDate > projectEnd.value) {
+    errors.endDate = `프로젝트 마감일(${formatDate(projectEnd.value)}) 이전이어야 합니다.`;
+    valid = false;
+  } else if (form.startDate && form.endDate && form.startDate > form.endDate) {
+    errors.endDate = '마감일은 시작일 이후여야 합니다.';
+    valid = false;
+  }
+
+  return valid;
+};
+
 const handleRegister = async () => {
-  submitted.value = true;
-  if (!form.name) return;
+  if (!validate()) return;
 
   try {
     const payload = {
@@ -103,14 +153,14 @@ onMounted(async () => {
 </script>
 
 <template>
-  <Dialog :visible="visible" :header="isEdit ? '버전 수정' : '버전 추가'" modal :style="{ width: '600px' }" @update:visible="close">
+  <Dialog :visible="visible" :header="isEdit ? '버전 수정' : '버전 추가'" modal :style="{ width: '700px' }" @update:visible="close">
     <div class="divide-y divide-[#F2F0EB]">
       <!-- 버전명 -->
       <div class="flex items-start px-8 py-4">
         <label class="form-label w-32 pt-2 shrink-0">버전명 <span class="text-red-500">*</span></label>
         <div class="flex-1">
-          <InputText v-model="form.name" placeholder="버전명을 입력해 주세요." class="w-full form-input" :class="{ 'p-invalid': submitted && !form.name }" />
-          <small v-if="submitted && !form.name" class="text-red-500 mt-1 block">값을 입력해 주세요.</small>
+          <InputText v-model="form.name" placeholder="버전명을 입력해 주세요." class="w-full form-input" />
+          <small v-if="errors.name" class="text-red-500 mt-1 block">{{ errors.name }}</small>
         </div>
       </div>
 
@@ -125,19 +175,27 @@ onMounted(async () => {
       <!-- 기간 -->
       <div class="flex items-start px-8 py-4">
         <label class="form-label w-32 pt-2 shrink-0">기간 <span class="text-red-500">*</span></label>
-        <div class="flex items-center gap-5">
-          <DatePicker v-model="form.startDate" dateFormat="yy-mm-dd" placeholder="시작일" class="form-input w-36" />
-          <span class="text-[#6B6B63] ml-14">~</span>
-          <DatePicker v-model="form.endDate" dateFormat="yy-mm-dd" placeholder="마감일" class="form-input w-36" />
+        <div class="flex items-start gap-5">
+          <div class="flex flex-col w-42">
+            <DatePicker v-model="form.startDate" dateFormat="yy-mm-dd" placeholder="시작일" class="form-input w-36" />
+            <small v-if="errors.startDate" class="text-red-500 mt-1 block">{{ errors.startDate }}</small>
+          </div>
+          <span class="text-[#6B6B63] pt-2 shrink-0 ml-8">~</span>
+          <div class="flex flex-col w-42">
+            <DatePicker v-model="form.endDate" dateFormat="yy-mm-dd" placeholder="마감일" class="form-input w-36" />
+            <small v-if="errors.endDate" class="text-red-500 mt-1 block">{{ errors.endDate }}</small>
+          </div>
         </div>
       </div>
 
       <!-- 상태 -->
       <div class="flex items-start px-8 py-4">
         <label class="form-label w-32 pt-2 shrink-0">상태<span class="text-red-500">*</span></label>
-        <Select v-model="form.status" :options="statusOptions" optionLabel="name" optionValue="id" placeholder="선택" class="form-input w-50" />
+        <div class="flex flex-col gap-1">
+          <Select v-model="form.status" :options="statusOptions" optionLabel="name" optionValue="id" placeholder="선택" class="form-input w-50" />
+          <small v-if="errors.status" class="text-red-500 mt-1 block">{{ errors.status }}</small>
+        </div>
       </div>
-
       <!-- 공유 여부 + 기본 버전 -->
       <div class="flex items-center px-8 py-4">
         <label class="form-label w-32 shrink-0">설정</label>

@@ -127,17 +127,27 @@ const handleSubmit = async () => {
   }
 
   // 3. 생성
-  const id = await projectStore.createProject({
+  const payload = {
+    sourceProjectId: route.params.id,
     title: form.title,
     identifier: form.identifier,
     description: form.description,
     startDate: formatDate(form.startDate),
     endDate: formatDate(form.endDate),
     isPublic: form.isPublic ? 'J1' : 'J0',
-    parentId: form.parentId
-  });
-  toast.add({ severity: 'success', summary: '등록 완료', detail: '프로젝트가 등록되었습니다.', life: 2000 });
+    parentId: form.parentId,
+    copyMembers: copyOptions.value.includes('members') ? 'Y' : 'N',
+    copyVersions: copyOptions.value.includes('versions') ? 'Y' : 'N',
+    copyIssues: copyOptions.value.includes('issues') ? 'Y' : 'N',
+    copyDocs: copyOptions.value.includes('docs') ? 'Y' : 'N',
+    copyWiki: copyOptions.value.includes('wiki') ? 'Y' : 'N'
+  };
 
+  console.log(payload); // Y/N 확인
+
+  const id = await projectStore.copyProject(payload);
+
+  toast.add({ severity: 'success', summary: '복사 완료', detail: '프로젝트가 복사되었습니다.', life: 2000 });
   router.push(`/project/setting/${id}`);
 };
 

@@ -46,12 +46,14 @@ export const useProjectStore = defineStore('project', {
           identifier: p.identifier,
           pm: p.pmName,
           pmId: p.pmId,
+          startDate: p.startDate,
           endDate: p.endDate,
           isLock: p.isLock,
           parentId: p.parentId,
           level: p.level,
-          issueCount: '0/0', // 아직 DB 연동 전이라 하드코딩
-          progress: 0 // 아직 로직 전이라 하드코딩
+          totalTaskCount: p.totalTaskCount,
+          completedTaskCount: p.completedTaskCount,
+          progressRate: p.progressRate ?? 0
         }));
 
         return response.data;
@@ -185,6 +187,12 @@ export const useProjectStore = defineStore('project', {
     async fetchTaskTypes() {
       const response = await axios.get('/type');
       this.taskTypes = response.data;
+    },
+
+    // 프로젝트 복사
+    async copyProject(payload) {
+      const { data } = await axios.post('/project/copy', payload);
+      return data;
     }
   },
   persist: {

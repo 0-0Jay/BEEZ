@@ -138,6 +138,7 @@ const toggleMenu = (event, data) => {
 const goToDetail = (project) => {
   if (project.isLock === 'L1') return;
   projectStore.selectedProject = { title: project.title, id: project.id, startDate: project.startDate, endDate: project.endDate };
+  console.log(projectStore.selectedProject);
   router.push(`/project`);
 };
 
@@ -198,9 +199,9 @@ const unlockProject = async (id) => {
       <Button label="프로젝트 등록" icon="pi pi-plus" severity="contrast" outlined @click="router.push('/project/create')" />
     </div>
 
-    <div class="bg-[#E8E5DC] px-10 py-8 rounded-lg mb-8 shadow-sm border border-[#C7C7C2] flex">
+    <div class="bg-[#E8E5DC] px-10 py-8 rounded-lg mb-8 shadow-sm border border-[#C7C7C2] flex flex-col gap-3">
       <!-- 입력칸 + 체크박스 묶음 -->
-      <div class="flex items-center flex-1 flex-wrap gap-y-3">
+      <div class="flex items-center flex-wrap gap-y-3">
         <label class="filter-label mr-5 self-start mt-3">프로젝트명</label>
         <Select v-model="filters.id" :options="projectOptions" optionLabel="label" optionValue="value" placeholder="선택" class="filter-input w-80 mr-10 self-start" />
         <label class="filter-label mr-5 self-start mt-3">PM/PL</label>
@@ -214,20 +215,19 @@ const unlockProject = async (id) => {
           </div>
           <small v-if="dateError" class="text-red-500 mt-1">{{ dateError }}</small>
         </div>
-
         <Checkbox v-model="filters.isLock" :binary="true" inputId="archived" class="mr-3 self-start mt-3" />
         <label for="archived" class="text-sm font-medium text-[#1A1816] whitespace-nowrap cursor-pointer self-start mt-3">잠금 보관 프로젝트 보기</label>
       </div>
 
-      <!-- 버튼 묶음 — ml-auto로 오른쪽 -->
-      <div class="flex gap-2 ml-auto shrink-0 self-start">
+      <!-- 버튼 묶음 — 항상 오른쪽 끝 -->
+      <div class="flex gap-2 justify-end">
         <Button label="초기화" severity="secondary" raised @click="resetFilters" />
         <Button label="조회" icon="pi pi-search" raised @click="fetchProjects" />
       </div>
     </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-[#C7C7C2] overflow-hidden">
-      <DataTable :value="projects" :loading="loading" dataKey="id" :rowHover="true" :rowClass="rowClass" tableStyle="width: 100%">
+      <DataTable :value="projects" :loading="loading" dataKey="id" :rowHover="true" :rowClass="rowClass" tableStyle="width: 100%" scrollable scrollHeight="500px">
         <template #empty>
           <div class="text-center py-10 text-gray-400">조회된 데이터가 없습니다.</div>
         </template>
@@ -255,15 +255,17 @@ const unlockProject = async (id) => {
 
         <Column header="일감 수" headerClass="table-header" style="width: 10%">
           <template #body="{ data }">
-            <span class="text-[#3A3B35]">{{ data.issueCount }}</span>
+            <span class="text-[#3A3B35]">
+              {{ data.totalTaskCount === 0 ? '0 / 0' : `${data.completedTaskCount} / ${data.totalTaskCount}` }}
+            </span>
           </template>
         </Column>
 
         <Column header="진행률" headerClass="table-header" style="width: 30%">
           <template #body="{ data }">
             <div class="flex items-center gap-5 px-10">
-              <ProgressBar :value="data.progress" :showValue="false" class="progress-bar-custom flex-1" style="height: 8px" />
-              <span class="text-xs text-[#9A9B90] whitespace-nowrap">{{ data.progress }}%</span>
+              <ProgressBar :value="data.progressRate ?? 0" :showValue="false" class="progress-bar-custom flex-1" style="height: 8px" />
+              <span class="text-xs text-[#9A9B90] whitespace-nowrap"> {{ data.progressRate ?? 0 }}% </span>
             </div>
           </template>
         </Column>

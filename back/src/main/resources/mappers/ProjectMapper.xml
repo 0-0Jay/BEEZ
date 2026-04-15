@@ -86,10 +86,42 @@
            p.identifier,
            p.user_id AS pmId,
            u.name AS pmName,
+           p.start_date As startDate,
            p.end_date AS endDate,
            p.is_lock AS isLock,
            p.parent_id AS parentId,
-           (LEVEL - 1) AS "level"
+           (LEVEL - 1) AS "level",
+           (
+             SELECT COUNT(*)
+             FROM task t
+             WHERE t.project_id = p.id
+             AND t.status = 'T1'
+           ) AS totalTaskCount,
+           (
+             SELECT COUNT(*)
+             FROM task t
+             WHERE t.project_id = p.id
+             AND t.status = 'T1'
+             AND t.workflow = 'Q3'
+           ) AS completedTaskCount,
+           (
+           SELECT ROUND(
+             SUM(
+                 (t.planned_end - t.planned_start + 1)
+                 * CASE
+                 WHEN EXISTS (
+                 SELECT 1 FROM task ch
+                 WHERE ch.parent_id = t.id
+                 AND ch.status = 'T1'
+               ) THEN t.sub_progress
+                 ELSE t.progress
+                 END
+                 ) / NULLIF(SUM(t.planned_end - t.planned_start + 1), 0)
+           )
+           FROM task t
+           WHERE t.project_id = p.id
+           AND t.status = 'T1'
+           ) AS progressRate
       FROM project p
       LEFT JOIN users u ON u.id = p.user_id
       WHERE p.status = 'K1'
@@ -338,6 +370,28 @@
     </if>
 
     ORDER BY v.end_date ASC, t.planned_start ASC
-
   </select>
+  
+  <!-- 프로젝트 복사 -->
+  <update id="copyProject" statementType="CALLABLE" parameterType="com.beez.beez.project.dto.ProjectCopyRequest">
+    {
+      CALL PROC_COPY_PROJECT(
+      #{sourceProjectId, mode=IN,  jdbcType=VARCHAR},
+      #{identifier,      mode=IN,  jdbcType=VARCHAR},
+      #{title,           mode=IN,  jdbcType=VARCHAR},
+      #{description,     mode=IN,  jdbcType=VARCHAR},
+      #{isPublic,        mode=IN,  jdbcType=VARCHAR},
+      #{parentId,        mode=IN,  jdbcType=VARCHAR},
+      #{startDate,       mode=IN,  jdbcType=DATE},
+      #{endDate,         mode=IN,  jdbcType=DATE},
+      #{userId,          mode=IN,  jdbcType=VARCHAR},
+      #{copyMembers,     mode=IN,  jdbcType=VARCHAR},
+      #{copyVersions,    mode=IN,  jdbcType=VARCHAR},
+      #{copyIssues,      mode=IN,  jdbcType=VARCHAR},
+      #{copyDocs,        mode=IN,  jdbcType=VARCHAR},
+      #{copyWiki,        mode=IN,  jdbcType=VARCHAR},
+      #{newProjectId,    mode=OUT, jdbcType=VARCHAR}
+      )
+    }
+  </update>
 </mapper>

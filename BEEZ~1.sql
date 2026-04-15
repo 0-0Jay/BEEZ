@@ -878,8 +878,8 @@ BEGIN
     proc_copy_project_task(
         p_source_task_id    => NULL,
         p_new_parent_id     => NULL,
-        p_source_project_id => 'PROJ2604013',
-        p_new_project_id    => 'PROJ2604014',
+        p_source_project_id => 'PROJ2604014',
+        p_new_project_id    => 'PROJ2604013',
         p_user_id           => '20210001',
         p_version_map       => v_version_map,
         p_ignore_version    => 'Y'  -- version_id NULL로 강제
@@ -888,3 +888,210 @@ BEGIN
     COMMIT;
 END;
 /
+
+CREATE OR REPLACE PROCEDURE proc_copy_project(
+    p_source_project_id  IN VARCHAR2,
+    p_identifier         IN VARCHAR2,
+    p_title              IN VARCHAR2,
+    p_description        IN VARCHAR2,
+    p_is_public          IN VARCHAR2,
+    p_parent_id          IN VARCHAR2,
+    p_start_date         IN DATE,
+    p_end_date           IN DATE,
+    p_user_id            IN VARCHAR2,
+    p_copy_members       IN VARCHAR2,
+    p_copy_versions      IN VARCHAR2,
+    p_copy_issues        IN VARCHAR2,
+    p_copy_docs          IN VARCHAR2,
+    p_copy_wiki          IN VARCHAR2,
+    p_new_project_id     OUT VARCHAR2
+)
+AS
+    v_version_map     pkg_project_copy.t_version_map;
+    v_member_id       project_member.id%TYPE;
+    v_new_ver_id      version.id%TYPE;
+    v_new_wiki_id     wiki.id%TYPE;
+    v_new_wiki_ver_id wiki_version.version_id%TYPE;
+    v_ignore_version  VARCHAR2(1) := 'N';
+BEGIN
+    -- 1. 새 프로젝트 생성
+    proc_create_project(
+        p_identifier  => p_identifier,
+        p_title       => p_title,
+        p_description => p_description,
+        p_is_public   => p_is_public,
+        p_parent_id   => p_parent_id,
+        p_start_date  => p_start_date,
+        p_end_date    => p_end_date,
+        p_user_id     => p_user_id,
+        p_project_id  => p_new_project_id
+    );
+
+    -- 2. 구성원 복사
+    IF p_copy_members = 'Y' THEN
+        FOR m IN (
+            SELECT pm.id, pm.user_id, pm.group_id
+            FROM project_member pm
+            WHERE pm.project_id = p_source_project_id
+            AND pm.is_delete = 'F0'
+            AND NOT (pm.user_id = p_user_id AND pm.group_id IS NULL)
+        ) LOOP
+            v_member_id := BEEZ.generate_pk_auto('project_member');
+
+            INSERT INTO project_member(id, project_id, user_id, group_id)
+            VALUES(v_member_id, p_new_project_id, m.user_id, m.group_id);
+
+            FOR r IN (
+                SELECT role_id, is_inherited FROM role_mapping
+                WHERE member_id = m.id
+                AND is_delete = 'F0'
+            ) LOOP
+                INSERT INTO role_mapping(member_id, role_id, is_inherited)
+                VALUES(v_member_id, r.role_id, r.is_inherited);
+            END LOOP;
+        END LOOP;
+    END IF;
+
+    -- 3. 버전 복사
+    IF p_copy_versions = 'Y' THEN
+        FOR v IN (
+            SELECT * FROM version
+            WHERE project_id = p_source_project_id
+            AND is_delete = 'F0'
+        ) LOOP
+            v_new_ver_id := BEEZ.generate_pk_auto('version');
+            v_version_map(v.id) := v_new_ver_id;
+
+            INSERT INTO version(id, project_id, name, description, created_on, start_date, end_date, status, is_share, is_delete)
+            VALUES(
+                v_new_ver_id,
+                p_new_project_id,
+                v.name,
+                v.description,
+                SYSDATE,
+                v.start_date,
+                v.end_date,
+                v.status,
+                v.is_share,
+                'F0'
+            );
+        END LOOP;
+    ELSE
+        v_ignore_version := 'Y';  -- 버전 복사 안하면 일감 version_id NULL로
+    END IF;
+    
+   -- 기본 버전 복사
+    DECLARE
+        v_src_default_id project.default_version_id%TYPE;
+    BEGIN
+        SELECT default_version_id INTO v_src_default_id
+        FROM project
+        WHERE id = p_source_project_id;
+
+        IF v_src_default_id IS NOT NULL AND v_version_map.EXISTS(v_src_default_id) THEN
+            UPDATE project
+            SET default_version_id = v_version_map(v_src_default_id)
+            WHERE id = p_new_project_id;
+        END IF;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN NULL;
+    END;
+
+    -- 4. 일감 복사
+    IF p_copy_issues = 'Y' THEN
+        proc_copy_project_task(
+            p_source_task_id    => NULL,
+            p_new_parent_id     => NULL,
+            p_source_project_id => p_source_project_id,
+            p_new_project_id    => p_new_project_id,
+            p_user_id           => p_user_id,
+            p_version_map       => v_version_map,
+            p_ignore_version    => v_ignore_version
+        );
+    END IF;
+
+    -- 5. 문서 복사
+    IF p_copy_docs = 'Y' THEN
+        FOR d IN (
+            SELECT id, title, content, file_id, doc_type
+            FROM docs
+            WHERE project_id = p_source_project_id
+        ) LOOP
+            INSERT INTO docs(id, project_id, user_id, title, content, created_on, edited_on, file_id, doc_type)
+            VALUES(
+                BEEZ.generate_pk_auto('docs'),
+                p_new_project_id,
+                p_user_id,
+                d.title,
+                d.content,
+                SYSTIMESTAMP,
+                NULL,
+                d.file_id,
+                d.doc_type
+            );
+        END LOOP;
+    END IF;
+
+    -- 6. 위키 복사
+    IF p_copy_wiki = 'Y' THEN
+        FOR w IN (
+            SELECT * FROM wiki
+            WHERE project_id = p_source_project_id
+        ) LOOP
+            v_new_wiki_id     := BEEZ.generate_pk_auto('wiki');
+            v_new_wiki_ver_id := BEEZ.generate_pk_auto('wiki_version');
+
+            FOR wv IN (
+                SELECT * FROM wiki_version
+                WHERE wiki_id = w.id
+                AND version_id = w.version_id
+            ) LOOP
+                INSERT INTO wiki_version(version_id, content, user_id, created_on, description, version_name, links, wiki_info, wiki_id)
+                VALUES(
+                    v_new_wiki_ver_id,
+                    wv.content,
+                    p_user_id,
+                    SYSTIMESTAMP,
+                    wv.description,
+                    wv.version_name,
+                    wv.links,
+                    wv.wiki_info,
+                    v_new_wiki_id
+                );
+            END LOOP;
+            
+                INSERT INTO wiki(id, project_id, version_id)
+            VALUES(v_new_wiki_id, p_new_project_id, v_new_wiki_ver_id);
+        END LOOP;
+    END IF;
+
+    COMMIT;
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        RAISE;
+END proc_copy_project;
+/
+
+SELECT pm.id, pm.user_id, pm.group_id, rm.role_id, rm.is_inherited
+FROM project_member pm
+JOIN role_mapping rm ON rm.member_id = pm.id
+WHERE pm.project_id = 'PROJ2604012'
+ORDER BY pm.user_id, pm.group_id;
+
+SELECT * FROM project WHERE identifier = '121212';
+
+SELECT COUNT(*) FROM project 
+WHERE identifier = '121212' AND status = 'K1';
+
+SELECT text FROM user_source 
+WHERE name = 'PROC_CREATE_PROJECT' 
+AND type = 'PROCEDURE'
+ORDER BY line;
+
+-- 제약조건 삭제
+ALTER TABLE project DROP CONSTRAINT UQ_PROJECT_TITLE;
+
+-- 함수 기반 유니크 인덱스 생성
+CREATE UNIQUE INDEX UQ_PROJECT_TITLE 
+ON project(CASE WHEN status = 'K1' THEN title ELSE NULL END);

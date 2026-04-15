@@ -54,4 +54,6 @@ public interface ProjectService {
   //로드맵 목록 조회
   List<RoadmapListResponse> findRoadmapList(RoadmapFilterRequest filter);
   
+  //프로젝트 복사
+  String copyProject(ProjectCopyRequest dto);
 }

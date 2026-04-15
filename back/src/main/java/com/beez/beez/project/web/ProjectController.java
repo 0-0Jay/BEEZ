@@ -4,6 +4,7 @@ import com.beez.beez.project.dto.*;
 import com.beez.beez.project.service.ProjectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,7 +29,7 @@ public class ProjectController {
     @RequestParam(required = false) String projectId) {
     return ResponseEntity.ok(projectService.checkIdentifier(identifier, projectId));
   }
-
+  
   //프로젝트 이름 중복체크
   @GetMapping("/check/title")
   public ResponseEntity<Boolean> checkTitle(
@@ -109,7 +110,7 @@ public class ProjectController {
   public ResponseEntity<MemberSearchResponseDto> searchMembers(
     @RequestParam String projectId,
     @RequestParam(required = false) String keyword) {
-      return ResponseEntity.ok(projectService.searchMembers(projectId, keyword));
+    return ResponseEntity.ok(projectService.searchMembers(projectId, keyword));
   }
   
   //프로젝트 구성원 추가
@@ -118,14 +119,21 @@ public class ProjectController {
     projectService.insertProjectMember(dto);
     return ResponseEntity.ok().build();
   }
-
+  
   //로드맵 목록 조회
   @GetMapping("/{projectId}/roadmap")
   public ResponseEntity<List<RoadmapListResponse>> findRoadmapList(
-          @PathVariable String projectId,
-          @ModelAttribute RoadmapFilterRequest filter) {
+    @PathVariable String projectId,
+    @ModelAttribute RoadmapFilterRequest filter) {
     filter.setProjectId(projectId);
     return ResponseEntity.ok(projectService.findRoadmapList(filter));
   }
-
+  
+  //프로젝트 복사
+  @PostMapping("/copy")
+  public ResponseEntity<String> copyProject(@RequestBody ProjectCopyRequest dto) {
+    String newProjectId = projectService.copyProject(dto);
+    return ResponseEntity.ok(newProjectId);
+  }
+  
 }

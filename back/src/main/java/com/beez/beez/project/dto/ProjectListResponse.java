@@ -11,14 +11,14 @@ public class ProjectListResponse {
   private String identifier;
   private String pmId;
   private String pmName;
+  private Date startDate;
   private Date endDate;
   private String isLock;
   private int level; // 계층 깊이
   private String parentId;
-  
-  // TODO: 일감 파트 팀원과 협의 후 추가 예정
-//  private int totalIssues;      // 전체 일감 수
-//  private int completedIssues;      // 완료된 일감 수
-//  private int progress;         // 진행률 ( (completed / total) * 100 )
+
+  private Integer totalTaskCount;
+  private Integer completedTaskCount;
+  private Integer progressRate;
 
 }
