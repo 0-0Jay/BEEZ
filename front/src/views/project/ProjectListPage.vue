@@ -57,7 +57,7 @@ const selectedRow = ref(null);
 
 // --- 2. 필터 상태 ---
 const filters = reactive({
-  id: null,
+  title: null,
   pmId: null,
   startDate: null,
   endDate: null,
@@ -92,24 +92,19 @@ const fetchProjects = async () => {
 
   // 조회가 끝난 후 최신 데이터로 옵션 갱신
   updateSelectOptions();
-
-  // 체크박스 전용 감시자
-  watch(
-    () => filters.isLock,
-    () => {
-      filters.id = null;
-      filters.pmId = null;
-      filters.startDate = null;
-      filters.endDate = null;
-      fetchProjects(); // 즉시 재조회
-    }
-  );
-
-  // 만약 현재 선택된 프로젝트가 바뀐 목록에 없다면 선택 해제
-  if (filters.id && !projectStore.projects.some((p) => p.id === filters.id)) {
-    filters.id = null;
-  }
 };
+
+// 체크박스 전용 감시자
+watch(
+  () => filters.isLock,
+  () => {
+    filters.title = null;
+    filters.pmId = null;
+    filters.startDate = null;
+    filters.endDate = null;
+    fetchProjects(); // 즉시 재조회
+  }
+);
 
 // 3. 초기 로딩 수정
 onMounted(() => {
@@ -118,7 +113,7 @@ onMounted(() => {
 
 const resetFilters = () => {
   Object.assign(filters, {
-    id: null,
+    title: null,
     pmId: null,
     startDate: null,
     endDate: null,
@@ -141,6 +136,17 @@ const goToDetail = (project) => {
   router.push(`/project`);
 };
 
+const goToSetting = (project) => {
+  projectStore.selectedProject = {
+    title: project.title,
+    id: project.id,
+    startDate: project.startDate,
+    endDate: project.endDate
+  };
+
+  router.push(`/project/setting/${project.id}/info`);
+};
+
 // 날짜 포맷 변환 함수
 const formatDate = (date) => {
   if (!date) return null;
@@ -155,6 +161,11 @@ const actionItems = computed(() => [
     command: () => (selectedRow.value?.isLock === 'L1' ? unlockProject(selectedRow.value.id) : lockProject(selectedRow.value.id))
   },
   { label: '프로젝트 복사', icon: 'pi pi-copy', command: () => router.push(`/project/copy/${selectedRow.value.id}`) },
+  {
+    label: '프로젝트 설정',
+    icon: 'pi pi-cog',
+    command: () => goToSetting(selectedRow.value)
+  },
   { label: '프로젝트 삭제', icon: 'pi pi-trash', command: () => openDeleteModal(selectedRow.value) }
 ]);
 
@@ -163,9 +174,32 @@ const rowClass = (data) => {
 };
 
 const lockProject = async (id) => {
-  await projectStore.lockProject(id);
-  fetchProjects();
-  toast.add({ severity: 'success', summary: '프로젝트 잠금보관', detail: '프로젝트가 잠금보관되었습니다.', life: 2000 });
+  try {
+    await projectStore.lockProject(id);
+    fetchProjects();
+    toast.add({ severity: 'success', summary: '성공', detail: '프로젝트가 잠금보관되었습니다.', life: 2000 });
+  } catch (error) {
+    // 1. 서버에서 보낸 메시지 추출 (구조 확인)
+    const errorMsg = error.response?.data?.message || error.message;
+
+    console.log('추출된 메시지:', errorMsg); // "CHILD_PROJECT_NOT_LOCKED"가 찍히는지 확인
+
+    if (errorMsg === 'CHILD_PROJECT_NOT_LOCKED') {
+      toast.add({
+        severity: 'warn',
+        summary: '잠금 불가',
+        detail: '잠금되지 않은 하위 프로젝트가 존재합니다.',
+        life: 3000
+      });
+    } else {
+      toast.add({
+        severity: 'error',
+        summary: '오류 발생',
+        detail: '잠금 처리 중 오류가 발생했습니다.',
+        life: 3000
+      });
+    }
+  }
 };
 
 const unlockProject = async (id) => {
@@ -186,11 +220,12 @@ const unlockProject = async (id) => {
     <div class="bg-[#E8E5DC] px-10 py-8 rounded-lg mb-8 shadow-sm border border-[#C7C7C2] flex flex-col gap-3">
       <!-- 입력칸 + 체크박스 묶음 -->
       <div class="flex items-center flex-wrap gap-y-3">
-        <label class="filter-label mr-5 self-start mt-3">프로젝트명</label>
-        <Select v-model="filters.id" :options="projectOptions" optionLabel="label" optionValue="value" placeholder="선택" class="filter-input w-80 mr-10 self-start" />
-        <label class="filter-label mr-5 self-start mt-3">PM/PL</label>
+        <label class="filter-label mr-3 self-start mt-3">프로젝트명</label>
+        <InputText v-model="filters.title" placeholder="검색할 키워드를 입력하세요." class="filter-input w-100 mr-10" @keyup.enter="fetchProjects" />
+
+        <label class="filter-label mr-3 self-start mt-3">PM/PL</label>
         <Select v-model="filters.pmId" :options="pmOptions" optionLabel="label" optionValue="value" placeholder="선택" class="filter-input w-42 mr-10 self-start" />
-        <label class="filter-label mr-5 self-start mt-3">마감일</label>
+        <label class="filter-label mr-3 self-start mt-3">마감일</label>
         <div class="flex flex-col self-start">
           <div class="flex items-center">
             <DatePicker v-model="filters.startDate" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" :maxDate="filters.endDate" class="filter-input w-50" showIcon inputClass="w-full" />

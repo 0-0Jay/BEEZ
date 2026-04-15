@@ -247,7 +247,7 @@ const handleCancel = () => {
       <div class="flex items-start px-8 py-4">
         <label class="form-label w-36 pt-2 shrink-0">상위 프로젝트</label>
         <div class="flex-1">
-          <Select v-model="form.parentId" :disabled="hasVersion" :options="projectOptions" optionLabel="label" optionValue="value" placeholder="선택" class="form-input w-64" />
+          <Select v-model="form.parentId" :disabled="hasVersion" :options="projectOptions" optionLabel="label" optionValue="value" placeholder="선택" class="form-input w-150" showClear />
           <div v-if="hasVersion" class="mt-1">
             <small class="text-red-400">버전이 생성된 프로젝트는 상위 프로젝트를 선택할 수 없습니다.</small>
           </div>

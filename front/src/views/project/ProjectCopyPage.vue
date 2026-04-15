@@ -255,7 +255,7 @@ const handleCancel = () => {
       <div class="flex items-start px-8 py-4">
         <label class="form-label w-36 pt-2 shrink-0">상위 프로젝트</label>
         <div class="flex-1">
-          <Select v-model="form.parentId" :options="projectOptions" optionLabel="label" optionValue="value" placeholder="선택" class="form-input w-64" />
+          <Select v-model="form.parentId" :options="projectOptions" optionLabel="label" optionValue="value" placeholder="선택" class="form-input w-150" showClear />
         </div>
       </div>
     </div>

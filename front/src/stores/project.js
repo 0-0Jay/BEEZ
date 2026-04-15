@@ -32,7 +32,7 @@ export const useProjectStore = defineStore('project', {
       try {
         const response = await axios.get('/project/list', {
           params: {
-            id: filters.id ?? null,
+            title: filters.title ?? null,
             pmId: filters.pmId ?? null,
             startDate: filters.startDate ?? null,
             endDate: filters.endDate ?? null,
@@ -44,6 +44,8 @@ export const useProjectStore = defineStore('project', {
           id: p.id,
           title: p.title,
           identifier: p.identifier,
+          creator: p.creator,
+          creatorName: p.creatorName,
           pm: p.pmName,
           pmId: p.pmId,
           startDate: p.startDate,
