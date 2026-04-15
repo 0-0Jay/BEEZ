@@ -2,7 +2,7 @@ import { useAlertStore } from '@/stores/alert';
 import { useAuthStore } from '@/stores/auth';
 import { jwtDecode } from 'jwt-decode';
 
-export const setupAuthGuard = (to, from, next) => {
+export const setupAuthGuard = async (to, from, next) => {
   const authStore = useAuthStore();
   const alertStore = useAlertStore();
   const token = authStore.accessToken;
@@ -44,6 +44,37 @@ export const setupAuthGuard = (to, from, next) => {
       authStore.logout();
       return next({ name: 'login' });
     }
+  }
+
+  // 프로젝트별 권한 확인
+  if (to.meta.permission) {
+    let projectId = to.params.id || to.params.projectId;
+
+    if (!projectId) {
+      const projectData = sessionStorage.getItem('project');
+      if (projectData) {
+        projectId = JSON.parse(projectData).selectedProject?.id;
+      }
+    }
+
+    console.log(`[Guard] 현재 페이지: ${to.name}, 찾은 ID: ${projectId}`);
+
+    if (!projectId) {
+      alertStore.setAlert('프로젝트 정보가 유효하지 않습니다.');
+      return next({ name: 'projectList' });
+    }
+
+    await authStore.findPermissionsByProject(projectId);
+
+    if (!authStore.hasPermissions(to.meta.permission)) {
+      alertStore.setAlert('접근 권한이 없습니다');
+      return next({ name: 'dashboard' });
+    }
+
+    console.log('내 역할:', authStore.user?.role);
+    console.log('필요한 코드:', to.meta.permission);
+    console.log('보유 권한 리스트:', JSON.stringify(authStore.projectPermissions));
+    console.log('포함 여부:', authStore.projectPermissions.includes(to.meta.permission));
   }
 
   const ROLE_NAMES = {

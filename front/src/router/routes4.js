@@ -19,7 +19,8 @@ const Routes4 = [
   {
     path: '/wiki/edit/:projectId/:wikiId',
     name: 'WikiEdit',
-    component: () => import('@/views/wiki/WikiWrite.vue')
+    component: () => import('@/views/wiki/WikiWrite.vue'),
+    meta: { permission: 'PER260407010' }
   },
 
   {
@@ -30,7 +31,8 @@ const Routes4 = [
   {
     path: '/document/write/:projectId',
     name: 'DocumentWrite',
-    component: () => import('@/views/document/DocumentWrite.vue')
+    component: () => import('@/views/document/DocumentWrite.vue'),
+    meta: { permission: 'PER260413006' }
   },
   {
     path: '/document/detail/:projectId/:docId',

@@ -1,5 +1,6 @@
 <script setup>
 import VersionFormModal from '@/components/project/VersionFormModal.vue';
+import { useAuthStore } from '@/stores/auth';
 import { useVersionStore } from '@/stores/version';
 import { storeToRefs } from 'pinia';
 import { useToast } from 'primevue';
@@ -8,6 +9,7 @@ import { useRoute, useRouter } from 'vue-router';
 
 const route = useRoute();
 const router = useRouter();
+const authStore = useAuthStore();
 const visible = ref(false); // 컨펌창
 const modalVisible = ref(false); //추가 모달
 const confirmMsg = ref(''); // 에러메시지

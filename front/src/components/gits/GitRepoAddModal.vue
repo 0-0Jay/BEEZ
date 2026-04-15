@@ -69,9 +69,12 @@ const handleRegister = async () => {
     emit('saved');
     close();
   } catch (err) {
-    const errorMsg = err.response?.data?.message || err.response?.data || '저장소 등록 중 오류가 발생했습니다.';
+    let errorMsg = err.response?.data?.message || err.response?.data || '저장소 등록 중 오류가 발생했습니다.';
     const isDuplicate = errorMsg.includes('이미 동일한');
 
+    if (errorMsg.includes('Forbidden')) {
+      errorMsg = '저장소 등록 중 오류가 발생했습니다.';
+    }
     toast.add({
       severity: isDuplicate ? 'warn' : 'error',
       summary: isDuplicate ? '중복 등록' : '등록 실패',
@@ -98,14 +101,14 @@ const handleRegister = async () => {
 
       <div class="flex flex-col gap-1.5">
         <label for="repoName" class="text-sm font-semibold text-stone-700"> 저장소 이름 <span class="text-lg text-red-500">*</span> </label>
-        <InputText id="repoName" v-model="form.repoName" placeholder="예: BEEZ_Main_Backend" class="w-full" :class="{ 'p-invalid': submitted && !form.repoName }" />
-        <small v-if="submitted && !form.repoName" class="flex items-center gap-1 text-red-500 text-xs"> <i class="pi pi-exclamation-circle" /> 이름을 입력해 주세요. </small>
+        <InputText id="repoName" v-model="form.repoName" placeholder="예: BEEZ_Main_Backend" class="w-full" />
+        <small v-if="submitted && !form.repoName" class="flex items-center gap-1 text-red-500 text-xs"> 이름을 입력해 주세요. </small>
       </div>
 
       <div class="flex flex-col gap-1.5">
         <label for="repoUrl" class="text-sm font-semibold text-stone-700"> Remote URL <span class="text-lg text-red-500">*</span> </label>
-        <InputText id="repoUrl" v-model="form.repoUrl" placeholder="https://github.com/user/repo.git" class="w-full" :class="{ 'p-invalid': submitted && !form.repoUrl }" />
-        <small v-if="submitted && !form.repoUrl" class="flex items-center gap-1 text-red-500 text-xs"> <i class="pi pi-exclamation-circle" /> Git URL을 입력해 주세요. </small>
+        <InputText id="repoUrl" v-model="form.repoUrl" placeholder="https://github.com/user/repo.git" class="w-full" />
+        <small v-if="submitted && !form.repoUrl" class="flex items-center gap-1 text-red-500 text-xs"> Git URL을 입력해 주세요. </small>
         <p class="text-[11px] text-stone-400 mt-0.5">Public 저장소인 경우 별도 인증 없이 등록 가능합니다.</p>
       </div>
 
@@ -135,25 +138,6 @@ const handleRegister = async () => {
 </template>
 
 <style scoped>
-/* 네가 준 스타일 100% 동일하게 적용 */
-:deep(.p-inputtext) {
-  background-color: #fafaf8;
-  border-color: #e5e2d9;
-  border-radius: 8px;
-}
-:deep(.p-inputtext:focus) {
-  border-color: #f5a623;
-  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.15);
-}
-
-:deep(.p-inputtext.p-invalid) {
-  border-color: #f5a623;
-}
-
-:deep(.p-inputtext.p-invalid::placeholder) {
-  color: #736f68;
-}
-
 :deep(.p-button) {
   border-radius: 8px;
 }
