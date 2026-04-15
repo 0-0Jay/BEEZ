@@ -74,4 +74,7 @@ public interface ProjectMapper {
   
   //프로젝트 복사
   void copyProject(ProjectCopyRequest dto);
+  
+  //PM 조회
+  List<UserResponse> findUserPm();
 }

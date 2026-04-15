@@ -20,7 +20,8 @@ export const useProjectStore = defineStore('project', {
     logs: [],
     logTotal: 0,
     roadmapList: [],
-    taskTypes: []
+    taskTypes: [],
+    pms: []
   }),
   // getters
   // actions
@@ -39,7 +40,6 @@ export const useProjectStore = defineStore('project', {
           }
         });
 
-        // 백엔드 데이터에 프론트용 하드코딩 데이터(일감 수, 진행률)를 합쳐서 저장
         this.projects = response.data.map((p) => ({
           id: p.id,
           title: p.title,
@@ -193,6 +193,12 @@ export const useProjectStore = defineStore('project', {
     async copyProject(payload) {
       const { data } = await axios.post('/project/copy', payload);
       return data;
+    },
+
+    // pm조회
+    async fetchUserPm() {
+      const response = await axios.get('/project/pm');
+      this.pms = response.data;
     }
   },
   persist: {

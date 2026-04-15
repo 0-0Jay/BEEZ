@@ -133,9 +133,9 @@ const formatDateTime = (datetime) => {
 
         <div class="flex items-center">
           <label class="filter-label mr-5 ml-30">발생일</label>
-          <DatePicker v-model="filters.startDate" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" class="filter-input w-36 mr-20" />
+          <DatePicker v-model="filters.startDate" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" class="filter-input w-50" :maxDate="filters.endDate" showIcon inputClass="w-full" />
           <span class="text-sm text-[#6B6B63] px-2">~</span>
-          <DatePicker v-model="filters.endDate" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" class="filter-input w-36 ml-4" />
+          <DatePicker v-model="filters.endDate" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" class="filter-input w-50" :minDate="filters.startDate" showIcon inputClass="w-full" />
         </div>
         <div class="flex gap-2 ml-auto">
           <Button label="초기화" severity="secondary" raised @click="resetFilters" />

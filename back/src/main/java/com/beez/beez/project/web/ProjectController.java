@@ -136,4 +136,9 @@ public class ProjectController {
     return ResponseEntity.ok(newProjectId);
   }
   
+  //PM 조회
+  @GetMapping("/pm")
+  public ResponseEntity<List<UserResponse>> findUserPm(){
+    return ResponseEntity.ok(projectService.findUserPm());
+  }
 }

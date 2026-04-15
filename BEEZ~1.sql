@@ -443,6 +443,7 @@ CREATE OR REPLACE PROCEDURE proc_create_project (
     p_start_date         IN DATE,
     p_end_date           IN DATE,
     p_user_id            IN VARCHAR2,
+    p_pm_id              IN VARCHAR2,
     p_project_id         OUT VARCHAR2
 ) AS
     v_member_id          project_member.id%TYPE;
@@ -480,7 +481,8 @@ BEGIN
                          end_date,
                          status, 
                          is_lock, 
-                         user_id
+                         user_id,
+                         pm_id
     ) VALUES (
                 p_project_id, 
                 p_identifier, 
@@ -493,7 +495,8 @@ BEGIN
                 p_end_date,
                 'K1', 
                 'L0',
-                p_user_id
+                p_user_id,
+                p_pm_id
     );
     
     -- 5. project_member 삽입 (생성자 자동 등록)
@@ -525,6 +528,19 @@ BEGIN
             'ROLE0002',
             'P0'
             );
+            
+    -- 7. PM 멤버 등록 (생성자와 PM이 다를 경우에만)
+    IF p_pm_id IS NOT NULL AND p_pm_id != p_user_id THEN
+        SELECT BEEZ.generate_pk_auto('project_member')
+        INTO v_member_id 
+        FROM dual;
+        
+        INSERT INTO project_member (id, project_id, user_id, group_id)
+        VALUES (v_member_id, p_project_id, p_pm_id, NULL);
+    
+        INSERT INTO role_mapping (member_id, role_id, is_inherited)
+        VALUES (v_member_id, 'ROLE0002', 'P0');
+    END IF;
 END proc_create_project;
 /
 
@@ -604,6 +620,7 @@ CREATE OR REPLACE PROCEDURE proc_copy_project(
     p_start_date         IN DATE,
     p_end_date           IN DATE,
     p_user_id            IN VARCHAR2,
+    p_pm_id              IN VARCHAR2,
     p_copy_members       IN VARCHAR2,
     p_copy_versions      IN VARCHAR2,
     p_copy_issues        IN VARCHAR2,
@@ -631,6 +648,7 @@ BEGIN
         p_start_date  => p_start_date,
         p_end_date    => p_end_date,
         p_user_id     => p_user_id,
+        p_pm_id       => p_pm_id,
         p_project_id  => p_new_project_id
     );
 
@@ -1095,3 +1113,16 @@ ALTER TABLE project DROP CONSTRAINT UQ_PROJECT_TITLE;
 -- 함수 기반 유니크 인덱스 생성
 CREATE UNIQUE INDEX UQ_PROJECT_TITLE 
 ON project(CASE WHEN status = 'K1' THEN title ELSE NULL END);
+
+-- 프로젝트 테이블 PL/PM 컬럼 추가
+-- 1단계: 일단 NULL 허용으로 컬럼 추가
+ALTER TABLE project ADD (pm_id VARCHAR2(20));
+
+-- 2단계: 기존 데이터 직접 업데이트
+UPDATE project SET pm_id = '20260329' WHERE pm_id IS NULL;
+COMMIT;
+
+-- 3단계: 그 다음 NOT NULL 제약 추가
+ALTER TABLE project MODIFY pm_id NOT NULL;
+COMMENT ON COLUMN project.pm_id IS '담당PM';
+

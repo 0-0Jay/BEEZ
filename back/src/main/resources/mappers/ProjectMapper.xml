@@ -15,6 +15,7 @@
                   #{startDate},
                   #{endDate},
                   #{userId},
+                  #{pmId},
                   #{id, mode=OUT, jdbcType=VARCHAR}
                   )
     }
@@ -35,16 +36,19 @@
   </select>
   
   <!-- 프로젝트 수정 -->
-  <update id="updateProject" parameterType="com.beez.beez.project.dto.ProjectUpdateRequest">
-    UPDATE project
-    SET identifier = #{identifier},
-        title = #{title},
-        description = #{description},
-        is_public = #{isPublic},
-        parent_id = #{parentId},
-        start_date = #{startDate},
-        end_date = #{endDate}
-    WHERE id = #{id}
+  <update id="updateProject" parameterType="com.beez.beez.project.dto.ProjectUpdateRequest" statementType="CALLABLE">
+    {call proc_update_project(
+        #{id},
+        #{identifier},
+        #{title},
+        #{description},
+        #{isPublic},
+        #{parentId},
+        #{startDate},
+        #{endDate},
+        #{userId},
+        #{pmId}
+          )}
   </update>
   
   <!-- 프로젝트 수정 시 식별자 중복체크 -->
@@ -64,7 +68,7 @@
   </select>
   
   <!-- 프로젝트 단건 조회 -->
-  <select id="findById" resultType="ProjectInfoResponse">
+  <select id="findById" resultType="com.beez.beez.project.dto.ProjectInfoResponse">
     SELECT identifier,
            title,
            description,
@@ -72,7 +76,8 @@
            parent_id,
            start_date,
            end_date,
-           default_version_id
+           default_version_id,
+           pm_id
     FROM project
     WHERE id = #{id}
   </select>
@@ -394,4 +399,13 @@
       )
     }
   </update>
+  
+  <!-- PM 조회 -->
+  <select id="findUserPm" resultType="UserResponse">
+    SELECT id,
+           name
+    FROM users
+    WHERE status = 'H1'
+    AND role = 'ROLE0002'
+  </select>
 </mapper>
