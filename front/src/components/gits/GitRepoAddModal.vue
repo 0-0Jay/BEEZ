@@ -21,6 +21,7 @@ const initialState = {
 
 const form = reactive({ ...initialState });
 const submitted = ref(false);
+const duplicateError = ref('');
 
 watch(
   () => props.visible,
@@ -36,6 +37,7 @@ watch(
 const resetForm = () => {
   Object.assign(form, initialState);
   submitted.value = false;
+  duplicateError.value = '';
 };
 
 const close = () => {
@@ -44,6 +46,7 @@ const close = () => {
 
 const handleRegister = async () => {
   submitted.value = true;
+  duplicateError.value = '';
 
   if (!form.repoName || !form.repoUrl) {
     return;
@@ -69,19 +72,18 @@ const handleRegister = async () => {
     emit('saved');
     close();
   } catch (err) {
-    let errorMsg = err.response?.data?.message || err.response?.data || '저장소 등록 중 오류가 발생했습니다.';
-    const isDuplicate = errorMsg.includes('이미 동일한');
+    const errorMsg = err.response?.data?.message || err.response?.data || '';
 
-    if (errorMsg.includes('Forbidden')) {
-      errorMsg = '저장소 등록 중 오류가 발생했습니다.';
+    if (errorMsg.includes('이미 동일한') || errorMsg.includes('중복')) {
+      duplicateError.value = errorMsg;
+    } else {
+      toast.add({
+        severity: 'error',
+        summary: '등록 실패',
+        detail: errorMsg || '저장소 등록 중 오류가 발생했습니다.',
+        life: 3000
+      });
     }
-    toast.add({
-      severity: isDuplicate ? 'warn' : 'error',
-      summary: isDuplicate ? '중복 등록' : '등록 실패',
-      detail: errorMsg,
-      life: 3000,
-      closable: false
-    });
   }
 };
 </script>
@@ -90,38 +92,44 @@ const handleRegister = async () => {
   <Dialog :visible="visible" header="새 저장소 등록" modal :style="{ width: '450px' }" @update:visible="close">
     <div class="flex flex-col gap-5 pt-1">
       <div class="bg-amber-50 border border-amber-200 border-l-4 border-l-amber-400 rounded-r-lg px-4 py-3">
-        <p class="flex items-center gap-2 text-xs font-medium text-amber-700" style="margin: 0"># 등록 시 서버에 물리적 복제(Clone)가 진행됩니다.</p>
-        <p class="text-xs text-amber-700 ml-6"># 저장소 크기에 따라 수 분이 소요될 수 있습니다.</p>
+        <p class="flex items-center gap-2 text-base font-medium text-amber-700" style="margin: 0"># 등록 시 서버에 물리적 복제(Clone)가 진행됩니다.</p>
+        <p class="text-base text-amber-700 ml-6"># 저장소 크기에 따라 수 분이 소요될 수 있습니다.</p>
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <label class="text-sm font-semibold text-stone-700">연결된 프로젝트</label>
+        <label class="font-semibold text-stone-700">연결된 프로젝트</label>
         <InputText :value="form.projectId" disabled class="w-full bg-stone-100 font-mono" />
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <label for="repoName" class="text-sm font-semibold text-stone-700"> 저장소 이름 <span class="text-lg text-red-500">*</span> </label>
+        <label for="repoName" class="font-semibold text-stone-700"> 저장소 이름 <span class="text-lg text-red-500">*</span> </label>
         <InputText id="repoName" v-model="form.repoName" placeholder="예: BEEZ_Main_Backend" class="w-full" />
         <small v-if="submitted && !form.repoName" class="flex items-center gap-1 text-red-500 text-xs"> 이름을 입력해 주세요. </small>
+        <small v-if="duplicateError && duplicateError.includes('이름')" class="text-red-500 text-xs">
+          {{ duplicateError }}
+        </small>
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <label for="repoUrl" class="text-sm font-semibold text-stone-700"> Remote URL <span class="text-lg text-red-500">*</span> </label>
+        <label for="repoUrl" class="font-semibold text-stone-700"> Remote URL <span class="text-lg text-red-500">*</span> </label>
         <InputText id="repoUrl" v-model="form.repoUrl" placeholder="https://github.com/user/repo.git" class="w-full" />
         <small v-if="submitted && !form.repoUrl" class="flex items-center gap-1 text-red-500 text-xs"> Git URL을 입력해 주세요. </small>
+        <small v-if="duplicateError && duplicateError.includes('이름')" class="text-red-500 text-xs">
+          {{ duplicateError }}
+        </small>
         <p class="text-[11px] text-stone-400 mt-0.5">Public 저장소인 경우 별도 인증 없이 등록 가능합니다.</p>
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <label class="text-sm font-semibold text-stone-700">저장소 유형</label>
+        <label class="font-semibold text-stone-700">저장소 유형</label>
         <div class="flex gap-4 p-2 bg-stone-50 rounded-lg border border-stone-200">
           <div class="flex items-center">
             <RadioButton v-model="form.repoType" inputId="typeNormal" name="repoType" value="AA0" />
-            <label for="typeNormal" class="ml-2 text-sm cursor-pointer">일반저장소</label>
+            <label for="typeNormal" class="ml-2 cursor-pointer">일반저장소</label>
           </div>
           <div class="flex items-center">
             <RadioButton v-model="form.repoType" inputId="typeMain" name="repoType" value="AA1" />
-            <label for="typeMain" class="ml-2 text-sm cursor-pointer font-bold">주저장소</label>
+            <label for="typeMain" class="ml-2 cursor-pointer font-bold">주저장소</label>
           </div>
         </div>
         <p v-if="form.repoType === 'AA1'" class="text-[11px] text-amber-600 italic">* 주저장소로 설정 시 기존 주저장소는 일반으로 변경됩니다.</p>

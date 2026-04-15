@@ -32,6 +32,7 @@ public class TaskServiceImpl implements TaskService {
     return taskTypeRepository.findAll().stream().map(TaskTypeResponse::toDto).toList();
   }
 
+  // 혹시 몰라서 안 지우고 두겠습니다(한유민)
   // 일감 유형 생성
   public void insertTaskType(TaskTypeRequest dto) {
     taskTypeRepository.insertTaskType(dto.getName(), dto.getDefaultStatus(), dto.getDescription());
@@ -43,11 +44,15 @@ public class TaskServiceImpl implements TaskService {
   }
   
   // 일감 유형 삭제
+  @Transactional
   public void deleteTaskType(String id) {
+    // 업무흐름 먼저 삭제
+    workflowMapper.deleteWorkflowByTypeId(id);
+
     taskTypeRepository.deleteById(id);
   }
 
-  // 기존의 insert랑 구분하려고 save 썼습니다!
+  // 기존의 insert랑 구분하려고 save 썼습니다(한유민)
   // 일감 유형 생성 및 수정(+ 업무 흐름 복사)
   @Transactional
   public void saveTaskType(TaskTypeRequest dto){

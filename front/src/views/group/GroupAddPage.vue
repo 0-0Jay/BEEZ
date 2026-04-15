@@ -35,13 +35,16 @@ const onSave = async () => {
     router.push('/group/list');
   } catch (err) {
     const errorMsg = err.response?.data?.message || err.response?.data || '등록 중 오류가 발생했습니다.';
-    toast.add({
-      severity: 'error',
-      summary: '등록 실패',
-      detail: errorMsg,
-      life: 3000,
-      closable: false
-    });
+    if (errorMsg.includes('이름') || errorMsg.includes('중복')) {
+      infoPanelRef.value.setExternalError(errorMsg);
+    } else {
+      toast.add({
+        severity: 'error',
+        summary: '등록 실패',
+        detail: errorMsg,
+        life: 3000
+      });
+    }
   }
 };
 

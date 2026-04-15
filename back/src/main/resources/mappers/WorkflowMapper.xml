@@ -92,7 +92,7 @@
            VALUES (#{id},
                    #{name},
                    #{defaultStatus},
-                   #{description}
+                   #{description})
   </insert>
 
   <!-- 일감 유형 수정 -->
@@ -110,6 +110,12 @@
       #{copyFromId},
       #{id}) }
   </update>
+
+  <!-- 일감 유형에 따른 업무흐름 삭제 -->
+  <delete id="deleteWorkflowByTypeId">
+    DELETE FROM workflow
+    WHERE type_id = #{typeId}
+  </delete>
 
   <!-- 일감 상태 공통 코드 조회 -->
   <select id="findTaskStatusCode" resultType="map">

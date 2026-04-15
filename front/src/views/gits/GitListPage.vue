@@ -20,16 +20,6 @@ const selectedRepoId = ref(null);
 const addModalVisible = ref(false);
 
 const openAddModal = () => {
-  if (authStore.hasPermissions('PER260413010')) {
-    toast.add({
-      severity: 'warn',
-      summary: '권한 없음',
-      detail: '저장소 등록 권한이 없습니다.',
-      life: 3000,
-      closable: false
-    });
-    return;
-  }
   addModalVisible.value = true;
 };
 

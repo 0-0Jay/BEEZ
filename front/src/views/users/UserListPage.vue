@@ -7,6 +7,7 @@ import { computed, onMounted, reactive, ref } from 'vue';
 const usersStore = useUsersStore();
 
 const loading = ref(false);
+const first = ref(0);
 const showAddModal = ref(false);
 const showEditModal = ref(false);
 const selectedUser = ref(null);
@@ -21,7 +22,7 @@ const search = reactive({
 
 const statusOptions = [
   { label: '활성', value: 'H1' },
-  { label: '비활성', value: 'H2' }
+  { label: '비활성', value: 'H0' }
 ];
 
 const totalCount = computed(() => usersStore.userList.length);
@@ -35,6 +36,7 @@ const findUsers = async () => {
       startDate: formatDate(search.startDate),
       endDate: formatDate(search.endDate)
     });
+    first.value = 0;
   } finally {
     loading.value = false;
   }
@@ -46,6 +48,7 @@ onMounted(() => {
 
 const resetFilters = () => {
   Object.assign(search, { name: '', status: '', startDate: null, endDate: null });
+  first.value = 0;
   findUsers();
 };
 
@@ -69,11 +72,10 @@ const onRowClick = (event) => {
 
 <template>
   <div class="p-8 bg-[#ffffff] h-full">
-    <h1 class="text-2xl font-bold text-[#1A1816]">사용자 목록</h1>
+    <h1 class="text-2xl font-bold text-[#1A1816] mb-2">사용자 목록</h1>
 
-    <div class="flex justify-between items-center mb-3">
-      <span class="text-sm text-[#3A3B35] font-medium">전체 {{ totalCount }}명</span>
-      <Button label="사용자 추가" icon="pi pi-plus" :style="{ background: '#2D8FAD', borderColor: '#2D8FAD' }" @click="openUserFormModal" />
+    <div class="flex justify-end mb-2">
+      <Button label="사용자 추가" icon="pi pi-plus" style="background: #2d8fad; border: #2d8fad" @click="openUserFormModal" />
     </div>
 
     <!-- 검색 필터 -->
@@ -85,12 +87,12 @@ const onRowClick = (event) => {
         </div>
 
         <label class="filter-label mr-3">상태</label>
-        <Select v-model="search.status" :options="statusOptions" optionLabel="label" optionValue="value" placeholder="선택" class="filter-input w-36 mr-8" />
+        <Select v-model="search.status" :options="statusOptions" optionLabel="label" optionValue="value" placeholder="선택" class="filter-input w-36 mr-8" show-clear />
 
         <label class="filter-label mr-5">등록일</label>
-        <DatePicker v-model="search.startDate" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" class="filter-input w-36 mr-15" />
+        <DatePicker v-model="search.startDate" dateFormat="yy-mm-dd" :maxDate="search.endDate" placeholder="YYYY-MM-DD" class="filter-input" showIcon />
         <span class="text-sm text-[#6B6B63] px-4">~</span>
-        <DatePicker v-model="search.endDate" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" class="filter-input w-36 mr-25" />
+        <DatePicker v-model="search.endDate" dateFormat="yy-mm-dd" :minDate="search.startDate" placeholder="YYYY-MM-DD" class="filter-input mr-25" showIcon />
       </div>
 
       <div class="flex gap-2 ml-auto">
@@ -99,10 +101,12 @@ const onRowClick = (event) => {
       </div>
     </div>
 
+    <span class="text-sm text-[#3A3B35] font-medium">전체 {{ totalCount }}명</span>
     <!-- 테이블 -->
     <div class="bg-white rounded-xl shadow-sm border border-[#5B6E96] overflow-hidden mb-6">
       <DataTable
         :value="usersStore.userList"
+        v-model:first="first"
         :loading="loading"
         dataKey="id"
         :rowHover="true"

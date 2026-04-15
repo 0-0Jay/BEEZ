@@ -183,7 +183,7 @@ const handleRegister = async () => {
       <div class="flex flex-col gap-2">
         <div class="flex items-center justify-between">
           <label class="text-sm font-semibold text-stone-700">역할</label>
-          <span class="text-xs text-stone-400">
+          <span class="text-base text-stone-400">
             미선택 시
             <span class="font-medium text-stone-500">일반 사용자</span>
             로 등록됩니다.
@@ -193,13 +193,13 @@ const handleRegister = async () => {
           <div v-for="role in roleOptions" :key="role.code" class="flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-all duration-150" @click="form.role = form.role === role.code ? null : role.code">
             <RadioButton v-model="form.role" :value="role.code" />
             <div class="flex flex-col gap-0.5">
-              <span class="text-sm font-bold text-stone-900">{{ role.name }}</span>
-              <span class="text-xs text-stone-400">{{ role.desc }}</span>
+              <span class="text-base font-bold text-stone-900">{{ role.name }}</span>
+              <span class="text-base text-stone-400">{{ role.desc }}</span>
             </div>
           </div>
         </div>
 
-        <div class="flex items-center gap-1.5 mt-1 text-xs text-stone-400">
+        <div class="flex items-center gap-1.5 mt-1 text-base text-stone-400">
           <i class="pi pi-user text-xs" />
           현재 역할 :
           <span class="font-medium text-stone-600">

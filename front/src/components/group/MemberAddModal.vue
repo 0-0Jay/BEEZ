@@ -82,7 +82,7 @@ onUnmounted(() => {
         <Column field="email" header="이메일" sortable style="width: 60%"></Column>
 
         <template #empty>
-          <div class="py-4 text-center text-stone-500 text-sm">조회된 사용자가 없습니다.</div>
+          <div class="py-4 text-center text-stone-500">조회된 사용자가 없습니다.</div>
         </template>
       </DataTable>
     </div>
@@ -98,14 +98,13 @@ onUnmounted(() => {
 
 <style scoped>
 :deep(.custom-table .p-datatable-thead > tr > th) {
+  padding: 10px 12px 10px 12px !important;
   background-color: #f8f8f7;
-  font-size: 0.8rem;
   color: #57534e;
 }
 
-:deep(.custom-table .p-datatable-tbody > tr > td) {
-  font-size: 0.85rem;
-  padding: 0.75rem;
+:deep(.p-datatable-tbody > tr > td) {
+  padding: 12px !important;
 }
 
 :deep(.p-paginator) {

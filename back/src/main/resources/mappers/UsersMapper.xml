@@ -32,7 +32,7 @@
       </if>
 
       <if test="status != null and status != ''">
-        AND status = #{status}
+        AND status = TRIM(#{status})
       </if>
 
       <if test="startDate != null">

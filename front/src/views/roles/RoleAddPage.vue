@@ -117,14 +117,19 @@ const onSave = async () => {
 
     router.push('/roles/list');
   } catch (err) {
-    const errorMsg = err.response?.data?.message || err.response?.data || '등록 중 오류가 발생했습니다.';
-    toast.add({
-      severity: 'error',
-      summary: '등록 실패',
-      detail: errorMsg,
-      life: 3000,
-      closable: false
-    });
+    const errorMsg = err.response?.data?.message || err.response?.data || '';
+
+    if (errorMsg.includes('존재') || errorMsg.includes('exists')) {
+      roleNameError.value = '이미 존재하는 역할 이름입니다.';
+    } else {
+      toast.add({
+        severity: 'error',
+        summary: '등록 실패',
+        detail: errorMsg || '등록 중 오류가 발생했습니다.',
+        life: 3000,
+        closable: false
+      });
+    }
   }
 };
 
@@ -139,7 +144,7 @@ const loadCopyData = async (id) => {
     const data = await rolesStore.findRolesDetail(id);
 
     // 기본 정보
-    roleName.value = `${data.name}_복사`;
+    roleName.value = `${data.name}_복사본`;
     isAssignee.value = data.isAssignee === 'Y1';
 
     // 권한 체크박스
@@ -182,7 +187,7 @@ const loadCopyData = async (id) => {
       <div class="flex items-center gap-3">
         <label class="form-label"> 역할 이름 <span class="text-red-500">*</span> </label>
         <InputText v-model="roleName" placeholder="역할 이름을 입력해 주세요." name="role_name" autocomplete="on" class="role-input" :class="{ 'p-invalid': roleNameError }" />
-        <small v-if="roleNameError" class="text-red-500 text-xs"> <i class="pi pi-exclamation-circle" style="font-size: 10px" /> {{ roleNameError }} </small>
+        <small v-if="roleNameError" class="text-red-500 text-xs"> {{ roleNameError }} </small>
       </div>
 
       <div class="flex items-center gap-2">
