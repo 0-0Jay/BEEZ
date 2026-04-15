@@ -120,6 +120,9 @@ const formatDate = (dateStr) => {
       <div class="section-title">즐겨찾기 문서</div>
       <div class="fav-grid">
         <div v-for="doc in favList" :key="doc.id" class="panel fav-card" :class="{ active: activeFav === doc.id }" @click="goToDetail(doc.id)">
+          <!-- X 버튼 추가 -->
+          <button class="fav-remove" @click.stop="toggleFavorite(doc.id)">✕</button>
+
           <div class="fav-icon">
             <span class="radio-dot" :class="{ active: activeFav === doc.id }"></span>
           </div>
@@ -295,11 +298,24 @@ const formatDate = (dateStr) => {
   height: 12px;
   border-radius: 50%;
   border: 2px solid #ddd;
+  transition: all 0.2s; /* 추가 */
+  cursor: pointer; /* 추가 */
+  pointer-events: auto; /* 추가 */
+}
+.radio-dot:hover {
+  border-color: #e8920e;
+  background: #fde8cc;
 }
 .radio-dot.active {
   background: #e8920e;
   border-color: #e8920e;
 }
+
+.fav-card:hover {
+  border-color: #e8920e;
+  box-shadow: 0 2px 8px rgba(232, 146, 14, 0.2);
+}
+
 .fav-name {
   font-weight: bold;
   margin: 4px 0;
@@ -420,5 +436,28 @@ const formatDate = (dateStr) => {
 .empty-sub {
   font-size: 13px;
   color: #aaa;
+}
+
+.fav-card {
+  position: relative; /* 기존 스타일에 추가 */
+}
+
+.fav-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  color: #bbb;
+  font-size: 13px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+.fav-remove:hover {
+  color: #e74c3c;
+  background: #fef0f0;
 }
 </style>

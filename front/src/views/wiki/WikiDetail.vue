@@ -126,8 +126,8 @@ watch(
           </div>
           <div class="wiki-header-right">
             <div class="btn-group">
-              <button class="btn btn-primary" @click="handleEdit">편집</button>
-              <button class="btn btn-secondary" @click="handleHistory">히스토리</button>
+              <Button label="편집" class="btn-amber" @click="handleEdit" />
+              <Button label="히스토리" class="btn-cancel" @click="handleHistory" />
             </div>
             <div class="wiki-meta">
               <span>작성자 - {{ projectInfo.userName }}</span>
@@ -305,26 +305,35 @@ watch(
   display: flex;
   gap: 6px;
 }
-.btn {
-  font-size: 12px;
-  padding: 5px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-  border: 1px solid #ccc;
-  transition: background 0.2s;
+:deep(.btn-amber) {
+  background-color: #e8920e !important;
+  color: #ffffff !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  font-size: 12px !important;
+  padding: 5px 14px !important;
+  border-radius: 6px !important;
 }
-.btn-primary {
-  background: #fff;
-  color: #333;
+:deep(.btn-amber:hover) {
+  background-color: #c97700 !important;
+  border-color: #c97700 !important;
 }
-.btn-secondary {
-  background: #f0f0f0;
-  color: #555;
+:deep(.btn-cancel) {
+  color: #6b6b63 !important;
+  border: 1px solid #c7c7c2 !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  font-size: 12px !important;
+  padding: 5px 14px !important;
+  border-radius: 6px !important;
+  background-color: white !important;
 }
-.btn:hover {
-  background: #f8f8f8;
+:deep(.btn-cancel:hover) {
+  background-color: #e5e2d9 !important;
+  color: #1a1816 !important;
 }
-
 .wiki-meta {
   display: flex;
   gap: 14px;
@@ -545,7 +554,7 @@ watch(
   min-height: 100%;
 }
 .toc-heading {
-  font-size: 13px;
+  font-size: 18px;
   font-weight: bold;
   margin-bottom: 10px;
 }

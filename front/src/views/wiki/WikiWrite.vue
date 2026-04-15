@@ -1,17 +1,19 @@
 <script setup>
 import { useAuthStore } from '@/stores/auth';
 import { useWikiStore } from '@/stores/wiki';
+import { useToast } from 'primevue';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 const wikiStore = useWikiStore(); //스토어 연결
 const authStore = useAuthStore();
 
-const saveSuccess = ref(false); // 저장여부
 const route = useRoute();
 const router = useRouter();
 const userId = ref(''); //입력받을 작성자명
 const wikiInfo = ref(''); //작성창 한줄 설명
+const showCancelModal = ref(false);
+const toast = useToast();
 
 const wikiId = computed(() => route.params.wikiId ?? null);
 const isEditMode = computed(() => !!wikiId.value);
@@ -284,12 +286,17 @@ async function confirmEdit() {
 
   if (result) {
     showEditModal.value = false;
-    saveSuccess.value = true;
     editReason.value = '';
     userId.value = '';
 
+    toast.add({
+      severity: 'success',
+      summary: isEditMode.value ? '수정 완료' : '작성 완료',
+      detail: isEditMode.value ? '수정되었습니다.' : '작성되었습니다.',
+      life: 1500
+    });
+
     setTimeout(() => {
-      saveSuccess.value = false;
       router.push({
         name: 'WikiDetail',
         params: {
@@ -305,7 +312,7 @@ async function confirmEdit() {
 // 에디터
 const editorRef = ref(null);
 const editorContent = ref('');
-const textStyle = ref('본문');
+const textStyle = ref('p');
 
 // 반드시 ref로 감싸고 모든 속성을 초기화해야 합니다.
 const activeStyles = ref({
@@ -340,7 +347,6 @@ function applyFormat(command, value = null) {
     if (value !== 'p') {
       newElement.id = `section-${Date.now()}`;
 
-      // ✅ 현재 에디터에서 번호 계산
       const allHeadings = Array.from(editorRef.value.querySelectorAll('h2, h3'));
       let h2Count = 0;
       let h3Count = 0;
@@ -399,15 +405,25 @@ function applyFormat(command, value = null) {
 
 // WikiWrite.vue script에 추가
 function handleCancel() {
+  showCancelModal.value = true;
+}
+
+// 취소 확인 시 실제 이동
+function confirmCancel() {
+  showCancelModal.value = false;
   const projectId = route.params.projectId;
   if (isEditMode.value) {
-    // 편집 모드면 → 상세 페이지로 돌아가기
     router.push({ name: 'WikiDetail', params: { projectId, wikiId: wikiId.value } });
   } else {
-    // 신규 작성 모드면 → 이전 페이지로
     router.back();
   }
 }
+
+const textStyleOptions = [
+  { label: '제목 (1. 2. 3. 형태)', value: 'h2' },
+  { label: '부제목(1.1 / 1.2 / 1.3형태)', value: 'h3' },
+  { label: '본문', value: 'p' }
+];
 </script>
 
 <template>
@@ -420,21 +436,15 @@ function handleCancel() {
         </h1>
         <div>
           <label class="field-label required">위키 한 줄 설명</label>
-          <input v-model="wikiStore.wikiDetail.wikiInfo" type="text" class="project-desc-input" :class="{ 'is-error': errors.wikiInfo }" placeholder="위키 관련 한 줄 설명을 입력하세요" />
+          <InputText v-model="wikiStore.wikiDetail.wikiInfo" class="project-desc-input" :class="{ 'p-invalid': errors.wikiInfo }" placeholder="위키 관련 한 줄 설명을 입력하세요" />
           <p v-if="errors.wikiInfo" class="error-msg">한 줄 설명을 입력해주세요.</p>
         </div>
       </div>
 
       <div class="header-actions">
-        <!-- 저장 성공 토스트 -->
-        <transition name="fade">
-          <div v-if="saveSuccess" class="toast-fixed">{{ isEditMode ? '수정되었습니다.' : '작성되었습니다.' }}<br />잠시 후 조회 페이지로 이동합니다.</div>
-        </transition>
         <div class="link-form-actions">
-          <button class="btn btn-cancel" @click="handleCancel">취소</button>
-          <button class="btn btn-edit" @click="handleEdit">
-            {{ isEditMode ? '수정' : '등록' }}
-          </button>
+          <Button label="취소" class="btn-cancel" @click="handleCancel" />
+          <Button :label="isEditMode ? '수정' : '등록'" class="btn-edit" @click="handleEdit" />
         </div>
       </div>
     </div>
@@ -501,22 +511,16 @@ function handleCancel() {
           <div class="link-items-container">
             <div class="toc-heading" style="margin-bottom: 12px">관련 URL 링크</div>
             <div v-for="(link, index) in linkItems" :key="index" class="link-item-group">
-              <input v-model="link.title" type="text" class="field-input" :class="{ 'is-error': linkErrors[index]?.title }" placeholder="연결할 링크 이름을 작성해주세요." />
+              <InputText v-model="link.title" class="field-input" :class="{ 'p-invalid': linkErrors[index]?.title }" placeholder="연결할 링크 이름을 작성해주세요." />
               <p v-if="linkErrors[index]?.title" class="error-msg">링크 이름을 입력해주세요.</p>
 
-              <input v-model="link.url" type="text" class="field-input" :class="{ 'is-error': linkErrors[index]?.url || linkErrors[index]?.invalidUrl }" placeholder="링크 주소" />
+              <InputText v-model="link.url" class="field-input" :class="{ 'p-invalid': linkErrors[index]?.url || linkErrors[index]?.invalidUrl }" placeholder="링크 주소" />
               <p v-if="linkErrors[index]?.url" class="error-msg">링크 주소를 입력해주세요.</p>
               <p v-if="linkErrors[index]?.invalidUrl" class="error-msg">URL 주소에 맞게 작성해주세요.</p>
             </div>
           </div>
 
-          <button class="btn btn-add-link" @click="addLinkItem">링크 추가</button>
-
-          <div class="link-form-actions">
-            <!--없어도 되는 코드들임-->
-            <!-- <button class="btn btn-cancel" @click="cancelLink">취소</button> -->
-            <!-- <button class="btn btn-primary" @click="registerLink">등록</button> -->
-          </div>
+          <Button label="링크 추가" class="btn-add-link" @click="addLinkItem" />
         </div>
 
         <!-- 편집 사유 모달 -->
@@ -528,12 +532,31 @@ function handleCancel() {
                 <button class="modal-close" @click="closeEditModal">×</button>
               </div>
               <div class="modal-body">
-                <textarea v-model="editReason" class="modal-textarea" :class="{ 'is-error': errors.editReason }" placeholder="등록 사유를 입력해주세요." />
+                <Textarea v-model="editReason" class="modal-textarea" :class="{ 'p-invalid': errors.editReason }" placeholder="등록 사유를 입력해주세요." rows="3" autoResize />
                 <p v-if="errors.editReason" class="error-msg">버전 설명을 작성해주세요.</p>
               </div>
               <div class="modal-footer">
-                <button class="btn btn-cancel" @click="closeEditModal">취소</button>
-                <button class="btn btn-primary" @click="confirmEdit">확인</button>
+                <Button label="취소" class="btn-cancel" @click="closeEditModal" />
+                <Button label="확인" class="btn-primary" @click="confirmEdit" />
+              </div>
+            </div>
+          </div>
+        </transition>
+
+        <!-- 취소 확인 모달 -->
+        <transition name="fade">
+          <div v-if="showCancelModal" class="modal-overlay" @click.self="showCancelModal = false">
+            <div class="modal-box">
+              <div class="modal-header">
+                <span>작성 취소</span>
+                <button class="modal-close" @click="showCancelModal = false">×</button>
+              </div>
+              <div class="modal-body" style="text-align: center; padding: 24px 16px">
+                <p style="font-size: 14px; color: #333; line-height: 1.6">작성 중인 내용이 저장되지 않습니다.<br />취소하시겠습니까?</p>
+              </div>
+              <div class="modal-footer">
+                <Button label="계속 수정하기" class="btn-cancel" @click="showCancelModal = false" />
+                <Button label="조회로 돌아가기" class="btn-primary" @click="confirmCancel" />
               </div>
             </div>
           </div>
@@ -551,18 +574,17 @@ function handleCancel() {
                 <p style="font-size: 14px; color: #333; line-height: 1.6">본문의 내용이 동일합니다.<br />버전업을 하시겠습니까?</p>
               </div>
               <div class="modal-footer">
-                <button class="btn btn-cancel" @click="showSameContentModal = false">취소</button>
-                <button
-                  class="btn btn-primary"
+                <Button label="취소" class="btn-cancel" @click="showSameContentModal = false" />
+                <Button
+                  label="버전업 진행"
+                  class="btn-primary"
                   @click="
                     () => {
                       showSameContentModal = false;
                       showEditModal = true;
                     }
                   "
-                >
-                  버전업 진행
-                </button>
+                />
               </div>
             </div>
           </div>
@@ -574,12 +596,7 @@ function handleCancel() {
     <div class="editor-section">
       <!-- 툴바 -->
       <div class="editor-toolbar">
-        <select v-model="textStyle" class="toolbar-select" @change="applyFormat('formatBlock', textStyle)">
-          <option value="h2">제목 (1. 2. 3. 형태)</option>
-          <option value="h3">부제목(1.1 / 1.2 / 1.3형태)</option>
-          <option value="p">본문</option>
-        </select>
-
+        <Select v-model="textStyle" :options="textStyleOptions" optionLabel="label" optionValue="value" class="toolbar-select" @change="applyFormat('formatBlock', textStyle)" />
         <div class="toolbar-divider" />
 
         <button class="toolbar-btn bold" title="굵게" @click="applyFormat('bold')"><b>B</b></button>
@@ -647,10 +664,9 @@ function handleCancel() {
   margin-top: 8px; /* WIKI 글자와의 간격 */
 }
 
-.project-desc-input.is-error {
+:deep(.p-invalid) {
   border-color: #e74c3c !important;
 }
-
 .header-fields {
   display: flex;
   gap: 16px;
@@ -768,13 +784,19 @@ function handleCancel() {
 }
 
 .panel-title {
-  font-size: 14px;
+  font-size: 22px;
   font-weight: 700;
   margin-bottom: 10px;
 }
 
 .panel-title.center {
   text-align: center;
+}
+
+/* 추가 */
+.toc-heading {
+  font-size: 22px;
+  font-weight: 700;
 }
 
 /* ② 목차 */
@@ -1078,22 +1100,6 @@ h6 {
 h1 {
   margin-top: 0 !important;
   margin-bottom: 0 !important;
-}
-
-/* 기존 toast-success 유지하고 아래 추가 */
-.toast-fixed {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.75);
-  color: #fff;
-  padding: 16px 28px;
-  border-radius: 8px;
-  font-size: 14px;
-  text-align: center;
-  z-index: 9999;
-  white-space: nowrap;
 }
 
 .toc-item.toc-sub a {
