@@ -24,7 +24,7 @@
   </select>
   
   <select id="findAllNotification" resultType="NotificationResponse">
-    SELECT n.id, n.content, n.created_on, n.status, n.link, n.project_id, p.title
+    SELECT n.id, n.content, n.created_on, n.status, n.link, n.project_id, p.title, p.start_date, p.end_date
     FROM notifications n
     JOIN project p ON n.project_id = p.id
     WHERE n.user_id = #{userId}

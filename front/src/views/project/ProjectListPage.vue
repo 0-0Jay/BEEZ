@@ -136,6 +136,7 @@ const toggleMenu = (event, data) => {
 };
 
 const goToDetail = (project) => {
+  console.log(project);
   if (project.isLock === 'L1') return;
   projectStore.selectedProject = { title: project.title, id: project.id, startDate: project.startDate, endDate: project.endDate };
   console.log(projectStore.selectedProject);

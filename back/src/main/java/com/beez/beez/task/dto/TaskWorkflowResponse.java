@@ -10,10 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class TaskWorkflowResponse {
-  private String roleId;
-  private String typeId;
   private String before;
   private String after;
   private String isAllow;
-  private String conditionType;
 }

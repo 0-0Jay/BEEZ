@@ -85,7 +85,7 @@ function togglePanel() {
 }
 
 function markAsRead(n) {
-  projectStore.selectedProject = { id: n.projectId, title: n.title };
+  projectStore.selectedProject = { id: n.projectId, title: n.title, startDate: n.startDate, endDate: n.endDate };
   router.push(`${n.link}`);
   if (n.status == 'G0') return;
   n.status = 'G0';
