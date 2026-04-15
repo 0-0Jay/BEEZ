@@ -94,6 +94,8 @@ const fetchProjects = async () => {
   updateSelectOptions();
 };
 
+const totalCount = computed(() => projectStore.projects.length);
+
 // 체크박스 전용 감시자
 watch(
   () => filters.isLock,
@@ -207,17 +209,26 @@ const unlockProject = async (id) => {
   fetchProjects();
   toast.add({ severity: 'success', summary: '프로젝트 잠금보관 해제', detail: '프로젝트가 잠금보관 해제되었습니다.', life: 2000 });
 };
+
+// 유틸
+function progressBarColor(p) {
+  if (p == 100) return '#22C55E';
+  if (p >= 90) return '#86EFAC';
+  if (p >= 60) return '#EAB308';
+  if (p >= 30) return '#F97316';
+  return '#EF4444';
+}
 </script>
 
 <template>
-  <div class="p-8 bg-[#FAFAF8] min-h-screen">
+  <div class="p-8 bg-[#ffffff] h-full">
     <!-- 타이틀 + 등록 버튼 -->
-    <div class="flex justify-between items-end mb-6">
+    <div class="flex justify-between items-end mb-2">
       <h1 class="text-2xl font-bold text-[#1A1816]">프로젝트 목록</h1>
       <Button label="프로젝트 등록" icon="pi pi-plus" severity="contrast" outlined @click="router.push('/project/create')" />
     </div>
 
-    <div class="bg-[#E8E5DC] px-10 py-8 rounded-lg mb-8 shadow-sm border border-[#C7C7C2] flex flex-col gap-3">
+    <div class="bg-[#F2F3F8] px-10 py-8 rounded-lg mb-4 shadow-sm border border-[#ECEEF4] flex items-center">
       <!-- 입력칸 + 체크박스 묶음 -->
       <div class="flex items-center flex-wrap gap-y-3">
         <label class="filter-label mr-3 self-start mt-3">프로젝트명</label>
@@ -242,11 +253,17 @@ const unlockProject = async (id) => {
         </div>
       </div>
     </div>
+    <div class="flex justify-between items-center mb-1">
+      <span class="text-sm text-[#3A3B35] font-medium pb-2">전체 {{ totalCount }}건</span>
+    </div>
 
-    <div class="bg-white rounded-xl shadow-sm border border-[#C7C7C2] overflow-hidden">
+    <div class="bg-white rounded-xl shadow-sm border border-[#5B6E96] overflow-hidden">
       <DataTable :value="projects" :loading="loading" dataKey="id" :rowHover="true" :rowClass="rowClass" tableStyle="width: 100%" scrollable scrollHeight="500px">
         <template #empty>
-          <div class="text-center py-10 text-gray-400">조회된 데이터가 없습니다.</div>
+          <div class="flex flex-col items-center justify-center py-10">
+            <i class="pi pi-search text-4xl text-[#C7C7C2] mb-3"></i>
+            <p class="text-[#6B6B63]">조회된 데이터가 없습니다.</p>
+          </div>
         </template>
 
         <Column header="No." headerClass="table-header" style="width: 5%">
@@ -280,9 +297,17 @@ const unlockProject = async (id) => {
 
         <Column header="진행률" headerClass="table-header" style="width: 30%">
           <template #body="{ data }">
-            <div class="flex items-center gap-5 px-10">
-              <ProgressBar :value="data.progressRate ?? 0" :showValue="false" class="progress-bar-custom flex-1" style="height: 8px" />
-              <span class="text-xs text-[#9A9B90] whitespace-nowrap"> {{ data.progressRate ?? 0 }}% </span>
+            <div class="px-10">
+              <ProgressBar
+                :value="data.progressRate ?? 0"
+                :pt="{
+                  value: {
+                    style: {
+                      background: progressBarColor(data.progressRate ?? 0)
+                    }
+                  }
+                }"
+              />
             </div>
           </template>
         </Column>
@@ -312,7 +337,7 @@ const unlockProject = async (id) => {
 .filter-label {
   font-size: 1rem;
   font-weight: 600;
-  color: #3a3b35;
+  color: #000000c2;
   white-space: nowrap;
 }
 :deep(.filter-input) {
@@ -323,8 +348,8 @@ const unlockProject = async (id) => {
   align-items: center;
 }
 :deep(.table-header) {
-  background-color: #e8e5dc !important;
-  color: #1a1816 !important;
+  background-color: #5b6e96 !important;
+  color: #dde3f0 !important;
   font-weight: 700 !important;
   text-align: center !important;
   padding: 1.25rem 0 !important;
@@ -337,15 +362,7 @@ const unlockProject = async (id) => {
   padding: 1rem 0 !important;
   border-bottom: 1px solid #f2f0eb !important;
 }
-:deep(.progress-bar-custom) {
-  border-radius: 10px;
-  background-color: #e5e2d9;
-  border: none;
-}
-:deep(.progress-bar-custom .p-progressbar-value) {
-  background-color: #e8920e;
-  border-radius: 10px;
-}
+
 :deep(.locked-row) {
   background-color: #f5f5f5 !important;
   color: #b0b0b0 !important;

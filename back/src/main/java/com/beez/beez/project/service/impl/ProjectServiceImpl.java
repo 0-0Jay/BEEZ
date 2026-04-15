@@ -158,7 +158,11 @@ public class ProjectServiceImpl implements ProjectService {
   )
   @Override
   public void deleteProjectMember(String projectMemberId, String projectId) {
-    projectMapper.deleteProjectMember(projectMemberId);
+    try {
+      projectMapper.deleteProjectMember(projectMemberId);
+    } catch (Exception e) {
+      throw new IllegalArgumentException(e.getMessage());
+    }
   }
   
   //프로젝트 구성원 수정

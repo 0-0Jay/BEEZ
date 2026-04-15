@@ -1,3 +1,5 @@
+use beez;
+
 CREATE OR REPLACE PROCEDURE generate_project_id(
     p_id OUT VARCHAR2
 ) AS
@@ -144,7 +146,7 @@ BEGIN
         AND pm.group_id IS NULL
         AND pm.is_delete = 'F0'
         AND rm.is_delete = 'F0'
-        AND rm.role_id NOT IN ('ROLE0001', 'ROLE0002')
+        AND rm.role_id NOT IN ('ROLE0001')
         ORDER BY pm.id;
         
     OPEN p_groups FOR

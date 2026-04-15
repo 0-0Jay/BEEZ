@@ -3,7 +3,7 @@ import { useProjectStore } from '@/stores/project';
 import { useVersionStore } from '@/stores/version';
 import { storeToRefs } from 'pinia';
 import { useToast } from 'primevue';
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 const projectStore = useProjectStore();
@@ -45,10 +45,14 @@ onMounted(async () => {
       .filter((p) => p.id !== route.params.id)
       .map((p) => ({
         label: p.title,
-        value: p.id
+        value: p.id,
+        startDate: p.startDate,
+        endDate: p.endDate
       }))
   ];
 });
+
+const selectedParent = computed(() => projectOptions.value.find((p) => p.value === form.parentId) ?? null);
 
 const form = reactive({
   title: '',
@@ -206,16 +210,40 @@ const handleCancel = () => {
         <!-- 프로젝트 기간 -->
         <div class="flex items-start px-8 py-4">
           <label class="form-label w-36 pt-2 shrink-0"> 프로젝트 기간 <span class="text-red-500">*</span> </label>
-          <div class="flex items-start gap-5">
-            <div class="flex flex-col">
-              <DatePicker v-model="form.startDate" dateFormat="yy-mm-dd" placeholder="시작일" class="form-input w-50" :maxDate="form.endDate" showIcon inputClass="w-full" />
-              <small v-if="errors.startDate" class="text-red-500 mt-1">{{ errors.startDate }}</small>
+          <div class="flex flex-col gap-1">
+            <!-- DatePicker 행 -->
+            <div class="flex items-start gap-5">
+              <div class="flex flex-col">
+                <DatePicker
+                  v-model="form.startDate"
+                  dateFormat="yy-mm-dd"
+                  placeholder="시작일"
+                  class="form-input w-50"
+                  :minDate="selectedParent ? new Date(selectedParent.startDate) : undefined"
+                  :maxDate="form.endDate ?? (selectedParent ? new Date(selectedParent.endDate) : undefined)"
+                  showIcon
+                  inputClass="w-full"
+                />
+                <small v-if="errors.startDate" class="text-red-500 mt-1">{{ errors.startDate }}</small>
+              </div>
+              <span class="text-xl text-[#6B6B63] mt-2">~</span>
+              <div class="flex flex-col">
+                <DatePicker
+                  v-model="form.endDate"
+                  dateFormat="yy-mm-dd"
+                  placeholder="마감일"
+                  class="form-input w-50"
+                  :minDate="form.startDate ?? (selectedParent ? new Date(selectedParent.startDate) : undefined)"
+                  :maxDate="selectedParent ? new Date(selectedParent.endDate) : undefined"
+                  showIcon
+                  inputClass="w-full"
+                />
+                <small v-if="errors.endDate" class="text-red-500 mt-1">{{ errors.endDate }}</small>
+              </div>
             </div>
-            <span class="text-xl text-[#6B6B63] mt-2">~</span>
-            <div class="flex flex-col">
-              <DatePicker v-model="form.endDate" dateFormat="yy-mm-dd" placeholder="마감일" class="form-input w-50" :minDate="form.startDate" showIcon inputClass="w-full" />
-              <small v-if="errors.endDate" class="text-red-500 mt-1">{{ errors.endDate }}</small>
-            </div>
+
+            <!-- DatePicker 행 아래 안내 문구 -->
+            <small v-if="selectedParent" class="text-[#9A9B90] mt-1"> 하위 프로젝트는 상위 프로젝트 기간({{ formatDate(selectedParent.startDate) }} ~ {{ formatDate(selectedParent.endDate) }})을 벗어날 수 없습니다. </small>
           </div>
         </div>
 
