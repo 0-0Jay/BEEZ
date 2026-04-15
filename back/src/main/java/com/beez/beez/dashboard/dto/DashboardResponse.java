@@ -23,4 +23,5 @@ public class DashboardResponse {
   private List<TaskRecapResponse> taskList;
   private List<MemoResponse> memoList;
   private List<ScheduleResponse> scheduleList;
+  private List<MemberListResponse> memberList;
 }

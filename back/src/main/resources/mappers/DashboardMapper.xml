@@ -25,7 +25,8 @@
         #{projectList,   mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=projectResultMap,    typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
         #{taskList,      mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=taskResultMap,       typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
         #{memoList,      mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=memoResultMap,       typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
-        #{scheduleList,  mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=scheduleResultMap,   typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler}
+        #{scheduleList,  mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=scheduleResultMap,   typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
+        #{memberList,    mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=memberResultMap,   typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler}
       )
     }
   </select>
@@ -61,6 +62,12 @@
     <result property="projectTitle" column="project_title" />
     <result property="startDate" column="start_date" />
     <result property="endDate" column="end_date" />
+  </resultMap>
+  
+  <resultMap id="memberResultMap" type="com.beez.beez.dashboard.dto.MemberListResponse">
+    <result property="id" column="id" />
+    <result property="name" column="name" />
+    <result property="role" column="role" />
   </resultMap>
   
   <insert id="insertMemo" parameterType="MemoRequest">

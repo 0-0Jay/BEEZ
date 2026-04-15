@@ -77,33 +77,38 @@ onMounted(async () => {
     <h1 class="text-2xl font-bold text-gray-800 mb-6 tracking-tight shrink-0">간트 차트</h1>
 
     <!-- 필터 카드 -->
-    <div class="rounded-xl p-5 mb-5 shadow-sm shrink-0" style="background-color: #f2f3f8">
-      <div class="flex flex-wrap items-end gap-4">
-        <div class="flex flex-col gap-1 min-w-[180px]">
-          <label class="text-xs font-semibold text-gray-500">담당자</label>
-          <Select v-model="filters.userId" :options="userOptions" option-label="name" option-value="id" placeholder="전체" filter filter-placeholder="이름 검색" show-clear class="w-full">
-            <template #option="data">{{ data.option.name }} ({{ data.option.id }})</template>
+    <div class="rounded-xl p-5 mb-5 shadow-sm shrink-0 bg-[#f2f3f8]">
+      <div class="flex flex-wrap items-center gap-4">
+        <!-- 담당자 -->
+        <div class="flex items-center gap-2 min-w-[260px]">
+          <label class="w-20 shrink-0 text-base font-semibold text-gray-500 text-right">담당자</label>
+          <Select v-model="filters.userId" :options="userOptions" option-label="name" option-value="id" placeholder="전체" filter filter-placeholder="이름 검색" show-clear class="flex-1">
+            <template #option="data"> {{ data.option.name }} ({{ data.option.id }}) </template>
           </Select>
         </div>
 
-        <div class="flex flex-col gap-1 min-w-[180px]">
-          <label class="text-xs font-semibold text-gray-500">프로젝트</label>
-          <Select v-model="filters.projectTitle" :options="projectOptions" option-label="label" option-value="value" placeholder="전체" filter filter-placeholder="프로젝트 검색" show-clear class="w-full" />
+        <!-- 프로젝트 -->
+        <div class="flex items-center gap-2 min-w-[260px]">
+          <label class="w-20 shrink-0 text-base font-semibold text-gray-500 text-right">프로젝트</label>
+          <Select v-model="filters.projectTitle" :options="projectOptions" option-label="label" option-value="value" placeholder="전체" filter filter-placeholder="프로젝트 검색" show-clear class="flex-1" />
         </div>
 
-        <div class="flex flex-col gap-1 min-w-[160px]">
-          <label class="text-xs font-semibold text-gray-500">버전</label>
-          <Select v-model="filters.versionName" :options="versionOptions" option-label="label" option-value="value" placeholder="전체" filter filter-placeholder="버전 검색" show-clear class="w-full" />
+        <!-- 버전 -->
+        <div class="flex items-center gap-2 min-w-[220px]">
+          <label class="w-20 shrink-0 text-base font-semibold text-gray-500 text-right">버전</label>
+          <Select v-model="filters.versionName" :options="versionOptions" option-label="label" option-value="value" placeholder="전체" filter filter-placeholder="버전 검색" show-clear class="flex-1" />
         </div>
 
-        <div class="flex flex-col gap-1 min-w-[200px]">
-          <label class="text-xs font-semibold text-gray-500">일감 제목</label>
-          <InputText v-model="filters.taskTitle" placeholder="제목 검색" class="w-full" />
+        <!-- 일감 제목 -->
+        <div class="flex items-center gap-2 min-w-[350px]">
+          <label class="w-20 shrink-0 text-base font-semibold text-gray-500 text-right">일감명</label>
+          <InputText v-model="filters.taskTitle" placeholder="제목 검색" class="flex-1" />
         </div>
 
-        <div class="flex gap-2 ml-auto items-end pb-0.5">
-          <Button label="적용" raised @click="applyFilters" />
+        <!-- 버튼 -->
+        <div class="flex items-center gap-2 ml-auto">
           <Button label="초기화" raised severity="secondary" @click="resetFilters" />
+          <Button label="적용" raised @click="applyFilters" />
         </div>
       </div>
     </div>
