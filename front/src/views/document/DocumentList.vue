@@ -149,24 +149,24 @@ const formatDate = (dateStr) => {
       </div>
     </div>
 
-    <!-- 즐겨찾기 -->
     <template v-if="favList.length">
       <div class="section-title">즐겨찾기 문서</div>
       <div class="fav-grid">
         <div v-for="doc in favList" :key="doc.id" class="panel fav-card" :class="{ active: activeFav === doc.id }" @click="goToDetail(doc.id)">
-          <!-- X 버튼 추가 -->
           <button class="fav-remove" @click.stop="toggleFavorite(doc.id)">✕</button>
 
           <div class="fav-icon">
             <span class="radio-dot" :class="{ active: activeFav === doc.id }"></span>
           </div>
-          <div class="fav-name">{{ doc.title }}</div>
+          <span class="title" @click="goToDetail(doc.id)" style="cursor: pointer; color: #3d7eff">
+            <span v-if="doc.editedOn" class="edited-badge">[수정]</span>
+            {{ doc.title }}
+          </span>
           <div class="fav-meta">작성자: {{ doc.userName }} / {{ formatDate(doc.createdOn) }}</div>
         </div>
       </div>
     </template>
 
-    <!-- 목록 테이블 -->
     <div class="panel table-panel">
       <div class="board-header">
         <span>번호</span>
@@ -194,9 +194,12 @@ const formatDate = (dateStr) => {
           </span>
           {{ filteredList.length - ((currentPage - 1) * pageSize + index) }}
         </span>
+
         <span class="title" @click="goToDetail(doc.id)" style="cursor: pointer; color: #3d7eff">
+          <span v-if="doc.editedOn" class="edited-badge">[수정]</span>
           {{ doc.title }}
         </span>
+
         <span>
           <span class="badge" :class="doc.doctype">{{ doc.doctype }}</span>
         </span>
@@ -492,5 +495,12 @@ const formatDate = (dateStr) => {
 /* style 태그 안에 추가 */
 h1 {
   margin-bottom: 0 !important;
+}
+
+.edited-badge {
+  color: #e8920e;
+  font-size: 12px;
+  font-weight: 600;
+  margin-right: 4px;
 }
 </style>

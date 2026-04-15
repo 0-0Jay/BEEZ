@@ -58,7 +58,6 @@ export const useDocumentStore = defineStore('document', {
 
     //문서 상세 조회
     async fetchDocumentDetail(id) {
-      // 파라미터 확인해
       try {
         this.currentDocument = null;
         const response = await axios.get(`/document/detail/${id}`);

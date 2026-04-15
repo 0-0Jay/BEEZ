@@ -131,6 +131,15 @@ const downloadFile = async (fileDetailId) => {
         <div class="content-box">{{ docStore.currentDocument.content }}</div>
       </div>
 
+      <!-- 섹션 2-1: 수정 사유 (수정된 경우에만 표시) -->
+      <div class="panel" v-if="docStore.currentDocument.editedOn">
+        <div class="panel-label">수정 정보</div>
+        <div class="doc-meta" style="margin-bottom: 12px">
+          <span>수정일 {{ formatDate(docStore.currentDocument.editedOn) }}</span>
+        </div>
+        <div class="content-box">{{ docStore.currentDocument.changeReason }}</div>
+      </div>
+
       <!-- 섹션 3: 첨부파일 -->
       <div class="panel">
         <div class="panel-label">첨부파일</div>

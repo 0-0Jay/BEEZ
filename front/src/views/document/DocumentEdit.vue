@@ -72,6 +72,7 @@ const submit = async () => {
   // UpdateRequest 형태로 만들기
   const updateRequest = {
     id: docId,
+    projectId: projectId,
     userId: userId.value,
     title: form.value.title,
     content: form.value.content ?? '',
