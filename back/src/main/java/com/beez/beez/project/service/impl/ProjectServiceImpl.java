@@ -192,11 +192,24 @@ public class ProjectServiceImpl implements ProjectService {
   }
   
   //프로젝트 복사
+  @Loggable(
+    logType = "A0",
+    logCategory = "B0",
+    content = "프로젝트 복사 ({newProjectId})",
+    link = "/project/{newProjectId}",
+    idField = "newProjectId"
+  )
   @Override
   public String copyProject(ProjectCopyRequest dto) {
     dto.setUserId(getCurrentUserId());
     projectMapper.copyProject(dto);
     return dto.getNewProjectId();
-  };
+  }
+  
+  //PM조회
+  @Override
+  public List<UserResponse> findUserPm() {
+    return projectMapper.findUserPm();
+  }
   
 }

@@ -318,7 +318,6 @@ const workflowSeverity = (workflow) => {
                 </div>
                 <div class="flex items-center gap-2">
                   <Tag :value="workflowLabel(task.taskWorkflow)" :severity="workflowSeverity(task.taskWorkflow)" />
-                  <Button icon="pi pi-ellipsis-h" severity="secondary" text size="small" />
                 </div>
               </div>
             </div>

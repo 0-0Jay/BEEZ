@@ -84,8 +84,6 @@ const updateSelectOptions = () => {
 
 // 2. 조회 함수
 const fetchProjects = async () => {
-  if (!validate()) return;
-
   await projectStore.fetchProjects({
     ...filters,
     startDate: formatDate(filters.startDate),
@@ -143,21 +141,6 @@ const goToDetail = (project) => {
   router.push(`/project`);
 };
 
-const dateError = ref('');
-
-watch(
-  () => [filters.startDate, filters.endDate],
-  () => {
-    if (filters.startDate && filters.endDate) {
-      dateError.value = new Date(filters.startDate) > new Date(filters.endDate) ? '시작일이 마감일 이후일 수 없습니다.' : '';
-    } else {
-      dateError.value = '';
-    }
-  }
-);
-
-const validate = () => !dateError.value;
-
 // 날짜 포맷 변환 함수
 const formatDate = (date) => {
   if (!date) return null;
@@ -210,20 +193,18 @@ const unlockProject = async (id) => {
         <label class="filter-label mr-5 self-start mt-3">마감일</label>
         <div class="flex flex-col self-start">
           <div class="flex items-center">
-            <DatePicker v-model="filters.startDate" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" class="filter-input w-36 mr-15" />
+            <DatePicker v-model="filters.startDate" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" :maxDate="filters.endDate" class="filter-input w-50" showIcon inputClass="w-full" />
             <span class="text-sm text-[#6B6B63] px-4">~</span>
-            <DatePicker v-model="filters.endDate" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" class="filter-input w-36 mr-25" />
+            <DatePicker v-model="filters.endDate" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" :minDate="filters.startDate" class="filter-input w-50 mr-15" showIcon inputClass="w-full" />
           </div>
-          <small v-if="dateError" class="text-red-500 mt-1">{{ dateError }}</small>
         </div>
         <Checkbox v-model="filters.isLock" :binary="true" inputId="archived" class="mr-3 self-start mt-3" />
         <label for="archived" class="text-sm font-medium text-[#1A1816] whitespace-nowrap cursor-pointer self-start mt-3">잠금 보관 프로젝트 보기</label>
-      </div>
-
-      <!-- 버튼 묶음 — 항상 오른쪽 끝 -->
-      <div class="flex gap-2 justify-end">
-        <Button label="초기화" severity="secondary" raised @click="resetFilters" />
-        <Button label="조회" icon="pi pi-search" raised @click="fetchProjects" />
+        <!-- 버튼 묶음 — 항상 오른쪽 끝 -->
+        <div class="flex gap-2 ml-auto shrink-0 self-start">
+          <Button label="초기화" severity="secondary" raised @click="resetFilters" />
+          <Button label="조회" icon="pi pi-search" raised @click="fetchProjects" />
+        </div>
       </div>
     </div>
 

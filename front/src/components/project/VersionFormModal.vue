@@ -52,9 +52,6 @@ watch(
   () => [props.visible, props.editData],
   ([newVisible, newEditData]) => {
     if (newVisible && newEditData) {
-      console.log('editData:', newEditData); // 👈 이거 추가
-      console.log('isDefault:', newEditData.isDefault);
-      console.log('isShare:', newEditData.isShare);
       Object.assign(form, {
         ...newEditData,
         startDate: newEditData.startDate ? new Date(newEditData.startDate) : null,
@@ -109,9 +106,6 @@ const validate = () => {
     valid = false;
   } else if (projectEnd.value && form.endDate > projectEnd.value) {
     errors.endDate = `프로젝트 마감일(${formatDate(projectEnd.value)}) 이전이어야 합니다.`;
-    valid = false;
-  } else if (form.startDate && form.endDate && form.startDate > form.endDate) {
-    errors.endDate = '마감일은 시작일 이후여야 합니다.';
     valid = false;
   }
 
@@ -177,13 +171,14 @@ onMounted(async () => {
         <label class="form-label w-32 pt-2 shrink-0">기간 <span class="text-red-500">*</span></label>
         <div class="flex items-start gap-5">
           <div class="flex flex-col w-42">
-            <DatePicker v-model="form.startDate" dateFormat="yy-mm-dd" placeholder="시작일" class="form-input w-36" />
-            <small v-if="errors.startDate" class="text-red-500 mt-1 block">{{ errors.startDate }}</small>
+            <DatePicker v-model="form.startDate" dateFormat="yy-mm-dd" placeholder="시작일" class="form-input w-50" :minDate="projectStart" :maxDate="form.endDate || projectEnd" showIcon inputClass="w-full" />
+            <small class="text-[#9A9B90] mt-2 block w-100"> 버전은 프로젝트 기간({{ formatDate(projectStart) }} ~ {{ formatDate(projectEnd) }}) 내에 설정해주세요. </small>
+            <small v-if="errors.startDate" class="text-red-500 block">{{ errors.startDate }}</small>
           </div>
-          <span class="text-[#6B6B63] pt-2 shrink-0 ml-8">~</span>
+          <span class="text-[#6B6B63] pt-2 shrink-0">~</span>
           <div class="flex flex-col w-42">
-            <DatePicker v-model="form.endDate" dateFormat="yy-mm-dd" placeholder="마감일" class="form-input w-36" />
-            <small v-if="errors.endDate" class="text-red-500 mt-1 block">{{ errors.endDate }}</small>
+            <DatePicker v-model="form.endDate" dateFormat="yy-mm-dd" placeholder="마감일" class="form-input w-50" :minDate="form.startDate || projectStart" :maxDate="projectEnd" showIcon inputClass="w-full" />
+            <small v-if="errors.endDate" class="text-red-500 block">{{ errors.endDate }}</small>
           </div>
         </div>
       </div>

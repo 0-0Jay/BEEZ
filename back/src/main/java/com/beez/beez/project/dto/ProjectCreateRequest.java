@@ -16,4 +16,5 @@ public class ProjectCreateRequest {
   private Date endDate;
   private String defaultVersionId;
   private String userId;
+  private String pmId;
 }

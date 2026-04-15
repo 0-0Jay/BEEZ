@@ -4,7 +4,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useVersionStore } from '@/stores/version';
 import { storeToRefs } from 'pinia';
 import { useToast } from 'primevue';
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 const route = useRoute();
@@ -15,14 +15,14 @@ const modalVisible = ref(false); //추가 모달
 const confirmMsg = ref(''); // 에러메시지
 const toast = useToast(); // 토스트메시지
 const versionOptions = ref([]); // 버전명 Select 옵션
-const statusOptions = ref([]); // 상태 Select 옵션
+// const statusOptions = ref([]); // 상태 Select 옵션
 const selectedRow = ref(null);
 const editRow = ref(null);
 const projectInfo = ref(null);
 
 // --- 1. 스토어 연결 ---
 const versionStore = useVersionStore();
-const { versions, loading } = storeToRefs(versionStore);
+const { versions, loading, commonCodeList } = storeToRefs(versionStore);
 
 // --- 2. 필터 상태 ---
 const filters = reactive({
@@ -33,6 +33,7 @@ const filters = reactive({
 
 // --- 3. 조회 로직 ---
 onMounted(async () => {
+  await versionStore.findCommonCodeList();
   projectInfo.value = await versionStore.findProject(route.params.id);
   await versionStore.fetchVersions(filters);
 
@@ -41,8 +42,9 @@ onMounted(async () => {
     label: p.name,
     value: p.id
   }));
-  statusOptions.value = [...new Map(versionStore.versions.map((p) => [p.statusName, { label: p.statusName, value: p.status }])).values()]; // 중복 제거
 });
+
+const statusOptions = computed(() => (commonCodeList.value ?? []).filter((c) => c.cgroup === '0N'));
 
 // 필터 적용한 목록 조회
 const fetchVersions = () => {
@@ -112,7 +114,7 @@ const formatDate = (date) => {
         <label class="filter-label mr-5">버전명</label>
         <Select v-model="filters.id" :options="versionOptions" optionLabel="label" optionValue="value" placeholder="선택" class="filter-input w-80 mr-10" />
         <label class="filter-label mr-5">상태</label>
-        <Select v-model="filters.status" :options="statusOptions" optionLabel="label" optionValue="value" placeholder="선택" class="filter-input w-50 mr-10" />
+        <Select v-model="filters.status" :options="statusOptions" optionLabel="name" optionValue="id" placeholder="선택" class="filter-input w-50 mr-10" />
       </div>
 
       <div class="flex gap-2 ml-auto">

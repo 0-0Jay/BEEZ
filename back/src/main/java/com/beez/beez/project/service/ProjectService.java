@@ -56,4 +56,7 @@ public interface ProjectService {
   
   //프로젝트 복사
   String copyProject(ProjectCopyRequest dto);
+  
+  //PM 조회
+  List<UserResponse> findUserPm();
 }
