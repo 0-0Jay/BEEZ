@@ -8,6 +8,30 @@ const router = useRouter();
 const route = useRoute();
 const docStore = useDocumentStore();
 const authStore = useAuthStore(); // 즐겨찾기 정보 위함
+const createdOn = ref('');
+
+const appliedKeyword = ref('');
+const appliedDoctype = ref('');
+const appliedDate = ref('');
+
+const totalCount = computed(() => docStore.documentList.length);
+
+const search = () => {
+  appliedKeyword.value = searchKeyword.value;
+  appliedDoctype.value = searchDoctype.value;
+  appliedDate.value = createdOn.value;
+  currentPage.value = 1;
+};
+
+const resetSearch = () => {
+  searchKeyword.value = '';
+  searchDoctype.value = '';
+  createdOn.value = '';
+  appliedKeyword.value = '';
+  appliedDoctype.value = '';
+  appliedDate.value = '';
+  currentPage.value = 1;
+};
 
 const projectId = route.params.projectId;
 const userId = authStore.user.id; //즐겨찾기 위함
@@ -22,9 +46,10 @@ onMounted(async () => {
 
 const filteredList = computed(() => {
   return docStore.documentList.filter((doc) => {
-    const matchKeyword = !searchKeyword.value || doc.title.includes(searchKeyword.value);
-    const matchDoctype = !searchDoctype.value || doc.doctype === searchDoctype.value;
-    return matchKeyword && matchDoctype;
+    const matchKeyword = !appliedKeyword.value || doc.title.includes(appliedKeyword.value);
+    const matchDoctype = !appliedDoctype.value || doc.doctype === appliedDoctype.value;
+    const matchDate = !appliedDate.value || formatDate(doc.createdOn) === formatDate(appliedDate.value);
+    return matchKeyword && matchDoctype && matchDate;
   });
 });
 
@@ -88,8 +113,12 @@ const formatDate = (dateStr) => {
 </script>
 
 <template>
-  <div class="wiki-list-page">
+  <div class="wiki-list-page pt-0">
     <h1 class="text-2xl font-bold text-[#1A1816]">문서 목록</h1>
+    <div class="flex justify-between items-center mb-3" style="margin-bottom: -10px">
+      <span class="text-sm text-[#3A3B35] font-medium">총 {{ totalCount }} 개의 문서</span>
+      <Button label="문서등록" icon="pi pi-plus" :style="{ background: '#2D8FAD', borderColor: '#2D8FAD' }" @click="goToWrite" />
+    </div>
 
     <div class="panel search-panel">
       <div class="search-bar">
@@ -100,6 +129,8 @@ const formatDate = (dateStr) => {
           </svg>
           <input v-model="searchKeyword" type="text" placeholder="검색어를 입력해주세요." />
         </div>
+        <label class="filter-label mr-5">등록일</label>
+        <DatePicker v-model="createdOn" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" class="filter-input" showIcon />
         <span class="label">문서 유형</span>
         <div class="select-wrap">
           <select v-model="searchDoctype">
@@ -111,7 +142,10 @@ const formatDate = (dateStr) => {
             <option>보고서</option>
           </select>
         </div>
-        <button class="btn btn-edit">조회</button>
+        <div style="margin-left: auto; display: flex; gap: 8px">
+          <button class="btn btn-cancel" @click="resetSearch">초기화</button>
+          <button class="btn btn-edit" @click="search">조회</button>
+        </div>
       </div>
     </div>
 
@@ -133,10 +167,6 @@ const formatDate = (dateStr) => {
     </template>
 
     <!-- 목록 테이블 -->
-    <div class="table-actions">
-      <button class="btn btn-edit" @click="goToWrite">문서등록</button>
-    </div>
-
     <div class="panel table-panel">
       <div class="board-header">
         <span>번호</span>
@@ -186,23 +216,12 @@ const formatDate = (dateStr) => {
 </template>
 
 <style scoped>
-/* 섹션 타이틀 스타일 수정 */
-.h1 {
-  margin: 1.5rem 0 0rem 0; /* 상단 여백 1.5rem, 하단 여백 0.5rem */
-  font-family: inherit; /* 부모의 폰트 계승 */
-  font-weight: 700; /* 굵게 */
-  line-height: 1.5; /* 줄 간격 */
-  color: #1a1816; /* var(--text-color) 대신 구체적인 색상 지정 */
-  font-size: 16px; /* 적절한 크기 추가 */
-}
-
-/* WIKI 페이지 스타일 가이드 적용 */
 .wiki-list-page {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 20px;
-  background: #f5f5f5;
+  padding: 32px;
+  background: #ffffff;
   min-height: 100vh;
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px;
@@ -210,23 +229,12 @@ const formatDate = (dateStr) => {
   box-sizing: border-box;
 }
 
-.project-desc {
-  font-size: 14px;
-  color: #666;
-  margin-top: 4px;
-}
-
-/* 패널 공통 (WIKI 코드의 .panel 스타일) */
-.panel {
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  padding: 16px;
-}
-
-/* 검색바 조정 */
+/* 검색 패널 */
 .search-panel {
-  padding: 12px 20px;
+  background: #f2f3f8;
+  border: 1px solid #eceef4;
+  border-radius: 8px;
+  padding: 20px 32px;
 }
 .search-bar {
   display: flex;
@@ -234,7 +242,7 @@ const formatDate = (dateStr) => {
   gap: 12px;
 }
 .search-input-wrap {
-  flex: 1;
+  flex: 0 0 220px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -242,52 +250,83 @@ const formatDate = (dateStr) => {
   border-radius: 4px;
   padding: 6px 12px;
   background: #fff;
+  height: 38px;
 }
 .search-input-wrap input {
   border: none;
   outline: none;
   width: 100%;
+  font-size: 13px;
 }
-
+.label,
+.filter-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #000000c2;
+  white-space: nowrap;
+}
 .select-wrap select {
   border: 1px solid #ddd;
   border-radius: 4px;
   padding: 6px 12px;
   background: #fff;
+  height: 38px;
+  font-size: 13px;
 }
 
-/* 버튼 스타일 (WIKI 스타일 계승) */
+/* 버튼 */
 .btn {
   padding: 6px 16px;
-  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
+  height: 38px;
 }
 .btn-edit {
   background: #e8920e;
   color: #fff;
+  border: none;
+}
+.btn-edit:hover {
+  background: #d07d0b;
 }
 .btn-cancel {
   background: #ffffff;
   border: 1px solid #bbb;
   color: #555;
 }
+.btn-cancel:hover {
+  background: #f0f0f0;
+}
 
-/* 즐겨찾기 그리드 (화면 전체 활용) */
+/* 섹션 타이틀 */
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #3a3b35;
+}
+
+/* 즐겨찾기 그리드 */
 .fav-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
-  width: 100%; /* 부모 너비에 꽉 차게 설정 */
+  width: 100%;
 }
-
-/* 카드의 최소 높이나 너비가 너무 작아지지 않게 조절 (선택 사항) */
 .fav-card {
+  position: relative;
   cursor: pointer;
   transition: all 0.2s;
-  min-width: 0; /* grid 내부에서 내용물이 박스를 뚫고 나가는 것 방지 */
+  min-width: 0;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 16px;
+}
+.fav-card:hover {
+  border-color: #e8920e;
+  box-shadow: 0 2px 8px rgba(232, 146, 14, 0.2);
 }
 .fav-card.active {
   border-color: #e8920e;
@@ -298,24 +337,12 @@ const formatDate = (dateStr) => {
   height: 12px;
   border-radius: 50%;
   border: 2px solid #ddd;
-  transition: all 0.2s; /* 추가 */
-  cursor: pointer; /* 추가 */
-  pointer-events: auto; /* 추가 */
-}
-.radio-dot:hover {
-  border-color: #e8920e;
-  background: #fde8cc;
+  transition: all 0.2s;
 }
 .radio-dot.active {
   background: #e8920e;
   border-color: #e8920e;
 }
-
-.fav-card:hover {
-  border-color: #e8920e;
-  box-shadow: 0 2px 8px rgba(232, 146, 14, 0.2);
-}
-
 .fav-name {
   font-weight: bold;
   margin: 4px 0;
@@ -324,28 +351,51 @@ const formatDate = (dateStr) => {
   font-size: 12px;
   color: #888;
 }
+.fav-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  color: #bbb;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+.fav-remove:hover {
+  color: #e74c3c;
+  background: #fef0f0;
+}
 
-/* 테이블 스타일 */
+/* 테이블 */
 .table-actions {
   display: flex;
   justify-content: flex-end;
 }
 .table-panel {
-  padding: 0; /* 내부 행들이 꽉 차도록 */
+  padding: 0;
   overflow: hidden;
+  border: 1px solid #5b6e96;
+  border-radius: 12px;
 }
 .board-header,
 .board-row {
   display: grid;
   grid-template-columns: 80px 1fr 120px 100px 120px;
   align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid #eee;
+  padding: 16px;
+  border-bottom: 1px solid #f2f0eb;
 }
 .board-header {
-  background: #fafafa;
-  font-weight: bold;
-  color: #666;
+  background: #5b6e96;
+  font-weight: 700;
+  color: #dde3f0;
+  text-align: center;
+}
+.board-header span,
+.board-row span {
+  text-align: center;
 }
 .board-row:last-child {
   border-bottom: none;
@@ -367,6 +417,8 @@ const formatDate = (dateStr) => {
 .star.active {
   color: #e8920e;
 }
+
+/* 뱃지 */
 .badge {
   padding: 2px 8px;
   border-radius: 4px;
@@ -406,13 +458,19 @@ const formatDate = (dateStr) => {
   background: #fff;
   cursor: pointer;
   border-radius: 4px;
+  font-size: 13px;
 }
 .page-btn.active {
   background: #e8920e;
   color: #fff;
   border-color: #e8920e;
+  font-weight: 700;
+}
+.page-btn:hover:not(.active) {
+  background: #f2f0eb;
 }
 
+/* 빈 목록 */
 .board-empty {
   display: flex;
   flex-direction: column;
@@ -421,43 +479,18 @@ const formatDate = (dateStr) => {
   padding: 60px 0;
   gap: 8px;
 }
-
-.empty-icon {
-  font-size: 40px;
-  margin-bottom: 8px;
-}
-
 .empty-title {
   font-size: 15px;
   font-weight: 600;
   color: #555;
 }
-
 .empty-sub {
   font-size: 13px;
   color: #aaa;
 }
 
-.fav-card {
-  position: relative; /* 기존 스타일에 추가 */
-}
-
-.fav-remove {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: none;
-  border: none;
-  color: #bbb;
-  font-size: 13px;
-  cursor: pointer;
-  line-height: 1;
-  padding: 2px 4px;
-  border-radius: 3px;
-}
-
-.fav-remove:hover {
-  color: #e74c3c;
-  background: #fef0f0;
+/* style 태그 안에 추가 */
+h1 {
+  margin-bottom: 0 !important;
 }
 </style>

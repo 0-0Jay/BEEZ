@@ -13,6 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateRequest {
+  private String projectId;
   private String id;
   private String title;
   private String doctype;

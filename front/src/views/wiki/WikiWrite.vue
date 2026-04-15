@@ -177,9 +177,8 @@ const tocItems = ref([]);
 const emptyTocSlots = computed(() => Math.max(0, 5 - tocItems.value.length)); // 목차 점 갯수
 
 function onEditorInput(e) {
-  // 본문에 입력할때 목차가 반영됨
   editorContent.value = e.target.innerHTML;
-  updateTOC(e.target); // 목차 업데이트 함수 호출
+  updateTOC(e.target); // 목차만 업데이트, renumberHeadings 호출 안 함
 }
 
 function updateTOC(container) {
@@ -327,7 +326,37 @@ const activeStyles = ref({
 // }
 
 function onEditorKeydown(e) {
-  // TODO: 단축키 처리
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+
+  const selection = window.getSelection();
+  if (!selection.rangeCount) return;
+  const range = selection.getRangeAt(0);
+  range.deleteContents();
+
+  const newEl = document.createElement(textStyle.value);
+
+  if (textStyle.value === 'p') {
+    newEl.innerHTML = '<br>';
+  } else {
+    newEl.innerText = ''; // 번호는 renumberHeadings가 붙여줌
+  }
+
+  const currentBlock = range.startContainer.nodeType === 3 ? range.startContainer.parentNode : range.startContainer;
+  const block = currentBlock.closest('h1,h2,h3,p') || currentBlock;
+
+  block.after(newEl);
+
+  renumberHeadings(); // 삽입 후 전체 번호 재계산
+
+  // 커서를 새 요소 끝으로 이동
+  const newRange = document.createRange();
+  newRange.selectNodeContents(newEl);
+  newRange.collapse(false);
+  selection.removeAllRanges();
+  selection.addRange(newRange);
+
+  onEditorInput({ target: editorRef.value });
 }
 
 //에디터 함수 - API 쓸거면 필요없음
@@ -346,35 +375,8 @@ function applyFormat(command, value = null) {
 
     if (value !== 'p') {
       newElement.id = `section-${Date.now()}`;
-
-      const allHeadings = Array.from(editorRef.value.querySelectorAll('h2, h3'));
-      let h2Count = 0;
-      let h3Count = 0;
-      let prefix = '';
-
-      // 기존 제목들 순회해서 현재 위치의 번호 계산
-      for (const h of allHeadings) {
-        if (h === blockElement) break; // 교체 대상 직전까지만
-        if (h.tagName === 'H2') {
-          h2Count++;
-          h3Count = 0;
-        } else if (h.tagName === 'H3') {
-          h3Count++;
-        }
-      }
-
-      if (value === 'h2') {
-        h2Count++;
-        h3Count = 0;
-        prefix = `${h2Count}. `;
-      } else if (value === 'h3') {
-        h3Count++;
-        prefix = `${h2Count}.${h3Count} `;
-      }
-
-      // 기존 텍스트에서 번호 제거 후 새 번호 붙이기
       const rawText = blockElement.innerText?.replace(/^[\d.]+\s*/, '').trim() || '';
-      newElement.innerText = prefix + rawText;
+      newElement.innerText = rawText; // 일단 텍스트만 넣고
     } else {
       newElement.innerHTML = blockElement.innerHTML && blockElement.innerHTML !== '<br>' ? blockElement.innerHTML : '<br>';
     }
@@ -396,11 +398,9 @@ function applyFormat(command, value = null) {
     range.collapse(false);
     selection.removeAllRanges();
     selection.addRange(range);
-  } else {
-    document.execCommand(command, false, value);
-  }
 
-  onEditorInput({ target: editorRef.value });
+    renumberHeadings(); // 삽입 후 전체 번호 재계산
+  }
 }
 
 // WikiWrite.vue script에 추가
@@ -419,11 +419,29 @@ function confirmCancel() {
   }
 }
 
-const textStyleOptions = [
-  { label: '제목 (1. 2. 3. 형태)', value: 'h2' },
-  { label: '부제목(1.1 / 1.2 / 1.3형태)', value: 'h3' },
-  { label: '본문', value: 'p' }
-];
+// 에디터 내 모든 제목 번호를 DOM 순서 기준으로 다시 계산
+function renumberHeadings() {
+  const headings = Array.from(editorRef.value.querySelectorAll('h2, h3'));
+  let h2Count = 0;
+  let h3Count = 0;
+
+  headings.forEach((h, index) => {
+    const id = `section-${index}`;
+    h.setAttribute('id', id);
+
+    // 기존 번호 제거 후 텍스트만 추출
+    const rawText = h.innerText.replace(/^[\d.]+\s*/, '').trim();
+
+    if (h.tagName === 'H2') {
+      h2Count++;
+      h3Count = 0;
+      h.innerText = `${h2Count}. ${rawText}`;
+    } else if (h.tagName === 'H3') {
+      h3Count++;
+      h.innerText = `${h2Count}.${h3Count} ${rawText}`;
+    }
+  });
+}
 </script>
 
 <template>
@@ -510,7 +528,7 @@ const textStyleOptions = [
         <div class="link-form">
           <div class="link-items-container">
             <div class="toc-heading" style="margin-bottom: 12px">관련 URL 링크</div>
-            <div v-for="(link, index) in linkItems" :key="index" class="link-item-group">
+            <div v-for="(link, index) in linkItems" :key="index" class="link-item-group" :class="{ 'link-item-divider': index % 1 === 0 && index !== 0 }">
               <InputText v-model="link.title" class="field-input" :class="{ 'p-invalid': linkErrors[index]?.title }" placeholder="연결할 링크 이름을 작성해주세요." />
               <p v-if="linkErrors[index]?.title" class="error-msg">링크 이름을 입력해주세요.</p>
 
@@ -596,7 +614,42 @@ const textStyleOptions = [
     <div class="editor-section">
       <!-- 툴바 -->
       <div class="editor-toolbar">
-        <Select v-model="textStyle" :options="textStyleOptions" optionLabel="label" optionValue="value" class="toolbar-select" @change="applyFormat('formatBlock', textStyle)" />
+        <button
+          class="toolbar-btn"
+          :class="{ 'is-active': textStyle === 'h2' }"
+          @click="
+            () => {
+              textStyle = 'h2';
+              applyFormat('formatBlock', 'h2');
+            }
+          "
+        >
+          제목
+        </button>
+        <button
+          class="toolbar-btn"
+          :class="{ 'is-active': textStyle === 'h3' }"
+          @click="
+            () => {
+              textStyle = 'h3';
+              applyFormat('formatBlock', 'h3');
+            }
+          "
+        >
+          부제목
+        </button>
+        <button
+          class="toolbar-btn"
+          :class="{ 'is-active': textStyle === 'p' }"
+          @click="
+            () => {
+              textStyle = 'p';
+              applyFormat('formatBlock', 'p');
+            }
+          "
+        >
+          본문
+        </button>
         <div class="toolbar-divider" />
 
         <button class="toolbar-btn bold" title="굵게" @click="applyFormat('bold')"><b>B</b></button>
@@ -1053,21 +1106,11 @@ const textStyleOptions = [
   z-index: 1;
 }
 
-/* 활성화된 버튼 스타일 (확실한 눌림 표시) */
 .toolbar-btn.is-active {
-  /* 1. 배경색을 더 어둡고 푸른 계열로 바꿔서 강조 (선택사항) */
-  background-color: #d1d9e6 !important;
-
-  /* 2. 테두리를 파란색 계열로 주어 강조 */
-  border: 1px solid #4a90e2 !important;
-
-  /* 3. 글자색을 더 진하게 */
-  color: #1a73e8 !important;
-
-  /* 4. 안쪽 그림자를 더 깊게 주어 버튼이 눌린 입체감 표현 */
-  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.2);
-
-  /* 5. 약간의 여백 보정 (테두리가 생겨서 버튼이 흔들리는 것 방지) */
+  background-color: #e8920e !important;
+  border: 1px solid #c97a0a !important;
+  color: #ffffff !important;
+  /* box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.2); */
   padding: 3px 7px;
 }
 
@@ -1121,5 +1164,11 @@ h1 {
   font-size: 11px;
   color: #e74c3c;
   margin-top: 2px;
+}
+
+.link-item-divider {
+  border-top: 1px solid #e8920e;
+  padding-top: 10px;
+  margin-top: 4px;
 }
 </style>

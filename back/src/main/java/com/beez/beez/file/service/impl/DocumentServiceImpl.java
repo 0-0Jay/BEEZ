@@ -1,6 +1,7 @@
 package com.beez.beez.file.service.impl;
 
 
+import com.beez.beez.aop.Loggable;
 import com.beez.beez.file.dto.*;
 import com.beez.beez.file.mapper.DocumentMapper;
 import com.beez.beez.file.service.DocumentService;
@@ -32,6 +33,15 @@ public class DocumentServiceImpl implements DocumentService {
   private final DocumentMapper documentMapper;
   private final FileService fileService;
   
+  //문서 생성
+  @Loggable(
+    logType = "A1", //생성
+    logCategory = "B5", //문서
+    content = "문서 생성({id})",
+    link = "/document/edit/{projectId}/{id}",
+    idField = "projectId"
+  )
+  
   @Override
   @Transactional //문서글(텍스트) + 파일묶음 = 1개의 게시글 형태로 만들기 위함
   public String registerDocument(CreateRequest request, List<MultipartFile> files) {
@@ -62,6 +72,16 @@ public class DocumentServiceImpl implements DocumentService {
   } // registerDocument end
   
   
+  
+  
+  //문서 수정
+//  @Loggable(
+//    logType = "A2", //수정
+//    logCategory = "B5", //문서
+//    content = "문서 수정({id})",
+//    link = "/document/detail/{projectId}/{id}",
+//    idField = "projectId"
+//  )
   @Override
   @Transactional //update로직에 본인이 쓴 글만 수정할 수 있게 체크하는 로직을 추가해야할 수 있음
   public void updateDocument(UpdateRequest updateRequest,
