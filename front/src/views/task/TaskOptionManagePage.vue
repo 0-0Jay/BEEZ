@@ -142,7 +142,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-stone-50 px-10 py-8 text-stone-700">
+  <div class="min-h-screen bg-white px-10 py-8 text-stone-700">
     <div class="mb-7">
       <h1 class="text-2xl font-bold tracking-tight text-stone-900">일감 유형 &amp; 범주 관리</h1>
     </div>
@@ -157,17 +157,17 @@ onMounted(async () => {
               >개
             </p>
           </div>
-          <Button label="일감 유형 추가" icon="pi pi-plus" raised @click="openTypeAdd" />
+          <Button label="일감 유형 추가" class="!bg-[#2D8FAD] !border-[#2D8FAD] hover:!bg-[#257892]" icon="pi pi-plus" raised @click="openTypeAdd" />
         </div>
 
         <div class="overflow-x-auto">
           <table class="w-full border-collapse">
             <thead>
-              <tr class="bg-stone-100 border-b border-stone-200">
-                <th class="px-5 py-3.5 text-left text-base font-bold uppercase tracking-wider text-stone-400 w-36">유형명</th>
-                <th class="px-5 py-3.5 text-center text-base font-bold uppercase tracking-wider text-stone-400 w-32">초기 상태</th>
-                <th class="px-5 py-3.5 text-left text-base font-bold uppercase tracking-wider text-stone-400">설명</th>
-                <th class="px-5 py-3.5 text-center text-base font-bold uppercase tracking-wider text-stone-400 w-28">관리</th>
+              <tr class="bg-[#5B6E96] border-b border-stone-200">
+                <th class="px-5 py-3.5 text-left text-base font-bold uppercase tracking-wider text-[#DDE3F0] w-36">유형명</th>
+                <th class="px-5 py-3.5 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] w-32">초기 상태</th>
+                <th class="px-5 py-3.5 text-left text-base font-bold uppercase tracking-wider text-[#DDE3F0]">설명</th>
+                <th class="px-5 py-3.5 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] w-28">관리</th>
               </tr>
             </thead>
             <tbody>
@@ -207,16 +207,16 @@ onMounted(async () => {
               >개
             </p>
           </div>
-          <Button label="일감 범주 추가" icon="pi pi-plus" raised @click="openCatAdd" />
+          <Button label="일감 범주 추가" class="!bg-[#2D8FAD] !border-[#2D8FAD] hover:!bg-[#257892]" icon="pi pi-plus" raised @click="openCatAdd" />
         </div>
 
         <div class="overflow-x-auto">
           <table class="w-full border-collapse">
             <thead>
-              <tr class="bg-stone-100 border-b border-stone-200">
-                <th class="px-5 py-3.5 text-left text-base font-bold uppercase tracking-wider text-stone-400 w-36">범주명</th>
-                <th class="px-5 py-3.5 text-left text-base font-bold uppercase tracking-wider text-stone-400">설명</th>
-                <th class="px-5 py-3.5 text-center text-base font-bold uppercase tracking-wider text-stone-400 w-28">관리</th>
+              <tr class="bg-[#5B6E96] border-b border-stone-200">
+                <th class="px-5 py-3.5 text-left text-base font-bold uppercase tracking-wider text-[#DDE3F0] w-36">범주명</th>
+                <th class="px-5 py-3.5 text-left text-base font-bold uppercase tracking-wider text-[#DDE3F0]">설명</th>
+                <th class="px-5 py-3.5 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] w-28">관리</th>
               </tr>
             </thead>
             <tbody>
