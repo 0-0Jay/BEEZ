@@ -61,6 +61,10 @@ export const setupAuthGuard = async (to, from, next) => {
     console.log(`[Guard] 현재 페이지: ${to.name}, 찾은 ID: ${projectId}`);
 
     if (!projectId) {
+      if (to.name === 'ProjectCreate' && (authStore.user.role === 'ROLE0001' || authStore.user.role === 'ROLE0002')) {
+        return next();
+      }
+
       alertStore.setAlert('프로젝트를 선택해주세요.');
       return next({ name: 'projectList' });
     }

@@ -48,8 +48,8 @@ defineExpose({ validate, setExternalError });
       <label class="block font-medium text-[#1A1816] mb-1">설명</label>
       <Textarea v-model="groupStore.groupForm.description" placeholder="그룹에 대한 설명을 입력해주세요." rows="5" class="w-full h-[350px] text-sm resize-none" :maxlength="500" />
       <div class="flex items-center justify-between mt-2">
-        <small v-if="groupStore.groupForm.description.length > 500" class="text-red-500 text-xs">설명은 500자를 초과할 수 없습니다.</small>
-        <small class="ml-auto text-xs" :class="groupStore.groupForm.description.length > 500 ? 'text-red-500 font-semibold' : 'text-[#9A9B90]'">{{ groupStore.groupForm.description.length }} / 500</small>
+        <small v-if="groupStore.groupForm.description?.length > 500" class="text-red-500 text-xs">설명은 500자를 초과할 수 없습니다.</small>
+        <small class="ml-auto text-xs" :class="groupStore.groupForm.description?.length > 500 ? 'text-red-500 font-semibold' : 'text-[#9A9B90]'">{{ groupStore.groupForm.description?.length }} / 500</small>
       </div>
     </div>
   </div>

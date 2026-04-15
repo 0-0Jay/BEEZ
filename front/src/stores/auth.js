@@ -59,11 +59,14 @@ export const useAuthStore = defineStore('auth', {
 
     logout() {
       this.accessToken = null;
-      this.user = null;
-      this.projectPermissions = null;
+      this.user = {
+        id: '',
+        name: '',
+        email: '',
+        role: ''
+      };
+      this.projectPermissions = [];
       this.currentProjectId = null;
-      // localStorage.removeItem('accessToken');
-      // localStorage.removeItem('user');
       sessionStorage.clear();
     },
 
@@ -104,9 +107,11 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async findPermissionsByProject(projectId) {
-      this.projectPermissions = [];
+      if (this.currentProjectId === projectId) return;
+
       const response = await axios.get(`/project-auth/permissions/${projectId}`);
       this.projectPermissions = response.data;
+      this.currentProjectId = projectId;
     }
   },
   persist: true

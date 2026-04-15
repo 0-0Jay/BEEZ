@@ -124,6 +124,16 @@ const handleSubmit = async () => {
     isPublic: form.isPublic ? 'J1' : 'J0',
     parentId: form.parentId
   });
+
+  sessionStorage.setItem(
+    'project',
+    JSON.stringify({
+      selectedProject: {
+        id: id
+      }
+    })
+  );
+
   toast.add({ severity: 'success', summary: '등록 완료', detail: '프로젝트가 등록되었습니다.', life: 2000 });
 
   router.push(`/project/setting/${id}`);
