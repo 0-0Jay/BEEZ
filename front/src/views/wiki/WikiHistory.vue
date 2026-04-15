@@ -59,18 +59,18 @@ const confirmRollback = (version) => {
 const executeRollback = async () => {
   const { wikiId, projectId } = route.params;
 
-  const latestVersion = versions.value[0];
-  let nextVersionNum = '1.0';
-  if (latestVersion?.versionName) {
-    const match = latestVersion.versionName.match(/v(\d+\.\d+)/);
-    if (match) {
-      nextVersionNum = (parseFloat(match[1]) + 0.1).toFixed(1);
-    }
-  }
+  // const latestVersion = versions.value[0];
+  // let nextVersionNum = '1.0';
+  // if (latestVersion?.versionName) {
+  //   const match = latestVersion.versionName.match(/v(\d+\.\d+)/);
+  //   if (match) {
+  //     nextVersionNum = (parseFloat(match[1]) + 0.1).toFixed(1);
+  //   }
+  // }
 
   // 프로젝트명 추출 (versionName에서 v숫자 앞부분)
-  const projectTitle = latestVersion?.versionName?.replace(/v[\d.]+$/, '').trim() ?? '';
-  const newVersionName = `${projectTitle} v${nextVersionNum}`;
+  // const projectTitle = latestVersion?.versionName?.replace(/v[\d.]+$/, '').trim() ?? '';
+  // const newVersionName = `${projectTitle} v${nextVersionNum}`;
 
   const saveData = {
     wikiRequest: {
@@ -81,8 +81,9 @@ const executeRollback = async () => {
       content: targetVersion.value.content,
       userId: authStore.user.id,
       wikiId: wikiId,
-      description: `${targetVersion.value.versionName} 버전으로 롤백`,
-      versionName: newVersionName,
+      description: `${targetVersion.value.versionId} 버전으로 롤백`,
+      // description: `${targetVersion.value.versionName} 버전으로 롤백`,
+      // versionName: newVersionName,
       links: targetVersion.value.links ?? '[]',
       wikiInfo: targetVersion.value.wikiInfo ?? ''
     }
@@ -112,7 +113,8 @@ const goBack = () => router.back();
       <div class="version-header" @click="toggleAccordion(index)">
         <div class="version-left">
           <span :class="['badge-version', index === 0 ? 'badge-latest' : 'badge-old']">
-            {{ version.versionName.match(/v[\d.]+/)?.[0] ?? version.versionName }}
+            <!-- {{ version.versionName.match(/v[\d.]+/)?.[0] ?? version.versionName }} -->
+            {{ version.versionId }}
           </span>
           <div class="version-description">{{ version.description }}</div>
         </div>
@@ -163,7 +165,8 @@ const goBack = () => router.back();
           <button class="modal-close" @click="showRollbackModal = false">×</button>
         </div>
         <div class="modal-body">
-          <p>{{ targetVersion?.versionName }} 버전으로 롤백하시겠습니까?</p>
+          <!-- <p>{{ targetVersion?.versionName }} 버전으로 롤백하시겠습니까?</p> -->
+          <p>{{ targetVersion?.versionId }} 버전으로 롤백하시겠습니까?</p>
           <p style="font-size: 12px; color: #999; margin-top: 8px">현재 내용이 새 버전으로 저장되고, 선택한 버전의 내용으로 되돌아갑니다.</p>
         </div>
         <div class="modal-footer">

@@ -29,8 +29,15 @@ export const useDocumentStore = defineStore('document', {
         // 목록에서 해당 문서의 isMarked 즉시 반전 (API 재호출 없이)
         const doc = this.documentList.find((d) => d.id === documentId);
         if (doc) doc.isMarked = doc.isMarked === 'Y' ? 'N' : 'Y';
+
+        // 상세 화면 업데이트 (추가)
+        if (this.currentDocument?.id === documentId) {
+          this.currentDocument.isMarked = this.currentDocument.isMarked === 'Y' ? 'N' : 'Y';
+        }
       } catch (error) {
         console.error('즐겨찾기 실패:', error);
+        console.log(this.currentDocument?.id, typeof this.currentDocument?.id);
+        console.log(documentId, typeof documentId);
         throw error;
       }
     },

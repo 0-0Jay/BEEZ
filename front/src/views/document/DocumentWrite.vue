@@ -16,6 +16,16 @@ const projectId = route.params.projectId;
 const toast = useToast();
 const submitted = ref(false);
 
+//글자수 카운트 계산
+const contentCount = computed(() => form.value.content.length);
+
+//입력시 500자 제한 로직
+const handleInput = (e) => {
+  if (e.target.value.length > 500) {
+    form.value.content = e.target.value.slice(0, 500);
+  }
+};
+
 const form = ref({
   title: '',
   doctype: '기획서',
@@ -29,10 +39,29 @@ const fileInput = ref(null);
 const triggerFileInput = () => fileInput.value?.click();
 
 const onFileChange = (e) => {
+  const MAX_SIZE = 10 * 1024 * 1024;
+
   Array.from(e.target.files).forEach((newFile) => {
+    // 1. 파일 크기 체크
+    if (newFile.size > MAX_SIZE) {
+      toast.add({
+        severity: 'error',
+        summary: '업로드 불가',
+        detail: `파일 크기가 10MB를 넘어서 업로드 할 수 없습니다\n파일명: ${newFile.name}`,
+        life: 3000
+      });
+      return; // 10MB 초과 시 해당 파일은 추가하지 않고 건너뜀
+    }
+
+    // 2. 중복 체크 후 추가
     const isDuplicate = form.value.attachments.some((f) => f.name === newFile.name && f.size === newFile.size);
-    if (!isDuplicate) form.value.attachments.push(newFile);
+
+    if (!isDuplicate) {
+      form.value.attachments.push(newFile);
+    }
   });
+
+  // input 초기화 (같은 파일을 다시 선택할 수 있도록)
   e.target.value = '';
 };
 
@@ -111,8 +140,11 @@ const goToList = () => {
       <div class="form-row">
         <div class="form-group full align-top">
           <span class="form-label pt">문서 설명</span>
-          <div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
-            <textarea v-model="form.content" class="textarea" :class="{ 'is-error': submitted && !form.content }" />
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 4px; position: relative">
+            <textarea v-model="form.content" class="textarea" :class="{ 'is-error': submitted && !form.content }" maxlength="500" @input="handleInput" placeholder="내용을 입력해주세요. (최대 500자)" />
+            <div class="char-count">
+              <span :class="{ 'text-error': contentCount >= 500 }">{{ contentCount }}</span> / 500
+            </div>
             <span v-if="submitted && !form.content" class="inline-error">문서 설명을 입력해주세요.</span>
           </div>
         </div>
@@ -122,7 +154,8 @@ const goToList = () => {
     <!-- 섹션 2: 첨부 파일 -->
     <div class="panel">
       <div class="panel-title"><span class="badge-num">2</span> 첨부 파일</div>
-      <button class="btn btn-attach" @click="triggerFileInput">첨부파일 등록</button>
+      <button class="btn btn-primary pi pi-paperclip" @click="triggerFileInput">첨부파일 등록</button>
+      <small class="text-[#9A9B90] mt-2 block text-base">파일당 최대 10MB / 여러 파일을 한 번에 선택하거나 반복 추가할 수 있습니다.</small>
 
       <input ref="fileInput" type="file" multiple style="display: none" @change="onFileChange" />
       <div class="attach-area">
@@ -354,9 +387,9 @@ const goToList = () => {
 }
 
 .btn-attach {
-  background: #f0f0f0;
-  border: 1px solid #bbb;
-  color: #555;
+  background: #e8920e;
+  border: 1px solid #d07d0b;
+  color: #ffffff;
   height: 30px;
   padding: 0 14px;
   font-size: 12px;
@@ -378,5 +411,23 @@ const goToList = () => {
 
 .is-error {
   border-color: #e74c3c !important;
+}
+
+/* 스타일 하단에 추가 */
+.char-count {
+  align-self: flex-end; /* 오른쪽 정렬 */
+  font-size: 12px;
+  color: #888;
+  margin-top: 2px;
+}
+
+.text-error {
+  color: #e74c3c;
+  font-weight: bold;
+}
+
+/* textarea에 약간의 여백을 주어 카운트와 겹치지 않게 할 수도 있습니다 */
+.textarea {
+  padding-bottom: 20px;
 }
 </style>

@@ -1,5 +1,6 @@
 package com.beez.beez.wiki.service.impl;
 
+import com.beez.beez.aop.Loggable;
 import com.beez.beez.wiki.dto.WikiProjectRequest;
 import com.beez.beez.wiki.dto.WikiRequest;
 import com.beez.beez.wiki.dto.WikiVersionRequest;
@@ -20,6 +21,15 @@ public class WikiServiceImpl implements WikiService {
   
   private final WikiMapper wikiMapper;
   
+  //위키 로그
+  @Loggable(
+    logType = "A1",
+    logCategory = "B4",
+    content = "위키 추가({wikiId})",
+    link = "/wiki/detail/{projectId}/{wikiId}",
+    idField = "projectId"
+  )
+  
   @Override
   @Transactional // ##프로시저 처리 하면 성능 향상 가능 - TaskMapper 파일 제일 밑에 형태 참고
   public void insertWiki(WikiRequest wikiRequest, WikiVersionRequest versionRequest){
@@ -37,6 +47,15 @@ public class WikiServiceImpl implements WikiService {
     versionRequest.setWikiId(wikiRequest.getId());
     wikiMapper.updateWikiIdInVersion(versionRequest);
   }
+  
+  //위키 업데이트 로그 기록
+  @Loggable(
+    logType = "A2",
+    logCategory = "B4",
+    content = "위키 버전 변경(롤백)({wikiId})",
+    link = "/wiki/edit/{projectId}/{wikiId}",
+    idField = "projectId"
+  )
   
   @Override
   @Transactional // 수정시 본문 추가랑 wiki테이블 최신 버전 갱신

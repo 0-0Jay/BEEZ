@@ -120,7 +120,7 @@ watch(
             <div class="wiki-header-left">
               <h1 class="text-2xl font-bold text-[#1A1816]">WIKI</h1>
               <!-- <p>설명 들어가면 좋을 것 같음 - wikiInfo 백단 처리</p> -->
-              <span class="badge-status">{{ wikiDetail.versionName || '-' }}</span>
+              <span class="badge-status">현재 버전 : {{ wikiDetail.versionId || '-' }}</span>
             </div>
             <p class="wiki-subtitle">{{ wikiDetail.wikiInfo || '위키 한 줄 설명 데이터가 없습니다' }}</p>
           </div>
@@ -161,10 +161,6 @@ watch(
       <div class="info-card">
         <div class="info-card-title">프로젝트 - 기본정보</div>
         <br />
-        <!-- <div class="info-row">
-          <span class="info-label">상태 : </span>
-          <span class="badge-status">{{ projectInfo.status || '데이터가 없습니다' }}</span>
-        </div> -->
 
         <div class="info-row">
           <span class="info-label">프로젝트번호 :</span>
@@ -266,15 +262,7 @@ watch(
   gap: 10px;
   flex-wrap: wrap;
 }
-/* .badge-wiki {
-  font-size: 20px;
-  background: #e8f0fe;
-  border: 1px solid #90b8f8;
-  border-radius: 20px;
-  padding: 2px 10px;
-  color: #1a56c4;
-  font-weight: bold;
-} */
+
 .wiki-title {
   font-size: 20px;
   font-weight: bold;
