@@ -18,8 +18,6 @@ const toDateStr = (val) => {
 };
 
 const handleSave = () => {
-  // CalendarRequest DTO 형태로 부모에 전달:
-  // { id, userId, type, title, content, projectId, startDate, endDate }
   emit('save');
 };
 </script>

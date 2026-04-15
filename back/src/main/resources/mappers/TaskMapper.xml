@@ -31,12 +31,14 @@
   
   <select id="findMemberList" resultType="MemberResponse">
     SELECT DISTINCT p.user_id AS id,
-           u.name
+           u.name,
+           MAX(r.is_assignee) AS is_assignee
     FROM project_member p
     JOIN users u ON p.user_id = u.id
     JOIN role_mapping rm ON p.id = rm.member_id
     JOIN roles r ON r.id = rm.role_id
-    WHERE p.project_id = #{projectId} AND r.is_assignee = 'Y1' AND rm.is_delete = 'F0' AND p.is_delete = 'F0'
+    WHERE p.project_id = #{projectId} AND rm.is_delete = 'F0' AND p.is_delete = 'F0'
+    GROUP BY p.user_id, u.name
   </select>
   
   <select id="findCommonCodeList" resultType="CommonCodeResponse">

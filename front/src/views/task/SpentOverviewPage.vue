@@ -113,7 +113,7 @@ const filteredSpent = computed(() => {
   });
 });
 
-const totalFilteredMinutes = computed(() => filteredSpent.value.reduce((sum, s) => sum + (s.spent || 0), 0));
+const totalFilteredHours = computed(() => filteredSpent.value.reduce((sum, s) => sum + (s.spent || 0), 0));
 
 // 정렬
 const sortKey = ref('taskStart');
@@ -201,11 +201,11 @@ function resetReportDate() {
 }
 
 // 요약 통계
-const reportTotalMinutes = computed(() => reportSpent.value.reduce((sum, s) => sum + (s.spent || 0), 0));
+const reportTotalHours = computed(() => reportSpent.value.reduce((sum, s) => sum + (s.spent || 0), 0));
 
-const dailyAvgMinutes = computed(() => {
+const dailyAvgHours = computed(() => {
   const days = new Set(reportSpent.value.map((s) => new Date(s.taskStart).toDateString())).size;
-  return days > 0 ? Math.round(reportTotalMinutes.value / days) : 0;
+  return days > 0 ? Math.round(reportTotalHours.value / days) : 0;
 });
 
 // 통계 헬퍼
@@ -260,26 +260,20 @@ const chartOptions = {
 };
 
 // 유틸
-function formatMinutes(mins) {
-  if (!mins && mins !== 0) return '-';
-
-  const totalMins = mins;
-  const d = Math.floor(totalMins / (8 * 60)); // 480분 = 1일
-  const h = Math.floor((totalMins % (8 * 60)) / 60);
-  const m = totalMins % 60;
-
+function formatHours(hrs) {
+  if (!hrs && hrs !== 0) return '-';
+  const d = Math.floor(hrs / 8);
+  const h = hrs % 8;
   const parts = [];
   if (d > 0) parts.push(`${d}일`);
   if (h > 0) parts.push(`${h}시간`);
-  if (m > 0) parts.push(`${m}분`);
-
-  return parts.length > 0 ? parts.join(' ') : '0분';
+  return parts.length > 0 ? parts.join(' ') : '0시간';
 }
 
 function formatDateTime(dt) {
   if (!dt) return '-';
   const d = new Date(dt);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getHours()).padStart(2, '0')}`;
 }
 
 const activeTab = ref(0);
@@ -346,9 +340,9 @@ onMounted(async () => {
           <div class="flex flex-col gap-1.5 col-span-2">
             <label class="text-base font-semibold uppercase tracking-wider text-stone-400">조회 기간 </label>
             <div class="flex gap-1.5 items-center">
-              <DatePicker v-model="filterDraft.dateFrom" :manualInput="false" showButtonBar showIcon placeholder="시작일" dateFormat="yy-mm-dd" class="w-full" inputClass="w-full" />
+              <DatePicker v-model="filterDraft.dateFrom" :manualInput="false" :max-date="filterDraft.dateTo" showButtonBar showIcon placeholder="시작일" dateFormat="yy-mm-dd" class="w-full" inputClass="w-full" />
               <span class="text-stone-400 text-base shrink-0">~</span>
-              <DatePicker v-model="filterDraft.dateTo" :manualInput="false" showButtonBar showIcon placeholder="종료일" dateFormat="yy-mm-dd" class="w-full" inputClass="w-full" />
+              <DatePicker v-model="filterDraft.dateTo" :manualInput="false" :min-date="filterDraft.dateFrom" showButtonBar showIcon placeholder="종료일" dateFormat="yy-mm-dd" class="w-full" inputClass="w-full" />
             </div>
           </div>
 
@@ -378,12 +372,12 @@ onMounted(async () => {
             >건
           </span>
           <span class="text-base text-stone-400">
-            총 소요시간 <strong class="text-amber-700 font-bold">{{ formatMinutes(totalFilteredMinutes) }}</strong>
+            총 소요시간 <strong class="text-amber-700 font-bold">{{ formatHours(totalFilteredHours) }}</strong>
           </span>
         </div>
 
         <div class="overflow-x-auto">
-          <table class="w-full border-collapse text-base">
+          <table class="w-full border-collapse text-base table-fixed">
             <thead>
               <tr class="bg-stone-100 border-b border-stone-200">
                 <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-stone-400 min-w-30">프로젝트</th>
@@ -429,11 +423,11 @@ onMounted(async () => {
                   <span class="inline-block px-2.5 py-0.5 rounded-full text-base font-semibold whitespace-nowrap bg-[#faeeda] text-[#633806]">{{ activityMap[item.activityType] ?? item.activityType }}</span>
                 </td>
                 <td class="px-4 py-3.5">
-                  <span class="text-base text-stone-500 line-clamp-2">{{ item.description }}</span>
+                  <span class="text-base text-stone-500 min-w-0 text-wrap break-words">{{ item.description }}</span>
                 </td>
                 <td class="px-4 py-3.5 text-base text-stone-500 tabular-nums text-center whitespace-nowrap">{{ formatDateTime(item.taskStart) }}</td>
                 <td class="px-4 py-3.5 text-center">
-                  <span class="font-mono text-base font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded">{{ formatMinutes(item.spent) }}</span>
+                  <span class="font-mono text-base font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded">{{ formatHours(item.spent) }}</span>
                 </td>
               </tr>
               <tr v-if="pagedSpent.length === 0">
@@ -457,9 +451,9 @@ onMounted(async () => {
       <!-- 기간 선택 (시작일 / 종료일 분리) -->
       <div class="bg-[#F2F0EB] border border-[#C7C7C2] rounded-xl shadow-sm px-7 py-4 mb-5 flex items-center gap-4">
         <span class="text-base font-semibold uppercase tracking-wider text-stone-400">보고서 기간</span>
-        <DatePicker v-model="reportDateFrom" :manualInput="false" showButtonBar showIcon placeholder="시작일" dateFormat="yy-mm-dd" />
+        <DatePicker v-model="reportDateFrom" :manualInput="false" :max-date="reportDateTo" showButtonBar showIcon placeholder="시작일" dateFormat="yy-mm-dd" />
         <span class="text-stone-400">~</span>
-        <DatePicker v-model="reportDateTo" :manualInput="false" showButtonBar showIcon placeholder="종료일" dateFormat="yy-mm-dd" />
+        <DatePicker v-model="reportDateTo" :manualInput="false" :min-date="reportDateFrom" showButtonBar showIcon placeholder="종료일" dateFormat="yy-mm-dd" />
         <Button label="초기화" severity="secondary" raised @click="resetReportDate" />
         <span class="text-base text-stone-400 ml-2">{{ reportSpent.length }}건의 데이터</span>
       </div>
@@ -472,7 +466,7 @@ onMounted(async () => {
         </p>
         <div class="grid grid-cols-2 gap-5">
           <div class="summary-stat-card">
-            <div class="text-6xl font-bold text-amber-700">{{ formatMinutes(reportTotalMinutes) }}</div>
+            <div class="text-6xl font-bold text-amber-700">{{ formatHours(reportTotalHours) }}</div>
             <div class="text-base text-stone-400 flex items-center gap-2 mt-1">
               <i class="pi pi-info-circle"></i>
               <span>모든 소요시간은 1일 8시간 업무로 가정하여 계산됩니다.</span>
@@ -480,7 +474,7 @@ onMounted(async () => {
           </div>
           <div class="summary-stat-card text-right">
             <div class="text-base font-semibold uppercase tracking-wider text-stone-400 mb-2">일 평균</div>
-            <div class="text-3xl font-bold text-amber-700">{{ formatMinutes(dailyAvgMinutes) }}<span class="text-base text-stone-400 mt-1"> / 일</span></div>
+            <div class="text-3xl font-bold text-amber-700">{{ formatHours(dailyAvgHours) }}<span class="text-base text-stone-400 mt-1"> / 일</span></div>
           </div>
         </div>
       </div>
@@ -498,7 +492,7 @@ onMounted(async () => {
             <Chart class="w-58" type="doughnut" :data="chartData" :options="chartOptions"></Chart>
             <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <span class="text-base text-stone-400">합계</span>
-              <span class="text-xl font-bold text-amber-700">{{ formatMinutes(reportTotalMinutes) }}</span>
+              <span class="text-xl font-bold text-amber-700">{{ formatHours(reportTotalHours) }}</span>
             </div>
           </div>
           <!-- 범례 + 프로그레스 -->
@@ -509,7 +503,7 @@ onMounted(async () => {
                   <span class="inline-block w-3 h-3 rounded-sm flex-shrink-0" :style="`background:${donutColors[idx % donutColors.length]}`"></span>
                   <span class="text-base text-stone-700">{{ item.label }}</span>
                 </div>
-                <span class="font-mono text-base font-bold text-amber-700">{{ formatMinutes(item.minutes) }}</span>
+                <span class="font-mono text-base font-bold text-amber-700">{{ formatHours(item.minutes) }}</span>
               </div>
               <ProgressBar
                 :value="item.pct"
@@ -536,7 +530,7 @@ onMounted(async () => {
             <div v-for="item in categoryStats" :key="item.label">
               <div class="flex justify-between items-center mb-1.5">
                 <span class="text-base text-stone-700">{{ item.label }}</span>
-                <span class="font-mono text-base font-bold text-amber-700">{{ formatMinutes(item.minutes) }}</span>
+                <span class="font-mono text-base font-bold text-amber-700">{{ formatHours(item.minutes) }}</span>
               </div>
               <ProgressBar
                 :value="item.pct"
@@ -560,7 +554,7 @@ onMounted(async () => {
             <div v-for="item in typeStats" :key="item.label">
               <div class="flex justify-between items-center mb-1.5">
                 <span class="text-base text-stone-700">{{ item.label }}</span>
-                <span class="font-mono text-base font-bold text-amber-700">{{ formatMinutes(item.minutes) }}</span>
+                <span class="font-mono text-base font-bold text-amber-700">{{ formatHours(item.minutes) }}</span>
               </div>
               <ProgressBar
                 :value="item.pct"
@@ -584,7 +578,7 @@ onMounted(async () => {
             <div v-for="item in assigneeStats" :key="item.label">
               <div class="flex justify-between items-center mb-1.5">
                 <span class="text-base text-stone-700">{{ item.label }}</span>
-                <span class="font-mono text-base font-bold text-amber-700">{{ formatMinutes(item.minutes) }}</span>
+                <span class="font-mono text-base font-bold text-amber-700">{{ formatHours(item.minutes) }}</span>
               </div>
               <ProgressBar
                 :value="item.pct"
@@ -608,7 +602,7 @@ onMounted(async () => {
             <div v-for="item in activityStats" :key="item.label">
               <div class="flex justify-between items-center mb-1.5">
                 <span class="text-base text-stone-700">{{ item.label }}</span>
-                <span class="font-mono text-base font-bold text-amber-700">{{ formatMinutes(item.minutes) }}</span>
+                <span class="font-mono text-base font-bold text-amber-700">{{ formatHours(item.minutes) }}</span>
               </div>
               <ProgressBar :value="item.pct"></ProgressBar>
             </div>

@@ -99,6 +99,8 @@ function initGantt(rawTasks) {
     project: ganttProject,
     width: containerWidth,
     height: '100%',
+    readOnly: true,
+    emptyText: '<div class="flex h-110 text-xl items-center justify-center">조건에 맞는 데이터가 없습니다</div>',
 
     viewPreset: {
       base: 'weekAndDay',
@@ -125,11 +127,11 @@ function initGantt(rawTasks) {
       percentBar: { allowResize: false },
       cellEdit: false,
       taskEdit: false,
-      taskDrag: true,
+      taskDrag: false,
+      taskDragCreate: false,
       taskResize: false,
       dependencyEdit: false,
       taskMenu: false,
-      // ① 표/차트 구분선 드래그 비활성화
       regionResize: false,
       filter: true,
       tree: true
@@ -189,13 +191,13 @@ function setupResizeObserver() {
 
 onMounted(() => {
   setupResizeObserver();
-  if (props.tasks.length) initGantt(props.tasks);
+  initGantt(props.tasks);
 });
 
 watch(
   () => props.tasks,
   (newVal) => {
-    if (newVal?.length) initGantt(newVal);
+    initGantt(newVal);
   }
 );
 

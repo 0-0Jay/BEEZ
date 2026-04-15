@@ -90,6 +90,11 @@ function handleCancel() {
   emit('update:visible', false);
   emit('cancel');
 }
+
+const datePicker = ref(null);
+const closeDatePicker = () => {
+  datePicker.value.overlayVisible = false;
+};
 </script>
 
 <template>
@@ -136,7 +141,13 @@ function handleCancel() {
             작업 일시
             <span class="text-red-500">*</span>
           </label>
-          <DatePicker v-model="form.taskStart" showTime hourFormat="24" dateFormat="yy-mm-dd" placeholder="작업 일시를 선택하세요" class="w-full" input-class="w-full" />
+          <DatePicker v-model="form.taskStart" showTime hourFormat="24" dateFormat="yy-mm-dd" placeholder="작업 일시를 선택하세요" class="w-full" input-class="w-full" ref="datePicker">
+            <template #footer>
+              <div class="flex justify-end p-2">
+                <Button label="확인" raised @click="closeDatePicker" />
+              </div>
+            </template>
+          </DatePicker>
           <small v-if="touched.taskStart && errors.taskStart" class="text-red-500 mt-1 block text-xs">
             {{ errors.taskStart }}
           </small>
@@ -147,10 +158,10 @@ function handleCancel() {
           <!-- 소요 시간 -->
           <div class="flex flex-col gap-1.5">
             <label class="flex items-center gap-1 text-base font-semibold text-stone-600">
-              소요 시간 (분)
+              소요 시간 (시간)
               <span class="text-red-500">*</span>
             </label>
-            <InputNumber v-model="form.spent" :min="0" placeholder="분 단위로 입력" class="w-full" />
+            <InputNumber v-model="form.spent" :min="0" placeholder="시간 단위로 입력" class="w-full" />
             <small v-if="touched.spent && errors.spent" class="text-red-500 mt-1 block text-xs">
               {{ errors.spent }}
             </small>

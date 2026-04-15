@@ -153,22 +153,18 @@ const formatDateTime = (ts) => {
 };
 
 // 시간 포맷
-const formatMinutes = (m) => {
-  if (!m) return '0분';
+const formatHours = (h) => {
+  if (!h && h !== 0) return '0시간';
 
-  const MINS_PER_HOUR = 60;
-  const MINS_PER_DAY = 8 * MINS_PER_HOUR; // 1일 = 8시간 = 480분
-
-  const days = Math.floor(m / MINS_PER_DAY);
-  const hours = Math.floor((m % MINS_PER_DAY) / MINS_PER_HOUR);
-  const mins = m % MINS_PER_HOUR;
+  const totalHours = Math.round(h); // 필요하면 floor로 변경 가능
+  const days = Math.floor(totalHours / 8);
+  const hours = totalHours % 8;
 
   const parts = [];
   if (days > 0) parts.push(`${days}일`);
   if (hours > 0) parts.push(`${hours}시간`);
-  if (mins > 0) parts.push(`${mins}분`);
 
-  return parts.length ? parts.join(' ') : '0분';
+  return parts.length ? parts.join(' ') : '0시간';
 };
 
 // 파일 크기 포맷
@@ -222,13 +218,6 @@ const replyingTo = ref(null);
 const addComment = async () => {
   if (!commentData.value.content.trim()) return;
   if (commentData.value.content.length > 500) {
-    toast.add({
-      severity: 'error',
-      summary: '입력 초과',
-      detail: '댓글은 500자를 초과할 수 없습니다.',
-      life: 3000,
-      closable: false
-    });
     return;
   }
   await taskStore.insertTaskReply(commentData.value);
@@ -246,13 +235,6 @@ const addComment = async () => {
 const addReply = async (comment) => {
   if (!replyData.value.content.trim()) return;
   if (replyData.value.content.length > 500) {
-    toast.add({
-      severity: 'error',
-      summary: '입력 초과',
-      detail: '댓글은 500자를 초과할 수 없습니다.',
-      life: 3000,
-      closable: false
-    });
     return;
   }
   replyData.value.parentId = comment.id;
@@ -375,13 +357,20 @@ const downloadFile = async (id) => {
   window.URL.revokeObjectURL(url);
 };
 
+const loading = ref(false);
 onMounted(async () => {
-  Promise.all([taskStore.findCateList(), taskStore.findTypeList(), gitStore.findCommitsByTaskId(taskId.value), taskStore.findCommonCodeList()]);
+  loading.value = true;
+  await Promise.all([taskStore.findCateList(), taskStore.findTypeList(), gitStore.findCommitsByTaskId(taskId.value), taskStore.findCommonCodeList()]);
+  loading.value = false;
 });
 </script>
 
 <template>
-  <div v-if="task && task.status == 'T1'" class="min-h-screen bg-[#FAFAF8] p-8">
+  <div v-if="loading" class="flex justify-center items-center py-20 text-stone-400">
+    <i class="pi pi-spin pi-spinner text-2xl mr-2"></i>
+    데이터 불러오는 중...
+  </div>
+  <div v-else class="min-h-screen bg-[#FAFAF8] p-8">
     <!-- 헤더 -->
     <div class="mb-6 flex items-start justify-between gap-4 flex-wrap">
       <div class="flex flex-col gap-2 min-w-0">
@@ -403,7 +392,7 @@ onMounted(async () => {
 
     <!-- 일감 정보 테이블 -->
     <div class="bg-white rounded-lg shadow-sm border border-[#C7C7C2] mb-6">
-      <table class="w-full">
+      <table class="table-fixed w-full">
         <colgroup>
           <col class="w-36" />
           <col />
@@ -509,11 +498,11 @@ onMounted(async () => {
           <!-- 추정 시간 / 소요 시간 + 기록 -->
           <tr v-if="subTasks.length === 0" class="divide-x divide-[#F2F0EB]">
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">추정 시간</td>
-            <td class="px-6 py-3 text-base text-[#1A1816]">{{ formatMinutes(task.estimatedTime) }}</td>
+            <td class="px-6 py-3 text-base text-[#1A1816]">{{ formatHours(task.estimatedTime) }}</td>
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">소요 시간</td>
             <td class="px-6 py-3">
               <div class="flex items-center gap-3">
-                <span class="text-base text-[#1A1816]">{{ formatMinutes(spentTime) }}</span>
+                <span class="text-base text-[#1A1816]">{{ formatHours(spentTime) }}</span>
                 <Button v-if="canEdit" label="소요 시간 기록" icon="pi pi-plus" severity="secondary" raised @click="timeLogVisible = true" />
               </div>
             </td>
@@ -532,8 +521,8 @@ onMounted(async () => {
           <tr class="divide-x divide-[#F2F0EB]">
             <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">설명</td>
             <td colspan="3" class="px-6 py-3">
-              <span class="inline-flex items-center gap-2">
-                <span class="text-base text-[#1A1816] font-medium">{{ task.description }}</span>
+              <span class="flex items-center gap-2">
+                <span class="text-base text-[#1A1816] font-medium text-wrap break-words min-w-0">{{ task.description }}</span>
               </span>
             </td>
           </tr>
@@ -697,7 +686,6 @@ onMounted(async () => {
             <span class="text-base font-semibold text-[#1A1816]">{{ authStore.user?.name }}</span>
             <span class="text-base text-[#9A9B90]">({{ userId }})</span>
           </div>
-          <!-- 변경 후 -->
           <textarea
             v-model="commentData.content"
             placeholder="댓글을 입력해주세요..."
@@ -861,12 +849,12 @@ onMounted(async () => {
         <div class="flex justify-between items-center mb-4">
           <div class="flex items-center gap-4">
             <div class="text-center">
-              <div class="text-lg font-bold text-[#E8920E]">{{ formatMinutes(spentTime) }}</div>
+              <div class="text-lg font-bold text-[#E8920E]">{{ formatHours(spentTime) }}</div>
               <div class="text-base text-[#9A9B90]">총 소요 시간</div>
             </div>
             <div class="h-8 w-px bg-[#F2F0EB]"></div>
             <div class="text-center">
-              <div class="text-lg font-bold text-[#3A3B35]">{{ formatMinutes(task.estimatedTime) }}</div>
+              <div class="text-lg font-bold text-[#3A3B35]">{{ formatHours(task.estimatedTime) }}</div>
               <div class="text-base text-[#9A9B90]">추정 시간</div>
             </div>
           </div>
@@ -885,7 +873,7 @@ onMounted(async () => {
           </Column>
           <Column field="spent" header="소요 시간" :style="{ width: '100px' }">
             <template #body="{ data }">
-              <span class="font-semibold text-[#E8920E] block">{{ formatMinutes(data.spent) }}</span>
+              <span class="font-semibold text-[#E8920E] block">{{ formatHours(data.spent) }}</span>
             </template>
           </Column>
           <Column field="description" header="설명">
@@ -968,6 +956,13 @@ onMounted(async () => {
           await taskStore.insertTaskTime(data);
           timeLogVisible = false;
           await taskStore.findTaskDetail(taskId);
+          toast.add({
+            severity: 'success',
+            summary: '작업 기록',
+            detail: '소요시간 및 진척도가 반영되었습니다.',
+            life: 3000,
+            closable: false
+          });
         }
       "
       @cancel="timeLogVisible = false"
@@ -981,6 +976,13 @@ onMounted(async () => {
           await taskStore.insertTaskLink(data);
           linkModalVisible = false;
           await taskStore.findTaskDetail(taskId);
+          toast.add({
+            severity: 'success',
+            summary: '일감 연결',
+            detail: '일감을 연결하였습니다.',
+            life: 3000,
+            closable: false
+          });
         }
       "
       @cancel="linkModalVisible = false"
@@ -994,6 +996,13 @@ onMounted(async () => {
           await taskStore.deleteTask(data);
           deleteModalVisible = false;
           router.push(`/tasks`);
+          toast.add({
+            severity: 'success',
+            summary: '일감 삭제',
+            detail: '일감이 삭제되었습니다.',
+            life: 3000,
+            closable: false
+          });
         }
       "
       @cancel="deleteModalVisible = false"
@@ -1018,6 +1027,13 @@ onMounted(async () => {
           await taskStore.deleteTaskLink(data);
           unlinkModalVisible = false;
           await taskStore.findTaskDetail(taskId);
+          toast.add({
+            severity: 'success',
+            summary: '연결 해제',
+            detail: '일감의 연결이 해제되었습니다.',
+            life: 3000,
+            closable: false
+          });
         }
       "
       @cancel="unlinkModalVisible = false"

@@ -30,16 +30,6 @@ const priorityMap = computed(() => Object.fromEntries(priorityOptions.value.map(
 const taskTypeMap = computed(() => Object.fromEntries(typeOptions.value.map((t) => [t.id, t.name])));
 const taskCateMap = computed(() => Object.fromEntries(categoryOptions.value.map((c) => [c.id, c.name])));
 
-// 날짜 포맷 유틸 (DatePicker → 'YYYY-MM-DD' 문자열)
-function formatDate(d) {
-  if (!d) return null;
-  if (typeof d === 'string') return d;
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
 const formatListDate = (ts) => {
   if (!ts) return '-';
   return new Date(ts).toLocaleDateString('ko-KR', {
@@ -77,29 +67,6 @@ function resetFilters() {
   appliedFilters.value = defaultFilters();
   currentPage.value = 1;
 }
-
-// 종료일, 시작일 교체
-watch(
-  () => filters.value.plannedEnd,
-  (newEnd) => {
-    const start = filters.value.plannedStart;
-    if (start && newEnd && new Date(newEnd) < new Date(start)) {
-      filters.value.plannedStart = newEnd;
-      filters.value.plannedEnd = start;
-    }
-  }
-);
-
-watch(
-  () => filters.value.plannedStart,
-  (newStart) => {
-    const end = filters.value.plannedEnd;
-    if (end && newStart && new Date(newStart) > new Date(end)) {
-      filters.value.plannedEnd = newStart;
-      filters.value.plannedStart = end;
-    }
-  }
-);
 
 // 내 일감 보기 필터
 watch(
@@ -252,35 +219,38 @@ const priorityClass = {
   S0: 'priority-low'
 };
 
+const loading = ref(false);
 onMounted(async () => {
-  Promise.all([taskStore.findCateList(), taskStore.findTypeList(), taskStore.findMember(project.value.id), taskStore.findTaskList(project.value.id, userId.value), taskStore.findCommonCodeList()]);
+  loading.value = true;
+  await Promise.all([taskStore.findCateList(), taskStore.findTypeList(), taskStore.findMember(project.value.id), taskStore.findTaskList(project.value.id, userId.value), taskStore.findCommonCodeList()]);
+  loading.value = false;
 });
 </script>
 
 <template>
-  <div class="min-h-screen bg-stone-50 px-10 py-8 text-stone-700">
+  <div class="min-h-screen bg-white px-10 py-8 text-stone-700">
     <!-- 페이지 헤더 -->
     <div class="flex items-end justify-between mb-7">
       <div>
         <h1 class="text-2xl font-bold tracking-tight text-stone-900">일감 목록</h1>
       </div>
-      <Button icon="pi pi-plus" label="일감 추가" raised @click="router.push('/task/create')" />
+      <Button icon="pi pi-plus" class="!bg-[#2D8FAD] !border-[#2D8FAD] hover:!bg-[#257892]" label="일감 추가" raised @click="router.push('/task/create')" />
     </div>
 
     <!-- 필터 카드 -->
-    <div class="bg-[#F2F0EB] border border-[#C7C7C2] rounded-xl shadow-sm px-7 pt-5 pb-5 mb-5">
-      <p class="text-xl font-bold tracking-wider uppercase text-amber-700 mb-4"><i class="pi pi-search" style="font-size: 1rem"></i> 검색 필터</p>
+    <div class="bg-[#F2F3F8] border border-[#C7C7C2] rounded-xl shadow-sm px-7 pt-5 pb-5 mb-5">
+      <p class="text-xl font-bold tracking-wider uppercase text-stone-700 mb-4"><i class="pi pi-search" style="font-size: 1rem"></i> 검색 필터</p>
 
       <div class="grid grid-cols-4 gap-x-5 gap-y-4">
         <!-- 진행 상태 -->
         <div class="flex flex-col gap-1.5">
-          <label class="text-base font-semibold uppercase tracking-wider text-stone-400">진행 상태</label>
+          <label class="text-base font-semibold uppercase tracking-wider text-stone-500">진행 상태</label>
           <Select v-model="filters.workflow" :options="workflowOptions" option-label="name" option-value="id" placeholder="전체" show-clear />
         </div>
 
         <!-- 담당자: Select + filter 옵션 -->
         <div class="flex flex-col gap-1.5">
-          <label class="text-base font-semibold uppercase tracking-wider text-stone-400">담당자</label>
+          <label class="text-base font-semibold uppercase tracking-wider text-stone-500">담당자</label>
           <Select v-model="filters.userId" :options="userOptions" option-label="name" option-value="id" placeholder="이름 검색" filter filter-placeholder="이름 검색" show-clear>
             <template #option="data"> {{ data.option.name }} ({{ data.option.id }}) </template>
           </Select>
@@ -288,35 +258,35 @@ onMounted(async () => {
 
         <!-- 마감일 범위 -->
         <div class="flex flex-col gap-1.5 col-span-2">
-          <label class="text-base font-semibold uppercase tracking-wider text-stone-400">마감일</label>
+          <label class="text-base font-semibold uppercase tracking-wider text-stone-500">마감일</label>
           <div class="flex items-center gap-2">
-            <DatePicker v-model="filters.plannedStart" date-format="yy-mm-dd" placeholder="시작일" show-button-bar showIcon class="flex-1 min-w-0 w-full" input-class="w-full" />
-            <span class="text-stone-400 text-base shrink-0">~</span>
-            <DatePicker v-model="filters.plannedEnd" date-format="yy-mm-dd" placeholder="종료일" show-button-bar showIcon class="flex-1 min-w-0 w-full" input-class="w-full" />
+            <DatePicker v-model="filters.plannedStart" date-format="yy-mm-dd" :maxDate="filters.plannedEnd" placeholder="시작일" show-button-bar showIcon class="flex-1 min-w-0 w-full" input-class="w-full" />
+            <span class="text-stone-500 text-base shrink-0">~</span>
+            <DatePicker v-model="filters.plannedEnd" date-format="yy-mm-dd" :minDate="filters.plannedStart" placeholder="종료일" show-button-bar showIcon class="flex-1 min-w-0 w-full" input-class="w-full" />
           </div>
         </div>
 
         <!-- 일감 유형 -->
         <div class="flex flex-col gap-1.5">
-          <label class="text-base font-semibold uppercase tracking-wider text-stone-400">일감 유형</label>
+          <label class="text-base font-semibold uppercase tracking-wider text-stone-500">일감 유형</label>
           <Select v-model="filters.type" :options="typeOptions" option-label="name" option-value="id" placeholder="전체" show-clear />
         </div>
 
         <!-- 일감 범주 -->
         <div class="flex flex-col gap-1.5">
-          <label class="text-base font-semibold uppercase tracking-wider text-stone-400">일감 범주</label>
+          <label class="text-base font-semibold uppercase tracking-wider text-stone-500">일감 범주</label>
           <Select v-model="filters.category" :options="categoryOptions" option-label="name" option-value="id" placeholder="전체" show-clear />
         </div>
 
         <!-- 우선순위 -->
         <div class="flex flex-col gap-1.5">
-          <label class="text-base font-semibold uppercase tracking-wider text-stone-400">우선순위</label>
+          <label class="text-base font-semibold uppercase tracking-wider text-stone-500">우선순위</label>
           <Select v-model="filters.priority" :options="priorityOptions" option-label="name" option-value="id" placeholder="전체" show-clear />
         </div>
 
         <!-- 제목 -->
         <div class="flex flex-col gap-1.5 col-span-2">
-          <label class="text-base font-semibold uppercase tracking-wider text-stone-400">제목</label>
+          <label class="text-base font-semibold uppercase tracking-wider text-stone-500">제목</label>
           <InputText v-model="filters.title" placeholder="일감 제목 검색" class="w-full" />
         </div>
       </div>
@@ -340,37 +310,42 @@ onMounted(async () => {
     <!-- 테이블 카드 -->
     <div class="bg-white border border-[#C7C7C2] rounded-xl shadow-sm overflow-hidden">
       <div class="px-6 py-3.5 border-b border-stone-100">
-        <span class="text-lg text-stone-400">
-          총 <strong class="text-stone-700 font-bold">{{ processedTasks.length }}</strong
+        <span class="text-lg text-stone-500">
+          총 <strong class="text-stone-700 font-bold">{{ loading ? processedTasks.length : 0 }}</strong
           >개
         </span>
       </div>
 
-      <div class="overflow-x-auto">
+      <div v-if="loading" class="flex justify-center items-center py-20 text-stone-500">
+        <i class="pi pi-spin pi-spinner text-2xl mr-2"></i>
+        데이터 불러오는 중...
+      </div>
+
+      <div v-else class="overflow-x-auto">
         <table class="w-full border-collapse text-base">
           <thead>
-            <tr class="bg-stone-100 border-b border-stone-200">
-              <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-50">
+            <tr class="bg-[#5B6E96] border-b border-stone-200">
+              <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-50">
                 <button class="sort-btn" :class="{ active: sortKey === 'id' }" @click="toggleSort('id')">
                   번호 <span class="sort-icon">{{ sortIcon('id') }}</span>
                 </button>
               </th>
-              <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-stone-400 min-w-70">제목</th>
-              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-24">유형</th>
-              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-28">상태</th>
-              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-24">
+              <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-[#DDE3F0] min-w-70">제목</th>
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-24">유형</th>
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-28">상태</th>
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-24">
                 <button class="sort-btn" :class="{ active: sortKey === 'priority' }" @click="toggleSort('priority')">
                   우선순위 <span class="sort-icon">{{ sortIcon('priority') }}</span>
                 </button>
               </th>
-              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-24">범주</th>
-              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-70">
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-24">범주</th>
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-70">
                 <button class="sort-btn" :class="{ active: sortKey === 'progress' }" @click="toggleSort('progress')">
                   진척도 <span class="sort-icon">{{ sortIcon('progress') }}</span>
                 </button>
               </th>
-              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-45">담당자</th>
-              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-36">
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-45">담당자</th>
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-36">
                 <button class="sort-btn" :class="{ active: sortKey === 'plannedEnd' }" @click="toggleSort('plannedEnd')">
                   마감일 <span class="sort-icon">{{ sortIcon('plannedEnd') }}</span>
                 </button>
@@ -390,7 +365,7 @@ onMounted(async () => {
               </td>
               <td class="px-4 py-3.5">
                 <span class="block text-base font-medium text-stone-800 hover:text-amber-600 transition-colors leading-snug" :style="{ paddingLeft: task._depth * 20 + 'px' }">
-                  <span v-if="task._depth > 0" class="text-stone-400 mr-1">└</span>
+                  <span v-if="task._depth > 0" class="text-stone-500 mr-1">└</span>
                   {{ task.title }}
                 </span>
               </td>
@@ -401,12 +376,12 @@ onMounted(async () => {
                 </span>
               </td>
               <td class="px-4 py-3.5 text-center">
-                <span class="inline-block px-2.5 py-0.5 rounded-full text-base font-semibold" :class="priorityClass[task.priority] ?? 'bg-stone-100 text-stone-400'">
+                <span class="inline-block px-2.5 py-0.5 rounded-full text-base font-semibold" :class="priorityClass[task.priority] ?? 'bg-stone-100 text-stone-500'">
                   {{ priorityMap[task.priority] ?? task.priority }}
                 </span>
               </td>
               <td class="px-4 py-3.5 text-center">
-                <span class="inline-block mt-1 text-base text-stone-400 bg-stone-100 px-2 py-px rounded">{{ taskCateMap[task.category] ?? task.category }}</span>
+                <span class="inline-block mt-1 text-base text-stone-500 bg-stone-100 px-2 py-px rounded">{{ taskCateMap[task.category] ?? task.category }}</span>
               </td>
               <td class="px-4 py-3.5">
                 <ProgressBar
@@ -424,7 +399,7 @@ onMounted(async () => {
               <td class="px-4 py-3.5 text-base text-stone-500 tabular-nums text-center">{{ formatListDate(task.plannedEnd) }}</td>
             </tr>
             <tr v-if="pagedTasks.length === 0">
-              <td colspan="9" class="text-center py-16 text-base text-stone-400">일감이 없습니다.</td>
+              <td colspan="9" class="text-center py-16 text-base text-stone-500">일감이 없습니다.</td>
             </tr>
           </tbody>
         </table>
@@ -461,12 +436,9 @@ onMounted(async () => {
     color 0.15s;
   white-space: nowrap;
 }
-.sort-btn:hover {
-  background: #fef3c7;
-  color: #92400e;
-}
+
 .sort-btn.active {
-  color: #b45309;
+  color: #dde3f0;
 }
 .sort-icon {
   font-size: 0.75rem;
@@ -474,7 +446,7 @@ onMounted(async () => {
 }
 .sort-btn.active .sort-icon {
   opacity: 1;
-  color: #d97706;
+  color: #dde3f0;
 }
 
 /*  우선순위  */

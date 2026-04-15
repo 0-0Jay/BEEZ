@@ -5,6 +5,7 @@ import { useDashboardStore } from '@/stores/dashboard';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import FullCalendar from '@fullcalendar/vue3';
+import { useToast } from 'primevue';
 import { computed, onMounted, ref } from 'vue';
 
 // ──────────────────────── 날짜 ────────────────────────
@@ -21,6 +22,7 @@ const userStore = useAuthStore();
 const dashboardStore = useDashboardStore();
 const user = computed(() => userStore.user);
 const dashboard = computed(() => dashboardStore.mainDashboard);
+const toast = useToast();
 
 // ──────────────────────── 날짜 유틸 ────────────────────────
 function formatDate(dateStr) {
@@ -52,9 +54,9 @@ function isToday(dateStr) {
 }
 
 // ──────────────────────── 반응형 데이터 ────────────────────────
-const projects = computed(() => mapProjects(dashboard.value?.projectList).sort((a, b) => a.id - b.id));
-const myTasks = computed(() => mapTasks(dashboard.value?.taskList).sort((a, b) => a.id - b.id));
-const memos = computed(() => mapMemos(dashboard.value?.memoList).sort((a, b) => a.id - b.id));
+const projects = computed(() => mapProjects(dashboard.value?.projectList).sort((a, b) => a.id.localeCompare(b.id)));
+const myTasks = computed(() => mapTasks(dashboard.value?.taskList).sort((a, b) => a.id.localeCompare(b.id)));
+const memos = computed(() => mapMemos(dashboard.value?.memoList).sort((a, b) => a.id.localeCompare(b.id)));
 
 // ──────────────────────── 요약 통계 ────────────────────────
 const summaryStats = computed(() => [
@@ -168,19 +170,41 @@ async function saveMemo() {
   };
 
   if (activeMemo.value.id) {
+    console.log(activeMemo);
     await dashboardStore.updateMemo(payload);
     const idx = memos.value.findIndex((m) => m.id === activeMemo.value.id);
     if (idx !== -1) memos.value[idx] = { ...memos.value[idx], ...activeMemo.value };
+    toast.add({
+      severity: 'success',
+      summary: '메모 수정',
+      detail: '메모를 수정하였습니다.',
+      life: 3000,
+      closable: false
+    });
   } else {
     await dashboardStore.insertMemo(payload);
-    await dashboardStore.findMainDashboard(user.value?.id);
+    toast.add({
+      severity: 'success',
+      summary: '새 메모 작성',
+      detail: '새 메모를 작성하였습니다.',
+      life: 3000,
+      closable: false
+    });
   }
+  await dashboardStore.findMainDashboard(user.value?.id);
   memoDialogVisible.value = false;
 }
 
 async function deleteMemo(id) {
   await dashboardStore.deleteMemo(id);
   await dashboardStore.findMainDashboard(user.value?.id);
+  toast.add({
+    severity: 'success',
+    summary: '메모 삭제',
+    detail: '메모를 삭제하였습니다.',
+    life: 3000,
+    closable: false
+  });
 }
 
 // ──────────────────────── DTO 매핑 ────────────────────────
@@ -229,7 +253,9 @@ function mapScheduleEvents(list) {
 }
 
 // ──────────────────────── 마운트 ────────────────────────
+const loading = ref(false);
 onMounted(async () => {
+  loading.value = true;
   await dashboardStore.findMainDashboard(user.value?.id);
   const d = dashboard.value;
   if (d) {
@@ -238,12 +264,16 @@ onMounted(async () => {
       events: mapScheduleEvents(d.scheduleList)
     };
   }
-  console.log(d);
+  loading.value = false;
 });
 </script>
 
 <template>
-  <div class="min-h-screen bg-white p-5 flex flex-col gap-5">
+  <div v-if="loading" class="flex justify-center items-center py-20 text-stone-400">
+    <i class="pi pi-spin pi-spinner text-2xl mr-2"></i>
+    데이터 불러오는 중...
+  </div>
+  <div v-else class="min-h-screen bg-white p-5 flex flex-col gap-5">
     <div class="bg-[#F2F3F8] px-8 py-6 rounded-xl">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
         <div class="flex flex-col gap-2">
@@ -265,11 +295,8 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- ──────────────────────────────────────────────
-         2 × 2 그리드
-    ────────────────────────────────────────────── -->
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-5 flex-1">
-      <!-- ① 참여 프로젝트 현황 ──────────── -->
+      <!-- 참여 프로젝트 현황 -->
       <Card class="rounded-2xl border-0 shadow-md overflow-hidden flex flex-col">
         <template #header>
           <div class="flex items-center gap-3 px-5 pt-3">
@@ -299,7 +326,7 @@ onMounted(async () => {
         </template>
       </Card>
 
-      <!-- ② 나의 일감 현황 ──────────── -->
+      <!-- 나의 일감 현황 -->
       <Card class="rounded-2xl border-0 shadow-md overflow-hidden flex flex-col">
         <template #header>
           <div class="flex items-center gap-3 px-5 pt-3">
@@ -345,7 +372,7 @@ onMounted(async () => {
         </template>
       </Card>
 
-      <!-- ③ 메모 ──────────── -->
+      <!-- 메모 -->
       <Card class="rounded-2xl border-0 shadow-md overflow-hidden flex flex-col">
         <template #header>
           <div class="flex items-center gap-3 px-5 pt-3">
@@ -376,7 +403,7 @@ onMounted(async () => {
         </template>
       </Card>
 
-      <!-- ④ 달력 ──────────── -->
+      <!-- 달력 -->
       <Card class="rounded-2xl border-0 shadow-md overflow-hidden flex flex-col">
         <template #content>
           <div class="bg-white dashboard-calendar h-110">
@@ -386,12 +413,10 @@ onMounted(async () => {
       </Card>
     </div>
 
-    <!-- ──────────────────────────────────────────────
-         메모 다이얼로그
-    ────────────────────────────────────────────── -->
+    <!-- 메모 다이얼로그 -->
     <Dialog v-model:visible="memoDialogVisible" :header="memoDialogMode === 'new' ? '새 메모' : memoDialogMode === 'edit' ? '메모 수정' : '메모'" modal :style="{ width: '500px' }">
       <div class="flex flex-col gap-5 pt-2">
-        <!-- view 모드: 텍스트로만 표시 -->
+        <!-- view -->
         <template v-if="memoDialogMode === 'view'">
           <div class="flex flex-col gap-1">
             <label class="text-[#5B6E96] text-base font-bold">제목</label>
@@ -405,7 +430,7 @@ onMounted(async () => {
           </div>
         </template>
 
-        <!-- edit / new 모드: 입력 폼 -->
+        <!-- edit / new -->
         <template v-else>
           <div class="flex flex-col gap-1">
             <label class="text-[#5B6E96] text-base font-bold">제목</label>
@@ -438,9 +463,7 @@ onMounted(async () => {
       </template>
     </Dialog>
 
-    <!-- ──────────────────────────────────────────────
-         일정 상세 다이얼로그
-    ────────────────────────────────────────────── -->
+    <!-- 일정 상세 다이얼로그 -->
     <Dialog v-model:visible="scheduleDialogVisible" header="일정 상세" modal :style="{ width: '480px' }">
       <div class="flex flex-col gap-5 pt-2">
         <div class="flex flex-col gap-1">
