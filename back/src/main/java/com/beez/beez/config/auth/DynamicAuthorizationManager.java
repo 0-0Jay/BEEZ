@@ -43,15 +43,39 @@ public class DynamicAuthorizationManager implements AuthorizationManager<Request
     String url = request.getRequestURI();
     String projectId = request.getHeader("X-Project-Id");
 
+    boolean isProjectApi = url.startsWith("/api/")
+      && !url.startsWith("/api/auth")
+      && !url.startsWith("/api/users")
+      && !url.startsWith("/api/roles")
+      && !url.startsWith("/api/permission")
+      && !url.startsWith("/api/workflow")
+      && !url.startsWith("/api/groups");
+
     // 프로젝트 선택 전 호출해야 하는 API (목록 조회 등)
     // 이 API들은 projectId 헤더가 없어도 권한 검사를 진행함
     boolean isProjectListApi = url.equals("/api/project/list") && method.equalsIgnoreCase("GET");
 
+    // 프로젝트 목록 API 예외
+    if (isProjectListApi) {
+      return new AuthorizationDecision(true);
+    }
+
+    if(isProjectApi){
+      if(projectId == null){
+        return new AuthorizationDecision(false);
+      }
+      boolean isMember = rolesMapper.isProjectMember(auth.getName(), projectId) > 0;
+
+      if(!isMember){
+        return new AuthorizationDecision(false);
+      }
+    }
+
     // 현재 요청에 필요한 권한 코드 목록 조회
     List<String> requiredPerms = dynamicPermissionService.getRequiredPermissionId(method, url);
 
-    // 필요한 권한 설정이 아예 없는 API라면 -> 누구나 접근 가능으로 판단
     if (requiredPerms == null || requiredPerms.isEmpty()) {
+      System.out.println("권한 설정 안 된 API: " + method + " " + url);
       return new AuthorizationDecision(true);
     }
 
@@ -65,8 +89,7 @@ public class DynamicAuthorizationManager implements AuthorizationManager<Request
     // 최종 승인
     // - 내 기본 권한(가입 시 부여된 것)에 필요한 권한이 있을 때
     // - 또는 현재 선택한 프로젝트에서의 내 역할(projectPerms)에 필요한 권한이 있을 때
-    boolean isGranted = isProjectListApi // 프로젝트 목록 조회 API면 무조건 true
-      || auth.getAuthorities().stream().anyMatch(a -> requiredPerms.contains(a.getAuthority()))
+    boolean isGranted = auth.getAuthorities().stream().anyMatch(a -> requiredPerms.contains(a.getAuthority()))
       || projectPerms.stream().anyMatch(requiredPerms::contains);
 
     // 디버깅 로그 (테스트할 때 큰 도움이 돼!)

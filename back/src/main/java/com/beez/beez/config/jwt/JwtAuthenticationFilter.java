@@ -34,6 +34,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       // 토큰이 맞으면 사원번호 추출
       String id = jwtProvider.getId(token);
 
+      if (id != null) {
+        UserDetails userDetails = userDetailsService.loadUserByUsername(id);
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+          userDetails, "", userDetails.getAuthorities());
+
+        SecurityContextHolder.getContext().setAuthentication(auth);
+      }
+
       // DB에서 사용자 정보를 가져와 인증됨을 보장해줌
       UserDetails userDetails = userDetailsService.loadUserByUsername(id);
       Authentication auth = new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
@@ -43,7 +51,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 //      System.out.println("DEBUG: Auth 객체에 담긴 권한 리스트 = " + auth.getAuthorities());
 
       // 시큐리티 세션(context)에 인증 정보를 저장(요청이 끝날 때까지만 유효)
-      SecurityContextHolder.getContext().setAuthentication(auth);
+      if (SecurityContextHolder.getContext().getAuthentication() == null) {
+        SecurityContextHolder.getContext().setAuthentication(auth);
+      }
     }
 
     filterChain.doFilter(request, response);

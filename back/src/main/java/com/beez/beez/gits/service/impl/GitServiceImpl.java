@@ -6,6 +6,7 @@ import com.beez.beez.gits.mapper.GitMapper;
 import com.beez.beez.gits.service.GitService;
 import lombok.RequiredArgsConstructor;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -94,7 +95,12 @@ public class GitServiceImpl implements GitService {
         throw new RuntimeException("원격 저장소와 통신에 실패했습니다");
       }
 
-      Iterable<RevCommit> commits = git.log().all().call();
+      ObjectId remoteHead = git.getRepository().resolve("refs/remotes/origin/main");
+      if (remoteHead == null) {
+        remoteHead = git.getRepository().resolve("refs/remotes/origin/master");
+      }
+
+      Iterable<RevCommit> commits = git.log().add(remoteHead).call();
       Pattern p = Pattern.compile("#(TASK\\d+)", Pattern.CASE_INSENSITIVE); // #숫자 꺼냄
 
       for(RevCommit commit : commits){

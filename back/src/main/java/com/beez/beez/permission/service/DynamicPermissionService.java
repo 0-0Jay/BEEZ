@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,7 @@ public class DynamicPermissionService {
       String key = p.getMethod().toUpperCase() + ":" + p.getUrl();
       map.put(key, p.getId());
     });
-    this.permissionMap = map;
+    this.permissionMap = Collections.unmodifiableMap(map);
   }
 
   public List<String> getRequiredPermissionId(String method, String url) {
@@ -48,7 +49,9 @@ public class DynamicPermissionService {
         return method.equalsIgnoreCase(splitMethod)
           && antPathMatcher.match(splitUrl, url);
       })
-      .map(key -> permissionMap.get(key))
+      .sorted((a, b) -> b.length() - a.length())
+      .map(permissionMap :: get)
+      .limit(1)
       .collect(Collectors.toList());
   }
 }

@@ -10,10 +10,11 @@ export const useAuthStore = defineStore('auth', {
       id: '',
       name: '',
       email: '',
-      role: '',
-      authorities: []
+      role: ''
+      // authorities: []
     }, // 사용자 정보
-    projectPermissions: []
+    projectPermissions: [],
+    currentProjectId: null
   }),
 
   // getters
@@ -43,11 +44,11 @@ export const useAuthStore = defineStore('auth', {
             id: decoded.sub,
             name: decoded.name,
             email: decoded.email,
-            authorities: decoded.auth ? decoded.auth.split(',') : [],
+            // authorities: decoded.auth ? decoded.auth.split(',') : [],
             role: decoded.role
           };
 
-          console.log(this.user.authorities);
+          //console.log(this.user.authorities);
           return true;
         }
       } catch (error) {
@@ -59,6 +60,8 @@ export const useAuthStore = defineStore('auth', {
     logout() {
       this.accessToken = null;
       this.user = null;
+      this.projectPermissions = null;
+      this.currentProjectId = null;
       // localStorage.removeItem('accessToken');
       // localStorage.removeItem('user');
       sessionStorage.clear();

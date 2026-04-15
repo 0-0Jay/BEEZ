@@ -38,6 +38,14 @@
     WHERE  r.id = #{id}
   </select>
 
+  <select id="isProjectMember" resultType="int">
+    SELECT COUNT(*)
+    FROM project_member
+    WHERE user_id = #{userId}
+    AND project_id = #{projectId}
+    AND is_delete = 'F0'
+  </select>
+
   <!-- 프로젝트별 역할 및 권한 조회 -->
   <select id="findPermissionsByProject" resultType="String">
     SELECT DISTINCT

@@ -20,6 +20,8 @@ public interface RolesMapper {
   // 프로젝트별 역할 권한 조회
   List<String> findPermissionsByProject(@Param("userId") String userId, @Param("projectId") String projectId);
 
+  int isProjectMember(@Param("userId") String userId, @Param("projectId") String projectId);
+
   // 새 역할 기본 정보 등록
   void insertRoles(Roles roles);
 
