@@ -163,15 +163,15 @@ const formatDate = (date) => {
 
 const actionItems = computed(() => [
   {
-    label: selectedRow.value?.isLock === 'L1' ? '잠금보관 해제' : '프로젝트 잠금보관',
-    icon: selectedRow.value?.isLock === 'L1' ? 'pi pi-lock-open' : 'pi pi-lock',
-    command: () => (selectedRow.value?.isLock === 'L1' ? unlockProject(selectedRow.value.id) : lockProject(selectedRow.value.id))
-  },
-  { label: '프로젝트 복사', icon: 'pi pi-copy', command: () => router.push(`/project/copy/${selectedRow.value.id}`) },
-  {
     label: '프로젝트 설정',
     icon: 'pi pi-cog',
     command: () => goToSetting(selectedRow.value)
+  },
+  { label: '프로젝트 복사', icon: 'pi pi-copy', command: () => router.push(`/project/copy/${selectedRow.value.id}`) },
+  {
+    label: selectedRow.value?.isLock === 'L1' ? '잠금보관 해제' : '프로젝트 잠금보관',
+    icon: selectedRow.value?.isLock === 'L1' ? 'pi pi-lock-open' : 'pi pi-lock',
+    command: () => (selectedRow.value?.isLock === 'L1' ? unlockProject(selectedRow.value.id) : lockProject(selectedRow.value.id))
   },
   { label: '프로젝트 삭제', icon: 'pi pi-trash', command: () => openDeleteModal(selectedRow.value) }
 ]);

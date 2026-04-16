@@ -78,8 +78,6 @@ const validate = () => {
   if (!form.title.trim()) {
     errors.title = '프로젝트명을 입력해주세요.';
     valid = false;
-  } else if (form.title.length > 20) {
-    errors.title = '프로젝트 명은 20자 이내로 입력해주세요.';
   }
   if (!form.identifier.trim()) {
     errors.identifier = '식별자를 입력해주세요.';
@@ -87,8 +85,6 @@ const validate = () => {
   } else if (!/^[a-z0-9_]+$/.test(form.identifier)) {
     errors.identifier = '영문 소문자(a-z), 숫자, 대시(_)만 가능합니다.';
     valid = false;
-  } else if (form.identifier.length > 20) {
-    errors.identifier = '식별자는 20자 이내로 입력해주세요.';
   }
   if (!form.startDate) {
     errors.startDate = '시작일을 선택해주세요.';
@@ -200,8 +196,9 @@ const handleCancel = () => {
         <div class="flex items-start px-8 py-4">
           <label class="form-label w-36 pt-2 shrink-0"> 프로젝트명 <span class="text-red-500">*</span> </label>
           <div class="flex-1">
-            <InputText v-model="form.title" @blur="checkTitle" placeholder="텍스트를 입력해 주세요." class="w-full form-input" />
+            <InputText v-model="form.title" @blur="checkTitle" placeholder="텍스트를 입력해 주세요." class="w-full form-input" :maxlength="30" />
             <small v-if="errors.title" class="text-red-500 mt-1 block">{{ errors.title }}</small>
+            <small v-if="form.title.length > 30" class="text-red-500 text-xs">프로젝트명은 30자를 초과할 수 없습니다.</small>
           </div>
         </div>
 
@@ -221,9 +218,10 @@ const handleCancel = () => {
         <div class="flex items-start px-8 py-4">
           <label class="form-label w-36 pt-2 shrink-0"> 식별자 <span class="text-red-500">*</span> </label>
           <div class="flex-1">
-            <InputText v-model="form.identifier" @blur="checkIdentifier" placeholder="텍스트를 입력해 주세요." class="w-full form-input" />
+            <InputText v-model="form.identifier" @blur="checkIdentifier" placeholder="텍스트를 입력해 주세요." class="w-full form-input" :maxlength="30" />
             <small class="text-[#9A9B90] mt-1 block">영문 소문자(a-z), 숫자, 대시(_)만 가능합니다.</small>
             <small v-if="errors.identifier" class="text-red-500 block">{{ errors.identifier }}</small>
+            <small v-if="form.identifier.length > 30" class="text-red-500 text-xs">식별자는 30자를 초과할 수 없습니다.</small>
           </div>
         </div>
 
