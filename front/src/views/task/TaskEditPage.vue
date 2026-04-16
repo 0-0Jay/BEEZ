@@ -14,7 +14,7 @@ const projectStore = useProjectStore();
 const authStore = useAuthStore();
 const project = computed(() => projectStore.selectedProject);
 const userId = computed(() => authStore.user.id);
-const roleId = computed(() => authStore.user.role);
+const roleId = computed(() => authStore.projectRoles);
 const condition = computed(() => (taskStore.task?.creator == userId.value ? 'Z1' : taskStore.task?.userId == userId.value ? 'Z2' : 'Z0'));
 const toast = useToast();
 
@@ -76,13 +76,9 @@ function formatDate(d) {
 function parseDate(d) {
   if (!d) return null;
 
-  const date = new Date(d);
-  return new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate(),
-    12 // 안전용
-  );
+  const str = typeof d === 'string' ? d.substring(0, 10) : new Date(d).toISOString().substring(0, 10);
+  const [y, m, day] = str.split('-').map(Number);
+  return new Date(y, m - 1, day, 12);
 }
 
 const task = computed(() => taskStore.task);
@@ -132,7 +128,10 @@ const currentWorkflowName = computed(() => {
 
 const editWorkflowOptions = computed(() => {
   const workflowList = taskStore.workflow ?? [];
-  const allowedAfters = workflowList.filter((w) => w.before === form.workflow && w.isAllow === 'R1').map((w) => w.after);
+  const allowedAfters = workflowList
+    .filter((w) => w.before === form.workflow && w.isAllow === 'R1')
+    .map((w) => w.after)
+    .sort((a, b) => a.localeCompare(b));
   const allowedIds = new Set([form.workflow, ...allowedAfters]);
   return workflowOptions.value.filter((w) => allowedIds.has(w.id));
 });
@@ -450,7 +449,8 @@ onMounted(async () => {
   loading.value = true;
   await Promise.all([taskStore.findVersionList(project.value.id), taskStore.findCateList(), taskStore.findTypeList(), taskStore.findMember(project.value.id), taskStore.findCommonCodeList()]);
   if (isEditMode) {
-    await taskStore.findWorkflow({ roleId: roleId.value, typeId: taskStore.task?.type, conditionType: condition.value });
+    console.log(roleId.value);
+    await taskStore.findWorkflow({ roleId: roleId.value.map((r) => r.id), typeId: taskStore.task?.type, conditionType: condition.value });
   }
   loading.value = false;
 });

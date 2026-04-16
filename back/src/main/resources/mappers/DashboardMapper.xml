@@ -35,7 +35,7 @@
     <result property="id" column="id" />
     <result property="title" column="title" />
     <result property="plannedEnd" column="planned_end" />
-    <result property="process" column="process" />
+    <result property="progress" column="progress" />
   </resultMap>
   
   <resultMap id="taskResultMap" type="com.beez.beez.dashboard.dto.TaskRecapResponse">
@@ -43,7 +43,7 @@
     <result property="title" column="title"/>
     <result property="projectId" column="project_id"/>
     <result property="projectTitle" column="project_title" />
-    <result property="process" column="process" />
+    <result property="progress" column="progress" />
     <result property="workflow" column="workflow" />
     <result property="plannedEnd" column="planned_end" />
   </resultMap>

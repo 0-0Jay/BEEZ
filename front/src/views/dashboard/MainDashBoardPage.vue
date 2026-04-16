@@ -170,7 +170,6 @@ async function saveMemo() {
   };
 
   if (activeMemo.value.id) {
-    console.log(activeMemo);
     await dashboardStore.updateMemo(payload);
     const idx = memos.value.findIndex((m) => m.id === activeMemo.value.id);
     if (idx !== -1) memos.value[idx] = { ...memos.value[idx], ...activeMemo.value };
@@ -212,7 +211,7 @@ function mapProjects(list) {
   return (list ?? []).map((p) => ({
     id: p.id,
     title: p.title,
-    progress: p.process ?? 0,
+    progress: p.progress ?? 0,
     deadline: formatDate(p.endDate),
     dday: calcDday(p.endDate)
   }));
@@ -224,7 +223,7 @@ function mapTasks(list) {
     title: t.title,
     project: t.projectTitle,
     status: t.workflow,
-    progress: t.process ?? 0,
+    progress: t.progress ?? 0,
     deadline: formatDate(t.plannedEnd)
   }));
 }

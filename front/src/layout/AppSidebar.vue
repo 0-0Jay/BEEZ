@@ -128,24 +128,12 @@ const clearSelectedProject = () => {
           <router-link to="/calendar" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
             <span>달력</span>
           </router-link>
-          <!-- <router-link to="" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
-            <span>공지사항</span>
-          </router-link>
-          <router-link to="" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
-            <span>게시판</span>
-          </router-link> -->
           <router-link
             :to="`/document/list/${selectedProject.id}`"
             class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between"
           >
             <span>문서</span>
           </router-link>
-          <!-- <router-link
-            :to="`/wiki/detail/${selectedProject.id}`"
-            class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between"
-          >
-            <span>위키 조회</span>
-          </router-link> -->
           <div @click="goWiki(selectedProject.id)" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
             <span>위키</span>
           </div>
@@ -195,7 +183,7 @@ const clearSelectedProject = () => {
               <span>업무 흐름</span>
             </router-link>
             <router-link to="/task/option" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
-              <span>일감 유형/범주</span>
+              <span>일감 유형/범주 관리</span>
             </router-link>
           </div>
         </template>

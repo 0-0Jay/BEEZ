@@ -93,10 +93,19 @@ const latestJournal = computed(() => {
 });
 
 const modifiedBy = computed(() => latestJournal.value?.name ?? '-');
-const modifiedMinutesAgo = computed(() => {
+
+const modifiedTimeAgo = computed(() => {
   if (!latestJournal.value?.createdOn) return '-';
   const diff = Date.now() - new Date(latestJournal.value.createdOn).getTime();
-  return Math.max(0, Math.floor(diff / 60_000));
+  const minutes = Math.max(0, Math.floor(diff / 60_000));
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+  const years = Math.floor(days / 365);
+
+  if (years >= 1) return `${years}년`;
+  if (days >= 1) return `${days}일`;
+  if (hours >= 1) return `${hours}시간`;
+  return `${minutes}분`;
 });
 
 const fieldMapper = {
@@ -370,12 +379,12 @@ onMounted(async () => {
     <i class="pi pi-spin pi-spinner text-2xl mr-2"></i>
     데이터 불러오는 중...
   </div>
-  <div v-else class="min-h-screen bg-[#FAFAF8] p-8">
+  <div v-else class="min-h-screen bg-white p-8">
     <!-- 헤더 -->
     <div class="mb-6 flex items-start justify-between gap-4 flex-wrap">
       <div class="flex flex-col gap-2 min-w-0">
         <div class="flex items-center gap-3 flex-wrap">
-          <span class="text-base font-mono font-semibold text-[#9A9B90] bg-[#F2F0EB] px-2.5 py-0.5 rounded border border-[#E5E4DF] shrink-0">{{ task.id }}</span>
+          <span class="text-base font-mono font-semibold text-[#9A9B90] bg-white px-2.5 py-0.5 rounded border border-[#E5E4DF] shrink-0">{{ task.id }}</span>
           <span v-if="task.isPublic === 'J0'" class="text-base font-semibold px-2.5 py-0.5 rounded-full bg-red-50 text-red-500 border border-red-200 shrink-0">비공개</span>
           <span v-else class="text-base font-semibold px-2.5 py-0.5 rounded-full bg-green-50 text-green-500 border border-green-200 shrink-0">공개</span>
         </div>
@@ -384,14 +393,14 @@ onMounted(async () => {
 
       <!-- 액션 버튼 -->
       <div class="flex items-center gap-2 shrink-0">
-        <Button v-if="canEdit" label="수정" icon="pi pi-pen-to-square" severity="secondary" raised @click="goToEdit" />
-        <Button label="복사" icon="pi pi-clone" severity="secondary" raised @click="goToCopy" />
+        <Button v-if="canEdit" label="수정" icon="pi pi-pen-to-square" class="!bg-[#2D8FAD] !border-[#2D8FAD] hover:!bg-[#257892]" raised @click="goToEdit" />
+        <Button label="복사" icon="pi pi-clone" class="!bg-[#2D8FAD] !border-[#2D8FAD] hover:!bg-[#257892]" raised @click="goToCopy" />
         <Button v-if="canEdit" label="삭제" icon="pi pi-trash" severity="danger" raised @Click="deleteModalVisible = true" />
       </div>
     </div>
 
     <!-- 일감 정보 테이블 -->
-    <div class="bg-white rounded-lg shadow-sm border border-[#C7C7C2] mb-6">
+    <div class="bg-white rounded-lg shadow-sm border divide-[#D6E4EA] mb-6">
       <table class="table-fixed w-full">
         <colgroup>
           <col class="w-36" />
@@ -399,7 +408,7 @@ onMounted(async () => {
           <col class="w-36" />
           <col />
         </colgroup>
-        <tbody class="divide-y divide-[#F2F0EB]">
+        <tbody class="divide-y divide-[#D6E4EA]">
           <!-- 범주 / 유형 / 수정시간 -->
           <tr>
             <td colspan="4" class="px-6 py-3">
@@ -410,7 +419,7 @@ onMounted(async () => {
                   </svg>
                   {{ taskCateMap[task.category] }}
                 </span>
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#F2F0EB] border border-[#C7C7C2] text-base font-semibold text-[#3A3B35]">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#F2F3F8] border divide-[#D6E4EA] text-base font-semibold text-[#3A3B35]">
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
@@ -419,19 +428,19 @@ onMounted(async () => {
                 <span class="h-4 w-px bg-[#C7C7C2]"></span>
                 <span class="text-base text-[#9A9B90]">
                   <span class="font-medium text-[#6B6B63]">{{ modifiedBy }}</span
-                  >이(가) <span class="font-medium text-[#6B6B63]">{{ modifiedMinutesAgo }}분</span> 전에 수정함
+                  >이(가) <span class="font-medium text-[#6B6B63]">{{ modifiedTimeAgo }}</span> 전에 수정함
                 </span>
               </div>
             </td>
           </tr>
 
           <!-- 진행상태 / 우선순위 -->
-          <tr class="divide-x divide-[#F2F0EB]">
-            <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">진행상태</td>
+          <tr class="divide-x divide-[#D6E4EA]">
+            <td class="px-6 py-3 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35]">진행상태</td>
             <td class="px-6 py-3">
               <span class="inline-block text-base font-semibold px-2.5 py-0.5 rounded-full" :class="workflowClass[task.workflow]">{{ workflowMap[task.workflow] }}</span>
             </td>
-            <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">우선순위</td>
+            <td class="px-6 py-3 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35]">우선순위</td>
             <td class="px-6 py-3">
               <span class="inline-block px-2.5 py-0.5 rounded-full text-base font-semibold" :class="priorityClass[task.priority] ?? 'bg-stone-100 text-stone-400'">
                 {{ priorityMap[task.priority] }}
@@ -440,8 +449,8 @@ onMounted(async () => {
           </tr>
 
           <!-- 반려 사유 -->
-          <tr v-if="task.workflow == 'Q4'" class="divide-x divide-[#F2F0EB]">
-            <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">반려 사유</td>
+          <tr v-if="task.workflow == 'Q4'" class="divide-x divide-[#D6E4EA]">
+            <td class="px-6 py-3 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35]">반려 사유</td>
             <td colspan="3" class="px-6 py-3">
               <span class="inline-flex items-center gap-2">
                 <span class="text-base text-[#1A1816] font-medium">{{ task.reject }}</span>
@@ -450,20 +459,20 @@ onMounted(async () => {
           </tr>
 
           <!-- 담당자 / 목표버전 -->
-          <tr class="divide-x divide-[#F2F0EB]">
-            <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">담당자</td>
+          <tr class="divide-x divide-[#D6E4EA]">
+            <td class="px-6 py-3 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35]">담당자</td>
             <td class="px-6 py-3">
               <span class="inline-flex items-center gap-2">
                 <span class="text-base text-[#1A1816] font-medium">{{ task.name }} ( {{ task.userId }} ) </span>
               </span>
             </td>
-            <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">목표 버전</td>
+            <td class="px-6 py-3 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35]">목표 버전</td>
             <td class="px-6 py-3 text-base text-[#1A1816]">{{ task.versionName || '-' }}</td>
           </tr>
 
           <!-- 진척도 -->
-          <tr class="divide-x divide-[#F2F0EB]">
-            <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">진척도</td>
+          <tr class="divide-x divide-[#D6E4EA]">
+            <td class="px-6 py-3 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35]">진척도</td>
             <td colspan="3" class="px-6 py-3">
               <ProgressBar
                 class="w-150"
@@ -480,37 +489,37 @@ onMounted(async () => {
           </tr>
 
           <!-- 예상 시작일 / 예상 마감일 -->
-          <tr class="divide-x divide-[#F2F0EB]">
-            <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">예상 시작일</td>
+          <tr class="divide-x divide-[#D6E4EA]">
+            <td class="px-6 py-3 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35]">예상 시작일</td>
             <td class="px-6 py-3 text-base text-[#1A1816]">{{ formatDate(task.plannedStart) }}</td>
-            <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">예상 마감일</td>
+            <td class="px-6 py-3 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35]">예상 마감일</td>
             <td class="px-6 py-3 text-base text-[#1A1816]">{{ formatDate(task.plannedEnd) }}</td>
           </tr>
 
           <!-- 실제 시작일 / 실제 마감일 -->
-          <tr class="divide-x divide-[#F2F0EB]">
-            <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">실제 시작일</td>
+          <tr class="divide-x divide-[#D6E4EA]">
+            <td class="px-6 py-3 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35]">실제 시작일</td>
             <td class="px-6 py-3 text-base text-[#1A1816]">{{ formatDate(task.actualStart) }}</td>
-            <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">실제 마감일</td>
+            <td class="px-6 py-3 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35]">실제 마감일</td>
             <td class="px-6 py-3 text-base text-[#1A1816]">{{ formatDate(task.actualEnd) }}</td>
           </tr>
 
-          <!-- 추정 시간 / 소요 시간 + 기록 -->
-          <tr v-if="subTasks.length === 0" class="divide-x divide-[#F2F0EB]">
-            <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">추정 시간</td>
+          <!-- 추정 시간 / 작업 + 기록 -->
+          <tr v-if="subTasks.length === 0" class="divide-x divide-[#D6E4EA]">
+            <td class="px-6 py-3 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35]">추정 시간</td>
             <td class="px-6 py-3 text-base text-[#1A1816]">{{ formatHours(task.estimatedTime) }}</td>
-            <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">소요 시간</td>
+            <td class="px-6 py-3 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35]">작업</td>
             <td class="px-6 py-3">
               <div class="flex items-center gap-3">
                 <span class="text-base text-[#1A1816]">{{ formatHours(spentTime) }}</span>
-                <Button v-if="canEdit" label="소요 시간 기록" icon="pi pi-plus" severity="secondary" raised @click="timeLogVisible = true" />
+                <Button v-if="canEdit" label="작업 기록" icon="pi pi-plus" class="!bg-[#2D8FAD] !border-[#2D8FAD] hover:!bg-[#257892]" raised @click="timeLogVisible = true" />
               </div>
             </td>
           </tr>
 
           <!-- 상위일감 -->
-          <tr class="divide-x divide-[#F2F0EB]">
-            <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">상위 일감</td>
+          <tr class="divide-x divide-[#D6E4EA]">
+            <td class="px-6 py-3 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35]">상위 일감</td>
             <td colspan="3" class="px-6 py-3">
               <span v-if="task.parentId" class="inline-flex items-center gap-1.5 text-base text-[#E8920E] font-medium cursor-pointer hover:underline" @click="goToTask(task.parentId)"> {{ task.parentName }} ( {{ task.parentId }} ) </span>
               <span v-else class="text-base text-[#9A9B90]">-</span>
@@ -518,8 +527,8 @@ onMounted(async () => {
           </tr>
 
           <!-- 설명 -->
-          <tr class="divide-x divide-[#F2F0EB]">
-            <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">설명</td>
+          <tr class="divide-x divide-[#D6E4EA]">
+            <td class="px-6 py-3 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35]">설명</td>
             <td colspan="3" class="px-6 py-3">
               <span class="flex items-center gap-2">
                 <span class="text-base text-[#1A1816] font-medium text-wrap break-words min-w-0">{{ task.description }}</span>
@@ -528,8 +537,8 @@ onMounted(async () => {
           </tr>
 
           <!-- 첨부파일 -->
-          <tr class="divide-x divide-[#F2F0EB]">
-            <td class="px-6 py-3 bg-[#F8F7F4] text-base font-semibold text-[#3A3B35]">첨부파일</td>
+          <tr class="divide-x divide-[#D6E4EA]">
+            <td class="px-6 py-3 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35]">첨부파일</td>
             <td colspan="3" class="px-6 py-3">
               <div v-if="fileList.length" class="flex flex-wrap gap-2">
                 <a
@@ -537,7 +546,7 @@ onMounted(async () => {
                   :key="file.id"
                   @click="downloadFile(file.id)"
                   target="_blank"
-                  class="inline-flex items-center gap-1.5 px-3 py-1.5 text-base rounded border border-[#C7C7C2] text-[#3A3B35] bg-[#FAFAF8] hover:bg-[#F2F0EB] transition-colors"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 text-base rounded border divide-[#D6E4EA] text-[#3A3B35] bg-[#FAFAF8] hover:bg-white transition-colors"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#9A9B90]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
@@ -554,8 +563,8 @@ onMounted(async () => {
     </div>
 
     <!-- 하위 일감 -->
-    <div class="bg-white rounded-lg shadow-sm border border-[#C7C7C2] mb-6">
-      <div class="px-6 py-3 border-b border-[#C7C7C2] bg-[#F2F0EB] rounded-t-lg flex items-center justify-between">
+    <div class="bg-white rounded-lg shadow-sm border divide-[#D6E4EA] mb-6">
+      <div class="px-6 py-3 border-b divide-[#D6E4EA] bg-white rounded-t-lg flex items-center justify-between">
         <div class="flex items-center gap-3">
           <span class="text-base font-bold text-[#1A1816]">하위 일감</span>
           <span class="text-base font-semibold px-2 py-0.5 rounded-full bg-[#E8920E] text-white">{{ subTasks.length }}</span>
@@ -563,20 +572,20 @@ onMounted(async () => {
             완료 <span class="font-semibold text-emerald-600">{{ subTaskDone }}</span> · 진행중 <span class="font-semibold text-amber-600">{{ subTaskInProgress }}</span>
           </span>
         </div>
-        <Button v-if="canEdit" label="하위 일감 추가" icon="pi pi-plus" severity="secondary" raised @click="handleAddSubTask" />
+        <Button v-if="canEdit" label="하위 일감 추가" icon="pi pi-plus" class="!bg-[#2D8FAD] !border-[#2D8FAD] hover:!bg-[#257892]" raised @click="handleAddSubTask" />
       </div>
 
       <table class="w-full text-base">
         <thead>
-          <tr class="border-b border-[#F2F0EB] bg-[#F8F7F4]">
-            <th class="px-6 py-2.5 text-left font-semibold text-[#6B6B63] w-28">번호</th>
-            <th class="px-6 py-2.5 text-left font-semibold text-[#6B6B63]">이름</th>
-            <th class="px-6 py-2.5 text-center font-semibold text-[#6B6B63] w-60">진척도</th>
-            <th class="px-6 py-2.5 text-center font-semibold text-[#6B6B63] w-28">상태</th>
-            <th class="px-6 py-2.5 text-center font-semibold text-[#6B6B63] w-36">마감일</th>
+          <tr class="border-b border-[#F2F0EB] bg-[#5B6E96]">
+            <th class="px-6 py-2.5 text-left font-semibold text-[#DDE3F0] w-28">번호</th>
+            <th class="px-6 py-2.5 text-left font-semibold text-[#DDE3F0]">이름</th>
+            <th class="px-6 py-2.5 text-center font-semibold text-[#DDE3F0] w-60">진척도</th>
+            <th class="px-6 py-2.5 text-center font-semibold text-[#DDE3F0] w-28">상태</th>
+            <th class="px-6 py-2.5 text-center font-semibold text-[#DDE3F0] w-36">마감일</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-[#F2F0EB]">
+        <tbody class="divide-y divide-[#D6E4EA]">
           <tr v-for="sub in subTasks" :key="sub.id" class="hover:bg-[#FAFAF8] cursor-pointer transition-colors" @click="goToTask(sub.id)">
             <td class="px-6 py-3 font-mono text-base text-[#9A9B90]">{{ sub.id }}</td>
             <td class="px-6 py-3 text-[#1A1816] font-medium hover:text-[#E8920E] transition-colors">{{ sub.title }}</td>
@@ -602,8 +611,8 @@ onMounted(async () => {
     </div>
 
     <!-- 연결된 일감 -->
-    <div class="bg-white rounded-lg shadow-sm border border-[#C7C7C2] mb-6">
-      <div class="px-6 py-3 border-b border-[#C7C7C2] bg-[#F2F0EB] rounded-t-lg flex items-center justify-between">
+    <div class="bg-white rounded-lg shadow-sm border divide-[#D6E4EA] mb-6">
+      <div class="px-6 py-3 border-b divide-[#D6E4EA] bg-white rounded-t-lg flex items-center justify-between">
         <div class="flex items-center gap-3">
           <span class="text-base font-bold text-[#1A1816]">연결된 일감</span>
           <span class="text-base font-semibold px-2 py-0.5 rounded-full bg-[#6B6B63] text-white">{{ linkedTasks.length }}</span>
@@ -611,27 +620,27 @@ onMounted(async () => {
             완료 <span class="font-semibold text-emerald-600">{{ linkedTaskDone }}</span> · 진행중 <span class="font-semibold text-amber-600">{{ linkedTaskInProgress }}</span>
           </span>
         </div>
-        <Button v-if="canEdit" label="연결된 일감 추가" icon="pi pi-plus" severity="secondary" raised @click="linkModalVisible = true" />
+        <Button v-if="canEdit" label="연결된 일감 추가" icon="pi pi-plus" class="!bg-[#2D8FAD] !border-[#2D8FAD] hover:!bg-[#257892]" raised @click="linkModalVisible = true" />
       </div>
 
       <table class="w-full text-base">
         <thead>
-          <tr class="border-b border-[#F2F0EB] bg-[#F8F7F4]">
-            <th class="px-6 py-2.5 text-left font-semibold text-[#6B6B63] w-28">번호</th>
-            <th class="px-6 py-2.5 text-left font-semibold text-[#6B6B63]">이름</th>
-            <th class="px-6 py-2.5 text-center font-semibold text-[#6B6B63] w-28">관계</th>
-            <th class="px-6 py-2.5 text-center font-semibold text-[#6B6B63] w-60">진척도</th>
-            <th class="px-6 py-2.5 text-center font-semibold text-[#6B6B63] w-28">상태</th>
-            <th class="px-6 py-2.5 text-center font-semibold text-[#6B6B63] w-36">마감일</th>
+          <tr class="border-b border-[#F2F0EB] bg-[#5B6E96]">
+            <th class="px-6 py-2.5 text-left font-semibold text-[#DDE3F0] w-28">번호</th>
+            <th class="px-6 py-2.5 text-left font-semibold text-[#DDE3F0]">이름</th>
+            <th class="px-6 py-2.5 text-center font-semibold text-[#DDE3F0] w-28">관계</th>
+            <th class="px-6 py-2.5 text-center font-semibold text-[#DDE3F0] w-60">진척도</th>
+            <th class="px-6 py-2.5 text-center font-semibold text-[#DDE3F0] w-28">상태</th>
+            <th class="px-6 py-2.5 text-center font-semibold text-[#DDE3F0] w-36">마감일</th>
             <th class="px-6 py-2.5 w-12"></th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-[#F2F0EB]">
+        <tbody class="divide-y divide-[#D6E4EA]">
           <tr v-for="linked in linkedTasks" :key="linked.id" class="hover:bg-[#FAFAF8] transition-colors">
             <td class="px-6 py-3 font-mono text-base text-[#9A9B90] cursor-pointer" @click="goToTask(linked.id)">{{ linked.id }}</td>
             <td class="px-6 py-3 text-[#1A1816] font-medium hover:text-[#E8920E] transition-colors cursor-pointer" @click="goToTask(linked.id)">{{ linked.title }}</td>
             <td class="px-6 py-3 text-center cursor-pointer" @click="goToTask(linked.id)">
-              <span v-if="linked.relationType" class="px-2 py-0.5 bg-[#F2F0EB] rounded text-base font-semibold text-[#3A3B35] border border-[#E5E4DF]">{{ relationMap[linked.relationType] }}</span>
+              <span v-if="linked.relationType" class="px-2 py-0.5 bg-white rounded text-base font-semibold text-[#3A3B35] border border-[#E5E4DF]">{{ relationMap[linked.relationType] }}</span>
               <span v-else class="text-[#9A9B90]">-</span>
             </td>
             <td class="px-6 py-3 text-center cursor-pointer" @click="goToTask(linked.id)">
@@ -664,14 +673,14 @@ onMounted(async () => {
     </div>
 
     <!--  보조 구역  -->
-    <div class="bg-white rounded-lg shadow-sm border border-[#C7C7C2]">
+    <div class="bg-white rounded-lg shadow-sm border divide-[#D6E4EA]">
       <!-- 탭 헤더 -->
-      <div class="flex border-b border-[#C7C7C2] bg-[#F2F0EB] rounded-t-lg overflow-hidden">
+      <div class="flex border-b divide-[#D6E4EA] bg-white rounded-t-lg overflow-hidden">
         <button
-          v-for="tab in [{ key: 'comments', label: '댓글' }, { key: 'history', label: '수정 이력' }, ...(subTasks.length === 0 ? [{ key: 'timelog', label: '소요 시간' }] : []), { key: 'commits', label: '커밋 내역' }]"
+          v-for="tab in [{ key: 'comments', label: '댓글' }, { key: 'history', label: '수정 이력' }, ...(subTasks.length === 0 ? [{ key: 'timelog', label: '작업 이력' }] : []), { key: 'commits', label: '커밋 내역' }]"
           :key="tab.key"
           class="px-6 py-3 text-base font-semibold transition-colors relative"
-          :class="activeTab === tab.key ? 'text-[#E8920E] bg-white border-b-2 border-[#E8920E]' : 'text-[#6B6B63] hover:text-[#3A3B35] hover:bg-[#F8F7F4]'"
+          :class="activeTab === tab.key ? 'text-[#E8920E] bg-white border-b-2 border-[#E8920E]' : 'text-[#6B6B63] hover:text-[#3A3B35] hover:bg-[#F2F3F8]'"
           @click="activeTab = tab.key"
         >
           {{ tab.label }}
@@ -690,7 +699,7 @@ onMounted(async () => {
             v-model="commentData.content"
             placeholder="댓글을 입력해주세요..."
             rows="3"
-            class="w-full px-4 py-2.5 bg-[#FAFAF8] border border-[#C7C7C2] rounded-lg text-base text-[#1A1816] outline-none focus:border-[#E8920E] focus:ring-2 focus:ring-[#E8920E]/15 transition-all resize-none placeholder-[#9A9B90]"
+            class="w-full px-4 py-2.5 bg-[#FAFAF8] border divide-[#D6E4EA] rounded-lg text-base text-[#1A1816] outline-none focus:border-[#E8920E] focus:ring-2 focus:ring-[#E8920E]/15 transition-all resize-none placeholder-[#9A9B90]"
             :class="{ '!border-red-400 focus:!border-red-400 focus:!ring-red-400/15': commentData.content.length > 500 }"
           ></textarea>
           <div class="flex items-center justify-between mt-2">
@@ -720,7 +729,7 @@ onMounted(async () => {
               <textarea
                 v-model="comment.editContent"
                 rows="2"
-                class="w-full px-3 py-2 text-base border border-[#C7C7C2] rounded-lg outline-none focus:border-[#E8920E] resize-none bg-[#FAFAF8]"
+                class="w-full px-3 py-2 text-base border divide-[#D6E4EA] rounded-lg outline-none focus:border-[#E8920E] resize-none bg-[#FAFAF8]"
                 :class="{ '!border-red-400 focus:!border-red-400': comment.editContent.length > 500 }"
               ></textarea>
               <div class="flex items-center justify-between mt-1">
@@ -735,10 +744,10 @@ onMounted(async () => {
 
             <!-- 액션 -->
             <div class="flex items-center gap-2 mt-2">
-              <Button label="답글" text raised size="small" @click="replyingTo = replyingTo === comment.id ? null : comment.id" />
+              <Button label="답글" text size="small" @click="replyingTo = replyingTo === comment.id ? null : comment.id" />
               <template v-if="canEditComment(comment)">
-                <Button label="수정" text raised size="small" @click="startEdit(comment)" />
-                <Button label="삭제" text raised size="small" severity="danger" @click="deleteComment(comment.id)" />
+                <Button label="수정" text size="small" @click="startEdit(comment)" />
+                <Button label="삭제" text size="small" severity="danger" @click="deleteComment(comment.id)" />
               </template>
             </div>
 
@@ -752,7 +761,7 @@ onMounted(async () => {
                 v-model="replyData.content"
                 placeholder="답글을 입력해주세요..."
                 rows="2"
-                class="w-full px-3 py-2 text-base border border-[#C7C7C2] rounded-lg outline-none focus:border-[#E8920E] resize-none bg-[#FAFAF8]"
+                class="w-full px-3 py-2 text-base border divide-[#D6E4EA] rounded-lg outline-none focus:border-[#E8920E] resize-none bg-[#FAFAF8]"
                 :class="{ '!border-red-400 focus:!border-red-400': replyData.content.length > 500 }"
               ></textarea>
               <div class="flex items-center justify-between mt-1">
@@ -783,9 +792,9 @@ onMounted(async () => {
                   <span class="text-base text-[#9A9B90]">{{ formatDateTime(reply.createdOn) }}</span>
                   <span v-if="reply.editedOn" class="text-base text-[#C7C7C2]">(수정됨)</span>
                 </div>
-                <div v-if="!reply.editing" class="text-base text-[#3A3B35] bg-[#F8F7F4] border border-[#F2F0EB] rounded-lg px-4 py-3 leading-relaxed">{{ reply.content }}</div>
+                <div v-if="!reply.editing" class="text-base text-[#3A3B35] bg-[#F2F3F8] border border-[#F2F0EB] rounded-lg px-4 py-3 leading-relaxed">{{ reply.content }}</div>
                 <div v-else>
-                  <textarea v-model="reply.editContent" rows="2" class="w-full px-3 py-2 text-base border border-[#C7C7C2] rounded-lg outline-none focus:border-[#E8920E] resize-none bg-[#FAFAF8]"></textarea>
+                  <textarea v-model="reply.editContent" rows="2" class="w-full px-3 py-2 text-base border divide-[#D6E4EA] rounded-lg outline-none focus:border-[#E8920E] resize-none bg-[#FAFAF8]"></textarea>
                   <div class="flex gap-2 mt-2 justify-end">
                     <Button label="저장" raised @click="saveEdit(reply)" />
                     <Button label="취소" severity="secondary" raised @click="cancelEdit(reply)" />
@@ -805,16 +814,7 @@ onMounted(async () => {
 
       <!-- 수정 이력 -->
       <div v-if="activeTab === 'history'" class="p-6">
-        <DataTable
-          :value="history"
-          paginator
-          :rows="5"
-          :rowsPerPageOptions="[5, 10, 20]"
-          paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
-          stripedRows
-          class="text-base"
-          table-style="table-layout: fixed; width: 100%"
-        >
+        <DataTable :value="history" paginator :rows="10" paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown" stripedRows class="text-base" table-style="table-layout: fixed; width: 100%">
           <Column field="userId" header="수정자" :style="{ width: '160px' }">
             <template #body="{ data }">
               <span class="font-semibold text-[#1A1816]">{{ data.name }}</span>
@@ -844,21 +844,21 @@ onMounted(async () => {
         </DataTable>
       </div>
 
-      <!--  소요 시간 탭  -->
+      <!--  작업 탭  -->
       <div v-if="activeTab === 'timelog'" class="p-6">
         <div class="flex justify-between items-center mb-4">
           <div class="flex items-center gap-4">
             <div class="text-center">
               <div class="text-lg font-bold text-[#E8920E]">{{ formatHours(spentTime) }}</div>
-              <div class="text-base text-[#9A9B90]">총 소요 시간</div>
+              <div class="text-base text-[#9A9B90]">총 작업</div>
             </div>
-            <div class="h-8 w-px bg-[#F2F0EB]"></div>
+            <div class="h-8 w-px bg-white"></div>
             <div class="text-center">
               <div class="text-lg font-bold text-[#3A3B35]">{{ formatHours(task.estimatedTime) }}</div>
               <div class="text-base text-[#9A9B90]">추정 시간</div>
             </div>
           </div>
-          <Button v-if="canEdit && subTasks.length == 0" label="소요 시간 기록" icon="pi pi-plus" severity="secondary" raised @click="timeLogVisible = true" />
+          <Button v-if="canEdit && subTasks.length == 0" label="작업 기록" icon="pi pi-plus" class="!bg-[#2D8FAD] !border-[#2D8FAD] hover:!bg-[#257892]" raised @click="timeLogVisible = true" />
         </div>
         <DataTable :value="timeLogs" stripedRows class="text-base" table-style="table-layout: fixed; width: 100%">
           <Column field="name" header="작업자" :style="{ width: '100px' }">
@@ -871,7 +871,7 @@ onMounted(async () => {
               <span class="text-[#6B6B63]">{{ formatDateTime(data.taskStart) }}</span>
             </template>
           </Column>
-          <Column field="spent" header="소요 시간" :style="{ width: '100px' }">
+          <Column field="spent" header="작업" :style="{ width: '100px' }">
             <template #body="{ data }">
               <span class="font-semibold text-[#E8920E] block">{{ formatHours(data.spent) }}</span>
             </template>
@@ -888,7 +888,7 @@ onMounted(async () => {
           </Column>
           <Column field="activityType" header="작업 종류" :style="{ width: '120px' }">
             <template #body="{ data }">
-              <span class="px-2 py-0.5 bg-[#F2F0EB] rounded text-base font-semibold text-[#3A3B35] border border-[#E5E4DF]">
+              <span class="px-2 py-0.5 bg-white rounded text-base font-semibold text-[#3A3B35] border border-[#E5E4DF]">
                 {{ activityMap[data.activityType] || '-' }}
               </span>
             </template>
@@ -922,7 +922,7 @@ onMounted(async () => {
           </Column>
           <Column field="commitSha" header="커밋 ID" :style="{ width: '100px' }">
             <template #body="{ data }">
-              <code class="text-sm bg-[#F2F0EB] px-1.5 py-0.5 rounded text-[#E8920E] font-mono">
+              <code class="text-sm bg-white px-1.5 py-0.5 rounded text-[#E8920E] font-mono">
                 {{ data.commitSha.substring(0, 7) }}
               </code>
             </template>
