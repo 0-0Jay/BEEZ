@@ -49,4 +49,8 @@ public interface TaskMapper {
   void deleteTaskReply(String id);
   
   void updateTaskReply(TaskReplyRequest taskReplyRequest);
+  
+  List<TaskTypeResponse> findTaskType();
+  
+  List<TaskCategoryResponse> findTaskCategory();
 }

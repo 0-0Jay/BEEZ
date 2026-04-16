@@ -16,6 +16,12 @@ const userId = computed(() => authStore.user?.id);
 
 const selectedProject = computed(() => projectStore.selectedProject);
 
+function formatDate(dt) {
+  if (!dt) return '-';
+  const d = new Date(dt);
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}.`;
+}
+
 // 로그아웃
 const visible = ref(false);
 const confirmMsg = ref('');
@@ -63,7 +69,7 @@ const handleUserSaved = () => {
     <!-- 좌측 -->
     <div class="flex items-center gap-3">
       <!-- 프로젝트명 -->
-      <span v-if="selectedProject" class="ml-4 text-gray-600"> {{ selectedProject.title }} ({{ selectedProject.startDate }} - {{ selectedProject.endDate }}) </span>
+      <span v-if="selectedProject" class="ml-4 text-gray-600"> {{ selectedProject.title }} ({{ formatDate(selectedProject.startDate) }} ~ {{ formatDate(selectedProject.endDate) }}) </span>
       <span v-else class="ml-4 text-gray-600">프로젝트를 선택해주세요</span>
     </div>
 

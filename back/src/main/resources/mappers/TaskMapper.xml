@@ -368,4 +368,16 @@
     FROM workflow
     WHERE role_id = #{roleId} AND type_id = #{typeId} AND condition_type = #{conditionType}
   </select>
+  
+  <select id="findTaskType" resultType="TaskTypeResponse">
+    SELECT t.id, t.name, t.default_status, t.description,
+           (SELECT COUNT(*) FROM task a WHERE a.type = t.id) AS is_used
+    FROM task_type t
+  </select>
+  
+  <select id="findTaskCategory" resultType="TaskCategoryResponse">
+    SELECT t.id, t.name, t.description,
+           (SELECT COUNT(*) FROM task a WHERE a.category = t.id) AS is_used
+    FROM task_category t
+  </select>
 </mapper>

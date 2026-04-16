@@ -30,18 +30,7 @@ public class TaskServiceImpl implements TaskService {
   
   // 일감 유형 목록
   public List<TaskTypeResponse> findTaskType() {
-    return taskTypeRepository.findAll().stream().map(TaskTypeResponse::toDto).toList();
-  }
-
-  // 혹시 몰라서 안 지우고 두겠습니다(한유민)
-  // 일감 유형 생성
-  public void insertTaskType(TaskTypeRequest dto) {
-    taskTypeRepository.insertTaskType(dto.getName(), dto.getDefaultStatus(), dto.getDescription());
-  }
-  
-  // 일감 유형 수정
-  public void updateTaskType(TaskTypeRequest dto) {
-    taskTypeRepository.save(TaskType.toEntity(dto));
+    return taskMapper.findTaskType();
   }
   
   // 일감 유형 삭제
@@ -52,8 +41,7 @@ public class TaskServiceImpl implements TaskService {
 
     taskTypeRepository.deleteById(id);
   }
-
-  // 기존의 insert랑 구분하려고 save 썼습니다(한유민)
+  
   // 일감 유형 생성 및 수정(+ 업무 흐름 복사)
   @Transactional
   public void saveTaskType(TaskTypeRequest dto){
@@ -72,7 +60,7 @@ public class TaskServiceImpl implements TaskService {
   // 일감 범주 목록
   @Override
   public List<TaskCategoryResponse> findTaskCategory() {
-    return taskCategoryRepository.findAll().stream().map(TaskCategoryResponse::toDto).toList();
+    return taskMapper.findTaskCategory();
   }
   
   // 일감 범주 추가

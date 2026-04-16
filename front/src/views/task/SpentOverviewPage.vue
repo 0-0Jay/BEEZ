@@ -287,7 +287,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-stone-50 px-10 py-8 text-stone-700">
+  <div class="min-h-screen bg-white px-10 py-8 text-stone-700">
     <!-- 페이지 헤더 -->
     <div class="mb-7">
       <h1 class="text-2xl font-bold tracking-tight text-stone-900">소요시간</h1>
@@ -302,46 +302,46 @@ onMounted(async () => {
     <!-- ===== 탭1: 소요시간 목록 ===== -->
     <template v-if="activeTab === 0">
       <!-- 필터 카드 -->
-      <div class="bg-[#F2F0EB] border border-[#C7C7C2] rounded-xl shadow-sm px-7 pt-5 pb-5 mb-5">
-        <p class="text-xl font-bold tracking-wider uppercase text-amber-700 mb-4"><i class="pi pi-search" style="font-size: 1rem"></i> 검색 필터</p>
+      <div class="bg-[#F2F3F8] border border-[#C7C7C2] rounded-xl shadow-sm px-7 pt-5 pb-5 mb-5">
+        <p class="text-xl font-bold tracking-wider uppercase text-stone-700 mb-4"><i class="pi pi-search" style="font-size: 1rem"></i> 검색 필터</p>
 
         <div class="grid grid-cols-4 gap-x-5 gap-y-4">
           <!-- 프로젝트 -->
           <div class="flex flex-col gap-1.5">
-            <label class="text-base font-semibold uppercase tracking-wider text-stone-400">프로젝트</label>
+            <label class="text-base font-semibold uppercase tracking-wider text-stone-500">프로젝트</label>
             <Select v-model="filterDraft.projectId" :options="projectOptions" optionLabel="label" optionValue="value" placeholder="전체" showClear />
           </div>
 
           <!-- 일감 유형 -->
           <div class="flex flex-col gap-1.5">
-            <label class="text-base font-semibold uppercase tracking-wider text-stone-400">일감 유형</label>
+            <label class="text-base font-semibold uppercase tracking-wider text-stone-500">일감 유형</label>
             <Select v-model="filterDraft.type" :options="typeOptions" optionLabel="name" optionValue="id" placeholder="전체" showClear />
           </div>
 
           <!-- 일감 범주 -->
           <div class="flex flex-col gap-1.5">
-            <label class="text-base font-semibold uppercase tracking-wider text-stone-400">일감 범주</label>
+            <label class="text-base font-semibold uppercase tracking-wider text-stone-500">일감 범주</label>
             <Select v-model="filterDraft.category" :options="categoryOptions" optionLabel="name" optionValue="id" placeholder="전체" showClear />
           </div>
 
           <!-- 담당자 -->
           <div class="flex flex-col gap-1.5">
-            <label class="text-base font-semibold uppercase tracking-wider text-stone-400">담당자</label>
+            <label class="text-base font-semibold uppercase tracking-wider text-stone-500">담당자</label>
             <Select v-model="filterDraft.assignee" :options="assigneeOptions" optionLabel="name" optionValue="id" placeholder="이름 검색" filter filter-placeholder="이름 검색" showClear />
           </div>
 
           <!-- 작업종류 -->
           <div class="flex flex-col gap-1.5">
-            <label class="text-base font-semibold uppercase tracking-wider text-stone-400">작업종류</label>
+            <label class="text-base font-semibold uppercase tracking-wider text-stone-500">작업종류</label>
             <Select v-model="filterDraft.activityType" :options="activityOptions" optionLabel="name" optionValue="id" placeholder="전체" showClear />
           </div>
 
           <!-- 조회 기간 -->
           <div class="flex flex-col gap-1.5 col-span-2">
-            <label class="text-base font-semibold uppercase tracking-wider text-stone-400">조회 기간 </label>
+            <label class="text-base font-semibold uppercase tracking-wider text-stone-500">조회 기간 </label>
             <div class="flex gap-1.5 items-center">
               <DatePicker v-model="filterDraft.dateFrom" :manualInput="false" :max-date="filterDraft.dateTo" showButtonBar showIcon placeholder="시작일" dateFormat="yy-mm-dd" class="w-full" inputClass="w-full" />
-              <span class="text-stone-400 text-base shrink-0">~</span>
+              <span class="text-stone-500 text-base shrink-0">~</span>
               <DatePicker v-model="filterDraft.dateTo" :manualInput="false" :min-date="filterDraft.dateFrom" showButtonBar showIcon placeholder="종료일" dateFormat="yy-mm-dd" class="w-full" inputClass="w-full" />
             </div>
           </div>
@@ -351,7 +351,7 @@ onMounted(async () => {
 
           <!-- 제목 검색 (다음 줄, 2칸 차지) -->
           <div class="flex flex-col gap-1.5 col-span-2">
-            <label class="text-base font-semibold uppercase tracking-wider text-stone-400">제목 검색</label>
+            <label class="text-base font-semibold uppercase tracking-wider text-stone-500">제목 검색</label>
             <InputText v-model="filterDraft.titleSearch" placeholder="일감 제목을 입력하세요" class="w-full" />
           </div>
         </div>
@@ -367,11 +367,11 @@ onMounted(async () => {
       <!-- 테이블 카드 -->
       <div class="bg-white border border-[#C7C7C2] rounded-xl shadow-sm overflow-hidden">
         <div class="flex items-center justify-between px-6 py-3.5 border-b border-stone-100">
-          <span class="text-base text-stone-400">
+          <span class="text-base text-stone-500">
             총 <strong class="text-stone-700 font-bold">{{ sortedFilteredSpent.length }}</strong
             >건
           </span>
-          <span class="text-base text-stone-400">
+          <span class="text-base text-stone-500">
             총 소요시간 <strong class="text-amber-700 font-bold">{{ formatHours(totalFilteredHours) }}</strong>
           </span>
         </div>
@@ -379,20 +379,20 @@ onMounted(async () => {
         <div class="overflow-x-auto">
           <table class="w-full border-collapse text-base table-fixed">
             <thead>
-              <tr class="bg-stone-100 border-b border-stone-200">
-                <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-stone-400 min-w-30">프로젝트</th>
-                <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-stone-400 min-w-30">일감</th>
-                <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-24">유형</th>
-                <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-24">범주</th>
-                <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-28">담당자</th>
-                <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-24">작업종류</th>
-                <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-stone-400 min-w-60">설명</th>
-                <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-36">
+              <tr class="bg-[#5B6E96] border-b border-stone-200">
+                <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-[#DDE3F0] min-w-30">프로젝트</th>
+                <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-[#DDE3F0] min-w-30">일감</th>
+                <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-24">유형</th>
+                <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-24">범주</th>
+                <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-28">담당자</th>
+                <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-24">작업종류</th>
+                <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-[#DDE3F0] min-w-60">설명</th>
+                <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-36">
                   <button class="sort-btn" :class="{ active: sortKey === 'taskStart' }" @click="toggleSort('taskStart')">
                     작업일시 <span class="sort-icon">{{ sortIcon('taskStart') }}</span>
                   </button>
                 </th>
-                <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-stone-400 whitespace-nowrap w-40">
+                <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-40">
                   <button class="sort-btn" :class="{ active: sortKey === 'spent' }" @click="toggleSort('spent')">
                     소요시간 <span class="sort-icon">{{ sortIcon('spent') }}</span>
                   </button>
@@ -403,7 +403,7 @@ onMounted(async () => {
               <tr v-for="(item, idx) in pagedSpent" :key="item.id" class="border-b border-stone-100 last:border-none hover:bg-amber-50 transition-colors duration-100" :class="idx % 2 !== 0 ? 'bg-stone-50/60' : 'bg-white'">
                 <td class="px-4 py-3.5">
                   <span class="block text-base text-stone-700 leading-snug">{{ item.projectTitle }}</span>
-                  <span class="text-base font-mono text-stone-400 mt-0.5 inline-block">#{{ item.projectId }}</span>
+                  <span class="text-base font-mono text-stone-500 mt-0.5 inline-block">#{{ item.projectId }}</span>
                 </td>
                 <td class="px-4 py-3.5">
                   <span class="block text-base font-medium text-stone-800 leading-snug">{{ item.taskTitle }}</span>
@@ -413,11 +413,11 @@ onMounted(async () => {
                   <span class="inline-block px-2.5 py-0.5 rounded-full text-base font-semibold whitespace-nowrap bg-[#eeedfe] text-[#3c3489]">{{ typeMap[item.type] ?? item.type }}</span>
                 </td>
                 <td class="px-4 py-3.5 text-center">
-                  <span class="inline-block text-base text-stone-400 bg-stone-100 px-2 py-px rounded">{{ categoryMap[item.category] ?? item.category }}</span>
+                  <span class="inline-block text-base text-stone-500 bg-stone-100 px-2 py-px rounded">{{ categoryMap[item.category] ?? item.category }}</span>
                 </td>
                 <td class="px-4 py-3.5 text-center">
                   <span class="block text-base text-stone-600">{{ item.name }}</span>
-                  <span class="text-base font-mono text-stone-400">{{ item.userId }}</span>
+                  <span class="text-base font-mono text-stone-500">{{ item.userId }}</span>
                 </td>
                 <td class="px-4 py-3.5 text-center">
                   <span class="inline-block px-2.5 py-0.5 rounded-full text-base font-semibold whitespace-nowrap bg-[#faeeda] text-[#633806]">{{ activityMap[item.activityType] ?? item.activityType }}</span>
@@ -427,11 +427,11 @@ onMounted(async () => {
                 </td>
                 <td class="px-4 py-3.5 text-base text-stone-500 tabular-nums text-center whitespace-nowrap">{{ formatDateTime(item.taskStart) }}</td>
                 <td class="px-4 py-3.5 text-center">
-                  <span class="font-mono text-base font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded">{{ formatHours(item.spent) }}</span>
+                  <span class="font-mono text-base font-semibold text-amber-700 px-2 py-0.5 rounded">{{ formatHours(item.spent) }}</span>
                 </td>
               </tr>
               <tr v-if="pagedSpent.length === 0">
-                <td colspan="9" class="text-center py-16 text-base text-stone-400">조건에 맞는 소요시간 데이터가 없습니다.</td>
+                <td colspan="9" class="text-center py-16 text-base text-stone-500">조건에 맞는 소요시간 데이터가 없습니다.</td>
               </tr>
             </tbody>
           </table>
@@ -449,32 +449,32 @@ onMounted(async () => {
     <!-- ===== 탭2: 소요시간 보고서 ===== -->
     <template v-if="activeTab === 1">
       <!-- 기간 선택 (시작일 / 종료일 분리) -->
-      <div class="bg-[#F2F0EB] border border-[#C7C7C2] rounded-xl shadow-sm px-7 py-4 mb-5 flex items-center gap-4">
-        <span class="text-base font-semibold uppercase tracking-wider text-stone-400">보고서 기간</span>
+      <div class="bg-[#F2F3F8] border border-[#C7C7C2] rounded-xl shadow-sm px-7 py-4 mb-5 flex items-center gap-4">
+        <span class="text-base font-semibold uppercase tracking-wider text-stone-500">보고서 기간</span>
         <DatePicker v-model="reportDateFrom" :manualInput="false" :max-date="reportDateTo" showButtonBar showIcon placeholder="시작일" dateFormat="yy-mm-dd" />
-        <span class="text-stone-400">~</span>
+        <span class="text-stone-500">~</span>
         <DatePicker v-model="reportDateTo" :manualInput="false" :min-date="reportDateFrom" showButtonBar showIcon placeholder="종료일" dateFormat="yy-mm-dd" />
         <Button label="초기화" severity="secondary" raised @click="resetReportDate" />
-        <span class="text-base text-stone-400 ml-2">{{ reportSpent.length }}건의 데이터</span>
+        <span class="text-base text-stone-500 ml-2">{{ reportSpent.length }}건의 데이터</span>
       </div>
 
       <!-- 전체 소요시간 요약 -->
-      <div class="bg-[#F2F0EB] border border-[#C7C7C2] rounded-xl shadow-sm px-7 pt-5 pb-5 mb-5">
+      <div class="bg-[#F2F3F8] border border-[#C7C7C2] rounded-xl shadow-sm px-7 pt-5 pb-5 mb-5">
         <p class="text-2xl font-bold tracking-wider uppercase text-amber-700 mb-4">
           <i class="pi pi-chart-bar" style="font-size: 1rem"></i> 전체 소요시간
-          <span class="text-base text-stone-400 mt-1">총 {{ reportSpent.length }}개 일감</span>
+          <span class="text-base text-stone-500 mt-1">총 {{ reportSpent.length }}개 일감</span>
         </p>
         <div class="grid grid-cols-2 gap-5">
           <div class="summary-stat-card">
             <div class="text-6xl font-bold text-amber-700">{{ formatHours(reportTotalHours) }}</div>
-            <div class="text-base text-stone-400 flex items-center gap-2 mt-1">
+            <div class="text-base text-stone-500 flex items-center gap-2 mt-1">
               <i class="pi pi-info-circle"></i>
               <span>모든 소요시간은 1일 8시간 업무로 가정하여 계산됩니다.</span>
             </div>
           </div>
           <div class="summary-stat-card text-right">
-            <div class="text-base font-semibold uppercase tracking-wider text-stone-400 mb-2">일 평균</div>
-            <div class="text-3xl font-bold text-amber-700">{{ formatHours(dailyAvgHours) }}<span class="text-base text-stone-400 mt-1"> / 일</span></div>
+            <div class="text-base font-semibold uppercase tracking-wider text-stone-500 mb-2">일 평균</div>
+            <div class="text-3xl font-bold text-amber-700">{{ formatHours(dailyAvgHours) }}<span class="text-base text-stone-500 mt-1"> / 일</span></div>
           </div>
         </div>
       </div>
@@ -482,7 +482,7 @@ onMounted(async () => {
       <!-- 프로젝트별 (도넛 + 리스트) -->
       <div class="bg-white border border-[#C7C7C2] rounded-xl shadow-sm px-7 py-5 mb-5">
         <p class="text-2xl font-bold uppercase tracking-wider text-stone-500 mb-5">프로젝트별 소요시간</p>
-        <div class="text-base text-stone-400 flex items-center gap-2 mb-4">
+        <div class="text-base text-stone-500 flex items-center gap-2 mb-4">
           <i class="pi pi-info-circle"></i>
           <span>현재 프로젝트와 직속 하위 프로젝트만 집계됩니다.</span>
         </div>
@@ -491,7 +491,7 @@ onMounted(async () => {
           <div class="flex-shrink-0 relative" style="width: 200px; height: 200px">
             <Chart class="w-58" type="doughnut" :data="chartData" :options="chartOptions"></Chart>
             <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span class="text-base text-stone-400">합계</span>
+              <span class="text-base text-stone-500">합계</span>
               <span class="text-xl font-bold text-amber-700">{{ formatHours(reportTotalHours) }}</span>
             </div>
           </div>
@@ -516,7 +516,7 @@ onMounted(async () => {
                 }"
               />
             </div>
-            <div v-if="!projectStats.length" class="text-center py-8 text-base text-stone-400">데이터가 없습니다.</div>
+            <div v-if="!projectStats.length" class="text-center py-8 text-base text-stone-500">데이터가 없습니다.</div>
           </div>
         </div>
       </div>
@@ -543,7 +543,7 @@ onMounted(async () => {
                 }"
               ></ProgressBar>
             </div>
-            <div v-if="!categoryStats.length" class="text-center py-8 text-base text-stone-400">데이터가 없습니다.</div>
+            <div v-if="!categoryStats.length" class="text-center py-8 text-base text-stone-500">데이터가 없습니다.</div>
           </div>
         </div>
 
@@ -567,7 +567,7 @@ onMounted(async () => {
                 }"
               ></ProgressBar>
             </div>
-            <div v-if="!typeStats.length" class="text-center py-8 text-base text-stone-400">데이터가 없습니다.</div>
+            <div v-if="!typeStats.length" class="text-center py-8 text-base text-stone-500">데이터가 없습니다.</div>
           </div>
         </div>
 
@@ -591,7 +591,7 @@ onMounted(async () => {
                 }"
               ></ProgressBar>
             </div>
-            <div v-if="!assigneeStats.length" class="text-center py-8 text-base text-stone-400">데이터가 없습니다.</div>
+            <div v-if="!assigneeStats.length" class="text-center py-8 text-base text-stone-500">데이터가 없습니다.</div>
           </div>
         </div>
 
@@ -606,7 +606,7 @@ onMounted(async () => {
               </div>
               <ProgressBar :value="item.pct"></ProgressBar>
             </div>
-            <div v-if="!activityStats.length" class="text-center py-8 text-base text-stone-400">데이터가 없습니다.</div>
+            <div v-if="!activityStats.length" class="text-center py-8 text-base text-stone-500">데이터가 없습니다.</div>
           </div>
         </div>
       </div>
@@ -659,12 +659,9 @@ onMounted(async () => {
     color 0.15s;
   white-space: nowrap;
 }
-.sort-btn:hover {
-  background: #fef3c7;
-  color: #92400e;
-}
+
 .sort-btn.active {
-  color: #b45309;
+  color: #dde3f0;
 }
 .sort-icon {
   font-size: 0.75rem;
@@ -672,7 +669,7 @@ onMounted(async () => {
 }
 .sort-btn.active .sort-icon {
   opacity: 1;
-  color: #d97706;
+  color: #dde3f0;
 }
 
 /* ── 요약 카드 ── */

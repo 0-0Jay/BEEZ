@@ -10,12 +10,6 @@ public interface TaskService {
   // 일감 유형 목록
   List<TaskTypeResponse> findTaskType();
   
-  // 일감 유형 생성
-  void insertTaskType(TaskTypeRequest request);
-  
-  // 일감 유형 수정
-  void updateTaskType(TaskTypeRequest request);
-  
   // 일감 유형 삭제
   void deleteTaskType(String id);
 

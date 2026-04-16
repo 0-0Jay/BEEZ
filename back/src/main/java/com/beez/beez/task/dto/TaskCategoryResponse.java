@@ -15,6 +15,7 @@ public class TaskCategoryResponse {
   private String id;
   private String name;
   private String description;
+  private Integer isUsed;
   
   public static TaskCategoryResponse toDto(TaskCategory category) {
     return TaskCategoryResponse.builder()

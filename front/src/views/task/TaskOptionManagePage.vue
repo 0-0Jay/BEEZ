@@ -133,16 +133,22 @@ async function handleDelete() {
   deleteId.value = null;
   deleteTarget.value = '';
 }
-
+const loading = ref(false);
 onMounted(async () => {
-  await taskStore.findTypeList();
-  await taskStore.findCateList();
-  await taskStore.findCommonCodeList();
+  loading.value = true;
+  await Promise.all([taskStore.findTypeList(), taskStore.findCateList(), taskStore.findCommonCodeList()]);
+  console.log(taskTypes.value);
+  console.log(taskCategories.value);
+  loading.value = false;
 });
 </script>
 
 <template>
-  <div class="min-h-screen bg-stone-50 px-10 py-8 text-stone-700">
+  <div v-if="loading" class="flex justify-center items-center py-20 text-stone-500">
+    <i class="pi pi-spin pi-spinner text-2xl mr-2"></i>
+    데이터 불러오는 중...
+  </div>
+  <div v-else class="min-h-screen bg-white px-10 py-8 text-stone-700">
     <div class="mb-7">
       <h1 class="text-2xl font-bold tracking-tight text-stone-900">일감 유형 &amp; 범주 관리</h1>
     </div>
@@ -157,17 +163,17 @@ onMounted(async () => {
               >개
             </p>
           </div>
-          <Button label="일감 유형 추가" icon="pi pi-plus" raised @click="openTypeAdd" />
+          <Button label="일감 유형 추가" class="!bg-[#2D8FAD] !border-[#2D8FAD] hover:!bg-[#257892]" icon="pi pi-plus" raised @click="openTypeAdd" />
         </div>
 
         <div class="overflow-x-auto">
           <table class="w-full border-collapse">
             <thead>
-              <tr class="bg-stone-100 border-b border-stone-200">
-                <th class="px-5 py-3.5 text-left text-base font-bold uppercase tracking-wider text-stone-400 w-36">유형명</th>
-                <th class="px-5 py-3.5 text-center text-base font-bold uppercase tracking-wider text-stone-400 w-32">초기 상태</th>
-                <th class="px-5 py-3.5 text-left text-base font-bold uppercase tracking-wider text-stone-400">설명</th>
-                <th class="px-5 py-3.5 text-center text-base font-bold uppercase tracking-wider text-stone-400 w-28">관리</th>
+              <tr class="bg-[#5B6E96] border-b border-stone-200">
+                <th class="px-5 py-3.5 text-left text-base font-bold uppercase tracking-wider text-[#DDE3F0] w-36">유형명</th>
+                <th class="px-5 py-3.5 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] w-32">초기 상태</th>
+                <th class="px-5 py-3.5 text-left text-base font-bold uppercase tracking-wider text-[#DDE3F0]">설명</th>
+                <th class="px-5 py-3.5 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] w-28">관리</th>
               </tr>
             </thead>
             <tbody>
@@ -186,7 +192,15 @@ onMounted(async () => {
                 <td class="px-5 py-5">
                   <div class="flex items-center justify-center gap-1.5">
                     <Button icon="pi pi-pencil" text rounded class="!w-8 !h-8 !text-stone-400 hover:!text-amber-600 hover:!bg-amber-50 transition-colors" v-tooltip.top="'수정'" @click="openTypeEdit(item)" />
-                    <Button icon="pi pi-trash" text rounded class="!w-8 !h-8 !text-stone-400 hover:!text-red-500 hover:!bg-red-50 transition-colors" v-tooltip.top="'삭제'" @click="openDeleteConfirm(item.id, 'TYPE')" />
+                    <Button
+                      icon="pi pi-trash"
+                      text
+                      rounded
+                      class="!w-8 !h-8 !text-stone-400 hover:!text-red-500 hover:!bg-red-50 transition-colors"
+                      :disabled="item.isUsed > 0"
+                      v-tooltip.top="item.isUsed > 0 ? '사용 중인 유형은\n삭제할 수 없습니다' : '삭제'"
+                      @click="openDeleteConfirm(item.id, 'TYPE')"
+                    />
                   </div>
                 </td>
               </tr>
@@ -207,16 +221,16 @@ onMounted(async () => {
               >개
             </p>
           </div>
-          <Button label="일감 범주 추가" icon="pi pi-plus" raised @click="openCatAdd" />
+          <Button label="일감 범주 추가" class="!bg-[#2D8FAD] !border-[#2D8FAD] hover:!bg-[#257892]" icon="pi pi-plus" raised @click="openCatAdd" />
         </div>
 
         <div class="overflow-x-auto">
           <table class="w-full border-collapse">
             <thead>
-              <tr class="bg-stone-100 border-b border-stone-200">
-                <th class="px-5 py-3.5 text-left text-base font-bold uppercase tracking-wider text-stone-400 w-36">범주명</th>
-                <th class="px-5 py-3.5 text-left text-base font-bold uppercase tracking-wider text-stone-400">설명</th>
-                <th class="px-5 py-3.5 text-center text-base font-bold uppercase tracking-wider text-stone-400 w-28">관리</th>
+              <tr class="bg-[#5B6E96] border-b border-stone-200">
+                <th class="px-5 py-3.5 text-left text-base font-bold uppercase tracking-wider text-[#DDE3F0] w-36">범주명</th>
+                <th class="px-5 py-3.5 text-left text-base font-bold uppercase tracking-wider text-[#DDE3F0]">설명</th>
+                <th class="px-5 py-3.5 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] w-28">관리</th>
               </tr>
             </thead>
             <tbody>
@@ -230,7 +244,15 @@ onMounted(async () => {
                 <td class="px-5 py-5">
                   <div class="flex items-center justify-center gap-1.5">
                     <Button icon="pi pi-pencil" text rounded class="!w-8 !h-8 !text-stone-400 hover:!text-amber-600 hover:!bg-amber-50 transition-colors" v-tooltip.top="'수정'" @click="openCateEdit(item)" />
-                    <Button icon="pi pi-trash" text rounded class="!w-8 !h-8 !text-stone-400 hover:!text-red-500 hover:!bg-red-50 transition-colors" v-tooltip.top="'삭제'" @click="openDeleteConfirm(item.id, 'CATE')" />
+                    <Button
+                      icon="pi pi-trash"
+                      text
+                      rounded
+                      class="!w-8 !h-8 !text-stone-400 hover:!text-red-500 hover:!bg-red-50 transition-colors"
+                      :disabled="item.isUsed > 0"
+                      v-tooltip.top="item.isUsed > 0 ? '사용 중인 범주는\n삭제할 수 없습니다' : '삭제'"
+                      @click="openDeleteConfirm(item.id, 'CATE')"
+                    />
                   </div>
                 </td>
               </tr>
