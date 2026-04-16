@@ -6,7 +6,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
+import java.util.UUID;
 import java.io.IOException;
 
 @RestController
@@ -19,7 +19,18 @@ public class S3Controller {
   // 업로드
   @PostMapping("/upload")
   public ResponseEntity<String> upload(@RequestParam("file") MultipartFile file) throws IOException {
-    String url = s3Service.uploadFile(file);
+    
+    String originalName = file.getOriginalFilename();
+    String extension = "";
+    
+    if (originalName != null && originalName.contains(".")) {
+      extension = originalName.substring(originalName.lastIndexOf("."));
+    }
+    
+    String storedName = UUID.randomUUID().toString() + extension;
+    
+    String url = s3Service.uploadFile(file, storedName);
+    
     return ResponseEntity.ok(url);
   }
   
