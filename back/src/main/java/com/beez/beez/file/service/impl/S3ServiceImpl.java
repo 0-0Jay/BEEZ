@@ -28,21 +28,20 @@ public class S3ServiceImpl implements S3Service {
   @Value("${cloud.aws.region.static}")
   private String region;
   
-  // ✅ 업로드
+  // 업로드
   @Override
-  public String uploadFile(MultipartFile file) throws IOException {
-    String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+  public String uploadFile(MultipartFile file, String storedName) throws IOException {
     
     PutObjectRequest request = PutObjectRequest.builder()
       .bucket(bucket)
-      .key(fileName)
+      .key(storedName)
       .contentType(file.getContentType())
       .contentLength(file.getSize())
       .build();
     
     s3Client.putObject(request, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
     
-    return "https://" + bucket + ".s3." + region + ".amazonaws.com/" + fileName;
+    return "https://" + bucket + ".s3." + region + ".amazonaws.com/" + storedName;
   }
   
   // 다운로드
