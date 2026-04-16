@@ -46,7 +46,7 @@
         AND role != #{excludeRoleId}
       </if>
     </where>
-    ORDER BY created_on DESC
+    ORDER BY created_on DESC, id ASC
   </select>
 
   <!-- 이메일 중복체크 -->
