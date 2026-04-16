@@ -516,10 +516,6 @@ function renumberHeadings() {
             <span class="info-label">종료일 :</span>
             <span class="info-value status-badge">{{ projectInfo.endDate ? projectInfo.endDate.replace('T', ' ').substring(0, 10) : '데이터가 없습니다' }}</span>
           </div>
-          <div class="info-row">
-            <span class="info-label">상태값 :</span>
-            <span class="info-value status-badge">{{ projectInfo.status || '데이터가 없습니다' }}</span>
-          </div>
         </div>
       </div>
 
