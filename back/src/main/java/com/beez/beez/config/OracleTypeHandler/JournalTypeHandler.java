@@ -21,8 +21,8 @@ public class JournalTypeHandler implements TypeHandler<List<JournalRequest>> {
                                   List<JournalRequest> journals, JdbcType jdbcType) throws SQLException {
     OracleConnection conn = ps.getConnection().unwrap(OracleConnection.class);
     
-    Object[] structs = new Object[journals.size()];
-    for (int j = 0; j < journals.size(); j++) {
+    Object[] structs = new Object[journals != null ? journals.size() : 0];
+    for (int j = 0; j < (journals != null ? journals.size() : 0); j++) {
       JournalRequest r = journals.get(j);
       Object[] attrs = { r.getFieldName(), r.getOldValue(), r.getNewValue() };
       structs[j] = conn.createStruct("T_JOURNAL", attrs);
