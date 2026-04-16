@@ -134,28 +134,30 @@
       LEFT JOIN users u ON u.id = p.user_id
       LEFT JOIN users u2 ON u2.id = p.pm_id
       WHERE p.status = 'K1'
+    <if test="currentUserRole != 'ROLE0001'">
       AND (
-          p.user_id = #{currentUserId}
-          OR p.pm_id = #{currentUserId}
-          OR EXISTS (
-          SELECT 1 FROM project_member pm
-          WHERE pm.project_id = p.id
-          AND pm.user_id = #{currentUserId}
-          AND pm.is_delete = 'F0'
-      )
-      OR EXISTS (
-          SELECT 1
-          FROM project ancestor
-          WHERE ancestor.pm_id = #{currentUserId}
-          AND ancestor.status = 'K1'
-          AND ancestor.id IN (
-              SELECT sub.parent_id
-              FROM project sub
-              START WITH sub.id = p.id
-              CONNECT BY PRIOR sub.parent_id = sub.id
-              )
-          )
-      )
+            p.user_id = #{currentUserId}
+            OR p.pm_id = #{currentUserId}
+            OR EXISTS (
+            SELECT 1 FROM project_member pm
+            WHERE pm.project_id = p.id
+            AND pm.user_id = #{currentUserId}
+            AND pm.is_delete = 'F0'
+        )
+        OR EXISTS (
+            SELECT 1
+            FROM project ancestor
+            WHERE ancestor.pm_id = #{currentUserId}
+            AND ancestor.status = 'K1'
+            AND ancestor.id IN (
+                SELECT sub.parent_id
+                FROM project sub
+                START WITH sub.id = p.id
+                CONNECT BY PRIOR sub.parent_id = sub.id
+                )
+            )
+        )
+    </if>
       <if test="title != null and title != ''">
         AND p.title LIKE '%' || #{title} || '%'
       </if>

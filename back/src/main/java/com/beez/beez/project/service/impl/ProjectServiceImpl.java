@@ -7,6 +7,7 @@ import com.beez.beez.project.mapper.ProjectMapper;
 import com.beez.beez.project.service.ProjectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,10 +21,22 @@ public class ProjectServiceImpl implements ProjectService {
   
   private final ProjectMapper projectMapper;
   
-  //  세션에서 아이디 받아오기
+  //세션에서 아이디 받아오기
   private String getCurrentUserId() {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     return auth.getName();
+  }
+  
+  //세션에서 역할 받아오기
+  private String getCurrentUserRole() {
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    
+    List<String> roles = auth.getAuthorities().stream()
+      .map(GrantedAuthority::getAuthority)
+      .filter(a -> a.startsWith("ROLE"))
+      .toList();
+    
+    return roles.isEmpty() ? null : roles.getFirst();
   }
   
   // 프로젝트 생성
@@ -60,6 +73,7 @@ public class ProjectServiceImpl implements ProjectService {
   @Override
   public List<ProjectListResponse> selectProjectList(ProjectFilterRequest filter) {
     filter.setCurrentUserId(getCurrentUserId());
+    filter.setCurrentUserRole((getCurrentUserRole()));
     return projectMapper.selectProjectList(filter);
   }
   

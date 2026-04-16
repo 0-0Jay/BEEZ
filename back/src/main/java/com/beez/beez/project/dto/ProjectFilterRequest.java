@@ -16,4 +16,5 @@ public class ProjectFilterRequest {
   private Date endDate;
   private String isLock;
   private String currentUserId;
+  private String currentUserRole;
 }

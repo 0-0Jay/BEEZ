@@ -104,7 +104,7 @@ const formatDate = (date) => {
 </script>
 
 <template>
-  <div>
+  <div class="bg-[#ffffff] h-full">
     <div class="flex justify-end mb-4">
       <Button v-if="!projectInfo?.parentId" label="버전 추가" icon="pi pi-plus" severity="contrast" outlined @click="modalVisible = true" />
     </div>

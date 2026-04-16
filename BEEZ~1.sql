@@ -147,6 +147,7 @@ BEGIN
         AND pm.is_delete = 'F0'
         AND rm.is_delete = 'F0'
         AND rm.role_id NOT IN ('ROLE0001')
+        AND u.status = 'H1'
         ORDER BY pm.id;
         
     OPEN p_groups FOR
@@ -182,6 +183,7 @@ BEGIN
     AND pm.group_id IS NOT NULL
     AND pm.is_delete = 'F0'
     AND rm.is_delete = 'F0'
+    AND u.status = 'H1'
     ORDER BY pm.id;
 END;
 /
