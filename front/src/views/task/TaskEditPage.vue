@@ -75,10 +75,7 @@ function formatDate(d) {
 
 function parseDate(d) {
   if (!d) return null;
-
-  const str = typeof d === 'string' ? d.substring(0, 10) : new Date(d).toISOString().substring(0, 10);
-  const [y, m, day] = str.split('-').map(Number);
-  return new Date(y, m - 1, day, 12);
+  return new Date(d);
 }
 
 const task = computed(() => taskStore.task);
@@ -152,10 +149,10 @@ const originalValues = isEditMode
       category: task.value?.category ?? null,
       userId: task.value?.userId ?? null,
       versionId: task.value?.versionId ?? null,
-      plannedStart: formatDate(task.value?.plannedStart),
-      plannedEnd: formatDate(task.value?.plannedEnd),
-      actualStart: formatDate(task.value?.actualStart),
-      actualEnd: formatDate(task.value?.actualEnd),
+      plannedStart: parseDate(task.value?.plannedStart),
+      plannedEnd: parseDate(task.value?.plannedEnd),
+      actualStart: parseDate(task.value?.actualStart),
+      actualEnd: parseDate(task.value?.actualEnd),
       estimatedTime: task.value?.estimatedTime ?? 0,
       progress: task.value?.progress ?? 0,
       attachments: (task.value?.fileList ?? []).map((f) => ({ ...f })),
@@ -200,8 +197,10 @@ const buildChangeLog = () => {
   });
 
   dateFields.forEach((field) => {
-    const oldValue = originalValues[field] ?? '';
+    const oldValue = formatDate(originalValues[field]) ?? '';
     const newValue = formatDate(form[field]) ?? '';
+    console.log(oldValue);
+    console.log(newValue);
     if (oldValue !== newValue) {
       changeLog.push({ fieldName: fieldMapper[field], oldValue, newValue });
     }
@@ -393,6 +392,11 @@ const handleSubmit = async () => {
     formData.append('editor', userId.value);
     formData.append('fileId', fileId);
     const changeLog = buildChangeLog();
+    nextId = task.value?.id;
+    if (changeLog.length == 0) {
+      router.push(`/task/${nextId}`);
+      return;
+    }
     changeLog.forEach((entry, i) => {
       formData.append(`journals[${i}].fieldName`, entry.fieldName);
       formData.append(`journals[${i}].oldValue`, entry.oldValue ?? '');
@@ -401,7 +405,6 @@ const handleSubmit = async () => {
     deletedFileIds.forEach((id) => formData.append('deletedFileIds', id));
     form.attachments.filter((f) => f instanceof File).forEach((file) => formData.append('attachments', file));
     await taskStore.updateTask(formData);
-    nextId = task.value?.id;
     toast.add({
       severity: 'success',
       summary: '수정 완료',
@@ -453,6 +456,7 @@ onMounted(async () => {
     await taskStore.findWorkflow({ roleId: roleId.value.map((r) => r.id), typeId: taskStore.task?.type, conditionType: condition.value });
   }
   loading.value = false;
+  console.log(task.value);
 });
 </script>
 

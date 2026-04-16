@@ -238,7 +238,12 @@
   <update id="deleteTask">
     UPDATE task
     SET status = 'T0'
-    WHERE id = #{id}
+    WHERE id IN (
+      SELECT id
+      FROM task
+      START WITH id = #{id}
+      CONNECT BY PRIOR id = parent_id
+    )
   </update>
   
   <select id="copySubTasks" statementType="CALLABLE">

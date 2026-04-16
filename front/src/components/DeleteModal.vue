@@ -43,7 +43,10 @@ function handleCancel() {
       <div class="flex flex-col gap-1.5">
         <InputText v-model="inputValue" :placeholder="title" :invalid="showError" class="w-full" />
         <p v-if="showError" class="text-sm text-red-500">이름을 정확하게 입력해 주세요.</p>
-
+        <div class="flex items-start gap-2 pt-5">
+          <i class="pi pi-exclamation-circle text-red-500 mt-1"></i>
+          <p class="text-base text-red-500">이 일감에 소속된 모든 하위 일감이 함께 삭제됩니다.</p>
+        </div>
         <div class="flex items-start gap-2">
           <i class="pi pi-exclamation-circle text-red-500 mt-1"></i>
           <p class="text-base text-red-500">이 작업은 되돌릴 수 없습니다.</p>

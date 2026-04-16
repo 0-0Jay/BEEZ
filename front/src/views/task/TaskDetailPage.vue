@@ -371,6 +371,7 @@ onMounted(async () => {
   loading.value = true;
   await Promise.all([taskStore.findCateList(), taskStore.findTypeList(), gitStore.findCommitsByTaskId(taskId.value), taskStore.findCommonCodeList()]);
   loading.value = false;
+  console.log(task.value);
 });
 </script>
 
@@ -993,9 +994,9 @@ onMounted(async () => {
       :title="task.title"
       @confirm="
         async (data) => {
+          router.push(`/tasks`);
           await taskStore.deleteTask(data);
           deleteModalVisible = false;
-          router.push(`/tasks`);
           toast.add({
             severity: 'success',
             summary: '일감 삭제',
