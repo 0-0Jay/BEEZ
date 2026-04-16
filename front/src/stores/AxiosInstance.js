@@ -94,11 +94,15 @@ function handleError(status, message) {
       isRedirecting = true;
       alert(ERROR_MESSAGES[403]);
 
-      router.push('/main').then(() => {
-        setTimeout(() => {
-          isRedirecting = false;
-        }, 100); // 이동 완료 후 다시 에러를 받을 수 있게 초기화
-      });
+      if (window.history.length > 1) {
+        router.back();
+      } else {
+        router.replace('/main');
+      }
+
+      setTimeout(() => {
+        isRedirecting = false;
+      }, 100);
 
       break;
 

@@ -42,7 +42,8 @@ const Routes4 = [
   {
     path: '/document/edit/:projectId/:docId',
     name: 'DocumentEdit',
-    component: () => import('@/views/document/DocumentEdit.vue')
+    component: () => import('@/views/document/DocumentEdit.vue'),
+    meta: { permission: 'PER260413008' }
   }
 ]; //router end
 export default Routes4;

@@ -63,6 +63,9 @@ const onSync = async (data) => {
   } catch (err) {
     const errorMsg = err.response?.data?.message || err.response?.data || '저장소 연결 상태를 확인하세요.';
     console.error('동기화 통신 에러:', err.response);
+    if (errorMsg.includes('Forbidden')) {
+      return;
+    }
     toast.add({
       severity: 'error',
       summary: '동기화 실패',

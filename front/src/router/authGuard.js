@@ -65,6 +65,11 @@ export const setupAuthGuard = async (to, from, next) => {
         return next();
       }
 
+      if (to.meta.permission) {
+        alertStore.setAlert('접근 권한이 없습니다');
+        return next(false);
+      }
+
       alertStore.setAlert('프로젝트를 선택해주세요.');
       return next({ name: 'projectList' });
     }
@@ -75,13 +80,22 @@ export const setupAuthGuard = async (to, from, next) => {
         authStore.currentProjectId = projectId;
       } catch (e) {
         alertStore.setAlert('권한 정보를 불러오지 못했습니다.');
-        return next({ name: 'dashboard' });
+
+        if (window.history.length > 1) {
+          return next(false);
+        } else {
+          return next({ name: 'dashboard' });
+        }
       }
     }
 
     if (!authStore.hasPermissions(to.meta.permission)) {
       alertStore.setAlert('접근 권한이 없습니다');
-      return next({ name: 'dashboard' });
+      if (window.history.length > 1) {
+        return next(false);
+      } else {
+        return next({ name: 'dashboard' });
+      }
     }
 
     console.log('내 역할:', authStore.user?.role);

@@ -13,13 +13,13 @@ const Routes2 = [
     path: '/task/create',
     name: 'taskCreate',
     component: () => import('@/views/task/TaskEditPage.vue'),
-    meta: { permission: 'PER260407010' }
+    meta: { permission: 'PER260403006' }
   },
   {
     path: '/task/edit',
     name: 'taskEdit',
     component: () => import('@/views/task/TaskEditPage.vue'),
-    meta: { permission: 'PER260403005' }
+    meta: { permission: 'PER260403007' }
   },
   {
     path: '/task/copy',
