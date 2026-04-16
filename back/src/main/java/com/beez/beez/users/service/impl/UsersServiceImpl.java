@@ -49,8 +49,8 @@ public class UsersServiceImpl implements UsersService {
   @Override
   public Map<String, String> getInitPw() {
     // 초기 비밀번호 생성
-    StringBuilder sb = new StringBuilder(7);
-    for(int i = 0; i < 7; i++) {
+    StringBuilder sb = new StringBuilder(8);
+    for(int i = 0; i < 8; i++) {
       sb.append(CHAR_SET.charAt(sr.nextInt(CHAR_SET.length())));
     }
     String initPw = sb.toString();

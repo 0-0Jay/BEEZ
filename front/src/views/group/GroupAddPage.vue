@@ -67,7 +67,7 @@ onUnmounted(() => {
       <ProjectPanel />
     </div>
 
-    <div class="flex justify-end gap-3 mt-6">
+    <div class="flex justify-center gap-3 mt-6">
       <Button label="취소" severity="secondary" raised @click="onCancel" />
       <Button label="등록" raised @click="onSave" />
     </div>
