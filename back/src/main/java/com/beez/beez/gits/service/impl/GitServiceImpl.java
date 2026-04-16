@@ -217,7 +217,7 @@ public class GitServiceImpl implements GitService {
       System.out.println("5. 완료");
 
     } catch (IOException e) {
-      e.printStackTrace();
+//      e.printStackTrace();
 //      throw e;
     }
   }
