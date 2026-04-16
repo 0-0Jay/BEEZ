@@ -42,6 +42,13 @@ const fetchRepos = async () => {
 // 동기화 실행
 const onSync = async (data) => {
   loading.value = true;
+  console.log('지금 동기화 시도하는 ID:', data.id);
+  console.log('ID의 타입:', typeof data.id);
+
+  if (!data.id || typeof data.id === 'object') {
+    console.error('에러 발생! ID가 정상이 아닙니다.');
+    return;
+  }
   try {
     const response = await gitStore.updateSyncCommits(data.id);
     const count = response;
@@ -55,7 +62,7 @@ const onSync = async (data) => {
     await fetchRepos();
   } catch (err) {
     const errorMsg = err.response?.data?.message || err.response?.data || '저장소 연결 상태를 확인하세요.';
-
+    console.error('동기화 통신 에러:', err.response);
     toast.add({
       severity: 'error',
       summary: '동기화 실패',

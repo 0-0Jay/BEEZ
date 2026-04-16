@@ -44,7 +44,8 @@ public class SecurityConfig {
       .authorizeHttpRequests(auth -> auth
         // 누구나 접근 가능
         .requestMatchers("/api/auth/**").permitAll()
-        .requestMatchers("/api/project-auth/**").authenticated()
+        // 로그인 하면 접근 가능
+//        .requestMatchers("/api/project-auth/**").authenticated()
         // 관리자만
         .requestMatchers("/api/roles/**", "/api/users/**", "/api/permission/**", "/api/workflow/**", "/api/group/**").hasAuthority("ROLE0001")
         // 그 외 페이지

@@ -2,6 +2,7 @@ package com.beez.beez.config.jwt;
 
 import com.beez.beez.users.dto.CustomUserDetails;
 import com.beez.beez.users.repository.Users;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -13,7 +14,6 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
@@ -54,7 +54,7 @@ public class JwtProvider {
       .subject(user.getId()) // 사원번호를 식별
       .claim("name", user.getName())
       .claim("email", user.getEmail())
-      .claim("auth", authorities) // 어떤 권한을 가졌는지 토큰에 넣음
+      //.claim("auth", authorities) // 어떤 권한을 가졌는지 토큰에 넣음
       .claim("role", user.getRole()) // 역할
       .issuedAt(now) // 발급시간
       .expiration(new Date(now.getTime() + tokenValidTime)) // 만료 시간
@@ -64,12 +64,16 @@ public class JwtProvider {
 
   // 프론트가 보낸 토큰으로 사번 확인
   public String getId(String token){
-    return Jwts.parser()
-      .verifyWith(key) // 키가 일치하는지 확인
-      .build()
-      .parseSignedClaims(token) // 토큰 안에 서명 검증
-      .getPayload() // payload 꺼냄
-      .getSubject(); // 그 안에 사번만 반환
+    try {
+      return Jwts.parser()
+        .verifyWith(key) // 키가 일치하는지 확인
+        .build()
+        .parseSignedClaims(token) // 토큰 안에 서명 검증
+        .getPayload() // payload 꺼냄
+        .getSubject(); // 그 안에 사번만 반환
+    } catch (Exception e) {
+      return null;
+    }
   }
 
   // 토큰 유효성 검사
@@ -78,9 +82,14 @@ public class JwtProvider {
       // 토큰 검증 (토큰이 일치하지 않거나 만료 되면 예외 발생)
       Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
       return true;
-    }catch (JwtException | IllegalArgumentException e){
-      return false;
+    }catch (ExpiredJwtException e) {
+      System.out.println("토큰 만료");
+    } catch (JwtException e) {
+      System.out.println("토큰 변조 또는 오류");
+    } catch (IllegalArgumentException e) {
+      System.out.println("토큰 없음 또는 잘못된 값");
     }
+    return false;
   }
 
 }

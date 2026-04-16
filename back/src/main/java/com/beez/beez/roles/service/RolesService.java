@@ -1,9 +1,7 @@
 package com.beez.beez.roles.service;
 
-import com.beez.beez.roles.dto.RoleDetailResponse;
-import com.beez.beez.roles.dto.RoleListResponse;
-import com.beez.beez.roles.dto.RoleSaveRequest;
-import com.beez.beez.roles.dto.RoleUpdateRequest;
+import com.beez.beez.roles.dto.*;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -16,7 +14,10 @@ public interface RolesService {
   RoleDetailResponse findByRoleIdRole(String id);
 
   // 프로젝트별 역할 권한 조회
-  List<String> findPermissionsByProject(String userId, String projectId);
+  List<ProjectPermissionResponse> findPermissionsByProject(String projectId);
+
+  // 프로젝트별 역할 조회
+  List<ProjectRoleResponse> findRolesByProject(String projectId);
 
   // 새 역할 기본 정보 등록
   void insertRole(RoleSaveRequest dto);

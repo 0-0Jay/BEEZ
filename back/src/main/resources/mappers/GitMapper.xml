@@ -28,12 +28,14 @@
   <update id="updateCommitLog">
     MERGE INTO git_commit_logs g
     USING DUAL
-      ON (g.commit_sha = #{commitSha}
-      AND g.repo_id = #{repoId}
-      AND NVL(g.task_id, 'NONE') = NVL(#{taskId}, 'NONE'))
+      ON (g.commit_sha = #{commitSha})
     WHEN NOT MATCHED THEN
     INSERT (commit_sha, repo_id, task_id, message, author, commit_date)
     VALUES (#{commitSha}, #{repoId}, #{taskId}, #{message}, #{author}, #{commitDate})
+    -- 만약 이미 있는 커밋인데 task_id가 업데이트 되었다면?
+    WHEN MATCHED THEN
+    UPDATE SET g.task_id = #{taskId}
+    WHERE g.task_id IS NULL AND #{taskId} IS NOT NULL
   </update>
 
   <select id="findReposById" parameterType="string" resultType="com.beez.beez.gits.dto.GitRepoDto">

@@ -61,13 +61,23 @@ export const setupAuthGuard = async (to, from, next) => {
     console.log(`[Guard] 현재 페이지: ${to.name}, 찾은 ID: ${projectId}`);
 
     if (!projectId) {
-      if (authStore.user.role === 'ROLE0002') return next();
-      alertStore.setAlert('프로젝트 정보가 유효하지 않습니다.');
+      if (to.name === 'ProjectCreate' && (authStore.user.role === 'ROLE0001' || authStore.user.role === 'ROLE0002')) {
+        return next();
+      }
+
       alertStore.setAlert('프로젝트를 선택해주세요.');
       return next({ name: 'projectList' });
     }
 
-    await authStore.findPermissionsByProject(projectId);
+    if (authStore.currentProjectId !== projectId) {
+      try {
+        await Promise.all([authStore.findPermissionsByProject(projectId), authStore.findRolesByProject(projectId)]);
+        authStore.currentProjectId = projectId;
+      } catch (e) {
+        alertStore.setAlert('권한 정보를 불러오지 못했습니다.');
+        return next({ name: 'dashboard' });
+      }
+    }
 
     if (!authStore.hasPermissions(to.meta.permission)) {
       alertStore.setAlert('접근 권한이 없습니다');

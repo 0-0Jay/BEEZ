@@ -6,6 +6,7 @@ import com.beez.beez.gits.mapper.GitMapper;
 import com.beez.beez.gits.service.GitService;
 import lombok.RequiredArgsConstructor;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -84,6 +85,23 @@ public class GitServiceImpl implements GitService {
     String localPath = repo.getLocalPath();
     int count = 0;
 
+    File localDir = new File(repo.getLocalPath());
+
+    if (!localDir.exists()) {
+      if (!localDir.mkdirs()) {
+        if (!localDir.exists()) {
+          throw new IOException("저장소 경로를 생성할 수 없습니다: " + localPath);
+        }
+      }
+
+      // 재복제 실행
+      Git.cloneRepository()
+        .setURI(repo.getRepoUrl())
+        .setDirectory(localDir)
+        .setBare(true)
+        .call();
+    }
+
     // 저장소 열기
     try(Git git = Git.open(new File(localPath))){
       // 원격 저장소에서 최신 데이터(커밋 이력)를 가져옴
@@ -93,12 +111,16 @@ public class GitServiceImpl implements GitService {
       } catch (Exception e) {
         throw new RuntimeException("원격 저장소와 통신에 실패했습니다");
       }
-
       Iterable<RevCommit> commits = git.log().all().call();
+//      Iterable<RevCommit> commits = git.log()
+//        .add(git.getRepository().resolve("refs/remotes/origin/main") != null
+//          ? git.getRepository().resolve("refs/remotes/origin/main")
+//          : git.getRepository().resolve("refs/remotes/origin/master"))
+//        .call();
       Pattern p = Pattern.compile("#(TASK\\d+)", Pattern.CASE_INSENSITIVE); // #숫자 꺼냄
 
       for(RevCommit commit : commits){
-//        System.out.println("Commit Message: " + commit.getFullMessage());
+// System.out.println("Commit Message: " + commit.getFullMessage());
         String msg = commit.getFullMessage();
         Matcher m = p.matcher(msg);
         boolean found = false;
@@ -116,7 +138,6 @@ public class GitServiceImpl implements GitService {
           // 쿼리 실행
           count += gitMapper.updateCommitLog(request);
         }
-
         if(!found){
           request.setTaskId(null);
           count += gitMapper.updateCommitLog(request);

@@ -1,5 +1,7 @@
 package com.beez.beez.roles.web;
 
+import com.beez.beez.roles.dto.ProjectPermissionResponse;
+import com.beez.beez.roles.dto.ProjectRoleResponse;
 import com.beez.beez.roles.service.RolesService;
 import com.beez.beez.users.dto.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
@@ -20,9 +22,15 @@ public class ProjectAuthController {
   private final RolesService rolesService;
 
   @GetMapping("/permissions/{projectId}")
-  public ResponseEntity<List<String> > findPermissionsByProject(@PathVariable String projectId, @AuthenticationPrincipal CustomUserDetails userDetails) {
-    List<String> permissions = rolesService.findPermissionsByProject(userDetails.getUsername(), projectId);
+  public ResponseEntity<List<ProjectPermissionResponse> > findPermissionsByProject(@PathVariable String projectId) {
+    List<ProjectPermissionResponse> permissions = rolesService.findPermissionsByProject(projectId);
     return ResponseEntity.ok(permissions);
+  }
+
+  @GetMapping("/roles/{projectId}")
+  public  ResponseEntity<List<ProjectRoleResponse>> findRolesByProject(@PathVariable String projectId) {
+    List<ProjectRoleResponse> list = rolesService.findRolesByProject(projectId);
+    return ResponseEntity.ok(list);
   }
 }
 

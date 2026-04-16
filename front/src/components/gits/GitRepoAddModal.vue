@@ -76,6 +76,8 @@ const handleRegister = async () => {
 
     if (errorMsg.includes('이미 동일한') || errorMsg.includes('중복')) {
       duplicateError.value = errorMsg;
+    } else if (errorMsg.includes('Forbidden')) {
+      return;
     } else {
       toast.add({
         severity: 'error',

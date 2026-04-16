@@ -35,4 +35,5 @@
   <delete id="deleteByRoleIdPermissionMapping">
     DELETE FROM permission_mapping WHERE role_id = #{roleId}
   </delete>
+
 </mapper>

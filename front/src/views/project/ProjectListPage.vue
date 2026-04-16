@@ -43,7 +43,7 @@ const handleActualDelete = async (id) => {
       life: 2000
     });
   } catch (error) {
-    toast.add({ severity: 'error', summary: '삭제 실패', detail: '오류가 발생했습니다.' });
+    toast.add({ severity: 'error', summary: '삭제 실패', detail: '오류가 발생했습니다.', life: 3000 });
   }
 };
 

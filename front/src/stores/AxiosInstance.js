@@ -97,7 +97,7 @@ function handleError(status, message) {
       router.push('/main').then(() => {
         setTimeout(() => {
           isRedirecting = false;
-        }, 500); // 이동 완료 후 다시 에러를 받을 수 있게 초기화
+        }, 100); // 이동 완료 후 다시 에러를 받을 수 있게 초기화
       });
 
       break;

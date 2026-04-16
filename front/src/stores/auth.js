@@ -10,10 +10,12 @@ export const useAuthStore = defineStore('auth', {
       id: '',
       name: '',
       email: '',
-      role: '',
-      authorities: []
+      role: ''
+      // authorities: []
     }, // 사용자 정보
-    projectPermissions: []
+    projectPermissions: [],
+    projectRoles: [],
+    currentProjectId: null
   }),
 
   // getters
@@ -43,11 +45,11 @@ export const useAuthStore = defineStore('auth', {
             id: decoded.sub,
             name: decoded.name,
             email: decoded.email,
-            authorities: decoded.auth ? decoded.auth.split(',') : [],
+            // authorities: decoded.auth ? decoded.auth.split(',') : [],
             role: decoded.role
           };
 
-          console.log(this.user.authorities);
+          //console.log(this.user.authorities);
           return true;
         }
       } catch (error) {
@@ -58,12 +60,17 @@ export const useAuthStore = defineStore('auth', {
 
     logout() {
       this.accessToken = null;
-      this.user = null;
-      // localStorage.removeItem('accessToken');
-      // localStorage.removeItem('user');
+      this.user = {
+        id: '',
+        name: '',
+        email: '',
+        role: ''
+      };
+      this.projectPermissions = [];
+      this.projectRoles = [];
+      this.currentProjectId = null;
       sessionStorage.clear();
     },
-
     async requestPasswordReset(payload) {
       try {
         const response = await axios.post('/auth/reset-request', payload);
@@ -97,13 +104,22 @@ export const useAuthStore = defineStore('auth', {
         return false;
       }
 
-      return this.projectPermissions.includes(targetCode);
+      return this.projectPermissions.some((p) => p.id === targetCode);
     },
 
     async findPermissionsByProject(projectId) {
-      this.projectPermissions = [];
+      if (this.currentProjectId === projectId) return;
+
       const response = await axios.get(`/project-auth/permissions/${projectId}`);
       this.projectPermissions = response.data;
+      this.currentProjectId = projectId;
+      console.log('프로젝트별 권한 -> ', this.projectPermissions);
+    },
+
+    async findRolesByProject(projectId) {
+      const response = await axios.get(`/project-auth/roles/${projectId}`);
+      this.projectRoles = response.data;
+      console.log('프로젝트별 역할 -> ', this.projectRoles);
     }
   },
   persist: true
