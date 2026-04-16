@@ -15,7 +15,6 @@ const modalVisible = ref(false); //추가 모달
 const confirmMsg = ref(''); // 에러메시지
 const toast = useToast(); // 토스트메시지
 const versionOptions = ref([]); // 버전명 Select 옵션
-// const statusOptions = ref([]); // 상태 Select 옵션
 const selectedRow = ref(null);
 const editRow = ref(null);
 const projectInfo = ref(null);
@@ -104,7 +103,7 @@ const formatDate = (date) => {
 </script>
 
 <template>
-  <div>
+  <div class="bg-[#ffffff] h-full">
     <div class="flex justify-end mb-4">
       <Button v-if="!projectInfo?.parentId" label="버전 추가" icon="pi pi-plus" severity="contrast" outlined @click="modalVisible = true" />
     </div>

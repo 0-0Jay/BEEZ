@@ -21,7 +21,7 @@ const isActive = (tabName) => {
 </script>
 
 <template>
-  <div class="p-8 bg-[#FAFAF8] min-h-screen">
+  <div class="p-8 bg-[#ffffff] h-full">
     <div class="mb-6">
       <h1 class="text-2xl font-bold text-[#1A1816]">프로젝트 설정</h1>
     </div>

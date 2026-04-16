@@ -176,7 +176,7 @@ const handleCancel = () => {
 </script>
 
 <template>
-  <div>
+  <div class="bg-[#ffffff] h-full">
     <div class="bg-white rounded-xl shadow-sm border border-[#C7C7C2] overflow-hidden">
       <!-- 기본 정보 섹션 -->
       <div class="bg-[#F2F0EB] px-8 py-3 border-b border-[#C7C7C2]">

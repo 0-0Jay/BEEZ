@@ -183,7 +183,7 @@ const handleCancel = () => {
 </script>
 
 <template>
-  <div class="p-8 bg-[#FAFAF8] min-h-screen">
+  <div class="p-8 bg-[#ffffff] h-full">
     <!-- 타이틀 -->
     <div class="mb-4">
       <h1 class="text-2xl font-bold text-[#1A1816]">프로젝트 복사</h1>
