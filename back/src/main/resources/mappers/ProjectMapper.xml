@@ -77,6 +77,7 @@
            start_date,
            end_date,
            default_version_id,
+           user_id,
            pm_id
     FROM project
     WHERE id = #{id}
@@ -89,12 +90,14 @@
     SELECT p.id,
            p.title,
            p.identifier,
-           p.user_id AS pmId,
-           u.name AS pmName,
+           p.user_id creator,
+           u.name AS creatorName,
            p.start_date As startDate,
            p.end_date AS endDate,
            p.is_lock AS isLock,
            p.parent_id AS parentId,
+           p.pm_id,
+           u2.name AS pmName,
            (LEVEL - 1) AS "level",
            (
              SELECT COUNT(*)
@@ -129,12 +132,35 @@
            ) AS progressRate
       FROM project p
       LEFT JOIN users u ON u.id = p.user_id
+      LEFT JOIN users u2 ON u2.id = p.pm_id
       WHERE p.status = 'K1'
-      <if test="id != null and id != ''">
-        AND p.id = #{id}
+      AND (
+          p.user_id = #{currentUserId}
+          OR p.pm_id = #{currentUserId}
+          OR EXISTS (
+          SELECT 1 FROM project_member pm
+          WHERE pm.project_id = p.id
+          AND pm.user_id = #{currentUserId}
+          AND pm.is_delete = 'F0'
+      )
+      OR EXISTS (
+          SELECT 1
+          FROM project ancestor
+          WHERE ancestor.pm_id = #{currentUserId}
+          AND ancestor.status = 'K1'
+          AND ancestor.id IN (
+              SELECT sub.parent_id
+              FROM project sub
+              START WITH sub.id = p.id
+              CONNECT BY PRIOR sub.parent_id = sub.id
+              )
+          )
+      )
+      <if test="title != null and title != ''">
+        AND p.title LIKE '%' || #{title} || '%'
       </if>
       <if test="pmId != null and pmId != ''">
-        AND p.user_id = #{pmId}
+        AND p.pm_id = #{pmId}
       </if>
       <if test="startDate != null">
         AND p.end_date &gt;= #{startDate}
@@ -155,6 +181,15 @@
     UPDATE project
     SET is_lock = 'L1'
     WHERE id = #{id}
+      AND NOT EXISTS (
+      /* 하위 프로젝트 중 잠금되지 않은(L0) 프로젝트가 있는지 확인 */
+      SELECT 1
+      FROM project
+      WHERE is_lock = 'L0'
+        AND id != #{id}  -- 자기 자신은 제외
+      START WITH parent_id = #{id}
+      CONNECT BY PRIOR id = parent_id
+    )
   </update>
   
   <!-- 프로젝트 잠금보관 해제 -->
@@ -249,16 +284,17 @@
     SELECT id AS roleId,
            name AS roleName
     FROM roles
-    WHERE id >= 'ROLE0004'
+    WHERE id NOT IN ('ROLE0001', 'ROLE0003')
   </select>
   
   <!-- 프로젝트 구성원 추가 모달(사용자 리스트) -->
-  <select id="findUsers" resultType="UserResponse">
+  <select id="findUsers" resultType="com.beez.beez.project.dto.UserResponse">
     SELECT id,
-           name
+           name,
+           role
     FROM users u
     WHERE status = 'H1'
-    AND role = 'ROLE0003'
+    AND role != 'ROLE0001'
     AND NOT EXISTS( SELECT 1
                     FROM project_member pm
                     WHERE pm.user_id = u.id
@@ -268,6 +304,7 @@
       <if test="keyword != null and keyword != ''">
         AND name LIKE '%' || #{keyword} || '%'
       </if>
+    ORDER BY CASE WHEN role = 'ROLE0002' THEN 0 ELSE 1 END, name
   </select>
   
   <!-- 프로젝트 구성원 추가 모달(그룹 리스트) -->
@@ -390,6 +427,7 @@
       #{startDate,       mode=IN,  jdbcType=DATE},
       #{endDate,         mode=IN,  jdbcType=DATE},
       #{userId,          mode=IN,  jdbcType=VARCHAR},
+      #{pmId,            mode=IN,  jdbcType=VARCHAR},
       #{copyMembers,     mode=IN,  jdbcType=VARCHAR},
       #{copyVersions,    mode=IN,  jdbcType=VARCHAR},
       #{copyIssues,      mode=IN,  jdbcType=VARCHAR},

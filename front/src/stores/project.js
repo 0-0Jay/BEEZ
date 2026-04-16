@@ -32,7 +32,7 @@ export const useProjectStore = defineStore('project', {
       try {
         const response = await axios.get('/project/list', {
           params: {
-            id: filters.id ?? null,
+            title: filters.title ?? null,
             pmId: filters.pmId ?? null,
             startDate: filters.startDate ?? null,
             endDate: filters.endDate ?? null,
@@ -44,6 +44,8 @@ export const useProjectStore = defineStore('project', {
           id: p.id,
           title: p.title,
           identifier: p.identifier,
+          creator: p.creator,
+          creatorName: p.creatorName,
           pm: p.pmName,
           pmId: p.pmId,
           startDate: p.startDate,
@@ -116,8 +118,19 @@ export const useProjectStore = defineStore('project', {
     async fetchProjectMembers(projectId) {
       const response = await axios.get(`/project/${projectId}/members`);
 
+      const ownerId = this.projectInfo.userId;
+      const pmId = this.projectInfo.pmId;
+
+      const sortFixed = (list) => {
+        return list.sort((a, b) => {
+          const aFixed = a.userId === ownerId || a.userId === pmId ? 0 : 1;
+          const bFixed = b.userId === ownerId || b.userId === pmId ? 0 : 1;
+          return aFixed - bFixed;
+        });
+      };
+
       this.members = {
-        userList: groupByUserId(response.data.userList, 'userId'),
+        userList: sortFixed(groupByUserId(response.data.userList, 'userId')),
         groupList: groupByUserId(response.data.groupList, 'groupId'),
         groupMemberList: groupByUserId(response.data.groupMemberList, 'userId')
       };

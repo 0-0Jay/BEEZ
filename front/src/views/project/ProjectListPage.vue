@@ -57,7 +57,7 @@ const selectedRow = ref(null);
 
 // --- 2. 필터 상태 ---
 const filters = reactive({
-  id: null,
+  title: null,
   pmId: null,
   startDate: null,
   endDate: null,
@@ -92,24 +92,21 @@ const fetchProjects = async () => {
 
   // 조회가 끝난 후 최신 데이터로 옵션 갱신
   updateSelectOptions();
-
-  // 체크박스 전용 감시자
-  watch(
-    () => filters.isLock,
-    () => {
-      filters.id = null;
-      filters.pmId = null;
-      filters.startDate = null;
-      filters.endDate = null;
-      fetchProjects(); // 즉시 재조회
-    }
-  );
-
-  // 만약 현재 선택된 프로젝트가 바뀐 목록에 없다면 선택 해제
-  if (filters.id && !projectStore.projects.some((p) => p.id === filters.id)) {
-    filters.id = null;
-  }
 };
+
+const totalCount = computed(() => projectStore.projects.length);
+
+// 체크박스 전용 감시자
+watch(
+  () => filters.isLock,
+  () => {
+    filters.title = null;
+    filters.pmId = null;
+    filters.startDate = null;
+    filters.endDate = null;
+    fetchProjects(); // 즉시 재조회
+  }
+);
 
 // 3. 초기 로딩 수정
 onMounted(() => {
@@ -118,7 +115,7 @@ onMounted(() => {
 
 const resetFilters = () => {
   Object.assign(filters, {
-    id: null,
+    title: null,
     pmId: null,
     startDate: null,
     endDate: null,
@@ -141,6 +138,17 @@ const goToDetail = (project) => {
   router.push(`/project`);
 };
 
+const goToSetting = (project) => {
+  projectStore.selectedProject = {
+    title: project.title,
+    id: project.id,
+    startDate: project.startDate,
+    endDate: project.endDate
+  };
+
+  router.push(`/project/setting/${project.id}/info`);
+};
+
 // 날짜 포맷 변환 함수
 const formatDate = (date) => {
   if (!date) return null;
@@ -155,6 +163,11 @@ const actionItems = computed(() => [
     command: () => (selectedRow.value?.isLock === 'L1' ? unlockProject(selectedRow.value.id) : lockProject(selectedRow.value.id))
   },
   { label: '프로젝트 복사', icon: 'pi pi-copy', command: () => router.push(`/project/copy/${selectedRow.value.id}`) },
+  {
+    label: '프로젝트 설정',
+    icon: 'pi pi-cog',
+    command: () => goToSetting(selectedRow.value)
+  },
   { label: '프로젝트 삭제', icon: 'pi pi-trash', command: () => openDeleteModal(selectedRow.value) }
 ]);
 
@@ -163,9 +176,32 @@ const rowClass = (data) => {
 };
 
 const lockProject = async (id) => {
-  await projectStore.lockProject(id);
-  fetchProjects();
-  toast.add({ severity: 'success', summary: '프로젝트 잠금보관', detail: '프로젝트가 잠금보관되었습니다.', life: 2000 });
+  try {
+    await projectStore.lockProject(id);
+    fetchProjects();
+    toast.add({ severity: 'success', summary: '성공', detail: '프로젝트가 잠금보관되었습니다.', life: 2000 });
+  } catch (error) {
+    // 1. 서버에서 보낸 메시지 추출 (구조 확인)
+    const errorMsg = error.response?.data?.message || error.message;
+
+    console.log('추출된 메시지:', errorMsg); // "CHILD_PROJECT_NOT_LOCKED"가 찍히는지 확인
+
+    if (errorMsg === 'CHILD_PROJECT_NOT_LOCKED') {
+      toast.add({
+        severity: 'warn',
+        summary: '잠금 불가',
+        detail: '잠금되지 않은 하위 프로젝트가 존재합니다.',
+        life: 3000
+      });
+    } else {
+      toast.add({
+        severity: 'error',
+        summary: '오류 발생',
+        detail: '잠금 처리 중 오류가 발생했습니다.',
+        life: 3000
+      });
+    }
+  }
 };
 
 const unlockProject = async (id) => {
@@ -173,24 +209,34 @@ const unlockProject = async (id) => {
   fetchProjects();
   toast.add({ severity: 'success', summary: '프로젝트 잠금보관 해제', detail: '프로젝트가 잠금보관 해제되었습니다.', life: 2000 });
 };
+
+// 유틸
+function progressBarColor(p) {
+  if (p == 100) return '#22C55E';
+  if (p >= 90) return '#86EFAC';
+  if (p >= 60) return '#EAB308';
+  if (p >= 30) return '#F97316';
+  return '#EF4444';
+}
 </script>
 
 <template>
-  <div class="p-8 bg-[#FAFAF8] min-h-screen">
+  <div class="p-8 bg-[#ffffff] h-full">
     <!-- 타이틀 + 등록 버튼 -->
-    <div class="flex justify-between items-end mb-6">
+    <div class="flex justify-between items-end mb-2">
       <h1 class="text-2xl font-bold text-[#1A1816]">프로젝트 목록</h1>
       <Button label="프로젝트 등록" icon="pi pi-plus" severity="contrast" outlined @click="router.push('/project/create')" />
     </div>
 
-    <div class="bg-[#E8E5DC] px-10 py-8 rounded-lg mb-8 shadow-sm border border-[#C7C7C2] flex flex-col gap-3">
+    <div class="bg-[#F2F3F8] px-10 py-8 rounded-lg mb-4 shadow-sm border border-[#ECEEF4] flex items-center">
       <!-- 입력칸 + 체크박스 묶음 -->
       <div class="flex items-center flex-wrap gap-y-3">
-        <label class="filter-label mr-5 self-start mt-3">프로젝트명</label>
-        <Select v-model="filters.id" :options="projectOptions" optionLabel="label" optionValue="value" placeholder="선택" class="filter-input w-80 mr-10 self-start" />
-        <label class="filter-label mr-5 self-start mt-3">PM/PL</label>
+        <label class="filter-label mr-3 self-start mt-3">프로젝트명</label>
+        <InputText v-model="filters.title" placeholder="검색할 키워드를 입력하세요." class="filter-input w-100 mr-10" @keyup.enter="fetchProjects" />
+
+        <label class="filter-label mr-3 self-start mt-3">PM/PL</label>
         <Select v-model="filters.pmId" :options="pmOptions" optionLabel="label" optionValue="value" placeholder="선택" class="filter-input w-42 mr-10 self-start" />
-        <label class="filter-label mr-5 self-start mt-3">마감일</label>
+        <label class="filter-label mr-3 self-start mt-3">마감일</label>
         <div class="flex flex-col self-start">
           <div class="flex items-center">
             <DatePicker v-model="filters.startDate" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" :maxDate="filters.endDate" class="filter-input w-50" showIcon inputClass="w-full" />
@@ -201,17 +247,23 @@ const unlockProject = async (id) => {
         <Checkbox v-model="filters.isLock" :binary="true" inputId="archived" class="mr-3 self-start mt-3" />
         <label for="archived" class="text-sm font-medium text-[#1A1816] whitespace-nowrap cursor-pointer self-start mt-3">잠금 보관 프로젝트 보기</label>
         <!-- 버튼 묶음 — 항상 오른쪽 끝 -->
-        <div class="flex gap-2 ml-auto shrink-0 self-start">
+        <div class="flex gap-2 ml-17 shrink-0 self-start">
           <Button label="초기화" severity="secondary" raised @click="resetFilters" />
           <Button label="조회" icon="pi pi-search" raised @click="fetchProjects" />
         </div>
       </div>
     </div>
+    <div class="flex justify-between items-center mb-1">
+      <span class="text-sm text-[#3A3B35] font-medium pb-2">전체 {{ totalCount }}건</span>
+    </div>
 
-    <div class="bg-white rounded-xl shadow-sm border border-[#C7C7C2] overflow-hidden">
-      <DataTable :value="projects" :loading="loading" dataKey="id" :rowHover="true" :rowClass="rowClass" tableStyle="width: 100%" scrollable scrollHeight="500px">
+    <div class="bg-white rounded-xl shadow-sm border border-[#5B6E96] overflow-hidden">
+      <DataTable :value="projects" :loading="loading" dataKey="id" :rowHover="true" :rowClass="rowClass" tableStyle="width: 100%" scrollable scrollHeight="560px">
         <template #empty>
-          <div class="text-center py-10 text-gray-400">조회된 데이터가 없습니다.</div>
+          <div class="flex flex-col items-center justify-center py-10">
+            <i class="pi pi-search text-4xl text-[#C7C7C2] mb-3"></i>
+            <p class="text-[#6B6B63]">조회된 데이터가 없습니다.</p>
+          </div>
         </template>
 
         <Column header="No." headerClass="table-header" style="width: 5%">
@@ -245,9 +297,17 @@ const unlockProject = async (id) => {
 
         <Column header="진행률" headerClass="table-header" style="width: 30%">
           <template #body="{ data }">
-            <div class="flex items-center gap-5 px-10">
-              <ProgressBar :value="data.progressRate ?? 0" :showValue="false" class="progress-bar-custom flex-1" style="height: 8px" />
-              <span class="text-xs text-[#9A9B90] whitespace-nowrap"> {{ data.progressRate ?? 0 }}% </span>
+            <div class="px-10">
+              <ProgressBar
+                :value="data.progressRate ?? 0"
+                :pt="{
+                  value: {
+                    style: {
+                      background: progressBarColor(data.progressRate ?? 0)
+                    }
+                  }
+                }"
+              />
             </div>
           </template>
         </Column>
@@ -277,7 +337,7 @@ const unlockProject = async (id) => {
 .filter-label {
   font-size: 1rem;
   font-weight: 600;
-  color: #3a3b35;
+  color: #000000c2;
   white-space: nowrap;
 }
 :deep(.filter-input) {
@@ -288,8 +348,8 @@ const unlockProject = async (id) => {
   align-items: center;
 }
 :deep(.table-header) {
-  background-color: #e8e5dc !important;
-  color: #1a1816 !important;
+  background-color: #5b6e96 !important;
+  color: #dde3f0 !important;
   font-weight: 700 !important;
   text-align: center !important;
   padding: 1.25rem 0 !important;
@@ -302,15 +362,7 @@ const unlockProject = async (id) => {
   padding: 1rem 0 !important;
   border-bottom: 1px solid #f2f0eb !important;
 }
-:deep(.progress-bar-custom) {
-  border-radius: 10px;
-  background-color: #e5e2d9;
-  border: none;
-}
-:deep(.progress-bar-custom .p-progressbar-value) {
-  background-color: #e8920e;
-  border-radius: 10px;
-}
+
 :deep(.locked-row) {
   background-color: #f5f5f5 !important;
   color: #b0b0b0 !important;

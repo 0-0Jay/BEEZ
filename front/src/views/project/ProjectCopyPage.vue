@@ -2,7 +2,7 @@
 import { useProjectStore } from '@/stores/project';
 import { storeToRefs } from 'pinia';
 import { useToast } from 'primevue';
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -10,7 +10,7 @@ const route = useRoute();
 const projectStore = useProjectStore();
 const toast = useToast();
 const copyOptions = ref([]);
-const { pms, loading } = storeToRefs(projectStore);
+const { pms } = storeToRefs(projectStore);
 
 // 상위 프로젝트 옵션 - 기존 프로젝트 목록 활용
 const projectOptions = ref([]);
@@ -22,18 +22,22 @@ onMounted(async () => {
   const project = projectStore.projectInfo;
   projectOptions.value = projectStore.projects.map((p) => ({
     label: p.title,
-    value: p.id
+    value: p.id,
+    startDate: p.startDate,
+    endDate: p.endDate
   }));
 
   form.title = `${project.title}_복사본`;
   form.identifier = '';
-  form.description = project.description;
+  form.description = project.description ?? '';
   form.startDate = project.startDate ? new Date(project.startDate) : null;
   form.endDate = project.endDate ? new Date(project.endDate) : null;
+  form.pmId = project.pmId;
   form.isPublic = project.isPublic === 'J1';
   form.parentId = project.parentId;
-  form.pmId = project;
 });
+
+const selectedParent = computed(() => projectOptions.value.find((p) => p.value === form.parentId) ?? null);
 
 const copyOptionList = [
   { value: 'members', label: '구성원' },
@@ -74,6 +78,8 @@ const validate = () => {
   if (!form.title.trim()) {
     errors.title = '프로젝트명을 입력해주세요.';
     valid = false;
+  } else if (form.title.length > 20) {
+    errors.title = '프로젝트 명은 20자 이내로 입력해주세요.';
   }
   if (!form.identifier.trim()) {
     errors.identifier = '식별자를 입력해주세요.';
@@ -81,6 +87,8 @@ const validate = () => {
   } else if (!/^[a-z0-9_]+$/.test(form.identifier)) {
     errors.identifier = '영문 소문자(a-z), 숫자, 대시(_)만 가능합니다.';
     valid = false;
+  } else if (form.identifier.length > 20) {
+    errors.identifier = '식별자는 20자 이내로 입력해주세요.';
   }
   if (!form.startDate) {
     errors.startDate = '시작일을 선택해주세요.';
@@ -153,8 +161,13 @@ const handleSubmit = async () => {
   };
 
   const id = await projectStore.copyProject(payload);
-
   toast.add({ severity: 'success', summary: '복사 완료', detail: '프로젝트가 복사되었습니다.', life: 2000 });
+  projectStore.selectedProject = {
+    title: form.title,
+    id: form.id,
+    startDate: form.startDate,
+    endDate: form.endDate
+  };
   router.push(`/project/setting/${id}`);
 };
 
@@ -173,7 +186,7 @@ const handleCancel = () => {
   <div class="p-8 bg-[#FAFAF8] min-h-screen">
     <!-- 타이틀 -->
     <div class="mb-4">
-      <h1 class="text-2xl font-bold text-[#1A1816]">새 프로젝트 등록</h1>
+      <h1 class="text-2xl font-bold text-[#1A1816]">프로젝트 복사</h1>
     </div>
 
     <div class="bg-white rounded-lg shadow-sm border border-[#C7C7C2] overflow-hidden mb-6">
@@ -196,7 +209,11 @@ const handleCancel = () => {
         <div class="flex items-start px-8 py-4">
           <label class="form-label w-36 pt-2 shrink-0">설명</label>
           <div class="flex-1">
-            <Textarea v-model="form.description" placeholder="텍스트를 입력해 주세요." class="w-full" rows="4" autoResize />
+            <Textarea v-model="form.description" placeholder="프로젝트에 대한 설명을 입력해 주세요." class="w-full" rows="5" autoResize :maxlength="500" />
+            <div class="flex items-center justify-between mt-1">
+              <small v-if="(form.description || '').length > 500" class="text-red-500 text-xs">설명은 500자를 초과할 수 없습니다.</small>
+              <small class="ml-auto text-xs" :class="(form.description || '').length > 500 ? 'text-red-500 font-semibold' : 'text-[#9A9B90]'"> {{ (form.description || '').length }} / 500 </small>
+            </div>
           </div>
         </div>
 
@@ -213,17 +230,37 @@ const handleCancel = () => {
         <!-- 프로젝트 기간 -->
         <div class="flex items-start px-8 py-4">
           <label class="form-label w-36 pt-2 shrink-0"> 프로젝트 기간 <span class="text-red-500">*</span> </label>
-          <div class="flex items-start gap-5">
-            <div class="flex flex-col">
-              <DatePicker v-model="form.startDate" dateFormat="yy-mm-dd" placeholder="시작일" class="form-input w-50" :maxDate="form.endDate" showIcon inputClass="w-full" />
-              <small v-if="errors.startDate" class="text-red-500 mt-1">{{ errors.startDate }}</small>
-              <small v-if="errors.date" class="text-red-500 mt-1">{{ errors.date }}</small>
+          <div class="flex flex-col gap-1">
+            <div class="flex items-start gap-5">
+              <div class="flex flex-col">
+                <DatePicker
+                  v-model="form.startDate"
+                  dateFormat="yy-mm-dd"
+                  placeholder="시작일"
+                  class="form-input w-50"
+                  :minDate="selectedParent ? new Date(selectedParent.startDate) : undefined"
+                  :maxDate="form.endDate ?? (selectedParent ? new Date(selectedParent.endDate) : undefined)"
+                  showIcon
+                  inputClass="w-full"
+                />
+                <small v-if="errors.startDate" class="text-red-500 mt-1">{{ errors.startDate }}</small>
+              </div>
+              <span class="text-xl text-[#6B6B63] mt-2">~</span>
+              <div class="flex flex-col">
+                <DatePicker
+                  v-model="form.endDate"
+                  dateFormat="yy-mm-dd"
+                  placeholder="마감일"
+                  class="form-input w-50"
+                  :minDate="form.startDate ?? (selectedParent ? new Date(selectedParent.startDate) : undefined)"
+                  :maxDate="selectedParent ? new Date(selectedParent.endDate) : undefined"
+                  showIcon
+                  inputClass="w-full"
+                />
+                <small v-if="errors.endDate" class="text-red-500 mt-1">{{ errors.endDate }}</small>
+              </div>
             </div>
-            <span class="text-xl text-[#6B6B63] mt-2">~</span>
-            <div class="flex flex-col">
-              <DatePicker v-model="form.endDate" dateFormat="yy-mm-dd" placeholder="마감일" class="form-input w-50" :minDate="form.startDate" showIcon inputClass="w-full" />
-              <small v-if="errors.endDate" class="text-red-500 mt-1">{{ errors.endDate }}</small>
-            </div>
+            <small v-if="selectedParent" class="text-[#9A9B90] mt-1"> 하위 프로젝트는 상위 프로젝트 기간({{ formatDate(selectedParent.startDate) }} ~ {{ formatDate(selectedParent.endDate) }})을 벗어날 수 없습니다. </small>
           </div>
         </div>
 
@@ -232,6 +269,7 @@ const handleCancel = () => {
           <label class="form-label w-36 pt-2 shrink-0">PM/PL <span class="text-red-500">*</span></label>
           <div class="flex-1">
             <Select v-model="form.pmId" :options="pms" optionLabel="name" optionValue="id" placeholder="선택" class="form-input w-64" />
+            <small v-if="errors.pmId" class="text-red-500 block mt-1">{{ errors.pmId }}</small>
           </div>
         </div>
 
@@ -255,7 +293,7 @@ const handleCancel = () => {
       <div class="flex items-start px-8 py-4">
         <label class="form-label w-36 pt-2 shrink-0">상위 프로젝트</label>
         <div class="flex-1">
-          <Select v-model="form.parentId" :options="projectOptions" optionLabel="label" optionValue="value" placeholder="선택" class="form-input w-64" />
+          <Select v-model="form.parentId" :options="projectOptions" optionLabel="label" optionValue="value" placeholder="선택" class="form-input w-150" showClear />
         </div>
       </div>
     </div>

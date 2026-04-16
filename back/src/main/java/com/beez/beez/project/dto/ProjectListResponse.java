@@ -9,6 +9,8 @@ public class ProjectListResponse {
   private String id;
   private String title;
   private String identifier;
+  private String creator;
+  private String creatorName;
   private String pmId;
   private String pmName;
   private Date startDate;

@@ -59,6 +59,7 @@ public class ProjectServiceImpl implements ProjectService {
   // 프로젝트 목록 조회(필터링)
   @Override
   public List<ProjectListResponse> selectProjectList(ProjectFilterRequest filter) {
+    filter.setCurrentUserId(getCurrentUserId());
     return projectMapper.selectProjectList(filter);
   }
   
@@ -70,8 +71,15 @@ public class ProjectServiceImpl implements ProjectService {
     link = "/project/setting/{id}/info"
   )
   @Override
-  public void updateProjectLock(String id) {
-    projectMapper.updateProjectLock(id);
+  public int updateProjectLock(String id) {
+    int result = projectMapper.updateProjectLock(id);
+    if (result == 0) {
+      throw new org.springframework.web.server.ResponseStatusException(
+        org.springframework.http.HttpStatus.BAD_REQUEST, "CHILD_PROJECT_NOT_LOCKED"
+      );
+    }
+    
+    return result;
   }
   
   // 프로젝트 잠금보관 해제
@@ -150,7 +158,11 @@ public class ProjectServiceImpl implements ProjectService {
   )
   @Override
   public void deleteProjectMember(String projectMemberId, String projectId) {
-    projectMapper.deleteProjectMember(projectMemberId);
+    try {
+      projectMapper.deleteProjectMember(projectMemberId);
+    } catch (Exception e) {
+      throw new IllegalArgumentException(e.getMessage());
+    }
   }
   
   //프로젝트 구성원 수정

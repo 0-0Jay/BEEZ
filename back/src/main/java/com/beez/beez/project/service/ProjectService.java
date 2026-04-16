@@ -19,7 +19,7 @@ public interface ProjectService {
   List<ProjectListResponse> selectProjectList(ProjectFilterRequest filter);
   
   //프로젝트 잠금보관
-  void updateProjectLock(String id);
+  int updateProjectLock(String id);
   
   //프로젝트 잠금보관 해제
   void updateUnProjectLock(String id);

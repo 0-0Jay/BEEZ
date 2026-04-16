@@ -17,8 +17,10 @@ const modalVisible = ref(false); // 추가 모달
 onMounted(async () => {
   await projectStore.fetchProjectMembers(projectId);
   await projectStore.fetchRoles();
+  await projectStore.findProject(projectId);
 });
 
+const projectInfo = computed(() => projectStore.projectInfo);
 const availableRoles = computed(() => projectStore.roles);
 const userList = computed(() => projectStore.members.userList);
 const groupList = computed(() => projectStore.members.groupList);
@@ -130,22 +132,26 @@ const handleMemberSaved = async () => {
       <template v-for="user in userList" :key="user.projectMemberId">
         <div class="table-row">
           <div class="col-name">
-            <span class="link-text">{{ user.userName }}</span>
+            <span>{{ user.userName }}</span>
+            <span v-if="user.userId === projectInfo.userId" class="fixed-badge">생성자</span>
+            <span v-else-if="user.userId === projectInfo.pmId" class="fixed-badge">담당 PM</span>
           </div>
           <div class="col-role text-gray">{{ user.roles?.map((r) => r.roleName).join(', ') || '-' }}</div>
           <div class="col-actions">
-            <button
-              class="action-btn edit-btn"
-              @click="
-                openEdit(
-                  user.projectMemberId,
-                  user.roles?.map((r) => r.roleId)
-                )
-              "
-            >
-              <i class="pi pi-pencil" /> 편집
-            </button>
-            <button class="action-btn delete-btn" @click="openDeleteConfirm(user.projectMemberId)"><i class="pi pi-trash" /> 삭제</button>
+            <template v-if="user.userId !== projectInfo.userId && user.userId !== projectInfo.pmId">
+              <button
+                class="action-btn edit-btn"
+                @click="
+                  openEdit(
+                    user.projectMemberId,
+                    user.roles?.map((r) => r.roleId)
+                  )
+                "
+              >
+                <i class="pi pi-pencil" /> 편집
+              </button>
+              <button class="action-btn delete-btn" @click="openDeleteConfirm(user.projectMemberId)"><i class="pi pi-trash" /> 삭제</button>
+            </template>
           </div>
         </div>
         <Transition name="accordion">
@@ -171,7 +177,7 @@ const handleMemberSaved = async () => {
       <template v-for="group in groupList" :key="group.projectMemberId">
         <div class="table-row">
           <div class="col-name">
-            <span class="link-text">{{ group.groupName }}</span>
+            <span>{{ group.groupName }}</span>
           </div>
           <div class="col-role text-gray">{{ group.roles?.map((r) => r.roleName).join(', ') || '-' }}</div>
           <div class="col-actions">
@@ -213,7 +219,7 @@ const handleMemberSaved = async () => {
           <div class="table-row member-row">
             <div class="col-name">
               <span class="member-indent">└ </span>
-              <span class="link-text">{{ member.userName }}</span>
+              <span>{{ member.userName }}</span>
             </div>
             <div class="col-role text-gray">{{ member.roles?.map((r) => r.roleName).join(', ') || '-' }}</div>
             <div class="col-actions">
@@ -345,6 +351,15 @@ const handleMemberSaved = async () => {
   background: #f2f0eb;
 }
 
+.fixed-badge {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #f0eeea;
+  color: var(--color-gray);
+  border: 1px solid var(--color-border);
+}
+
 /* ── 칸 ── */
 .col-name {
   display: flex;
@@ -360,15 +375,6 @@ const handleMemberSaved = async () => {
   gap: 6px;
   align-items: center;
   justify-content: flex-end;
-}
-
-.link-text {
-  color: var(--color-link);
-  cursor: pointer;
-  text-decoration: none;
-}
-.link-text:hover {
-  text-decoration: underline;
 }
 
 .text-gray {
