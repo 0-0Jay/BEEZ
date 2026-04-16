@@ -35,11 +35,11 @@ const handleSave = () => {
       <div class="grid grid-cols-2 gap-3">
         <div class="flex flex-col gap-1.5">
           <label class="text-base font-semibold text-gray-500">시작일 <span class="text-red-400">*</span></label>
-          <DatePicker :value="event?.start" dateFormat="yy-mm-dd" placeholder="시작일" class="w-full" @update:modelValue="updateField('start', $event)" />
+          <DatePicker :value="event?.start" dateFormat="yy-mm-dd" :maxDate="event?.end" placeholder="시작일" class="w-full" @update:modelValue="updateField('start', $event)" />
         </div>
         <div class="flex flex-col gap-1.5">
           <label class="text-base font-semibold text-gray-500">종료일</label>
-          <DatePicker :value="event?.end" dateFormat="yy-mm-dd" placeholder="종료일" class="w-full" @update:modelValue="updateField('end', $event)" />
+          <DatePicker :value="event?.end" dateFormat="yy-mm-dd" :minDate="event?.start" placeholder="종료일" class="w-full" @update:modelValue="updateField('end', $event)" />
         </div>
       </div>
 
