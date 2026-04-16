@@ -11,12 +11,6 @@ const updateField = (field, value) => {
   emit('update:event', { ...props.event, [field]: value });
 };
 
-const toDateStr = (val) => {
-  if (!val) return undefined;
-  if (typeof val === 'string') return val;
-  return new Date(val).toISOString().split('T')[0];
-};
-
 const handleSave = () => {
   emit('save');
 };

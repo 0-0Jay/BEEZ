@@ -615,14 +615,32 @@ onMounted(async () => {
                 <span class="flex items-center gap-1">예상 시작일<span class="text-red-500 inline-block text-xl">*</span></span>
               </td>
               <td class="px-6 py-3">
-                <DatePicker v-model="form.plannedStart" date-format="yy-mm-dd" placeholder="날짜 선택" show-button-bar class="w-full" input-class="w-full" />
+                <DatePicker
+                  v-model="form.plannedStart"
+                  date-format="yy-mm-dd"
+                  :minDate="parentPlannedStart ?? undefined"
+                  :maxDate="form.plannedEnd ?? parentPlannedEnd ?? undefined"
+                  placeholder="날짜 선택"
+                  show-button-bar
+                  class="w-full"
+                  input-class="w-full"
+                />
                 <small v-if="touched.plannedStart && errors.plannedStart" class="text-red-500 mt-1 block text-xs">{{ errors.plannedStart }}</small>
               </td>
               <td class="px-6 py-3 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35]">
                 <span class="flex items-center gap-1">예상 마감일<span class="text-red-500 inline-block text-xl">*</span></span>
               </td>
               <td class="px-6 py-3">
-                <DatePicker v-model="form.plannedEnd" date-format="yy-mm-dd" placeholder="날짜 선택" show-button-bar class="w-full" input-class="w-full" />
+                <DatePicker
+                  v-model="form.plannedEnd"
+                  date-format="yy-mm-dd"
+                  :minDate="form.plannedStart ?? parentPlannedStart ?? undefined"
+                  :maxDate="parentPlannedEnd ?? undefined"
+                  placeholder="날짜 선택"
+                  show-button-bar
+                  class="w-full"
+                  input-class="w-full"
+                />
                 <small v-if="touched.plannedEnd && errors.plannedEnd" class="text-red-500 mt-1 block text-xs">{{ errors.plannedEnd }}</small>
               </td>
             </tr>
@@ -631,12 +649,12 @@ onMounted(async () => {
             <tr class="divide-x divide-[#D6E4EA]">
               <td class="px-6 py-3 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35]">실제 시작일</td>
               <td class="px-6 py-3">
-                <DatePicker v-model="form.actualStart" date-format="yy-mm-dd" placeholder="날짜 선택" show-button-bar class="w-full" input-class="w-full" />
+                <DatePicker v-model="form.actualStart" date-format="yy-mm-dd" :maxDate="form.actualEnd" placeholder="날짜 선택" show-button-bar class="w-full" input-class="w-full" />
                 <small v-if="touched.actualStart && errors.actualStart" class="text-red-500 mt-1 block text-xs">{{ errors.actualStart }}</small>
               </td>
               <td class="px-6 py-3 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35]">실제 마감일</td>
               <td class="px-6 py-3">
-                <DatePicker v-model="form.actualEnd" date-format="yy-mm-dd" placeholder="날짜 선택" show-button-bar class="w-full" input-class="w-full" />
+                <DatePicker v-model="form.actualEnd" date-format="yy-mm-dd" :minDate="form.actualStart" placeholder="날짜 선택" show-button-bar class="w-full" input-class="w-full" />
                 <small v-if="touched.actualEnd && errors.actualEnd" class="text-red-500 mt-1 block text-xs">{{ errors.actualEnd }}</small>
               </td>
             </tr>

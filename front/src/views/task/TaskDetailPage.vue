@@ -4,12 +4,14 @@ import TaskTimeModal from '@/components/task/TaskTimeModal.vue';
 import TaskUnlinkModal from '@/components/task/TaskUnlinkModal.vue';
 import { useAuthStore } from '@/stores/auth';
 import { useGitStore } from '@/stores/gits';
+import { useProjectStore } from '@/stores/project';
 import { useTaskStore } from '@/stores/task';
 import { useToast } from 'primevue';
 import Button from 'primevue/button';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
+const projectStore = useProjectStore();
 const taskStore = useTaskStore();
 const authStore = useAuthStore();
 const gitStore = useGitStore();
@@ -30,6 +32,7 @@ const openUnlinkModal = (linked) => {
 };
 
 // 기본 정보
+const projectId = computed(() => projectStore.selectedProject?.id);
 const userId = computed(() => authStore.user?.id ?? null);
 const taskId = computed(() => route.params.taskId);
 const task = computed(() => taskStore.task);
@@ -369,7 +372,7 @@ const downloadFile = async (id) => {
 const loading = ref(false);
 onMounted(async () => {
   loading.value = true;
-  await Promise.all([taskStore.findCateList(), taskStore.findTypeList(), gitStore.findCommitsByTaskId(taskId.value), taskStore.findCommonCodeList()]);
+  await Promise.all([taskStore.findCateList(), taskStore.findTypeList(), gitStore.findCommitsByTaskId(taskId.value), taskStore.findCommonCodeList(), taskStore.findTaskList(projectId.value, userId.value)]);
   loading.value = false;
   console.log(task.value);
 });
