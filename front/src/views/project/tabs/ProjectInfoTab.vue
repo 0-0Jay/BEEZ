@@ -32,7 +32,7 @@ onMounted(async () => {
   const info = projectStore.projectInfo;
   form.title = info.title;
   form.identifier = info.identifier;
-  form.description = info.description;
+  form.description = info.description ?? '';
   form.startDate = info.startDate ? new Date(info.startDate) : null;
   form.endDate = info.endDate ? new Date(info.endDate) : null;
   form.isPublic = info.isPublic === 'J1';
@@ -84,6 +84,8 @@ const validate = () => {
   if (!form.title.trim()) {
     errors.title = '프로젝트명을 입력해주세요.';
     valid = false;
+  } else if (form.title.length > 20) {
+    errors.title = '프로젝트 명은 20자 이내로 입력해주세요.';
   }
   if (!form.identifier.trim()) {
     errors.identifier = '식별자를 입력해주세요.';
@@ -91,6 +93,8 @@ const validate = () => {
   } else if (!/^[a-z0-9_]+$/.test(form.identifier)) {
     errors.identifier = '영문 소문자(a-z), 숫자, 대시(_)만 가능합니다.';
     valid = false;
+  } else if (form.identifier.length > 20) {
+    errors.identifier = '식별자는 20자 이내로 입력해주세요.';
   }
   if (!form.startDate) {
     errors.startDate = '시작일을 선택해주세요.';
@@ -193,7 +197,11 @@ const handleCancel = () => {
         <div class="flex items-start px-8 py-4">
           <label class="form-label w-36 pt-2 shrink-0">설명</label>
           <div class="flex-1">
-            <Textarea v-model="form.description" placeholder="텍스트를 입력해 주세요." class="w-full" rows="4" autoResize />
+            <Textarea v-model="form.description" placeholder="프로젝트에 대한 설명을 입력해 주세요." class="w-full" rows="5" autoResize :maxlength="500" />
+            <div class="flex items-center justify-between mt-1">
+              <small v-if="(form.description || '').length > 500" class="text-red-500 text-xs">설명은 500자를 초과할 수 없습니다.</small>
+              <small class="ml-auto text-xs" :class="(form.description || '').length > 500 ? 'text-red-500 font-semibold' : 'text-[#9A9B90]'"> {{ (form.description || '').length }} / 500 </small>
+            </div>
           </div>
         </div>
 
@@ -252,6 +260,7 @@ const handleCancel = () => {
           <label class="form-label w-36 pt-2 shrink-0">PM/PL <span class="text-red-500">*</span></label>
           <div class="flex-1">
             <Select v-model="form.pmId" :options="pms" optionLabel="name" optionValue="id" placeholder="선택" class="form-input w-64" />
+            <small v-if="errors.pmId" class="text-red-500 block mt-1">{{ errors.pmId }}</small>
           </div>
         </div>
 

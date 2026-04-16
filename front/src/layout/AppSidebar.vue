@@ -65,6 +65,10 @@ const isAdminMenuOpen = ref(false);
 const toggleAdminMenu = () => {
   isAdminMenuOpen.value = !isAdminMenuOpen.value;
 };
+
+const clearSelectedProject = () => {
+  projectStore.selectedProject = null;
+};
 </script>
 
 <template>
@@ -97,7 +101,7 @@ const toggleAdminMenu = () => {
         <span>대시보드</span>
       </router-link>
 
-      <router-link to="/project/list" class="menu-item whitespace-nowrap cursor-pointer px-3 py-2.5 rounded-lg hover:bg-gray-700 transition-colors duration-150 flex items-center justify-between">
+      <router-link to="/project/list" class="menu-item whitespace-nowrap cursor-pointer px-3 py-2.5 rounded-lg hover:bg-gray-700 transition-colors duration-150 flex items-center justify-between" @click="clearSelectedProject">
         <span>프로젝트 목록</span>
       </router-link>
 

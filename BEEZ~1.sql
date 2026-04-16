@@ -239,12 +239,25 @@ CREATE OR REPLACE PROCEDURE delete_project_member (
 AS 
     v_group_id project_member.group_id%TYPE;
     v_project_id project_member.project_id%TYPE;
+    v_user_id    project_member.user_id%TYPE;
+    v_count      NUMBER;
 BEGIN
-    -- group_id, project_id 조회
-    SELECT group_id, project_id
-    INTO v_group_id, v_project_id
+    -- group_id, project_id, user_id 조회
+    SELECT group_id, project_id, user_id
+    INTO v_group_id, v_project_id, v_user_id
     FROM project_member
     WHERE id = p_project_member_id;
+    
+    -- 고정 멤버 여부 검증 (project 테이블의 user_id, pm_id)
+    SELECT COUNT(*)
+    INTO v_count
+    FROM project
+    WHERE id = v_project_id
+    AND (user_id = v_user_id OR pm_id = v_user_id);
+
+    IF v_count > 0 THEN
+        RAISE_APPLICATION_ERROR(-20001, '프로젝트 고정 멤버는 삭제할 수 없습니다.');
+    END IF;
     
     IF v_group_id IS NULL THEN
         -- 개별 사용자 소프트 딜리트
@@ -335,7 +348,29 @@ CREATE OR REPLACE PROCEDURE update_project_member_role (
     p_role_ids  IN T_VARCHAR_LIST  -- 최종 선택된 역할 배열
 )
 AS
+    v_user_id    project_member.user_id%TYPE;
+    v_project_id project_member.project_id%TYPE;
+    v_count      NUMBER;
 BEGIN
+    -- user_id, project_id 조회
+    SELECT user_id, project_id
+    INTO v_user_id, v_project_id
+    FROM project_member
+    WHERE id = p_member_id;
+
+    -- ✅ 고정 멤버 여부 검증
+    SELECT COUNT(*)
+    INTO v_count
+    FROM project
+    WHERE id = v_project_id
+    AND (user_id = v_user_id OR pm_id = v_user_id);
+
+    IF v_count > 0 THEN
+        RAISE_APPLICATION_ERROR(-20001, '프로젝트 고정 멤버는 역할을 수정할 수 없습니다.');
+    END IF;
+
+
+
     -- 1. 기존 직접 부여 역할 전부 삭제 처리
     UPDATE role_mapping
     SET is_delete = 'F1'
@@ -811,6 +846,8 @@ EXCEPTION
         RAISE;
 END proc_copy_project;
 /
+
+commit;
 
 -- 패키지 선언 (타입만 정의)
 CREATE OR REPLACE PACKAGE pkg_project_copy AS

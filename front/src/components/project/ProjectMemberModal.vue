@@ -29,7 +29,8 @@ watch(
 );
 
 const roles = computed(() => projectStore.roles);
-const filteredUsers = computed(() => projectStore.users);
+const pmUsers = computed(() => projectStore.users.filter((u) => u.role === 'ROLE0002'));
+const normalUsers = computed(() => projectStore.users.filter((u) => u.role !== 'ROLE0002'));
 const filteredGroups = computed(() => projectStore.groups);
 
 // 키워드 변경 시 자동 검색 (디바운스 적용)
@@ -106,7 +107,17 @@ onUnmounted(() => {
         <!-- 사용자 목록 -->
         <p class="text-sm font-medium text-stone-700 mb-2">사용자</p>
         <div class="flex flex-wrap gap-x-5 gap-y-2 mb-4">
-          <label v-for="user in filteredUsers" :key="user.id" class="flex items-center gap-1.5 text-sm text-stone-700 cursor-pointer">
+          <!-- ROLE0002 먼저 -->
+          <label v-for="user in pmUsers" :key="user.id" class="flex items-center gap-1.5 text-sm text-stone-700 cursor-pointer">
+            <Checkbox :value="user.id" v-model="selectedUsers" />
+            {{ user.name }}
+          </label>
+
+          <!-- 구분선 (둘 다 있을 때만) -->
+          <div v-if="pmUsers.length > 0 && normalUsers.length > 0" class="w-full border-t border-stone-200 my-1" />
+
+          <!-- 나머지 -->
+          <label v-for="user in normalUsers" :key="user.id" class="flex items-center gap-1.5 text-sm text-stone-700 cursor-pointer">
             <Checkbox :value="user.id" v-model="selectedUsers" />
             {{ user.name }}
           </label>

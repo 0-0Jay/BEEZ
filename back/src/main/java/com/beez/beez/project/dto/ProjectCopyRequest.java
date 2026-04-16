@@ -12,6 +12,7 @@ public class ProjectCopyRequest {
   private String description;
   private String isPublic;
   private String parentId;
+  private String pmId;
   private Date startDate;
   private Date endDate;
   private String userId;

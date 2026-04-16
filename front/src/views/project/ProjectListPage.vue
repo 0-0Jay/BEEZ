@@ -247,7 +247,7 @@ function progressBarColor(p) {
         <Checkbox v-model="filters.isLock" :binary="true" inputId="archived" class="mr-3 self-start mt-3" />
         <label for="archived" class="text-sm font-medium text-[#1A1816] whitespace-nowrap cursor-pointer self-start mt-3">잠금 보관 프로젝트 보기</label>
         <!-- 버튼 묶음 — 항상 오른쪽 끝 -->
-        <div class="flex gap-2 ml-auto shrink-0 self-start">
+        <div class="flex gap-2 ml-17 shrink-0 self-start">
           <Button label="초기화" severity="secondary" raised @click="resetFilters" />
           <Button label="조회" icon="pi pi-search" raised @click="fetchProjects" />
         </div>
@@ -258,7 +258,7 @@ function progressBarColor(p) {
     </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-[#5B6E96] overflow-hidden">
-      <DataTable :value="projects" :loading="loading" dataKey="id" :rowHover="true" :rowClass="rowClass" tableStyle="width: 100%" scrollable scrollHeight="500px">
+      <DataTable :value="projects" :loading="loading" dataKey="id" :rowHover="true" :rowClass="rowClass" tableStyle="width: 100%" scrollable scrollHeight="560px">
         <template #empty>
           <div class="flex flex-col items-center justify-center py-10">
             <i class="pi pi-search text-4xl text-[#C7C7C2] mb-3"></i>

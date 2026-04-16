@@ -57,6 +57,8 @@ const validate = () => {
   if (!form.title.trim()) {
     errors.title = '프로젝트명을 입력해주세요.';
     valid = false;
+  } else if (form.title.length > 20) {
+    errors.title = '프로젝트 명은 20자 이내로 입력해주세요.';
   }
   if (!form.identifier.trim()) {
     errors.identifier = '식별자를 입력해주세요.';
@@ -64,6 +66,8 @@ const validate = () => {
   } else if (!/^[a-z0-9_]+$/.test(form.identifier)) {
     errors.identifier = '영문 소문자(a-z), 숫자, 대시(_)만 가능합니다.';
     valid = false;
+  } else if (form.identifier.length > 20) {
+    errors.identifier = '식별자는 20자 이내로 입력해주세요.';
   }
   if (!form.startDate) {
     errors.startDate = '시작일을 선택해주세요.';
@@ -73,7 +77,7 @@ const validate = () => {
     errors.endDate = '마감일을 선택해주세요.';
     valid = false;
   }
-  if (errors.pmId) {
+  if (!form.pmId) {
     errors.pmId = 'PM/PL을 지정해주세요.';
     valid = false;
   }
@@ -130,6 +134,12 @@ const handleSubmit = async () => {
   });
   toast.add({ severity: 'success', summary: '등록 완료', detail: '프로젝트가 등록되었습니다.', life: 2000 });
 
+  projectStore.selectedProject = {
+    title: form.title,
+    id: form.id,
+    startDate: form.startDate,
+    endDate: form.endDate
+  };
   router.push(`/project/setting/${id}`);
 };
 
@@ -145,7 +155,7 @@ const handleCancel = () => {
 </script>
 
 <template>
-  <div class="p-8 bg-white min-h-screen">
+  <div class="p-8 bg-[#ffffff] h-full">
     <!-- 타이틀 -->
     <div class="mb-4">
       <h1 class="text-2xl font-bold text-[#1A1816]">새 프로젝트 등록</h1>
@@ -171,7 +181,11 @@ const handleCancel = () => {
         <div class="flex items-start px-8 py-4">
           <label class="form-label w-36 pt-2 shrink-0">설명</label>
           <div class="flex-1">
-            <Textarea v-model="form.description" placeholder="텍스트를 입력해 주세요." class="w-full" rows="4" autoResize />
+            <Textarea v-model="form.description" placeholder="프로젝트에 대한 설명을 입력해 주세요." class="w-full" rows="5" autoResize :maxlength="500" />
+            <div class="flex items-center justify-between mt-1">
+              <small v-if="form.description.length > 500" class="text-red-500 text-xs">설명은 500자를 초과할 수 없습니다.</small>
+              <small class="ml-auto text-xs" :class="form.description.length > 500 ? 'text-red-500 font-semibold' : 'text-[#9A9B90]'">{{ form.description.length }} / 500</small>
+            </div>
           </div>
         </div>
 
@@ -230,6 +244,7 @@ const handleCancel = () => {
           <label class="form-label w-36 pt-2 shrink-0">PM/PL <span class="text-red-500">*</span></label>
           <div class="flex-1">
             <Select v-model="form.pmId" :options="pms" optionLabel="name" optionValue="id" placeholder="선택" class="form-input w-64" />
+            <small v-if="errors.pmId" class="text-red-500 block mt-1">{{ errors.pmId }}</small>
           </div>
         </div>
 
