@@ -15,7 +15,7 @@
             WHERE  role_id = r.id) AS useCount
     FROM roles r
     WHERE id != 'ROLE0001' AND id != 'ROLE0003'
-    ORDER BY id DESC
+    ORDER BY id ASC
   </select>
 
   <!-- 역할 상세 조회 -->

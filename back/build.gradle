@@ -54,6 +54,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	// JGit 라이브러리
 	implementation 'org.eclipse.jgit:org.eclipse.jgit:7.2.1.202505142326-r'
+	implementation 'commons-io:commons-io:2.15.1'
 }
 
 tasks.named('test') {

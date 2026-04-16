@@ -51,8 +51,8 @@ axiosInstance.interceptors.response.use(
     const message = serverMessage || ERROR_MESSAGES[status] || `알 수 없는 오류가 발생했습니다. (${status})`;
 
     // 공통 에러 핸들링
-    handleError(status, message);
-    // console.log(error);
+    handleError(status, message, error);
+    console.log(error);
 
     // 호출부에서 추가 처리가 필요하면 reject로 전달
     error.message = message;
@@ -74,7 +74,7 @@ const ERROR_MESSAGES = {
 
 let isRedirecting = false;
 
-function handleError(status, message) {
+function handleError(status, message, error) {
   if (isRedirecting) return;
 
   const isLoginPage = window.location.pathname === '/';
@@ -109,6 +109,10 @@ function handleError(status, message) {
     case 400:
     case 404:
     case 405:
+    case 409:
+      console.log(error.response);
+      console.log(error.response.data);
+      break;
     case 500:
     case 501:
       // 예: 전역 토스트/알림 출력

@@ -5,10 +5,11 @@ import com.beez.beez.gits.dto.GitRepoDto;
 import com.beez.beez.gits.mapper.GitMapper;
 import com.beez.beez.gits.service.GitService;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
@@ -18,11 +19,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.apache.tomcat.util.http.fileupload.FileUtils.deleteDirectory;
-
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class GitServiceImpl implements GitService {
 
   private final GitMapper gitMapper;
@@ -35,11 +33,7 @@ public class GitServiceImpl implements GitService {
   public void insertRepository(GitRepoDto dto) throws Exception {
     // 중복 체크
     int count = gitMapper.checkRepoExists(dto);
-    if(count > 0) {
-      throw new RuntimeException("이미 동일한 이름이나 URL이 등록된 저장소가 있습니다.");
-    }
 
-    // PK 생성 함수 호출
     String newRepoId = gitMapper.getNextPk("repositories");
 
     // 상대 경로로 폴더 객체 생성
@@ -63,11 +57,12 @@ public class GitServiceImpl implements GitService {
     }
 
     // JGit Clon 실행
-    Git.cloneRepository()
-      .setURI(dto.getRepoUrl())
-      .setDirectory(repoDir)
-      .setBare(true)
-      .call();
+      Git.cloneRepository()
+        .setURI(dto.getRepoUrl())
+        .setDirectory(repoDir)
+        .setBare(true)
+        .call();
+
 
     // 등록
     gitMapper.insertRepository(dto);
@@ -75,26 +70,27 @@ public class GitServiceImpl implements GitService {
   }
 
   // 커밋 동기화
+  @Transactional
   @Override
   public int updateSyncCommits(String id) throws Exception {
+
     GitRepoDto repo = gitMapper.findReposById(id);
 
-    if(repo == null || repo.getLocalPath() == null) {
+    if (repo == null || repo.getLocalPath() == null) {
       throw new RuntimeException("저장소 정보를 찾을 수 없거나 경로가 설정되지 않았습니다.");
     }
+
     String localPath = repo.getLocalPath();
     int count = 0;
 
-    File localDir = new File(repo.getLocalPath());
+    File localDir = new File(localPath);
 
+    // 로컬 저장소 없으면 재복제
     if (!localDir.exists()) {
-      if (!localDir.mkdirs()) {
-        if (!localDir.exists()) {
-          throw new IOException("저장소 경로를 생성할 수 없습니다: " + localPath);
-        }
+      if (!localDir.mkdirs() && !localDir.exists()) {
+        throw new IOException("저장소 경로를 생성할 수 없습니다: " + localPath);
       }
 
-      // 재복제 실행
       Git.cloneRepository()
         .setURI(repo.getRepoUrl())
         .setDirectory(localDir)
@@ -102,55 +98,65 @@ public class GitServiceImpl implements GitService {
         .call();
     }
 
-    // 저장소 열기
-    try(Git git = Git.open(new File(localPath))){
-      // 원격 저장소에서 최신 데이터(커밋 이력)를 가져옴
-      try {
-        // 원격 저장소에서 데이터 가져오기 (여기서 네트워크 에러가 자주 남)
-        git.fetch().setRemote("origin").call();
-      } catch (Exception e) {
-        throw new RuntimeException("원격 저장소와 통신에 실패했습니다");
-      }
-      Iterable<RevCommit> commits = git.log().all().call();
-//      Iterable<RevCommit> commits = git.log()
-//        .add(git.getRepository().resolve("refs/remotes/origin/main") != null
-//          ? git.getRepository().resolve("refs/remotes/origin/main")
-//          : git.getRepository().resolve("refs/remotes/origin/master"))
-//        .call();
-      Pattern p = Pattern.compile("#(TASK\\d+)", Pattern.CASE_INSENSITIVE); // #숫자 꺼냄
+    Git git = null;
 
-      for(RevCommit commit : commits){
-// System.out.println("Commit Message: " + commit.getFullMessage());
-        String msg = commit.getFullMessage();
-        Matcher m = p.matcher(msg);
-        boolean found = false;
+    try {
+      git = Git.open(localDir);
+
+      // fetch
+      git.fetch().setRemote("origin").call();
+
+      Iterable<RevCommit> commits = git.log().all().call();
+
+      Pattern pattern = Pattern.compile("#(TASK\\d+)", Pattern.CASE_INSENSITIVE);
+
+      for (RevCommit commit : commits) {
+
+        String message = commit.getFullMessage();
+        Matcher matcher = pattern.matcher(message);
 
         GitCommitRequest request = new GitCommitRequest();
         request.setCommitSha(commit.getName());
         request.setRepoId(id);
-        request.setMessage(msg);
+        request.setMessage(message);
         request.setAuthor(commit.getAuthorIdent().getName());
         request.setCommitDate(new Timestamp(commit.getCommitTime() * 1000L));
 
-        while(m.find()){
-          found = true;
-          request.setTaskId(m.group(1).toUpperCase());
-          // 쿼리 실행
+        boolean hasTask = false;
+
+        while (matcher.find()) {
+          hasTask = true;
+
+          String taskId = matcher.group(1).toUpperCase();
+
+          if (!taskExists(taskId)) {
+            request.setTaskId(null);
+          } else {
+            request.setTaskId(taskId);
+          }
+
           count += gitMapper.updateCommitLog(request);
         }
-        if(!found){
+
+        if (!hasTask) {
           request.setTaskId(null);
           count += gitMapper.updateCommitLog(request);
         }
       }
-    }catch (IOException e) {
-      // 파일 경로나 권한 문제
-      throw new RuntimeException("로컬 저장소 파일을 열 수 없습니다.");
-    } catch (Exception e) {
-      // 그 외 예상치 못한 에러
-      throw new RuntimeException("동기화 중 오류가 발생했습니다.");
+
+    } finally {
+      if (git != null) {
+        git.getRepository().close();
+        git.close();
+      }
     }
+
+//    System.out.println("최종 저장된 개수: " + count);
     return count;
+  }
+
+  private boolean taskExists(String taskId) {
+    return gitMapper.existsTask(taskId) > 0;
   }
 
   // 일감 번호로 커밋 목록 조회
@@ -165,23 +171,54 @@ public class GitServiceImpl implements GitService {
     return gitMapper.findReposByProjectId(projectId);
   }
 
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public void deleteRepo(String id) {
+    gitMapper.deleteRepository(id);
+  }
+
   // 저장소 삭제(해제) - DB 데이터 삭제
   @Override
   public void deleteRepository(String id) {
-    GitRepoDto repo = gitMapper.findReposById(id);
+    try {
+      System.out.println("1. repo 조회");
 
-    if (repo == null) {
-      throw new RuntimeException("삭제할 저장소 정보가 존재하지 않습니다.");
-    }
+      GitRepoDto repo = gitMapper.findReposById(id);
 
-    // DB 데이터 삭제
-    gitMapper.deleteCommitLogsByRepoId(id);
-    gitMapper.deleteRepository(id);
+      if (repo == null) {
+        throw new RuntimeException("삭제할 저장소 정보가 존재하지 않습니다.");
+      }
 
-    // 물리적 폴더 삭제
-    File repoDir = new File(repo.getLocalPath());
-    if (repoDir.exists()) {
-      deleteDirectory(repoDir);
+      System.out.println("2. commit 삭제");
+      try {
+        int deleted = gitMapper.deleteCommitLogsByRepoId(id);
+        System.out.println("삭제된 commit 개수: " + deleted);
+
+      } catch (Exception e) {
+        e.printStackTrace();
+        throw e;
+      }
+
+      System.out.println("3. repo 삭제");
+      deleteRepo(id);
+
+      System.gc();
+      try {
+        Thread.sleep(200);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+
+      System.out.println("4. 폴더 삭제");
+      File repoDir = new File(repo.getLocalPath());
+      if (repoDir.exists()) {
+        FileUtils.deleteDirectory(repoDir);
+      }
+
+      System.out.println("5. 완료");
+
+    } catch (IOException e) {
+      e.printStackTrace();
+//      throw e;
     }
   }
 
@@ -203,6 +240,4 @@ public class GitServiceImpl implements GitService {
       System.err.println("권한 거부: " + e.getMessage());
     }
   }
-
-
 }

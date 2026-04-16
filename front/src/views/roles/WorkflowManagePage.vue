@@ -208,12 +208,12 @@ const onCopied = async (data) => {
     <div class="flex flex-wrap bg-[#F2F3F8] items-center gap-8 border rounded-[10px] px-7 py-5 mb-5">
       <div class="flex items-center gap-3">
         <label class="text-[15px] font-medium">역할:</label>
-        <Select v-model="selectedRole" :options="roleOptions" optionLabel="label" optionValue="value" size="small" class="!w-32" placeholder="선택" />
+        <Select v-model="selectedRole" :options="roleOptions" optionLabel="label" optionValue="value" size="medium" class="!w-50" placeholder="선택" />
       </div>
 
       <div class="flex items-center gap-3">
         <label class="text-[15px] font-medium">일감 유형:</label>
-        <Select v-model="selectedIssueType" :options="issueTypeOptions" optionLabel="label" optionValue="value" size="small" class="!w-32" placeholder="선택" />
+        <Select v-model="selectedIssueType" :options="issueTypeOptions" optionLabel="label" optionValue="value" size="medium" class="!w-32" placeholder="선택" />
       </div>
     </div>
 

@@ -29,6 +29,9 @@ public interface GitMapper {
   // 프로젝트별 저장소 조회
   List<GitRepoDto> findReposByProjectId(String taskId);
 
-  void deleteCommitLogsByRepoId(String id);
-  void deleteRepository(String id);
+  int deleteCommitLogsByRepoId(@Param("id") String id);
+  void deleteRepository(@Param("id") String id);
+
+  // 일감 존재 여부 확인
+  int existsTask(String taskId);
 }
