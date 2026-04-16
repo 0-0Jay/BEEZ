@@ -44,7 +44,7 @@ public interface TaskMapper {
   
   List<GanttRelationResponse> findGanttRelation(String id);
   
-  List<TaskWorkflowResponse> findWorkflow(TaskWorkflowRequest taskWorkflowRequest);
+  void findWorkflow(TaskWorkflowRequest taskWorkflowRequest);
   
   void deleteTaskReply(String id);
   

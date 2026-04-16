@@ -15,5 +15,5 @@ public class ProjectRecapResponse {
   private String id;
   private String title;
   private LocalDate endDate;
-  private int process;
+  private int progress;
 }

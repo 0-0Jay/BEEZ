@@ -65,7 +65,7 @@ const handleUserSaved = () => {
 </script>
 
 <template>
-  <div class="h-20 bg-header border-b shadow flex items-center justify-between px-4">
+  <div class="h-20 bg-[#F2F3F8] border-b shadow flex items-center justify-between px-4">
     <!-- 좌측 -->
     <div class="flex items-center gap-3">
       <!-- 프로젝트명 -->
@@ -91,10 +91,6 @@ const handleUserSaved = () => {
 </template>
 
 <style scope>
-.bg-header {
-  background-color: #f7f8fc;
-}
-
 .title-color {
   color: #f5a623;
 }

@@ -16,7 +16,7 @@ public class TaskRecapResponse {
   private String title;
   private String projectId;
   private String projectTitle;
-  private int process;
+  private int progress;
   private String workflow;
   private LocalDate plannedEnd;
 }

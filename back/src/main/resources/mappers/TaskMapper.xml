@@ -363,11 +363,22 @@
     WHERE (p.id = #{id} OR p.parent_id = #{id}) AND t.status = 'T1'
   </select>
 
-  <select id="findWorkflow" parameterType="TaskWorkflowRequest" resultType="TaskWorkflowResponse">
-    SELECT before, after, is_allow
-    FROM workflow
-    WHERE role_id = #{roleId} AND type_id = #{typeId} AND condition_type = #{conditionType}
+  <select id="findWorkflow" parameterType="TaskWorkflowRequest" resultType="TaskWorkflowResponse" statementType="CALLABLE">
+    {
+      CALL proc_find_workflow(
+        #{roleId,         mode=IN,  jdbcType=ARRAY, typeHandler=com.beez.beez.config.OracleTypeHandler.VarcharTypeHandler},
+        #{typeId,         mode=IN,  jdbcType=VARCHAR},
+        #{conditionType,  mode=IN,  jdbcType=VARCHAR},
+        #{workflows,      mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=workflowResultMap,   typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler}
+      )
+    }
   </select>
+  
+  <resultMap id="workflowResultMap" type="com.beez.beez.task.dto.TaskWorkflowResponse">
+    <result property="before" column="before" />
+    <result property="after" column="after" />
+    <result property="isAllow" column="is_allow" />
+  </resultMap>
   
   <select id="findTaskType" resultType="TaskTypeResponse">
     SELECT t.id, t.name, t.default_status, t.description,

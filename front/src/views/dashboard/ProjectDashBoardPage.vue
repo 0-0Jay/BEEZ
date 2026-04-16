@@ -66,7 +66,7 @@ const currentProject = computed(() => {
     pm: dashboard.value?.pmpl,
     startDate: formatDate(dashboard.value?.startDate),
     endDate: formatDate(dashboard.value?.endDate),
-    progress: dashboard.value?.process ?? 0,
+    progress: dashboard.value?.progress ?? 0,
     dday: calcDday(dashboard.value?.endDate),
     totalTasks: (dashboard.value?.taskList ?? []).length,
     doneTasks: (dashboard.value?.taskList ?? []).filter((t) => t.workflow === '완료').length,
@@ -223,7 +223,7 @@ function mapProjects(list) {
   return (list ?? []).map((p) => ({
     id: p.id,
     title: p.title,
-    progress: p.process ?? 0,
+    progress: p.progress ?? 0,
     deadline: formatDate(p.endDate),
     dday: calcDday(p.endDate)
   }));
@@ -235,7 +235,7 @@ function mapTasks(list) {
     title: t.title,
     project: t.projectTitle,
     status: t.workflow,
-    progress: t.process ?? 0,
+    progress: t.progress ?? 0,
     deadline: formatDate(t.plannedEnd)
   }));
 }
@@ -277,6 +277,7 @@ onMounted(async () => {
     };
   }
   loading.value = false;
+  console.log(d);
 });
 </script>
 
