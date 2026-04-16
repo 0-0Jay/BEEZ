@@ -48,6 +48,7 @@ export const setupAuthGuard = async (to, from, next) => {
   // 프로젝트별 권한 확인
   if (to.meta.permission) {
     let projectId = to.params.id || to.params.projectId;
+
     // 관리자는 무조건 통과
     if (authStore.user.role === 'ROLE0001') return next();
 
@@ -61,31 +62,23 @@ export const setupAuthGuard = async (to, from, next) => {
     console.log(`[Guard] 현재 페이지: ${to.name}, 찾은 ID: ${projectId}`);
 
     if (!projectId) {
-      if (to.name === 'ProjectCreate' && (authStore.user.role === 'ROLE0001' || authStore.user.role === 'ROLE0002')) {
+      if (to.meta.isGlobal && (authStore.user.role === 'ROLE0001' || authStore.user.role === 'ROLE0002')) {
         return next();
-      }
-
-      if (to.meta.permission) {
-        alertStore.setAlert('접근 권한이 없습니다');
-        return next(false);
       }
 
       alertStore.setAlert('프로젝트를 선택해주세요.');
       return next({ name: 'projectList' });
     }
 
-    if (authStore.currentProjectId !== projectId) {
-      try {
-        await Promise.all([authStore.findPermissionsByProject(projectId), authStore.findRolesByProject(projectId)]);
-        authStore.currentProjectId = projectId;
-      } catch (e) {
-        alertStore.setAlert('권한 정보를 불러오지 못했습니다.');
+    try {
+      await authStore.selectProject(projectId);
+    } catch (e) {
+      alertStore.setAlert('권한 정보를 불러오지 못했습니다.');
 
-        if (window.history.length > 1) {
-          return next(false);
-        } else {
-          return next({ name: 'dashboard' });
-        }
+      if (window.history.length > 1) {
+        return next(false);
+      } else {
+        return next({ name: 'dashboard' });
       }
     }
 
@@ -101,7 +94,7 @@ export const setupAuthGuard = async (to, from, next) => {
     console.log('내 역할:', authStore.user?.role);
     console.log('필요한 코드:', to.meta.permission);
     console.log('보유 권한 리스트:', JSON.stringify(authStore.projectPermissions));
-    console.log('포함 여부:', authStore.projectPermissions.includes(to.meta.permission));
+    // console.log('포함 여부:', authStore.projectPermissions.includes(to.meta.permission));
   }
 
   const ROLE_NAMES = {
@@ -112,10 +105,7 @@ export const setupAuthGuard = async (to, from, next) => {
 
   // 권한 체크
   if (to.meta.role) {
-    // console.log('권한 체크 진입');
     let userRole = authStore.user?.role || [];
-    // console.log('userRoles:', userRoles);
-    // console.log('required:', to.meta.role);
 
     // 배열이 아닌 경우 강제 변환
     if (!Array.isArray(userRole)) {

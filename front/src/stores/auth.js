@@ -15,7 +15,10 @@ export const useAuthStore = defineStore('auth', {
     }, // 사용자 정보
     projectPermissions: [],
     projectRoles: [],
-    currentProjectId: null
+    currentProjectId: null,
+
+    loadingProjectId: null,
+    loadingPromise: null
   }),
 
   // getters
@@ -120,6 +123,46 @@ export const useAuthStore = defineStore('auth', {
       const response = await axios.get(`/project-auth/roles/${projectId}`);
       this.projectRoles = response.data;
       console.log('프로젝트별 역할 -> ', this.projectRoles);
+    },
+
+    async selectProject(projectId) {
+      // 같은 프로젝트면 스킵
+      if (this.currentProjectId === projectId) return;
+      // 이미 로딩 중이면 그 Promise 그대로 반환
+      if (this.loadingProjectId === projectId && this.loadingPromise) {
+        return this.loadingPromise;
+      }
+
+      // 새로운 로딩 시작
+      this.loadingProjectId = projectId;
+
+      this.loadingPromise = (async () => {
+        try {
+          // sessionStorage 저장
+          sessionStorage.setItem(
+            'project',
+            JSON.stringify({
+              selectedProject: { id: projectId }
+            })
+          );
+
+          // 초기화
+          this.projectPermissions = [];
+          this.projectRoles = [];
+
+          // API 호출
+          await Promise.all([this.findPermissionsByProject(projectId), this.findRolesByProject(projectId)]);
+
+          // 완료 처리
+          this.currentProjectId = projectId;
+        } finally {
+          // 초기화
+          this.loadingProjectId = null;
+          this.loadingPromise = null;
+        }
+      })();
+
+      return this.loadingPromise;
     }
   },
   persist: true

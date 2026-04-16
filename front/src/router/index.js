@@ -35,15 +35,9 @@ const router = createRouter({
         {
           path: '/project/list',
           name: 'projectList',
-          component: () => import('@/views/project/ProjectListPage.vue')
+          component: () => import('@/views/project/ProjectListPage.vue'),
+          meta: { isGlobal: true }
         },
-        // 권한 테스트용
-        // {
-        //   path: '/test/auth',
-        //   name: 'authTest',
-        //   component: () => import('@/views/AuthTest.vue'),
-        //   meta: { requiresAuth: true, role: 'ROLE0001' } // 필요한 권한을 메타 정보에 기록
-        // },
         {
           path: '/error',
           name: 'error',
