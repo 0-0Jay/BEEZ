@@ -134,11 +134,12 @@ const handleMemberSaved = async () => {
           <div class="col-name">
             <span>{{ user.userName }}</span>
             <span v-if="user.userId === projectInfo.userId" class="fixed-badge">생성자</span>
-            <span v-else-if="user.userId === projectInfo.pmId" class="fixed-badge">담당 PM</span>
+            <span v-else-if="user.userId === projectInfo.pmId" class="fixed-badge">담당 PM/PL</span>
+            <span v-else-if="user.fixedReason" class="fixed-badge">{{ user.fixedReason }}</span>
           </div>
           <div class="col-role text-gray">{{ user.roles?.map((r) => r.roleName).join(', ') || '-' }}</div>
           <div class="col-actions">
-            <template v-if="user.userId !== projectInfo.userId && user.userId !== projectInfo.pmId">
+            <template v-if="user.userId !== projectInfo.userId && user.userId !== projectInfo.pmId && !user.fixedReason">
               <button
                 class="action-btn edit-btn"
                 @click="
