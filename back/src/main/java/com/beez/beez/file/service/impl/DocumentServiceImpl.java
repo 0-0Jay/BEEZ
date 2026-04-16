@@ -38,7 +38,7 @@ public class DocumentServiceImpl implements DocumentService {
     logType = "A1", //생성
     logCategory = "B5", //문서
     content = "문서 생성({id})",
-    link = "/document/edit/{projectId}/{id}",
+    link = "/document/detail/{projectId}/{id}",
     idField = "projectId"
   )
   
@@ -75,20 +75,20 @@ public class DocumentServiceImpl implements DocumentService {
   
   
   //문서 수정
-//  @Loggable(
-//    logType = "A2", //수정
-//    logCategory = "B5", //문서
-//    content = "문서 수정({id})",
-//    link = "/document/detail/{projectId}/{id}",
-//    idField = "projectId"
-//  )
+  @Loggable(
+    logType = "A2", //수정
+    logCategory = "B5", //문서
+    content = "문서 수정({id})",
+    link = "/document/detail/{projectId}/{id}",
+    idField = "projectId"
+  )
   @Override
   @Transactional //update로직에 본인이 쓴 글만 수정할 수 있게 체크하는 로직을 추가해야할 수 있음
   public void updateDocument(UpdateRequest updateRequest,
                              List<MultipartFile> newFiles,
                              String userId) {
-    System.out.println("=== updateDocument 진입 ===");                          // ← 추가
-    System.out.println("fileUpdates: " + updateRequest.getFileUpdates());       // ← 추가
+    System.out.println("projectId: " + updateRequest.getProjectId()); // ← 추가
+    System.out.println("id: " + updateRequest.getId());
     documentMapper.updateDocument(updateRequest);
     
     //삭제처리

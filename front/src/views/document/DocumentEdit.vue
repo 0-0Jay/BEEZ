@@ -67,11 +67,14 @@ const removeNewFile = (index) => newFiles.value.splice(index, 1);
 
 const submit = async () => {
   submitted.value = true;
-  if (!form.value.title || !form.value.editReason) return;
+  if (!form.value.title || !form.value.editReason || !form.value.content) {
+    return;
+  }
 
   // UpdateRequest 형태로 만들기
   const updateRequest = {
     id: docId,
+    projectId: projectId,
     userId: userId.value,
     title: form.value.title,
     content: form.value.content ?? '',
@@ -135,8 +138,11 @@ const goToDetail = () => {
 
       <div class="form-row">
         <div class="form-group full align-top">
-          <span class="form-label pt">문서 설명</span>
-          <textarea v-model="form.content" class="textarea" />
+          <label class="form-label">문서 설명<span class="required">*</span></label>
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
+            <textarea v-model="form.content" class="textarea" :class="{ 'is-error': submitted && !form.content }" placeholder="문서 설명을 입력해주세요." />
+            <span v-if="submitted && !form.content" class="inline-error"> 문서 설명을 입력해주세요. </span>
+          </div>
         </div>
       </div>
     </div>

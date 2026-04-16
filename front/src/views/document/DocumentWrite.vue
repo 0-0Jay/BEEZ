@@ -28,7 +28,7 @@ const handleInput = (e) => {
 
 const form = ref({
   title: '',
-  doctype: '기획서',
+  doctype: '',
   content: '',
   attachments: []
 });
@@ -119,7 +119,15 @@ const goToList = () => {
         <div class="form-group">
           <span class="form-label">문서 유형<span class="required">*</span></span>
           <div class="select-wrap">
-            <select v-model="form.doctype" class="form-select">
+            <select
+              v-model="form.doctype"
+              class="form-select"
+              :class="{
+                'is-error': submitted && !form.doctype,
+                'placeholder-style': form.doctype === ''
+              }"
+            >
+              <option value="" disabled selected hidden>문서 유형을 선택해주세요.</option>
               <option value="기타">기타</option>
               <option value="기획서">기획서</option>
               <option value="설계서">설계서</option>
@@ -139,7 +147,7 @@ const goToList = () => {
       <!-- 문서 설명 -->
       <div class="form-row">
         <div class="form-group full align-top">
-          <span class="form-label pt">문서 설명</span>
+          <label class="form-label">문서 설명<span class="required">*</span></label>
           <div style="flex: 1; display: flex; flex-direction: column; gap: 4px; position: relative">
             <textarea v-model="form.content" class="textarea" :class="{ 'is-error': submitted && !form.content }" maxlength="500" @input="handleInput" placeholder="내용을 입력해주세요. (최대 500자)" />
             <div class="char-count">
@@ -275,6 +283,16 @@ const goToList = () => {
   cursor: pointer;
   outline: none;
   color: #333;
+}
+
+/* 2. 아무것도 선택하지 않았을 때 (플레이스홀더 상태) */
+.form-select.placeholder-style {
+  color: #bbb; /* input의 placeholder 색상과 동일하게 설정 */
+}
+
+/* 3. input의 placeholder 색상도 명시적으로 맞추고 싶다면 */
+.form-input::placeholder {
+  color: #bbb;
 }
 
 .form-select:focus {

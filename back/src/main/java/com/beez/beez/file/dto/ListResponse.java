@@ -18,5 +18,6 @@ public class ListResponse {
   private String doctype;
   private String userName;
   private LocalDateTime createdOn;
+  private LocalDateTime editedOn;
   private String isMarked;
 }

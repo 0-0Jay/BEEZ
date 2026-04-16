@@ -38,6 +38,7 @@
     SET title = #{title},
     doc_type = #{doctype},
     content = #{content},
+    change_reason = #{changeReason},
     edited_on = SYSTIMESTAMP
     WHERE id = #{id}
   </update>
@@ -62,6 +63,7 @@
     D.USER_ID,
     U.NAME AS USERNAME,
     D.CREATED_ON AS createdOn,
+    D.EDITED_ON AS editedOn,
     CASE WHEN M.MARK_ID IS NOT NULL THEN 'Y' ELSE 'N' END AS isMarked
     FROM DOCS D
     LEFT JOIN USERS U ON D.USER_ID = U.ID
@@ -78,7 +80,9 @@
     D.CONTENT,
     D.USER_ID,
     U.NAME AS USERNAME,
-    D.CREATED_ON AS createdOn
+    D.CREATED_ON AS createdOn,
+    D.EDITED_ON AS editedOn,
+    D.CHANGE_REASON AS changeReason
     FROM DOCS D
     LEFT JOIN USERS U ON D.USER_ID = U.ID
     WHERE D.ID = #{id}
