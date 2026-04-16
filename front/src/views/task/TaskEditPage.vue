@@ -15,7 +15,7 @@ const authStore = useAuthStore();
 const project = computed(() => projectStore.selectedProject);
 const userId = computed(() => authStore.user.id);
 const roleId = computed(() => authStore.user.role);
-const condition = computed(() => (taskStore.task.creator == userId.value ? 'Z1' : taskStore.task.userId == userId.value ? 'Z2' : 'Z0'));
+const condition = computed(() => (taskStore.task?.creator == userId.value ? 'Z1' : taskStore.task?.userId == userId.value ? 'Z2' : 'Z0'));
 const toast = useToast();
 
 const isEditMode = route.path.includes('/task/edit');
@@ -434,7 +434,6 @@ const handleSubmit = async () => {
       closable: false
     });
   }
-  await taskStore.findTaskDetail(nextId);
   router.push(`/task/${nextId}`);
 };
 
@@ -450,7 +449,9 @@ const loading = ref(false);
 onMounted(async () => {
   loading.value = true;
   await Promise.all([taskStore.findVersionList(project.value.id), taskStore.findCateList(), taskStore.findTypeList(), taskStore.findMember(project.value.id), taskStore.findCommonCodeList()]);
-  await taskStore.findWorkflow({ roleId: roleId.value, typeId: taskStore.task?.type, conditionType: condition.value });
+  if (isEditMode) {
+    await taskStore.findWorkflow({ roleId: roleId.value, typeId: taskStore.task?.type, conditionType: condition.value });
+  }
   loading.value = false;
 });
 </script>

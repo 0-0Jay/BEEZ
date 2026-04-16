@@ -194,7 +194,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div>
+  <div class="z-[9999]">
     <!-- 채팅창 -->
     <Transition name="chat-slide">
       <div v-if="isOpen" class="chat-window fixed bottom-8 right-[90px] w-[340px] h-[480px] bg-white rounded-[20px] flex flex-col overflow-hidden">

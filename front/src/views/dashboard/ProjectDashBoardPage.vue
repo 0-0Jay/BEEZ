@@ -306,7 +306,7 @@ onMounted(async () => {
           </div>
           <div class="flex items-center gap-3 mt-1">
             <span class="text-gray-500 text-base w-12 shrink-0">진척도</span>
-            <ProgressBar :value="currentProject.progress" class="flex-1 min-w-200" />
+            <ProgressBar :value="currentProject.progress" class="flex-1" />
             <span class="text-[#5B6E96] font-semibold text-base w-10 text-right"> {{ currentProject.progress }}% </span>
           </div>
         </div>

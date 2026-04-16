@@ -15,6 +15,7 @@ public class TaskTypeResponse {
   private String name;
   private String defaultStatus;
   private String description;
+  private Integer isUsed;
   
   public static TaskTypeResponse toDto(TaskType type) {
     return TaskTypeResponse.builder()

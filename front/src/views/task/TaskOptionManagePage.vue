@@ -133,16 +133,22 @@ async function handleDelete() {
   deleteId.value = null;
   deleteTarget.value = '';
 }
-
+const loading = ref(false);
 onMounted(async () => {
-  await taskStore.findTypeList();
-  await taskStore.findCateList();
-  await taskStore.findCommonCodeList();
+  loading.value = true;
+  await Promise.all([taskStore.findTypeList(), taskStore.findCateList(), taskStore.findCommonCodeList()]);
+  console.log(taskTypes.value);
+  console.log(taskCategories.value);
+  loading.value = false;
 });
 </script>
 
 <template>
-  <div class="min-h-screen bg-white px-10 py-8 text-stone-700">
+  <div v-if="loading" class="flex justify-center items-center py-20 text-stone-500">
+    <i class="pi pi-spin pi-spinner text-2xl mr-2"></i>
+    데이터 불러오는 중...
+  </div>
+  <div v-else class="min-h-screen bg-white px-10 py-8 text-stone-700">
     <div class="mb-7">
       <h1 class="text-2xl font-bold tracking-tight text-stone-900">일감 유형 &amp; 범주 관리</h1>
     </div>
@@ -186,7 +192,15 @@ onMounted(async () => {
                 <td class="px-5 py-5">
                   <div class="flex items-center justify-center gap-1.5">
                     <Button icon="pi pi-pencil" text rounded class="!w-8 !h-8 !text-stone-400 hover:!text-amber-600 hover:!bg-amber-50 transition-colors" v-tooltip.top="'수정'" @click="openTypeEdit(item)" />
-                    <Button icon="pi pi-trash" text rounded class="!w-8 !h-8 !text-stone-400 hover:!text-red-500 hover:!bg-red-50 transition-colors" v-tooltip.top="'삭제'" @click="openDeleteConfirm(item.id, 'TYPE')" />
+                    <Button
+                      icon="pi pi-trash"
+                      text
+                      rounded
+                      class="!w-8 !h-8 !text-stone-400 hover:!text-red-500 hover:!bg-red-50 transition-colors"
+                      :disabled="item.isUsed > 0"
+                      v-tooltip.top="item.isUsed > 0 ? '사용 중인 유형은\n삭제할 수 없습니다' : '삭제'"
+                      @click="openDeleteConfirm(item.id, 'TYPE')"
+                    />
                   </div>
                 </td>
               </tr>
@@ -230,7 +244,15 @@ onMounted(async () => {
                 <td class="px-5 py-5">
                   <div class="flex items-center justify-center gap-1.5">
                     <Button icon="pi pi-pencil" text rounded class="!w-8 !h-8 !text-stone-400 hover:!text-amber-600 hover:!bg-amber-50 transition-colors" v-tooltip.top="'수정'" @click="openCateEdit(item)" />
-                    <Button icon="pi pi-trash" text rounded class="!w-8 !h-8 !text-stone-400 hover:!text-red-500 hover:!bg-red-50 transition-colors" v-tooltip.top="'삭제'" @click="openDeleteConfirm(item.id, 'CATE')" />
+                    <Button
+                      icon="pi pi-trash"
+                      text
+                      rounded
+                      class="!w-8 !h-8 !text-stone-400 hover:!text-red-500 hover:!bg-red-50 transition-colors"
+                      :disabled="item.isUsed > 0"
+                      v-tooltip.top="item.isUsed > 0 ? '사용 중인 범주는\n삭제할 수 없습니다' : '삭제'"
+                      @click="openDeleteConfirm(item.id, 'CATE')"
+                    />
                   </div>
                 </td>
               </tr>

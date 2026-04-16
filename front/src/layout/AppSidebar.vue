@@ -102,7 +102,7 @@ const toggleAdminMenu = () => {
       </router-link>
 
       <div v-if="selectedProject" class="mt-1">
-        <div class="px-3 py-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap">
+        <div class="px-3 py-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">
           {{ selectedProject.title }}
         </div>
         <div class="mt-1 space-y-0.5">
