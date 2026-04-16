@@ -1,6 +1,7 @@
 package com.beez.beez.config.auth;
 
 import com.beez.beez.permission.service.DynamicPermissionService;
+import com.beez.beez.roles.dto.ProjectPermissionResponse;
 import com.beez.beez.roles.mapper.RolesMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -104,20 +105,25 @@ public class DynamicAuthorizationManager implements AuthorizationManager<Request
     }
 
     // 8. 프로젝트 권한 조회
-    List<String> projectPerms =
+    List<ProjectPermissionResponse> projectPerms =
       rolesMapper.findPermissionsByProject(auth.getName(), projectId);
 
     // 9. 최종 권한 체크
     boolean isGranted =
       auth.getAuthorities().stream()
         .anyMatch(a -> requiredPerms.contains(a.getAuthority()))
-        || projectPerms.stream().anyMatch(requiredPerms::contains);
+        || projectPerms.stream()
+        .map(ProjectPermissionResponse::getId)
+        .anyMatch(requiredPerms::contains);
 
     System.out.println("=== 권한 체크 ===");
     System.out.println("========================================");
     System.out.println("검사 중인 URL: [" + method + "] " + url);
     System.out.println("user: " + auth.getName());
     System.out.println("requiredPerms: " + requiredPerms);
+    System.out.println("projectPermIds: " +
+      projectPerms.stream().map(ProjectPermissionResponse::getId).toList()
+    );
     System.out.println("projectId: " + projectId + ", isMember: " + isMember);
     System.out.println("projectPerms: " + projectPerms);
     System.out.println("isGranted: " + isGranted);

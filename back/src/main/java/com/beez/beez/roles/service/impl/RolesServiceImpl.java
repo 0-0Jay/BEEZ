@@ -1,14 +1,12 @@
 package com.beez.beez.roles.service.impl;
 
 import com.beez.beez.permission.mapper.PermissionMapper;
-import com.beez.beez.roles.dto.RoleDetailResponse;
-import com.beez.beez.roles.dto.RoleListResponse;
-import com.beez.beez.roles.dto.RoleSaveRequest;
-import com.beez.beez.roles.dto.RoleUpdateRequest;
+import com.beez.beez.roles.dto.*;
 import com.beez.beez.roles.mapper.RolesMapper;
 import com.beez.beez.roles.repository.Roles;
 import com.beez.beez.roles.service.RolesService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,8 +36,17 @@ public class RolesServiceImpl implements RolesService {
 
   // 프로젝트별 역할 권한 조회
   @Override
-  public List<String> findPermissionsByProject(String userId, String projectId) {
+  public List<ProjectPermissionResponse> findPermissionsByProject(String projectId) {
+    String userId = SecurityContextHolder.getContext().getAuthentication().getName();
     return rolesMapper.findPermissionsByProject(userId, projectId);
+  }
+
+  // 프로젝트별 역할 조회
+  @Override
+  public List<ProjectRoleResponse> findRolesByProject(String projectId) {
+    String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+
+    return rolesMapper.findRolesByProject(userId, projectId);
   }
 
   // 새 역할 기본 정보 등록

@@ -71,7 +71,7 @@ export const setupAuthGuard = async (to, from, next) => {
 
     if (authStore.currentProjectId !== projectId) {
       try {
-        await authStore.findPermissionsByProject(projectId);
+        await Promise.all([authStore.findPermissionsByProject(projectId), authStore.findRolesByProject(projectId)]);
         authStore.currentProjectId = projectId;
       } catch (e) {
         alertStore.setAlert('권한 정보를 불러오지 못했습니다.');

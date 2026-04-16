@@ -14,6 +14,7 @@ export const useAuthStore = defineStore('auth', {
       // authorities: []
     }, // 사용자 정보
     projectPermissions: [],
+    projectRoles: [],
     currentProjectId: null
   }),
 
@@ -66,10 +67,10 @@ export const useAuthStore = defineStore('auth', {
         role: ''
       };
       this.projectPermissions = [];
+      this.projectRoles = [];
       this.currentProjectId = null;
       sessionStorage.clear();
     },
-
     async requestPasswordReset(payload) {
       try {
         const response = await axios.post('/auth/reset-request', payload);
@@ -103,7 +104,7 @@ export const useAuthStore = defineStore('auth', {
         return false;
       }
 
-      return this.projectPermissions.includes(targetCode);
+      return this.projectPermissions.some((p) => p.id === targetCode);
     },
 
     async findPermissionsByProject(projectId) {
@@ -112,6 +113,13 @@ export const useAuthStore = defineStore('auth', {
       const response = await axios.get(`/project-auth/permissions/${projectId}`);
       this.projectPermissions = response.data;
       this.currentProjectId = projectId;
+      console.log('프로젝트별 권한 -> ', this.projectPermissions);
+    },
+
+    async findRolesByProject(projectId) {
+      const response = await axios.get(`/project-auth/roles/${projectId}`);
+      this.projectRoles = response.data;
+      console.log('프로젝트별 역할 -> ', this.projectRoles);
     }
   },
   persist: true

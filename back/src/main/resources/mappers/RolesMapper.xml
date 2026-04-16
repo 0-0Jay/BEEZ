@@ -46,17 +46,46 @@
     AND is_delete = 'F0'
   </select>
 
-  <!-- 프로젝트별 역할 및 권한 조회 -->
-  <select id="findPermissionsByProject" resultType="String">
+  <!-- 프로젝트별 권한 조회 -->
+<!--  <select id="findPermissionsByProject" resultType="String">-->
+<!--    SELECT DISTINCT-->
+<!--           pm.perm_id-->
+<!--    FROM   role_mapping rm-->
+<!--    JOIN   project_member pmbr ON pmbr.id = rm.member_id-->
+<!--    JOIN   permission_mapping pm ON rm.role_id = pm.role_id-->
+<!--    WHERE  pmbr.user_id = #{userId}-->
+<!--           AND pmbr.project_id = #{projectId}-->
+<!--           AND pmbr.is_delete = 'F0'-->
+<!--           AND rm.is_delete = 'F0'-->
+<!--  </select>-->
+
+  <select id="findPermissionsByProject" resultType="com.beez.beez.roles.dto.ProjectPermissionResponse">
     SELECT DISTINCT
-           pm.perm_id
-    FROM   role_mapping rm
-    JOIN   project_member pmbr ON pmbr.id = rm.member_id
-    JOIN   permission_mapping pm ON rm.role_id = pm.role_id
-    WHERE  pmbr.user_id = #{userId}
-           AND pmbr.project_id = #{projectId}
-           AND pmbr.is_delete = 'F0'
-           AND rm.is_delete = 'F0'
+           p.id,
+           p.name
+    FROM role_mapping rm
+    JOIN project_member pmbr ON pmbr.id = rm.member_id
+    JOIN permission_mapping pm ON rm.role_id = pm.role_id
+    JOIN permission p ON pm.perm_id = p.id
+    WHERE pmbr.user_id = #{userId}
+      AND pmbr.project_id = #{projectId}
+      AND pmbr.is_delete = 'F0'
+      AND rm.is_delete = 'F0'
+    ORDER BY p.id ASC
+  </select>
+
+  <!-- 프로젝트별 역할 조회 -->
+  <select id="findRolesByProject" resultType="com.beez.beez.roles.dto.ProjectRoleResponse">
+    SELECT r.id,
+           r.name
+    FROM role_mapping rm
+    JOIN roles r ON rm.role_id = r.id
+    JOIN project_member pm ON pm.id = rm.member_id
+    WHERE pm.user_id = #{userId}
+      AND pm.project_id = #{projectId}
+      AND pm.is_delete = 'F0'
+      AND rm.is_delete = 'F0'
+    ORDER BY r.id DESC
   </select>
 
   <!-- 역할 이름 중복 체크 -->

@@ -1,8 +1,6 @@
 package com.beez.beez.roles.mapper;
 
-import com.beez.beez.roles.dto.RoleDetailResponse;
-import com.beez.beez.roles.dto.RoleListResponse;
-import com.beez.beez.roles.dto.RoleUpdateRequest;
+import com.beez.beez.roles.dto.*;
 import com.beez.beez.roles.repository.Roles;
 import org.apache.ibatis.annotations.Param;
 
@@ -18,7 +16,10 @@ public interface RolesMapper {
   RoleDetailResponse findByRoleIdRole(String id);
 
   // 프로젝트별 역할 권한 조회
-  List<String> findPermissionsByProject(@Param("userId") String userId, @Param("projectId") String projectId);
+  List<ProjectPermissionResponse> findPermissionsByProject(@Param("userId") String userId, @Param("projectId") String projectId);
+
+  // 프로젝트별 역할 조회
+  List<ProjectRoleResponse> findRolesByProject(@Param("userId") String userId, @Param("projectId") String projectId);
 
   int isProjectMember(@Param("userId") String userId, @Param("projectId") String projectId);
 
