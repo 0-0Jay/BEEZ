@@ -125,7 +125,8 @@ const downloadFile = async (fileDetailId) => {
             <span>작성일: {{ formatDate(docStore.currentDocument.createdOn) }}</span>
           </div>
         </div>
-        <button class="btn btn-edit-top" @click="goToEdit">편집</button>
+
+        <Button label="편집" icon="pi pi-search" raised @click="goToEdit" />
       </div>
 
       <div class="panel">

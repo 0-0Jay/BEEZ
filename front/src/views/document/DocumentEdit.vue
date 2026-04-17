@@ -188,8 +188,8 @@ const goToDetail = () => {
 
     <!-- 하단 버튼 -->
     <div class="footer-row">
-      <button type="button" class="btn btn-cancel" @click="goToDetail">취소</button>
-      <button type="button" class="btn btn-primary" @click="submit">문서수정</button>
+      <Button label="취소" severity="secondary" raised @click="goToDetail" />
+      <Button label="문서수정" icon="pi pi-search" raised @click="submit" />
     </div>
   </div>
 </template>

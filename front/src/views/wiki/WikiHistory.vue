@@ -105,7 +105,7 @@ const goBack = () => router.back();
 <template>
   <div class="history-page">
     <div class="history-header">
-      <button class="btn-back" @click="goBack">이전 페이지</button>
+      <Button label="이전 페이지" icon="pi pi-search" raised @click="goBack" />
     </div>
 
     <div v-for="(version, index) in versions" :key="index" class="version-card">
