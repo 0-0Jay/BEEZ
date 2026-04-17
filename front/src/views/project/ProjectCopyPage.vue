@@ -14,13 +14,11 @@ const toast = useToast();
 const copyOptions = ref([]);
 const { pms } = storeToRefs(projectStore);
 
-// 상위 프로젝트 옵션 - 기존 프로젝트 목록 활용
 const projectOptions = ref([]);
 
 onMounted(async () => {
   const projectId = route.params.id;
 
-  // projectId 세팅
   await authStore.selectProject(projectId);
 
   await projectStore.fetchUserPm();
@@ -129,10 +127,8 @@ const checkTitle = async () => {
 };
 
 const handleSubmit = async () => {
-  // 1. 빈값/형식 체크
   if (!validate()) return;
 
-  // 2. 중복 체크 (validate 통과 후에)
   const isIdentifierDuplicate = await projectStore.checkIdentifier(form.identifier);
   if (isIdentifierDuplicate) {
     errors.identifier = '이미 사용중인 식별자입니다.';
@@ -145,7 +141,6 @@ const handleSubmit = async () => {
     return;
   }
 
-  // 3. 생성
   const payload = {
     sourceProjectId: route.params.id,
     title: form.title,
@@ -192,125 +187,146 @@ const handleCancel = () => {
       <h1 class="text-2xl font-bold text-[#1A1816]">프로젝트 복사</h1>
     </div>
 
-    <div class="bg-white rounded-lg shadow-sm border border-[#C7C7C2] overflow-hidden mb-6">
-      <!-- 기본 정보 섹션 -->
-      <div class="bg-[#F2F0EB] px-8 py-3 border-b border-[#C7C7C2]">
-        <span class="text-lg font-bold text-[#1A1816]">기본 정보</span>
+    <!-- 기본 정보 섹션 -->
+    <div class="bg-white rounded-lg shadow-sm border border-[#D6E4EA] overflow-hidden mb-6">
+      <div class="bg-[#5B6E96] px-8 py-3 border-b border-[#D6E4EA] rounded-t-lg">
+        <span class="text-base font-bold text-[#EBF0F8]">기본 정보</span>
       </div>
 
-      <div class="divide-y divide-[#F2F0EB]">
-        <!-- 프로젝트명 -->
-        <div class="flex items-start px-8 py-4">
-          <label class="form-label w-36 pt-2 shrink-0"> 프로젝트명 <span class="text-red-500">*</span> </label>
-          <div class="flex-1">
-            <InputText v-model="form.title" @blur="checkTitle" placeholder="텍스트를 입력해 주세요." class="w-full form-input" :maxlength="30" />
-            <small v-if="errors.title" class="text-red-500 mt-1 block">{{ errors.title }}</small>
-            <small v-if="form.title.length > 30" class="text-red-500 text-xs">프로젝트명은 30자를 초과할 수 없습니다.</small>
-          </div>
-        </div>
+      <table class="w-full">
+        <colgroup>
+          <col class="w-40" />
+          <col />
+        </colgroup>
+        <tbody class="divide-y divide-[#D6E4EA]">
+          <!-- 프로젝트명 -->
+          <tr>
+            <td class="px-6 py-4 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35] align-middle">프로젝트명 <span class="text-red-500">*</span></td>
+            <td class="px-6 py-4">
+              <InputText v-model="form.title" @blur="checkTitle" placeholder="텍스트를 입력해 주세요." class="w-full form-input" :maxlength="30" />
+              <small v-if="errors.title" class="text-red-500 mt-1 block">{{ errors.title }}</small>
+              <small v-if="form.title.length > 30" class="text-red-500 text-xs">프로젝트명은 30자를 초과할 수 없습니다.</small>
+            </td>
+          </tr>
 
-        <!-- 설명 -->
-        <div class="flex items-start px-8 py-4">
-          <label class="form-label w-36 pt-2 shrink-0">설명</label>
-          <div class="flex-1">
-            <Textarea v-model="form.description" placeholder="프로젝트에 대한 설명을 입력해 주세요." class="w-full" rows="5" autoResize :maxlength="500" />
-            <div class="flex items-center justify-between mt-1">
-              <small v-if="(form.description || '').length > 500" class="text-red-500 text-xs">설명은 500자를 초과할 수 없습니다.</small>
-              <small class="ml-auto text-xs" :class="(form.description || '').length > 500 ? 'text-red-500 font-semibold' : 'text-[#9A9B90]'"> {{ (form.description || '').length }} / 500 </small>
-            </div>
-          </div>
-        </div>
-
-        <!-- 식별자 -->
-        <div class="flex items-start px-8 py-4">
-          <label class="form-label w-36 pt-2 shrink-0"> 식별자 <span class="text-red-500">*</span> </label>
-          <div class="flex-1">
-            <InputText v-model="form.identifier" @blur="checkIdentifier" placeholder="텍스트를 입력해 주세요." class="w-full form-input" :maxlength="30" />
-            <small class="text-[#9A9B90] mt-1 block">영문 소문자(a-z), 숫자, 대시(_)만 가능합니다.</small>
-            <small v-if="errors.identifier" class="text-red-500 block">{{ errors.identifier }}</small>
-            <small v-if="form.identifier.length > 30" class="text-red-500 text-xs">식별자는 30자를 초과할 수 없습니다.</small>
-          </div>
-        </div>
-
-        <!-- 상위 프로젝트 -->
-        <div class="flex items-start px-8 py-4">
-          <label class="form-label w-36 pt-2 shrink-0">상위 프로젝트</label>
-          <div class="flex-1">
-            <Select v-model="form.parentId" :options="projectOptions" optionLabel="label" optionValue="value" placeholder="선택" class="form-input w-150" showClear />
-          </div>
-        </div>
-
-        <!-- 프로젝트 기간 -->
-        <div class="flex items-start px-8 py-4">
-          <label class="form-label w-36 pt-2 shrink-0"> 프로젝트 기간 <span class="text-red-500">*</span> </label>
-          <div class="flex flex-col gap-1">
-            <div class="flex items-start gap-5">
-              <div class="flex flex-col">
-                <DatePicker
-                  v-model="form.startDate"
-                  dateFormat="yy-mm-dd"
-                  placeholder="시작일"
-                  class="form-input w-50"
-                  :minDate="selectedParent ? new Date(selectedParent.startDate) : undefined"
-                  :maxDate="form.endDate ?? (selectedParent ? new Date(selectedParent.endDate) : undefined)"
-                  showIcon
-                  inputClass="w-full"
-                />
-                <small v-if="errors.startDate" class="text-red-500 mt-1">{{ errors.startDate }}</small>
+          <!-- 설명 -->
+          <tr>
+            <td class="px-6 py-4 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35] align-top pt-5">설명</td>
+            <td class="px-6 py-4">
+              <Textarea v-model="form.description" placeholder="프로젝트에 대한 설명을 입력해 주세요." class="w-full" rows="5" autoResize :maxlength="500" />
+              <div class="flex items-center justify-between mt-1">
+                <small v-if="(form.description || '').length > 500" class="text-red-500 text-xs">설명은 500자를 초과할 수 없습니다.</small>
+                <small class="ml-auto text-xs" :class="(form.description || '').length > 500 ? 'text-red-500 font-semibold' : 'text-[#9A9B90]'">{{ (form.description || '').length }} / 500</small>
               </div>
-              <span class="text-xl text-[#6B6B63] mt-2">~</span>
-              <div class="flex flex-col">
-                <DatePicker
-                  v-model="form.endDate"
-                  dateFormat="yy-mm-dd"
-                  placeholder="마감일"
-                  class="form-input w-50"
-                  :minDate="form.startDate ?? (selectedParent ? new Date(selectedParent.startDate) : undefined)"
-                  :maxDate="selectedParent ? new Date(selectedParent.endDate) : undefined"
-                  showIcon
-                  inputClass="w-full"
-                />
-                <small v-if="errors.endDate" class="text-red-500 mt-1">{{ errors.endDate }}</small>
+            </td>
+          </tr>
+
+          <!-- 식별자 -->
+          <tr>
+            <td class="px-6 py-4 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35] align-middle">식별자 <span class="text-red-500">*</span></td>
+            <td class="px-6 py-4">
+              <InputText v-model="form.identifier" @blur="checkIdentifier" placeholder="텍스트를 입력해 주세요." class="w-full form-input" :maxlength="30" />
+              <small class="text-[#9A9B90] mt-1 block">영문 소문자(a-z), 숫자, 대시(_)만 가능합니다.</small>
+              <small v-if="errors.identifier" class="text-red-500 block">{{ errors.identifier }}</small>
+              <small v-if="form.identifier.length > 30" class="text-red-500 text-xs">식별자는 30자를 초과할 수 없습니다.</small>
+            </td>
+          </tr>
+
+          <!-- 상위 프로젝트 -->
+          <tr>
+            <td class="px-6 py-4 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35] align-middle">상위 프로젝트</td>
+            <td class="px-6 py-4">
+              <Select v-model="form.parentId" :options="projectOptions" optionLabel="label" optionValue="value" placeholder="선택" class="form-input w-150" showClear />
+            </td>
+          </tr>
+
+          <!-- 프로젝트 기간 -->
+          <tr>
+            <td class="px-6 py-4 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35] align-middle">프로젝트 기간 <span class="text-red-500">*</span></td>
+            <td class="px-6 py-4">
+              <div class="flex flex-col gap-1">
+                <div class="flex items-start gap-5">
+                  <div class="flex flex-col">
+                    <DatePicker
+                      v-model="form.startDate"
+                      dateFormat="yy-mm-dd"
+                      placeholder="시작일"
+                      class="form-input w-50"
+                      :minDate="selectedParent ? new Date(selectedParent.startDate) : undefined"
+                      :maxDate="form.endDate ?? (selectedParent ? new Date(selectedParent.endDate) : undefined)"
+                      showIcon
+                      inputClass="w-full"
+                    />
+                    <small v-if="errors.startDate" class="text-red-500 mt-1">{{ errors.startDate }}</small>
+                  </div>
+                  <span class="text-xl text-[#6B6B63] mt-2">~</span>
+                  <div class="flex flex-col">
+                    <DatePicker
+                      v-model="form.endDate"
+                      dateFormat="yy-mm-dd"
+                      placeholder="마감일"
+                      class="form-input w-50"
+                      :minDate="form.startDate ?? (selectedParent ? new Date(selectedParent.startDate) : undefined)"
+                      :maxDate="selectedParent ? new Date(selectedParent.endDate) : undefined"
+                      showIcon
+                      inputClass="w-full"
+                    />
+                    <small v-if="errors.endDate" class="text-red-500 mt-1">{{ errors.endDate }}</small>
+                  </div>
+                </div>
+                <small v-if="selectedParent" class="text-[#9A9B90] mt-1"> 하위 프로젝트는 상위 프로젝트 기간({{ formatDate(selectedParent.startDate) }} ~ {{ formatDate(selectedParent.endDate) }})을 벗어날 수 없습니다. </small>
               </div>
-            </div>
-            <small v-if="selectedParent" class="text-[#9A9B90] mt-1"> 하위 프로젝트는 상위 프로젝트 기간({{ formatDate(selectedParent.startDate) }} ~ {{ formatDate(selectedParent.endDate) }})을 벗어날 수 없습니다. </small>
-          </div>
-        </div>
+            </td>
+          </tr>
 
-        <!-- PM/PL -->
-        <div class="flex items-start px-8 py-4">
-          <label class="form-label w-36 pt-2 shrink-0">PM/PL <span class="text-red-500">*</span></label>
-          <div class="flex-1">
-            <Select v-model="form.pmId" :options="pms" optionLabel="name" optionValue="id" placeholder="선택" class="form-input w-64" />
-            <small v-if="errors.pmId" class="text-red-500 block mt-1">{{ errors.pmId }}</small>
-          </div>
-        </div>
+          <!-- PM/PL -->
+          <tr>
+            <td class="px-6 py-4 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35] align-middle">PM/PL <span class="text-red-500">*</span></td>
+            <td class="px-6 py-4">
+              <Select v-model="form.pmId" :options="pms" optionLabel="name" optionValue="id" placeholder="선택" class="form-input w-64" />
+              <small v-if="errors.pmId" class="text-red-500 block mt-1">{{ errors.pmId }}</small>
+            </td>
+          </tr>
 
-        <!-- 공개여부 -->
-        <div class="flex items-center px-8 py-5">
-          <label class="form-label w-36 shrink-0">공개여부</label>
-          <div class="flex items-center gap-3">
-            <Checkbox v-model="form.isPublic" :binary="true" inputId="isPublic" />
-            <label for="isPublic" class="text-sm text-[#3A3B35] cursor-pointer">공개 프로젝트로 설정</label>
-          </div>
-        </div>
-      </div>
+          <!-- 공개여부 -->
+          <tr>
+            <td class="px-6 py-4 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35] align-middle">공개여부</td>
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <Checkbox v-model="form.isPublic" :binary="true" inputId="isPublic" />
+                <label for="isPublic" class="text-sm text-[#3A3B35] cursor-pointer">공개 프로젝트로 설정</label>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
-    <!-- 추가: 복사 옵션 섹션 -->
-    <div class="bg-white rounded-lg shadow-sm border border-[#C7C7C2] overflow-hidden mb-6">
-      <div class="bg-[#F2F0EB] px-8 py-3 border-b border-[#C7C7C2]">
-        <span class="text-lg font-bold text-[#1A1816]">복사</span>
+    <!-- 복사 옵션 섹션 -->
+    <div class="bg-white rounded-lg shadow-sm border border-[#D6E4EA] overflow-hidden mb-6">
+      <div class="bg-[#5B6E96] px-8 py-3 border-b border-[#D6E4EA] rounded-t-lg">
+        <span class="text-base font-bold text-[#EBF0F8]">복사</span>
       </div>
-      <div class="px-8 py-4">
-        <div class="flex gap-20 py-3 px-2">
-          <div v-for="option in copyOptionList" :key="option.value" class="flex items-center gap-2">
-            <Checkbox v-model="copyOptions" :value="option.value" :inputId="option.value" />
-            <label :for="option.value" class="text-m text-[#3A3B35] cursor-pointer">{{ option.label }}</label>
-          </div>
-        </div>
-        <small class="text-red-500 mt-1">함께 복사할 항목을 선택하세요.</small>
-      </div>
+      <table class="w-full">
+        <colgroup>
+          <col class="w-40" />
+          <col />
+        </colgroup>
+        <tbody>
+          <tr>
+            <td class="px-6 py-4 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35] align-middle">복사 항목</td>
+            <td class="px-6 py-4">
+              <div class="flex gap-20 py-1">
+                <div v-for="option in copyOptionList" :key="option.value" class="flex items-center gap-2">
+                  <Checkbox v-model="copyOptions" :value="option.value" :inputId="option.value" />
+                  <label :for="option.value" class="text-base text-[#3A3B35] cursor-pointer">{{ option.label }}</label>
+                </div>
+              </div>
+              <small class="text-red-500 mt-2 block">함께 복사할 항목을 선택하세요.</small>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <!-- 버튼 -->
@@ -322,12 +338,6 @@ const handleCancel = () => {
 </template>
 
 <style scoped>
-.form-label {
-  font-size: 1rem;
-  font-weight: 550;
-  color: #3a3b35;
-}
-
 :deep(.form-input) {
   height: 38px !important;
   border-color: #c7c7c2 !important;
@@ -343,8 +353,8 @@ const handleCancel = () => {
 }
 
 :deep(.form-input:focus) {
-  border-color: #e8920e !important;
-  box-shadow: 0 0 0 2px rgba(232, 146, 14, 0.15) !important;
+  border-color: #5b6e96 !important;
+  box-shadow: 0 0 0 2px rgba(91, 110, 150, 0.15) !important;
 }
 
 :deep(.p-textarea) {
@@ -353,8 +363,8 @@ const handleCancel = () => {
 }
 
 :deep(.p-textarea:focus) {
-  border-color: #e8920e !important;
-  box-shadow: 0 0 0 2px rgba(232, 146, 14, 0.15) !important;
+  border-color: #5b6e96 !important;
+  box-shadow: 0 0 0 2px rgba(91, 110, 150, 0.15) !important;
 }
 
 :deep(.btn-amber) {
