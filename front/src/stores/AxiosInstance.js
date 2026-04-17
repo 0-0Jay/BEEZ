@@ -34,9 +34,10 @@ axiosInstance.interceptors.request.use(
     if (projectId) {
       config.headers['X-Project-Id'] = projectId;
       console.log('최종 projectId:', projectId);
-    } else {
-      console.warn('projectId 없음 - 권한 문제 발생 가능');
     }
+    //  else {
+    //   console.warn('projectId 없음 - 권한 문제 발생 가능');
+    // }
 
     return config;
   },
