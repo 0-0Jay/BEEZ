@@ -325,27 +325,27 @@ onMounted(async () => {
         <table class="w-full border-collapse text-base">
           <thead>
             <tr class="bg-[#5B6E96] border-b border-stone-200">
-              <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-50">
+              <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-[#FFFFFF] whitespace-nowrap w-50">
                 <button class="sort-btn" :class="{ active: sortKey === 'id' }" @click="toggleSort('id')">
                   번호 <span class="sort-icon">{{ sortIcon('id') }}</span>
                 </button>
               </th>
-              <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-[#DDE3F0] min-w-70">제목</th>
-              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-24">유형</th>
-              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-28">상태</th>
-              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-24">
+              <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-[#FFFFFF] min-w-70">제목</th>
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#FFFFFF] whitespace-nowrap w-24">유형</th>
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#FFFFFF] whitespace-nowrap w-28">상태</th>
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#FFFFFF] whitespace-nowrap w-24">
                 <button class="sort-btn" :class="{ active: sortKey === 'priority' }" @click="toggleSort('priority')">
                   우선순위 <span class="sort-icon">{{ sortIcon('priority') }}</span>
                 </button>
               </th>
-              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-24">범주</th>
-              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-70">
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#FFFFFF] whitespace-nowrap w-24">범주</th>
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#FFFFFF] whitespace-nowrap w-70">
                 <button class="sort-btn" :class="{ active: sortKey === 'progress' }" @click="toggleSort('progress')">
                   진척도 <span class="sort-icon">{{ sortIcon('progress') }}</span>
                 </button>
               </th>
-              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-45">담당자</th>
-              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-36">
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#FFFFFF] whitespace-nowrap w-45">담당자</th>
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#FFFFFF] whitespace-nowrap w-36">
                 <button class="sort-btn" :class="{ active: sortKey === 'plannedEnd' }" @click="toggleSort('plannedEnd')">
                   마감일 <span class="sort-icon">{{ sortIcon('plannedEnd') }}</span>
                 </button>
@@ -438,7 +438,7 @@ onMounted(async () => {
 }
 
 .sort-btn.active {
-  color: #dde3f0;
+  color: #ffffff;
 }
 .sort-icon {
   font-size: 0.75rem;
@@ -446,7 +446,7 @@ onMounted(async () => {
 }
 .sort-btn.active .sort-icon {
   opacity: 1;
-  color: #dde3f0;
+  color: #ffffff;
 }
 
 /*  우선순위  */

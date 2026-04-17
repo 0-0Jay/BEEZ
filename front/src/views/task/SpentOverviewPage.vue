@@ -380,19 +380,19 @@ onMounted(async () => {
           <table class="w-full border-collapse text-base table-fixed">
             <thead>
               <tr class="bg-[#5B6E96] border-b border-stone-200">
-                <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-[#DDE3F0] min-w-30">프로젝트</th>
-                <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-[#DDE3F0] min-w-30">일감</th>
-                <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-24">유형</th>
-                <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-24">범주</th>
-                <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-28">담당자</th>
-                <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-24">작업종류</th>
-                <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-[#DDE3F0] min-w-60">설명</th>
-                <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-36">
+                <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-[#FFFFFF] min-w-30">프로젝트</th>
+                <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-[#FFFFFF] min-w-30">일감</th>
+                <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#FFFFFF] whitespace-nowrap w-24">유형</th>
+                <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#FFFFFF] whitespace-nowrap w-24">범주</th>
+                <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#FFFFFF] whitespace-nowrap w-28">담당자</th>
+                <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#FFFFFF] whitespace-nowrap w-24">작업종류</th>
+                <th class="px-4 py-3 text-left text-base font-bold uppercase tracking-wider text-[#FFFFFF] min-w-60">설명</th>
+                <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#FFFFFF] whitespace-nowrap w-36">
                   <button class="sort-btn" :class="{ active: sortKey === 'taskStart' }" @click="toggleSort('taskStart')">
                     작업일시 <span class="sort-icon">{{ sortIcon('taskStart') }}</span>
                   </button>
                 </th>
-                <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-40">
+                <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#FFFFFF] whitespace-nowrap w-40">
                   <button class="sort-btn" :class="{ active: sortKey === 'spent' }" @click="toggleSort('spent')">
                     소요시간 <span class="sort-icon">{{ sortIcon('spent') }}</span>
                   </button>
@@ -661,7 +661,7 @@ onMounted(async () => {
 }
 
 .sort-btn.active {
-  color: #dde3f0;
+  color: #ffffff;
 }
 .sort-icon {
   font-size: 0.75rem;
@@ -669,7 +669,7 @@ onMounted(async () => {
 }
 .sort-btn.active .sort-icon {
   opacity: 1;
-  color: #dde3f0;
+  color: #ffffff;
 }
 
 /* ── 요약 카드 ── */

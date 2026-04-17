@@ -187,7 +187,7 @@ const onDelete = async () => {
 <style scoped>
 :deep(.table-header) {
   background-color: #5b6e96 !important;
-  color: #dde3f0 !important;
+  color: #ffffff !important;
   font-weight: 700 !important;
   text-align: center !important;
   padding: 1.25rem 0 !important;

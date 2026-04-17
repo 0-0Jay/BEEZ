@@ -483,7 +483,7 @@ onMounted(async () => {
     <div v-else>
       <div class="bg-white rounded-lg shadow-sm border border-[#D6E4EA] mb-6">
         <div class="bg-[#5B6E96] px-8 py-3 border-b border-[#D6E4EA] rounded-t-lg">
-          <span class="text-base font-bold text-[#DDE3F0]">일감 정보</span>
+          <span class="text-base font-bold text-[#FFFFFF]">일감 정보</span>
         </div>
 
         <table class="w-full">

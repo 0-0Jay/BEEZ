@@ -393,7 +393,7 @@ const formatDate = (dateStr) => {
 .board-header {
   background: #5b6e96;
   font-weight: 700;
-  color: #dde3f0;
+  color: #ffffff;
   text-align: center;
 }
 .board-header span,

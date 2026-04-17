@@ -581,11 +581,11 @@ onMounted(async () => {
       <table class="w-full text-base">
         <thead>
           <tr class="border-b border-[#F2F0EB] bg-[#5B6E96]">
-            <th class="px-6 py-2.5 text-left font-semibold text-[#DDE3F0] w-28">번호</th>
-            <th class="px-6 py-2.5 text-left font-semibold text-[#DDE3F0]">이름</th>
-            <th class="px-6 py-2.5 text-center font-semibold text-[#DDE3F0] w-60">진척도</th>
-            <th class="px-6 py-2.5 text-center font-semibold text-[#DDE3F0] w-28">상태</th>
-            <th class="px-6 py-2.5 text-center font-semibold text-[#DDE3F0] w-36">마감일</th>
+            <th class="px-6 py-2.5 text-left font-semibold text-[#FFFFFF] w-28">번호</th>
+            <th class="px-6 py-2.5 text-left font-semibold text-[#FFFFFF]">이름</th>
+            <th class="px-6 py-2.5 text-center font-semibold text-[#FFFFFF] w-60">진척도</th>
+            <th class="px-6 py-2.5 text-center font-semibold text-[#FFFFFF] w-28">상태</th>
+            <th class="px-6 py-2.5 text-center font-semibold text-[#FFFFFF] w-36">마감일</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-[#D6E4EA]">
@@ -629,12 +629,12 @@ onMounted(async () => {
       <table class="w-full text-base">
         <thead>
           <tr class="border-b border-[#F2F0EB] bg-[#5B6E96]">
-            <th class="px-6 py-2.5 text-left font-semibold text-[#DDE3F0] w-28">번호</th>
-            <th class="px-6 py-2.5 text-left font-semibold text-[#DDE3F0]">이름</th>
-            <th class="px-6 py-2.5 text-center font-semibold text-[#DDE3F0] w-28">관계</th>
-            <th class="px-6 py-2.5 text-center font-semibold text-[#DDE3F0] w-60">진척도</th>
-            <th class="px-6 py-2.5 text-center font-semibold text-[#DDE3F0] w-28">상태</th>
-            <th class="px-6 py-2.5 text-center font-semibold text-[#DDE3F0] w-36">마감일</th>
+            <th class="px-6 py-2.5 text-left font-semibold text-[#FFFFFF] w-28">번호</th>
+            <th class="px-6 py-2.5 text-left font-semibold text-[#FFFFFF]">이름</th>
+            <th class="px-6 py-2.5 text-center font-semibold text-[#FFFFFF] w-28">관계</th>
+            <th class="px-6 py-2.5 text-center font-semibold text-[#FFFFFF] w-60">진척도</th>
+            <th class="px-6 py-2.5 text-center font-semibold text-[#FFFFFF] w-28">상태</th>
+            <th class="px-6 py-2.5 text-center font-semibold text-[#FFFFFF] w-36">마감일</th>
             <th class="px-6 py-2.5 w-12"></th>
           </tr>
         </thead>

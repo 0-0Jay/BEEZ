@@ -167,10 +167,10 @@ const handleCancel = () => {
       <h1 class="text-2xl font-bold text-[#1A1816]">새 프로젝트 등록</h1>
     </div>
 
-    <div class="bg-white rounded-lg shadow-sm border border-[#C7C7C2] overflow-hidden mb-6">
+    <div class="bg-white rounded-lg shadow-sm border border-[#D6E4EA] overflow-hidden mb-6">
       <!-- 기본 정보 섹션 -->
-      <div class="bg-[#F2F0EB] px-8 py-3 border-b border-[#C7C7C2]">
-        <span class="text-lg font-bold text-[#1A1816]">기본 정보</span>
+      <div class="bg-[#5B6E96] px-8 py-3 border-b border-[#D6E4EA]">
+        <span class="text-lg font-bold text-[#FFFFFF]">기본 정보</span>
       </div>
 
       <div class="divide-y divide-[#F2F0EB]">

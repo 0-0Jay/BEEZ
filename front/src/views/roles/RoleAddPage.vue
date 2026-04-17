@@ -264,7 +264,7 @@ const loadCopyData = async (id) => {
 
 :deep(.perm-header) {
   background-color: #5b6e96 !important;
-  color: #dde3f0 !important;
+  color: #ffffff !important;
   font-weight: 700 !important;
   text-align: center !important;
   padding: 17.5px 0 !important;

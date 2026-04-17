@@ -170,10 +170,10 @@ onMounted(async () => {
           <table class="w-full border-collapse">
             <thead>
               <tr class="bg-[#5B6E96] border-b border-stone-200">
-                <th class="px-5 py-3.5 text-left text-base font-bold uppercase tracking-wider text-[#DDE3F0] w-36">유형명</th>
-                <th class="px-5 py-3.5 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] w-32">초기 상태</th>
-                <th class="px-5 py-3.5 text-left text-base font-bold uppercase tracking-wider text-[#DDE3F0]">설명</th>
-                <th class="px-5 py-3.5 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] w-28">관리</th>
+                <th class="px-5 py-3.5 text-left text-base font-bold uppercase tracking-wider text-[#FFFFFF] w-36">유형명</th>
+                <th class="px-5 py-3.5 text-center text-base font-bold uppercase tracking-wider text-[#FFFFFF] w-32">초기 상태</th>
+                <th class="px-5 py-3.5 text-left text-base font-bold uppercase tracking-wider text-[#FFFFFF]">설명</th>
+                <th class="px-5 py-3.5 text-center text-base font-bold uppercase tracking-wider text-[#FFFFFF] w-28">관리</th>
               </tr>
             </thead>
             <tbody>
@@ -228,9 +228,9 @@ onMounted(async () => {
           <table class="w-full border-collapse">
             <thead>
               <tr class="bg-[#5B6E96] border-b border-stone-200">
-                <th class="px-5 py-3.5 text-left text-base font-bold uppercase tracking-wider text-[#DDE3F0] w-36">범주명</th>
-                <th class="px-5 py-3.5 text-left text-base font-bold uppercase tracking-wider text-[#DDE3F0]">설명</th>
-                <th class="px-5 py-3.5 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] w-28">관리</th>
+                <th class="px-5 py-3.5 text-left text-base font-bold uppercase tracking-wider text-[#FFFFFF] w-36">범주명</th>
+                <th class="px-5 py-3.5 text-left text-base font-bold uppercase tracking-wider text-[#FFFFFF]">설명</th>
+                <th class="px-5 py-3.5 text-center text-base font-bold uppercase tracking-wider text-[#FFFFFF] w-28">관리</th>
               </tr>
             </thead>
             <tbody>

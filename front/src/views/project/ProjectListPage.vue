@@ -252,7 +252,7 @@ function progressBarColor(p) {
     <!-- 타이틀 + 등록 버튼 -->
     <div class="flex justify-between items-end mb-2">
       <h1 class="text-2xl font-bold text-[#1A1816]">프로젝트 목록</h1>
-      <Button v-if="['ROLE0001', 'ROLE0002'].includes(currentRoleIds)" label="프로젝트 등록" icon="pi pi-plus" severity="contrast" outlined @click="router.push('/project/create')" />
+      <Button v-if="['ROLE0001', 'ROLE0002'].includes(currentRoleIds)" label="프로젝트 등록" icon="pi pi-plus" class="!bg-[#2D8FAD] !border-[#2D8FAD] hover:!bg-[#257892]" raised @click="router.push('/project/create')" />
     </div>
 
     <div class="bg-[#F2F3F8] px-10 py-8 rounded-lg mb-4 shadow-sm border border-[#ECEEF4] flex items-center">
@@ -376,7 +376,7 @@ function progressBarColor(p) {
 }
 :deep(.table-header) {
   background-color: #5b6e96 !important;
-  color: #dde3f0 !important;
+  color: #ffffff !important;
   font-weight: 700 !important;
   text-align: center !important;
   padding: 1.25rem 0 !important;

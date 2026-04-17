@@ -8,7 +8,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:matrix']);
 
-const thBase = 'bg-[#5b6e96] text-[#dde3f0] font-bold text-center text-[13px]';
+const thBase = 'bg-[#5b6e96] text-[#FFFFFF] font-bold text-center text-[13px]';
 const tdLabelBase = 'bg-[#f8f9fb] text-[#3a3b35] font-medium text-center px-3 py-[7px] border-r whitespace-nowrap group-hover:bg-[#f0f3f9]';
 const tdCellBase = 'text-center py-2 border-l border-[#f2f0eb] transition-colors duration-150 group-hover:brightness-[0.97]';
 

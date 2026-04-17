@@ -577,7 +577,7 @@ onMounted(async () => {
 }
 .dashboard-calendar .fc-button:hover {
   background: #5b6e96 !important;
-  color: #dde3f0 !important;
+  color: #ffffff !important;
 }
 .dashboard-calendar .fc-daygrid-day-number,
 .dashboard-calendar .fc-col-header-cell-cushion {
