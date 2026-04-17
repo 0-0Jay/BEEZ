@@ -167,13 +167,35 @@ const actionItems = computed(() => [
     icon: 'pi pi-cog',
     command: () => goToSetting(selectedRow.value)
   },
-  { label: '프로젝트 복사', icon: 'pi pi-copy', command: () => router.push(`/project/copy/${selectedRow.value.id}`) },
+  {
+    label: '프로젝트 복사',
+    icon: 'pi pi-copy',
+    command: async () => {
+      await auth.selectProject(selectedRow.value.id);
+      router.push(`/project/copy/${selectedRow.value.id}`);
+    }
+  },
   {
     label: selectedRow.value?.isLock === 'L1' ? '잠금보관 해제' : '프로젝트 잠금보관',
     icon: selectedRow.value?.isLock === 'L1' ? 'pi pi-lock-open' : 'pi pi-lock',
-    command: () => (selectedRow.value?.isLock === 'L1' ? unlockProject(selectedRow.value.id) : lockProject(selectedRow.value.id))
+    command: async () => {
+      await auth.selectProject(selectedRow.value.id);
+
+      if (selectedRow.value?.isLock === 'L1') {
+        await unlockProject(selectedRow.value.id);
+      } else {
+        await lockProject(selectedRow.value.id);
+      }
+    }
   },
-  { label: '프로젝트 삭제', icon: 'pi pi-trash', command: () => openDeleteModal(selectedRow.value) }
+  {
+    label: '프로젝트 삭제',
+    icon: 'pi pi-trash',
+    command: async () => {
+      await auth.selectProject(selectedRow.value.id);
+      openDeleteModal(selectedRow.value);
+    }
+  }
 ]);
 
 const rowClass = (data) => {

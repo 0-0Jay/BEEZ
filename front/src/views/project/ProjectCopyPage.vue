@@ -1,4 +1,5 @@
 <script setup>
+import { useAuthStore } from '@/stores/auth';
 import { useProjectStore } from '@/stores/project';
 import { storeToRefs } from 'pinia';
 import { useToast } from 'primevue';
@@ -7,6 +8,7 @@ import { useRoute, useRouter } from 'vue-router';
 
 const router = useRouter();
 const route = useRoute();
+const authStore = useAuthStore();
 const projectStore = useProjectStore();
 const toast = useToast();
 const copyOptions = ref([]);
@@ -16,8 +18,13 @@ const { pms } = storeToRefs(projectStore);
 const projectOptions = ref([]);
 
 onMounted(async () => {
+  const projectId = route.params.id;
+
+  // projectId 세팅
+  await authStore.selectProject(projectId);
+
   await projectStore.fetchUserPm();
-  await projectStore.findProject(route.params.id);
+  await projectStore.findProject(projectId);
   await projectStore.fetchProjects({});
   const project = projectStore.projectInfo;
   projectOptions.value = projectStore.projects.map((p) => ({
@@ -160,7 +167,7 @@ const handleSubmit = async () => {
   toast.add({ severity: 'success', summary: '복사 완료', detail: '프로젝트가 복사되었습니다.', life: 2000 });
   projectStore.selectedProject = {
     title: form.title,
-    id: form.id,
+    id: id,
     startDate: form.startDate,
     endDate: form.endDate
   };

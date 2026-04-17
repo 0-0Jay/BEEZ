@@ -87,7 +87,7 @@ public class DynamicAuthorizationManager implements AuthorizationManager<Request
 
     // 5. permission 없는 API → 그냥 통과
     if (!isPermissionApi) {
-      System.out.println("권한 설정 안 된 API: " + method + " " + url);
+//      System.out.println("권한 설정 안 된 API: " + method + " " + url);
       return new AuthorizationDecision(true);
     }
 

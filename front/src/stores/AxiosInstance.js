@@ -15,30 +15,32 @@ axiosInstance.interceptors.request.use(
     const token = authStore.accessToken || localStorage.getItem('accessToken');
 
     if (token) {
-      // Authorization 헤더에 Bearer 토큰 추가
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    // sessionStorage에서 project 데이터 가져옴
-    const data = sessionStorage.getItem('project');
-    if (data) {
-      try {
-        const parsedData = JSON.parse(data);
-        const projectId = parsedData.selectedProject?.id;
+    let projectId = authStore.currentProjectId;
 
-        if (projectId) {
-          config.headers['X-Project-Id'] = projectId;
+    if (!projectId) {
+      const data = sessionStorage.getItem('project');
+      if (data) {
+        try {
+          projectId = JSON.parse(data).selectedProject?.id;
+        } catch (e) {
+          console.error('Project ID 파싱 오류:', e);
         }
-      } catch (e) {
-        console.error('Project ID 파싱 오류: ', e);
       }
+    }
+
+    if (projectId) {
+      config.headers['X-Project-Id'] = projectId;
+      console.log('최종 projectId:', projectId);
+    } else {
+      console.warn('projectId 없음 - 권한 문제 발생 가능');
     }
 
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 // 공통 에러 처리(응답)
@@ -64,7 +66,7 @@ axiosInstance.interceptors.response.use(
 const ERROR_MESSAGES = {
   400: '잘못된 요청입니다.',
   401: '인증이 필요합니다.',
-  403: '접근 권한이 없습니다.',
+  403: '접근 권한이 없습니다!',
   404: '요청한 리소스를 찾을 수 없습니다.',
   405: '허용되지 않는 메서드입니다.',
   500: '서버 내부 오류가 발생했습니다.',
