@@ -126,7 +126,7 @@ const downloadFile = async (fileDetailId) => {
           </div>
         </div>
 
-        <Button label="편집" icon="pi pi-search" raised @click="goToEdit" />
+        <Button label="편집" class="!bg-[#2D8FAD] !border-[#2D8FAD] hover:!bg-[#257892]" raised @click="goToEdit" />
       </div>
 
       <div class="panel">
@@ -172,7 +172,7 @@ const downloadFile = async (fileDetailId) => {
       </div>
 
       <div class="footer-row">
-        <button class="btn btn-list" @click="goToList('back')">목록으로 돌아가기</button>
+        <Button severity="secondary" raised @click="goToList('back')">목록으로</button>
       </div>
     </template>
   </div>

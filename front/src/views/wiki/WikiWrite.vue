@@ -453,7 +453,7 @@ function renumberHeadings() {
           {{ isEditMode ? 'WIKI - 수정' : 'WIKI - 작성' }}
         </h1>
         <div>
-          <label class="field-label required">위키 한 줄 설명</label>
+          <label class="field-label required pr-4">위키 한 줄 설명</label>
           <InputText v-model="wikiStore.wikiDetail.wikiInfo" class="project-desc-input" :class="{ 'p-invalid': errors.wikiInfo }" placeholder="위키 관련 한 줄 설명을 입력하세요" />
           <p v-if="errors.wikiInfo" class="error-msg">한 줄 설명을 입력해주세요.</p>
         </div>
@@ -462,7 +462,7 @@ function renumberHeadings() {
       <div class="header-actions">
         <div class="link-form-actions">
           <Button label="취소" severity="secondary" raised @click="handleCancel" />
-          <Button :label="isEditMode ? '수정' : '등록'" icon="pi pi-search" raised @click="handleEdit" />
+          <Button :label="isEditMode ? '수정' : '등록'" raised @click="handleEdit" />
         </div>
       </div>
     </div>
@@ -534,7 +534,7 @@ function renumberHeadings() {
             </div>
           </div>
 
-          <Button label="링크 추가" class="btn-add-link" @click="addLinkItem" />
+          <Button label="링크 추가" class="!bg-[#2D8FAD] !border-[#2D8FAD] hover:!bg-[#257892]" @click="addLinkItem" />
         </div>
 
         <!-- 편집 사유 모달 -->

@@ -339,12 +339,12 @@ onMounted(async () => {
                 </button>
               </th>
               <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-24">범주</th>
-              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-70">
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-100">
                 <button class="sort-btn" :class="{ active: sortKey === 'progress' }" @click="toggleSort('progress')">
                   진척도 <span class="sort-icon">{{ sortIcon('progress') }}</span>
                 </button>
               </th>
-              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-45">담당자</th>
+              <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-50">담당자</th>
               <th class="px-4 py-3 text-center text-base font-bold uppercase tracking-wider text-[#DDE3F0] whitespace-nowrap w-36">
                 <button class="sort-btn" :class="{ active: sortKey === 'plannedEnd' }" @click="toggleSort('plannedEnd')">
                   마감일 <span class="sort-icon">{{ sortIcon('plannedEnd') }}</span>
