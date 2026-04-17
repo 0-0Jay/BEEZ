@@ -225,6 +225,14 @@ const handleCancel = () => {
           </div>
         </div>
 
+        <!-- 상위 프로젝트 -->
+        <div class="flex items-start px-8 py-4">
+          <label class="form-label w-36 pt-2 shrink-0">상위 프로젝트</label>
+          <div class="flex-1">
+            <Select v-model="form.parentId" :options="projectOptions" optionLabel="label" optionValue="value" placeholder="선택" class="form-input w-150" showClear />
+          </div>
+        </div>
+
         <!-- 프로젝트 기간 -->
         <div class="flex items-start px-8 py-4">
           <label class="form-label w-36 pt-2 shrink-0"> 프로젝트 기간 <span class="text-red-500">*</span> </label>
@@ -282,20 +290,6 @@ const handleCancel = () => {
       </div>
     </div>
 
-    <!-- 상위 프로젝트 섹션 -->
-    <div class="bg-white rounded-lg shadow-sm border border-[#C7C7C2] overflow-hidden mb-6">
-      <div class="bg-[#F2F0EB] px-8 py-3 border-b border-[#C7C7C2]">
-        <span class="text-lg font-bold text-[#1A1816]">상위 프로젝트</span>
-      </div>
-
-      <div class="flex items-start px-8 py-4">
-        <label class="form-label w-36 pt-2 shrink-0">상위 프로젝트</label>
-        <div class="flex-1">
-          <Select v-model="form.parentId" :options="projectOptions" optionLabel="label" optionValue="value" placeholder="선택" class="form-input w-150" showClear />
-        </div>
-      </div>
-    </div>
-
     <!-- 추가: 복사 옵션 섹션 -->
     <div class="bg-white rounded-lg shadow-sm border border-[#C7C7C2] overflow-hidden mb-6">
       <div class="bg-[#F2F0EB] px-8 py-3 border-b border-[#C7C7C2]">
@@ -313,7 +307,7 @@ const handleCancel = () => {
     </div>
 
     <!-- 버튼 -->
-    <div class="flex justify-center gap-3">
+    <div class="flex justify-center gap-3 pb-10">
       <Button label="저장" class="btn-amber px-8" @click="handleSubmit" />
       <Button label="취소" class="btn-cancel px-8" @click="handleCancel" />
     </div>
