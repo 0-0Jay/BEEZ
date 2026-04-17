@@ -284,7 +284,7 @@ onMounted(async () => {
       </div>
 
       <div class="ml-auto">
-        <Button label="일정 추가" icon="pi pi-plus" raised @click="openAddModal" />
+        <Button label="일정 추가" icon="pi pi-plus" class="!bg-[#2D8FAD] !border-[#2D8FAD] hover:!bg-[#257892]" raised @click="openAddModal" />
       </div>
     </div>
 
