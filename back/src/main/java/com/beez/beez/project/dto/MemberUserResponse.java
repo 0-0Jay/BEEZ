@@ -9,4 +9,5 @@ public class MemberUserResponse {
   private String userName;
   private String roleId;
   private String roleName;
+  private String fixedReason;
 }
