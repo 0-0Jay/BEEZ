@@ -69,8 +69,8 @@ const handleUserSaved = () => {
     <!-- 좌측 -->
     <div class="flex items-center gap-3">
       <!-- 프로젝트명 -->
-      <span v-if="selectedProject" class="ml-4 text-gray-600"> {{ selectedProject.title }} ({{ formatDate(selectedProject.startDate) }} ~ {{ formatDate(selectedProject.endDate) }}) </span>
-      <span v-else class="ml-4 text-gray-600">프로젝트를 선택해주세요</span>
+      <span v-if="selectedProject" class="ml-4 text-xl text-gray-600"> {{ selectedProject.title }} ({{ formatDate(selectedProject.startDate) }} ~ {{ formatDate(selectedProject.endDate) }}) </span>
+      <span v-else class="ml-4 text-xl text-gray-600">프로젝트를 선택해주세요</span>
     </div>
 
     <!-- 우측 -->
