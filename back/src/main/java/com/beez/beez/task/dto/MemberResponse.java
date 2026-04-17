@@ -10,5 +10,6 @@ import lombok.NoArgsConstructor;
 public class MemberResponse {
   private String id;
   private String name;
+  private String role;
   private String isAssignee;
 }
