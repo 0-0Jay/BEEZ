@@ -126,8 +126,8 @@ watch(
           </div>
           <div class="wiki-header-right">
             <div class="btn-group">
-              <Button label="편집" class="btn-amber" @click="handleEdit" />
-              <Button label="히스토리" class="btn-cancel" @click="handleHistory" />
+              <Button label="히스토리" severity="secondary" raised @click="handleHistory" />
+              <Button label="편집" icon="pi pi-search" raised @click="handleEdit" />
             </div>
             <div class="wiki-meta">
               <span>작성자 - {{ projectInfo.userName }}</span>

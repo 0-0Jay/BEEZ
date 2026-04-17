@@ -143,8 +143,8 @@ const formatDate = (dateStr) => {
           </select>
         </div>
         <div style="margin-left: auto; display: flex; gap: 8px">
-          <button class="btn btn-cancel" @click="resetSearch">초기화</button>
-          <button class="btn btn-edit" @click="search">조회</button>
+          <Button label="초기화" severity="secondary" raised @click="resetSearch" />
+          <Button label="조회" icon="pi pi-search" raised @click="search" />
         </div>
       </div>
     </div>

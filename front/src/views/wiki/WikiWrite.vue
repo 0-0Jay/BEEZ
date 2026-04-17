@@ -461,8 +461,8 @@ function renumberHeadings() {
 
       <div class="header-actions">
         <div class="link-form-actions">
-          <Button label="취소" class="btn-cancel" @click="handleCancel" />
-          <Button :label="isEditMode ? '수정' : '등록'" class="btn-edit" @click="handleEdit" />
+          <Button label="취소" severity="secondary" raised @click="handleCancel" />
+          <Button :label="isEditMode ? '수정' : '등록'" icon="pi pi-search" raised @click="handleEdit" />
         </div>
       </div>
     </div>
