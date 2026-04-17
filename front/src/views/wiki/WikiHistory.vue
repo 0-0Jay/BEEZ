@@ -220,7 +220,7 @@ const goBack = () => router.back();
 }
 .history-page {
   padding: 20px;
-  background: #f5f5f5;
+  background: #f2f3f8;
   min-height: 100vh;
 }
 .history-header {

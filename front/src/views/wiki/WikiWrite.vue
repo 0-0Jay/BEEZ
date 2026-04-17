@@ -673,7 +673,7 @@ function renumberHeadings() {
   flex-direction: column;
   gap: 16px;
   padding: 20px;
-  background: #f5f5f5;
+  background: #f2f3f8;
   min-height: 100vh;
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px;
