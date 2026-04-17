@@ -16,6 +16,15 @@ const appliedDate = ref('');
 
 const totalCount = computed(() => docStore.documentList.length);
 
+const docTypeOptions = [
+  { name: '선택', value: '' },
+  { name: '기타', value: '기타' },
+  { name: '기획서', value: '기획서' },
+  { name: '설계서', value: '설계서' },
+  { name: '회의록', value: '회의록' },
+  { name: '보고서', value: '보고서' }
+];
+
 const search = () => {
   appliedKeyword.value = searchKeyword.value;
   appliedDoctype.value = searchDoctype.value;
@@ -117,31 +126,16 @@ const formatDate = (dateStr) => {
     <h1 class="text-2xl font-bold text-[#1A1816]">문서 목록</h1>
     <div class="flex justify-between items-center mb-3" style="margin-bottom: -10px">
       <span class="text-sm text-[#3A3B35] font-medium">총 {{ totalCount }} 개의 문서</span>
-      <Button label="문서등록" icon="pi pi-plus" :style="{ background: '#2D8FAD', borderColor: '#2D8FAD' }" @click="goToWrite" />
+      <Button label="문서 등록" icon="pi pi-plus" class="!bg-[#2D8FAD] !border-[#2D8FAD] hover:!bg-[#257892]" raised @click="goToWrite" />
     </div>
 
     <div class="panel search-panel">
       <div class="search-bar">
-        <div class="search-input-wrap">
-          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input v-model="searchKeyword" type="text" placeholder="검색어를 입력해주세요." />
-        </div>
-        <label class="filter-label mr-5">등록일</label>
+        <InputText v-model="searchKeyword" placeholder="검색어를 입력해주세요." />
+        <label class="filter-label ml-4">등록일</label>
         <DatePicker v-model="createdOn" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" class="filter-input" showIcon />
-        <span class="label">문서 유형</span>
-        <div class="select-wrap">
-          <select v-model="searchDoctype">
-            <option value="">선택</option>
-            <option>기타</option>
-            <option>기획서</option>
-            <option>설계서</option>
-            <option>회의록</option>
-            <option>보고서</option>
-          </select>
-        </div>
+        <span class="label ml-4">문서 유형</span>
+        <Select v-model="searchDoctype" :options="docTypeOptions" optionLabel="name" optionValue="value" placeholder="선택" />
         <div style="margin-left: auto; display: flex; gap: 8px">
           <Button label="초기화" severity="secondary" raised @click="resetSearch" />
           <Button label="조회" icon="pi pi-search" raised @click="search" />
@@ -195,7 +189,7 @@ const formatDate = (dateStr) => {
           {{ filteredList.length - ((currentPage - 1) * pageSize + index) }}
         </span>
 
-        <span class="title" @click="goToDetail(doc.id)" style="cursor: pointer; color: #3d7eff">
+        <span class="title" @click="goToDetail(doc.id)" style="cursor: pointer">
           <span v-if="doc.editedOn" class="edited-badge">[수정]</span>
           {{ doc.title }}
         </span>

@@ -105,7 +105,7 @@ const goBack = () => router.back();
 <template>
   <div class="history-page">
     <div class="history-header">
-      <Button label="이전 페이지" icon="pi pi-search" raised @click="goBack" />
+      <Button label="이전 페이지" severity="secondary" raised @click="goBack" />
     </div>
 
     <div v-for="(version, index) in versions" :key="index" class="version-card">
@@ -120,7 +120,7 @@ const goBack = () => router.back();
         </div>
         <div class="version-right">
           작성자 : {{ version.userName }} / 작성일 : {{ version.createdOn?.substring(0, 10) }}
-          <button v-if="index !== 0" class="btn-rollback" @click.stop="confirmRollback(version)">이 버전으로 롤백</button>
+          <Button v-if="index !== 0" raised class="ml-4" @click.stop="confirmRollback(version)">이 버전으로 롤백</button>
         </div>
       </div>
 

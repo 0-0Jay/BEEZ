@@ -396,6 +396,7 @@ onMounted(async () => {
 
       <!-- 액션 버튼 -->
       <div class="flex items-center gap-2 shrink-0">
+        <Button severity="secondary" label="목록으로" raised @click="router.push(`/tasks`)"></Button>
         <Button v-if="canEdit" label="수정" icon="pi pi-pen-to-square" class="!bg-[#2D8FAD] !border-[#2D8FAD] hover:!bg-[#257892]" raised @click="goToEdit" />
         <Button label="복사" icon="pi pi-clone" class="!bg-[#2D8FAD] !border-[#2D8FAD] hover:!bg-[#257892]" raised @click="goToCopy" />
         <Button v-if="canEdit" label="삭제" icon="pi pi-trash" severity="danger" raised @Click="deleteModalVisible = true" />

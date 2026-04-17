@@ -16,6 +16,15 @@ const docId = route.params.docId;
 const toast = useToast();
 const submitted = ref(false);
 
+const docTypeOptions = [
+  { name: '선택', value: '' },
+  { name: '기타', value: '기타' },
+  { name: '기획서', value: '기획서' },
+  { name: '설계서', value: '설계서' },
+  { name: '회의록', value: '회의록' },
+  { name: '보고서', value: '보고서' }
+];
+
 const form = ref({
   title: '',
   doctype: '기획서',
@@ -52,6 +61,9 @@ onMounted(async () => {
   form.value.content = doc.content ?? '';
   form.value.attachments = doc.fileList ?? [];
 });
+
+const contentCount = computed(() => form.value.content.length);
+const editReasoncount = computed(() => form.value.editReason.length);
 
 // 새 파일 추가
 const newFiles = ref([]);
@@ -108,9 +120,9 @@ const goToDetail = () => {
       <!-- 문서 제목 -->
       <div class="form-row">
         <div class="form-group full">
-          <label class="form-label">문서 제목<span class="required">*</span></label>
+          <label class="form-label">문서 제목<span class="text-red-500 pl-1">*</span></label>
           <div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
-            <input v-model="form.title" type="text" class="form-input" :class="{ 'is-error': submitted && !form.title }" placeholder="문서 글 제목을 입력해 주세요." />
+            <InputText v-model="form.title" :class="{ 'is-error': submitted && !form.title }" class="w-full" placeholder="문서 제목을 입력해 주세요." />
             <span v-if="submitted && !form.title" class="inline-error">문서 제목을 입력해주세요.</span>
           </div>
         </div>
@@ -118,29 +130,23 @@ const goToDetail = () => {
 
       <div class="form-row">
         <div class="form-group">
-          <span class="form-label">문서 유형<span class="required">*</span></span>
-          <div class="select-wrap">
-            <select v-model="form.doctype" class="form-select">
-              <option value="기타">기타</option>
-              <option value="기획서">기획서</option>
-              <option value="설계서">설계서</option>
-              <option value="회의록">회의록</option>
-              <option value="보고서">보고서</option>
-            </select>
-            <span class="select-arrow">▼</span>
-          </div>
+          <span class="form-label">문서 유형<span class="text-red-500 pl-1 pr-2">*</span></span>
+          <Select v-model="form.doctype" :options="docTypeOptions" optionLabel="name" optionValue="value" placeholder="선택" class="w-full" />
         </div>
         <div class="form-group">
-          <span class="form-label">수정일</span>
-          <input class="form-input readonly" type="text" :value="new Date().toISOString().split('T')[0]" readonly />
+          <span class="form-label pl-4">수정일</span>
+          <InputText class="w-full" :value="new Date().toISOString().split('T')[0]" readonly disabled />
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group full align-top">
-          <label class="form-label">문서 설명<span class="required">*</span></label>
+          <label class="form-label">문서 설명<span class="text-red-500 pl-1">*</span></label>
           <div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
-            <textarea v-model="form.content" class="textarea" :class="{ 'is-error': submitted && !form.content }" placeholder="문서 설명을 입력해주세요." />
+            <Textarea v-model="form.content" class="h-40" :class="{ 'is-error': submitted && !form.content }" placeholder="문서 설명을 입력해주세요." />
+            <div class="char-count">
+              <span :class="{ 'text-error': contentCount > 500 }">{{ contentCount }}</span> / 500
+            </div>
             <span v-if="submitted && !form.content" class="inline-error"> 문서 설명을 입력해주세요. </span>
           </div>
         </div>
@@ -153,9 +159,12 @@ const goToDetail = () => {
       <div class="form-row">
         <!-- 수정 사유 -->
         <div class="form-group full align-top">
-          <span class="form-label pt">수정 사유<span class="required">*</span></span>
+          <span class="form-label pt">수정 사유<span class="text-red-500 pl-2">*</span></span>
           <div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
-            <textarea v-model="form.editReason" class="textarea" :class="{ 'is-error': submitted && !form.editReason }" placeholder="수정 사유를 입력해주세요." />
+            <Textarea v-model="form.editReason" class="h-40" :class="{ 'is-error': submitted && !form.editReason }" placeholder="수정 사유를 입력해주세요." />
+            <div class="char-count">
+              <span :class="{ 'text-error': editReasoncount > 500 }">{{ editReasoncount }}</span> / 500
+            </div>
             <span v-if="submitted && !form.editReason" class="inline-error">수정 사유를 입력해주세요.</span>
           </div>
         </div>
@@ -165,7 +174,7 @@ const goToDetail = () => {
     <!-- 섹션 3: 첨부 파일 -->
     <div class="panel">
       <div class="panel-title"><span class="badge-num">3</span> 첨부 파일</div>
-      <button type="button" class="btn btn-attach" @click.stop.prevent="triggerFileInput">첨부파일 등록</button>
+      <Button icon="pi pi-paperclip" label="첨부파일 등록" class="!bg-[#2D8FAD] !border-[#2D8FAD] hover:!bg-[#257892]" raised @click="triggerFileInput"></Button>
       <input ref="fileInput" type="file" multiple style="display: none" @change="onFileChange" />
 
       <!-- 기존 파일 -->
@@ -175,12 +184,12 @@ const goToDetail = () => {
           <li v-for="(f, i) in form.attachments" :key="'old-' + i">
             <span class="file-name">{{ f.name }}</span>
             <span class="file-badge">기존</span>
-            <button type="button" class="btn-remove" @click="removeExistingFile(i)">✕</button>
+            <Button severity="secondary" small @click="removeExistingFile(i)" label="✕" />
           </li>
           <li v-for="(f, i) in newFiles" :key="'new-' + i">
             <span class="file-name">{{ f.name }}</span>
             <span class="file-badge new">신규</span>
-            <button type="button" class="btn-remove" @click="removeNewFile(i)">✕</button>
+            <Button severity="secondary" small @click="removeNewFile(i)" label="✕" />
           </li>
         </ul>
       </div>
@@ -338,6 +347,13 @@ const goToDetail = () => {
 
 .textarea:focus {
   border-color: #e8920e;
+}
+
+.char-count {
+  align-self: flex-end; /* 오른쪽 정렬 */
+  font-size: 12px;
+  color: #888;
+  margin-top: 2px;
 }
 
 .attach-area {
