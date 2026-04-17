@@ -213,6 +213,17 @@ const handleCancel = () => {
           </div>
         </div>
 
+        <!-- 상위 프로젝트 -->
+        <div class="flex items-start px-8 py-4">
+          <label class="form-label w-36 pt-2 shrink-0">상위 프로젝트</label>
+          <div class="flex-1">
+            <Select v-model="form.parentId" :disabled="hasVersion" :options="projectOptions" optionLabel="label" optionValue="value" placeholder="선택" class="form-input w-150" showClear />
+            <div v-if="hasVersion" class="mt-1">
+              <small class="text-red-400">버전이 생성된 프로젝트는 상위 프로젝트를 선택할 수 없습니다.</small>
+            </div>
+          </div>
+        </div>
+
         <!-- 프로젝트 기간 -->
         <div class="flex items-start px-8 py-4">
           <label class="form-label w-36 pt-2 shrink-0"> 프로젝트 기간 <span class="text-red-500">*</span> </label>
@@ -273,25 +284,8 @@ const handleCancel = () => {
       </div>
     </div>
 
-    <!-- 상위 프로젝트 섹션 -->
-    <div class="bg-white rounded-lg shadow-sm border border-[#C7C7C2] overflow-hidden mb-6 mt-6">
-      <div class="bg-[#F2F0EB] px-8 py-3 border-b border-[#C7C7C2]">
-        <span class="text-lg font-bold text-[#1A1816]">상위 프로젝트</span>
-      </div>
-
-      <div class="flex items-start px-8 py-4">
-        <label class="form-label w-36 pt-2 shrink-0">상위 프로젝트</label>
-        <div class="flex-1">
-          <Select v-model="form.parentId" :disabled="hasVersion" :options="projectOptions" optionLabel="label" optionValue="value" placeholder="선택" class="form-input w-150" showClear />
-          <div v-if="hasVersion" class="mt-1">
-            <small class="text-red-400">버전이 생성된 프로젝트는 상위 프로젝트를 선택할 수 없습니다.</small>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- 버튼 -->
-    <div class="flex justify-center gap-3">
+    <div class="flex justify-center gap-3 mt-10">
       <Button label="수정" class="btn-amber px-8" @click="openUpdateConfirm" />
       <Button label="취소" class="btn-cancel px-8" @click="handleCancel" />
     </div>
