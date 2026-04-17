@@ -423,8 +423,8 @@ const formatDate = (dateStr) => {
 
 /* 뱃지 */
 .badge {
-  padding: 2px 8px;
-  border-radius: 4px;
+  padding: 3px 10px;
+  border-radius: 12px;
   font-size: 12px;
 }
 .badge.기획서 {
