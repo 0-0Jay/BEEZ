@@ -95,8 +95,8 @@ export const useTaskStore = defineStore('task', {
       const res = await axios.get(`/task/${id}/journal`);
       this.journalList = res.data;
     },
-    async deleteTask(id) {
-      const res = await axios.delete(`/task/${id}`);
+    async deleteTask(data) {
+      const res = await axios.delete(`/task/${data.projectId}/${data.id}`);
       this.task = ref(null);
     },
     async insertTaskTime(data) {

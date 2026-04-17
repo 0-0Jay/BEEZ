@@ -14,7 +14,7 @@ const projectStore = useProjectStore();
 const authStore = useAuthStore();
 const project = computed(() => projectStore.selectedProject);
 const userId = computed(() => authStore.user.id);
-const roleId = computed(() => authStore.projectRoles);
+const roleId = computed(() => [...(authStore.projectRoles ?? []), { id: authStore.user?.role }]);
 const condition = computed(() => (taskStore.task?.creator == userId.value ? 'Z1' : taskStore.task?.userId == userId.value ? 'Z2' : 'Z0'));
 const toast = useToast();
 
@@ -463,6 +463,7 @@ onMounted(async () => {
   loading.value = true;
   await Promise.all([taskStore.findVersionList(project.value.id), taskStore.findCateList(), taskStore.findTypeList(), taskStore.findMember(project.value.id), taskStore.findCommonCodeList()]);
   if (isEditMode) {
+    console.log(roleId.value);
     await taskStore.findWorkflow({ roleId: roleId.value.map((r) => r.id), typeId: taskStore.task?.type, conditionType: condition.value });
   }
   loading.value = false;

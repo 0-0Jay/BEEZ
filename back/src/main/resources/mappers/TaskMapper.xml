@@ -187,8 +187,8 @@
   </resultMap>
 
   <insert id="insertTaskReply" parameterType="TaskReplyRequest">
-    <selectKey keyProperty="id" resultType="String" order="BEFORE">
-      SELECT BEEZ.generate_pk_auto('task_reply') FROM dual
+    <selectKey keyProperty="id,taskUser,projectId" resultType="TaskReplyRequest" order="BEFORE">
+      SELECT BEEZ.generate_pk_auto('task_reply') AS id, user_id AS task_user, project_id FROM task WHERE id = #{taskId}
     </selectKey>
       INSERT INTO task_reply(id, task_id, user_id, content, created_on, parent_id)
       VALUES(#{id}, #{taskId}, #{userId}, #{content}, SYSTIMESTAMP, #{parentId})

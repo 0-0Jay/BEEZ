@@ -374,7 +374,6 @@ onMounted(async () => {
   loading.value = true;
   await Promise.all([taskStore.findCateList(), taskStore.findTypeList(), gitStore.findCommitsByTaskId(taskId.value), taskStore.findCommonCodeList(), taskStore.findTaskList(projectId.value, userId.value)]);
   loading.value = false;
-  console.log(task.value);
 });
 </script>
 
@@ -999,6 +998,7 @@ onMounted(async () => {
         async (data) => {
           router.push(`/tasks`);
           await taskStore.deleteTask(data);
+          await taskStore.findTaskList(projectId, userId);
           deleteModalVisible = false;
           toast.add({
             severity: 'success',

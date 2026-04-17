@@ -17,4 +17,6 @@ public class TaskReplyRequest {
   String createdOn;
   String editedOn;
   String parentId;
+  String taskUser;
+  String projectId;
 }
