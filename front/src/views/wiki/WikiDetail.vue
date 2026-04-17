@@ -118,7 +118,7 @@ watch(
         <div class="wiki-header-top">
           <div>
             <div class="wiki-header-left">
-              <h1 class="text-2xl font-bold text-[#1A1816]">WIKI</h1>
+              <h1 class="text-2xl font-bold text">WIKI</h1>
               <!-- <p>설명 들어가면 좋을 것 같음 - wikiInfo 백단 처리</p> -->
               <span class="badge-status">현재 버전 : {{ wikiDetail.versionId || '-' }}</span>
             </div>
@@ -141,27 +141,27 @@ watch(
     <div class="content-grid">
       <div class="section-marker">
         <div class="toc-card">
-          <div class="toc-heading">목차</div>
-          <ul class="toc-list" v-if="tocList.length > 0">
-            <template v-for="item in tocList" :key="item.id">
-              <li>
-                <a :href="`#${item.id}`">{{ item.number }} {{ item.title }}</a>
-              </li>
-              <ul v-if="item.sub && item.sub.length > 0" class="toc-list toc-sub">
-                <li v-for="sub in item.sub" :key="sub.id">
-                  <a :href="`#${sub.id}`">{{ sub.number }} {{ sub.title }}</a>
+          <div class="card-header">목차</div>
+          <div style="padding: 14px 16px">
+            <ul class="toc-list" v-if="tocList.length > 0">
+              <template v-for="item in tocList" :key="item.id">
+                <li>
+                  <a :href="`#${item.id}`">{{ item.number }} {{ item.title }}</a>
                 </li>
-              </ul>
-            </template>
-          </ul>
-          <p v-else class="related-placeholder" style="font-size: 12px">제목을 추가하면 목차가 생성됩니다.</p>
+                <ul v-if="item.sub && item.sub.length > 0" class="toc-list toc-sub">
+                  <li v-for="sub in item.sub" :key="sub.id">
+                    <a :href="`#${sub.id}`">{{ sub.number }} {{ sub.title }}</a>
+                  </li>
+                </ul>
+              </template>
+            </ul>
+            <p v-else class="related-placeholder" style="font-size: 12px">제목을 추가하면 목차가 생성됩니다.</p>
+          </div>
         </div>
       </div>
 
       <div class="info-card">
-        <div class="info-card-title">프로젝트 - 기본정보</div>
-        <br />
-
+        <div class="card-header">프로젝트 - 기본정보</div>
         <div class="info-row">
           <span class="info-label">프로젝트번호 :</span>
           <span class="info-value status-badge">{{ projectInfo.id || '데이터가 없습니다' }}</span>
@@ -194,8 +194,8 @@ watch(
 
       <div class="section-marker">
         <div class="related-card">
+          <div class="card-header">관련 URL 링크</div>
           <div v-if="relatedLinks.length > 0" class="link-list-container">
-            <div class="toc-heading" style="margin-bottom: 12px">관련 URL 링크</div>
             <ul class="related-link-list">
               <li v-for="(link, index) in relatedLinks" :key="index" class="link-item">
                 <i class="link-icon">🔗</i>
@@ -210,6 +210,7 @@ watch(
 
     <div class="section-marker">
       <div class="content-card">
+        <div class="card-header">본문</div>
         <div class="body-text" v-html="wikiDetail.content"></div>
       </div>
     </div>
@@ -222,7 +223,7 @@ watch(
   flex-direction: column;
   gap: 16px;
   padding: 20px;
-  background: #f5f5f5;
+  background: #ffffff;
   min-height: 100vh;
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px;
@@ -245,7 +246,7 @@ watch(
   margin-bottom: 14px;
 }
 .wiki-header-card {
-  background: #fff;
+  background: #f2f3f8;
   border: 1px solid #ddd;
   border-radius: 8px;
   padding: 14px 20px;
@@ -324,9 +325,10 @@ watch(
 }
 .wiki-meta {
   display: flex;
-  gap: 14px;
-  font-size: 11px;
+  gap: 16px;
+  font-size: 14px;
   color: #999;
+  margin-top: 10px;
 }
 
 .content-grid {
@@ -359,7 +361,7 @@ watch(
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .toc-item a {
@@ -383,12 +385,14 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 10px;
+  margin-top: 10px;
 }
 
 .info-row {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-top: 10px;
 }
 
 .info-label {
@@ -538,8 +542,9 @@ watch(
   background: #fff;
   border: 1px solid #ddd;
   border-radius: 8px;
-  padding: 14px 30px;
+  padding: 0;
   min-height: 100%;
+  overflow: hidden;
 }
 .toc-heading {
   font-size: 18px;
@@ -551,7 +556,7 @@ watch(
   padding: 0;
 }
 .toc-list li {
-  padding: 2px 0;
+  padding: 0 0;
 }
 .toc-list a {
   font-size: 12px;
@@ -563,7 +568,9 @@ watch(
   text-decoration: underline;
 }
 .toc-sub {
-  padding-left: 14px;
+  padding-left: 18px;
+  margin-top: 0; /* 상위 항목과 딱 붙게 설정 */
+  gap: 2px;
 }
 
 /* Info Card */
@@ -571,8 +578,9 @@ watch(
   background: #fff;
   border: 1px solid #ddd;
   border-radius: 8px;
-  padding: 20px 24px;
+  padding: 0;
   min-height: 100%;
+  overflow: hidden;
 }
 .info-card-title {
   font-size: 16px;
@@ -609,12 +617,15 @@ watch(
   background: #fff;
   border: 1px solid #ddd;
   border-radius: 8px;
-  padding: 14px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 0;
   min-height: 180px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
 }
+
 .related-placeholder {
   font-size: 13px;
   color: #aaa;
@@ -695,8 +706,9 @@ watch(
   background: #fff;
   border: 1px solid #ddd;
   border-radius: 8px;
-  padding: 24px 30px;
+  padding: 0; /* 기존 24px 30px → 0으로 변경 */
   min-height: 200px;
+  overflow: hidden; /* border-radius 적용 */
 }
 
 .content-card :deep(h1),
@@ -707,5 +719,63 @@ watch(
 .content-card :deep(h6) {
   margin: 0 !important;
   padding: 0 !important;
+}
+
+.card-header {
+  background-color: #5b6e96;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 16px;
+  /* margin, border-radius 없음 - overflow:hidden이 처리 */
+}
+
+.info-card .info-row {
+  padding: 0 16px;
+}
+
+/* info-card 내부 전체 컨텐츠 영역 */
+.info-card-body {
+  padding: 14px 16px;
+}
+
+.related-card > .link-list-container,
+.related-card > .related-placeholder {
+  padding: 14px 16px;
+}
+
+.related-card {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+  overflow: hidden;
+}
+
+.related-card > .link-list-container,
+.related-card > .related-placeholder {
+  padding: 14px 16px;
+}
+
+.content-card .body-text {
+  padding: 24px 30px; /* 기존 카드 padding을 여기로 이동 */
+}
+
+.card-header {
+  background-color: #5b6e96;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 16px;
+  border-radius: 8px 8px 0 0;
+}
+
+.content-card {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0;
+  min-height: 200px;
+  overflow: hidden;
 }
 </style>

@@ -114,6 +114,7 @@ const downloadFile = async (fileDetailId) => {
               <span class="star" :class="{ active: docStore.currentDocument.isMarked === 'Y' }" @click="toggleFavorite">
                 {{ docStore.currentDocument.isMarked === 'Y' ? '★' : '☆' }}
               </span>
+
               {{ docStore.currentDocument.title }}
             </div>
             <div class="doc-meta">
@@ -165,7 +166,7 @@ const downloadFile = async (fileDetailId) => {
 
 <style scoped>
 .doc-detail-page {
-  background: #f5f5f5;
+  background: #f2f3f8;
   min-height: 100vh;
   padding: 24px;
   display: flex;
@@ -355,5 +356,12 @@ const downloadFile = async (fileDetailId) => {
 }
 .star:hover {
   color: #e8920e;
+}
+
+.edited-badge {
+  color: #e8920e;
+  font-size: 12px;
+  font-weight: 600;
+  margin-right: 4px;
 }
 </style>
