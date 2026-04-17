@@ -196,7 +196,7 @@ const goToDetail = () => {
 
 <style scoped>
 .new-doc-page {
-  background: #f5f5f5;
+  background: #f2f3f8;
   min-height: 100vh;
   padding: 24px;
   font-family: 'Noto Sans KR', sans-serif;
