@@ -7,11 +7,13 @@ import { useProjectStore } from '@/stores/project';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import FullCalendar from '@fullcalendar/vue3';
+import { useToast } from 'primevue';
 import { computed, onMounted, ref } from 'vue';
 
 const calendarStore = useCalendarStore();
 const authStore = useAuthStore();
 const projectStore = useProjectStore();
+const toast = useToast();
 
 const project = computed(() => projectStore.selectedProject);
 const userId = computed(() => authStore.user?.id);
@@ -29,6 +31,18 @@ const filters = ref({ mine: true, team: true });
 const searchQuery = ref('');
 
 // ── 유틸 ────────────────────────────────────────────
+function formatDate(d) {
+  if (!d) return '';
+  // 문자열이면 앞 10자리(YYYY-MM-DD)만 사용
+  if (typeof d === 'string') return d.substring(0, 10);
+  // 숫자(타임스탬프)이면 Date로 변환
+  const date = typeof d === 'number' ? new Date(d) : d;
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 const addOneDay = (dateStr) => {
   if (!dateStr) return undefined;
   const d = new Date(dateStr);
@@ -104,22 +118,37 @@ const saveNewEvent = async () => {
   if (!newEvent.value.title.trim() || !newEvent.value.start) return;
   const data = {
     title: newEvent.value.title,
-    startDate: newEvent.value.start,
-    endDate: newEvent.value.end,
+    startDate: formatDate(newEvent.value.start),
+    endDate: formatDate(newEvent.value.end),
     type: newEvent.value.type,
     content: newEvent.value.content,
     userId: newEvent.value.userId,
     projectId: newEvent.value.projectId
   };
+
   await calendarStore.insertSchedule(data);
   await calendarStore.findScheduleList(project.value?.id, userId?.value);
   addVisible.value = false;
+  toast.add({
+    severity: 'success',
+    summary: '일정 추가',
+    detail: '일정을 추가하였습니다.',
+    life: 3000,
+    closable: false
+  });
 };
 
 const deleteEvent = async () => {
   await calendarStore.deleteSchedule(selectedEvent.value.id);
   await calendarStore.findScheduleList(project.value?.id, userId?.value);
   detailVisible.value = false;
+  toast.add({
+    severity: 'success',
+    summary: '일정 삭제',
+    detail: '일정을 삭제하였습니다.',
+    life: 3000,
+    closable: false
+  });
 };
 
 const updateEvent = async (updated) => {
@@ -137,6 +166,13 @@ const updateEvent = async (updated) => {
   await calendarStore.updateSchedule(data);
   await calendarStore.findScheduleList(project.value?.id, userId?.value);
   const original = calendarStore.scheduleList.find((s) => String(s.id) === String(updated.id));
+  toast.add({
+    severity: 'success',
+    summary: '일정 변경',
+    detail: '일정을 변경하였습니다.',
+    life: 3000,
+    closable: false
+  });
   if (original) {
     selectedEvent.value = {
       id: original.id,
@@ -209,6 +245,13 @@ const calendarOptions = computed(() => ({
     try {
       await calendarStore.updateSchedule(data);
       await calendarStore.findScheduleList(project.value?.id, userId?.value);
+      toast.add({
+        severity: 'success',
+        summary: '일정 이동',
+        detail: '일정이 이동되었습니다.',
+        life: 3000,
+        closable: false
+      });
     } catch {
       info.revert();
     }
