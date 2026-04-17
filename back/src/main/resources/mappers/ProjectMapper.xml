@@ -175,7 +175,7 @@
       </if>
     START WITH p.parent_id IS NULL
     CONNECT BY PRIOR p.id = p.parent_id
-    ORDER SIBLINGS BY p.id DESC
+    ORDER SIBLINGS BY p.id ASC
   </select>
   
   <!-- 프로젝트 잠금보관 -->

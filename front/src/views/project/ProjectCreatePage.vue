@@ -142,7 +142,7 @@ const handleSubmit = async () => {
 
   projectStore.selectedProject = {
     title: form.title,
-    id: form.id,
+    id: id,
     startDate: form.startDate,
     endDate: form.endDate
   };

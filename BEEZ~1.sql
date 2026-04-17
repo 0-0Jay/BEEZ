@@ -133,22 +133,42 @@ CREATE OR REPLACE PROCEDURE get_project_member (
 AS 
 BEGIN
     OPEN p_users FOR
-        SELECT pm.id AS project_member_id,
-               pm.user_id,
-               u.name AS user_name,
-               rm.role_id,
-               r.name AS role_name
-        FROM project_member pm
-        LEFT JOIN users u ON u.id = pm.user_id
-        LEFT JOIN role_mapping rm ON rm.member_id = pm.id
-        LEFT JOIN roles r ON r.id = rm.role_id
-        WHERE pm.project_id = p_project_id
-        AND pm.group_id IS NULL
-        AND pm.is_delete = 'F0'
-        AND rm.is_delete = 'F0'
-        AND rm.role_id NOT IN ('ROLE0001')
-        AND u.status = 'H1'
-        ORDER BY pm.id;
+    WITH ancestors AS (
+        SELECT id
+        FROM project
+        START WITH id = p_project_id
+        CONNECT BY PRIOR parent_id = id
+    )
+    SELECT pm.id AS project_member_id,
+           pm.user_id,
+           u.name AS user_name,
+           rm.role_id,
+           r.name AS role_name,
+           CASE
+           WHEN pm.user_id IN (
+                SELECT p2.user_id FROM project p2
+                JOIN ancestors a ON a.id = p2.id
+                WHERE p2.status = 'K1'
+                AND p2.id != p_project_id
+            ) THEN '상위 생성자'
+            WHEN pm.user_id IN (
+                SELECT p2.pm_id FROM project p2
+                JOIN ancestors a ON a.id = p2.id
+                WHERE p2.status = 'K1'
+                AND p2.id != p_project_id
+            ) THEN '상위 PM/PL'
+            ELSE NULL
+        END AS fixed_reason
+    FROM project_member pm
+    LEFT JOIN users u ON u.id = pm.user_id
+    LEFT JOIN role_mapping rm ON rm.member_id = pm.id
+    LEFT JOIN roles r ON r.id = rm.role_id
+    WHERE pm.project_id = p_project_id
+    AND pm.group_id IS NULL
+    AND pm.is_delete = 'F0'
+    AND rm.is_delete = 'F0'
+    AND u.status = 'H1'
+    ORDER BY pm.id;
         
     OPEN p_groups FOR
         SELECT pm.id AS project_member_id,
@@ -187,6 +207,8 @@ BEGIN
     ORDER BY pm.id;
 END;
 /
+
+COMMIT;
 
 SET SERVEROUTPUT ON;
 
@@ -486,7 +508,9 @@ CREATE OR REPLACE PROCEDURE proc_create_project (
     p_project_id         OUT VARCHAR2
 ) AS
     v_member_id          project_member.id%TYPE;
+    v_new_member_id      project_member.id%TYPE;
     v_count              NUMBER;
+    v_user_role          users.role%TYPE;
 BEGIN
     -- 1. 식별자 중복 체크
     SELECT COUNT(*) INTO v_count FROM project 
@@ -538,6 +562,11 @@ BEGIN
                 p_pm_id
     );
     
+    -- 생성자 role 조회
+    SELECT role INTO v_user_role
+    FROM users 
+    WHERE id = p_user_id;
+    
     -- 5. project_member 삽입 (생성자 자동 등록)
     SELECT BEEZ.generate_pk_auto('project_member') 
     INTO v_member_id 
@@ -556,7 +585,7 @@ BEGIN
             NULL
             );
             
-    -- 6. role_mapping 삽입 (생성자 = 관리자 역할)
+    -- 6. role_mapping 삽입 (관리자면 ROLE0001, 일반 사용자면 ROLE0002)
     INSERT INTO role_mapping (
                               member_id,
                               role_id,
@@ -564,7 +593,7 @@ BEGIN
                               )
     VALUES (
             v_member_id,
-            'ROLE0002',
+            CASE WHEN v_user_role = 'ROLE0001' THEN 'ROLE0001' ELSE 'ROLE0002' END,
             'P0'
             );
             
@@ -579,6 +608,34 @@ BEGIN
     
         INSERT INTO role_mapping (member_id, role_id, is_inherited)
         VALUES (v_member_id, 'ROLE0002', 'P0');
+    END IF;
+    
+    -- 8. 상위 프로젝트 구성원 상속 (parent_id가 있을 때만)
+    IF p_parent_id IS NOT NULL THEN
+        FOR rec IN (
+            SELECT pm.user_id, pm.group_id, pm.id AS old_member_id
+            FROM   project_member pm
+            WHERE  pm.project_id = p_parent_id
+              AND  pm.is_delete = 'F0'
+            AND (pm.user_id NOT IN (p_user_id, NVL(p_pm_id, p_user_id))
+                 OR pm.user_id IS NULL) 
+        ) LOOP
+            SELECT BEEZ.generate_pk_auto('project_member')
+            INTO v_new_member_id FROM dual;
+
+            INSERT INTO project_member (id, project_id, user_id, group_id)
+            VALUES (v_new_member_id, p_project_id, rec.user_id, rec.group_id);
+
+            FOR role_rec IN (
+                SELECT role_id, is_inherited
+                FROM   role_mapping
+                WHERE  member_id  = rec.old_member_id
+                  AND  is_delete = 'F0'
+            ) LOOP
+                INSERT INTO role_mapping (member_id, role_id, is_inherited)
+                VALUES (v_new_member_id, role_rec.role_id, role_rec.is_inherited);
+            END LOOP;
+        END LOOP;
     END IF;
 END proc_create_project;
 /

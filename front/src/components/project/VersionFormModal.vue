@@ -65,6 +65,17 @@ watch(
   }
 );
 
+// 기본 버전 체크 시 공유 + 상태 자동 설정
+watch(
+  () => form.isDefaultYn,
+  (checked) => {
+    if (checked) {
+      form.isShareYn = true;
+      form.status = 'N1';
+    }
+  }
+);
+
 const resetForm = () => {
   Object.assign(form, {
     projectId: route.params.id,
@@ -166,6 +177,34 @@ onMounted(async () => {
         </div>
       </div>
 
+      <!-- 공유 여부 + 기본 버전 -->
+      <div class="flex items-start px-8 py-4">
+        <label class="form-label w-32 shrink-0 pt-1">설정</label>
+        <div class="flex flex-col gap-1">
+          <div class="flex gap-40">
+            <div class="flex items-center gap-2">
+              <Checkbox v-model="form.isDefaultYn" :binary="true" inputId="isDefault" />
+              <label for="isDefault" class="text-sm text-[#3A3B35] cursor-pointer">기본 버전으로 설정</label>
+            </div>
+            <div class="flex items-center gap-2">
+              <Checkbox v-model="form.isShareYn" :binary="true" inputId="isShare" :disabled="form.isDefaultYn" />
+              <label for="isShare" class="text-sm text-[#3A3B35] cursor-pointer">공유</label>
+            </div>
+          </div>
+          <small v-if="form.isDefaultYn" class="text-orange-500">기본 버전은 필수로 공유됩니다.</small>
+        </div>
+      </div>
+
+      <!-- 상태 -->
+      <div class="flex items-start px-8 py-4">
+        <label class="form-label w-32 pt-2 shrink-0">상태<span class="text-red-500">*</span></label>
+        <div class="flex flex-col gap-1">
+          <Select v-model="form.status" :options="statusOptions" optionLabel="name" optionValue="id" placeholder="선택" class="form-input w-50" :disabled="form.isDefaultYn" />
+          <small v-if="form.isDefaultYn" class="text-orange-500 mt-1 block">기본 버전은 진행 중 상태로 고정됩니다.</small>
+          <small v-if="errors.status" class="text-red-500 mt-1 block">{{ errors.status }}</small>
+        </div>
+      </div>
+
       <!-- 기간 -->
       <div class="flex items-start px-8 py-4">
         <label class="form-label w-32 pt-2 shrink-0">기간 <span class="text-red-500">*</span></label>
@@ -179,29 +218,6 @@ onMounted(async () => {
           <div class="flex flex-col w-42">
             <DatePicker v-model="form.endDate" dateFormat="yy-mm-dd" placeholder="마감일" class="form-input w-50" :minDate="form.startDate || projectStart" :maxDate="projectEnd" showIcon inputClass="w-full" />
             <small v-if="errors.endDate" class="text-red-500 block">{{ errors.endDate }}</small>
-          </div>
-        </div>
-      </div>
-
-      <!-- 상태 -->
-      <div class="flex items-start px-8 py-4">
-        <label class="form-label w-32 pt-2 shrink-0">상태<span class="text-red-500">*</span></label>
-        <div class="flex flex-col gap-1">
-          <Select v-model="form.status" :options="statusOptions" optionLabel="name" optionValue="id" placeholder="선택" class="form-input w-50" />
-          <small v-if="errors.status" class="text-red-500 mt-1 block">{{ errors.status }}</small>
-        </div>
-      </div>
-      <!-- 공유 여부 + 기본 버전 -->
-      <div class="flex items-center px-8 py-4">
-        <label class="form-label w-32 shrink-0">설정</label>
-        <div class="flex gap-40">
-          <div class="flex items-center gap-2">
-            <Checkbox v-model="form.isShareYn" :binary="true" inputId="isShare" />
-            <label for="isShare" class="text-sm text-[#3A3B35] cursor-pointer">공유</label>
-          </div>
-          <div class="flex items-center gap-2">
-            <Checkbox v-model="form.isDefaultYn" :binary="true" inputId="isDefault" />
-            <label for="isDefault" class="text-sm text-[#3A3B35] cursor-pointer">기본 버전으로 설정</label>
           </div>
         </div>
       </div>
@@ -232,6 +248,11 @@ onMounted(async () => {
 :deep(.form-input:focus) {
   border-color: #e8920e !important;
   box-shadow: 0 0 0 2px rgba(232, 146, 14, 0.15) !important;
+}
+
+:deep(.p-select-label) {
+  display: flex !important;
+  align-items: center !important;
 }
 
 :deep(.p-textarea) {

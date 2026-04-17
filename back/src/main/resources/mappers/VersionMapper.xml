@@ -92,7 +92,7 @@
         <if test="status != null and status != ''">
           AND v.status = #{status}
         </if>
-    ORDER BY v.id DESC
+    ORDER BY v.id ASC
   </select>
   
   <!-- 공통코드 목록 -->

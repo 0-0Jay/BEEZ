@@ -104,7 +104,6 @@ export const useProjectStore = defineStore('project', {
     // 프로젝트 단건 조회
     async findProject(id) {
       const response = await axios.get(`/project/${id}`);
-      console.log(response.data);
       this.projectInfo = response.data;
     },
 
@@ -155,6 +154,7 @@ export const useProjectStore = defineStore('project', {
 
     // 사용자 + 그룹 (검색)
     async fetchSearchMembers(keyword = null) {
+      console.log('selectedProject:', this.selectedProject);
       const response = await axios.get(`/project/members/search`, {
         params: { projectId: this.selectedProject.id, keyword }
       });
