@@ -106,21 +106,15 @@ const clearSelectedProject = () => {
       </router-link>
 
       <div v-if="selectedProject" class="mt-1">
-        <div class="px-3 py-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-          {{ selectedProject.title }}
-        </div>
         <div class="mt-1 space-y-0.5">
           <router-link to="/project" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
             <span>개요</span>
           </router-link>
-          <router-link
-            :to="`/project/${selectedProject.id}/roadmap`"
-            class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between"
-          >
-            <span>로드맵</span>
-          </router-link>
           <router-link to="/tasks" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
             <span>일감 목록</span>
+          </router-link>
+          <router-link to="/spent" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
+            <span>소요시간</span>
           </router-link>
           <router-link to="/gantt" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
             <span>간트차트</span>
@@ -129,23 +123,25 @@ const clearSelectedProject = () => {
             <span>달력</span>
           </router-link>
           <router-link
+            :to="`/gits/list/${selectedProject.id}`"
+            class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between"
+          >
+            <span>저장소</span>
+          </router-link>
+          <div @click="goWiki(selectedProject.id)" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
+            <span>위키</span>
+          </div>
+          <router-link
             :to="`/document/list/${selectedProject.id}`"
             class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between"
           >
             <span>문서</span>
           </router-link>
-          <div @click="goWiki(selectedProject.id)" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
-            <span>위키</span>
-          </div>
-
-          <router-link to="/spent" class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between">
-            <span>소요시간</span>
-          </router-link>
           <router-link
-            :to="`/gits/list/${selectedProject.id}`"
+            :to="`/project/${selectedProject.id}/roadmap`"
             class="sub-menu-item whitespace-nowrap cursor-pointer px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150 flex items-center justify-between"
           >
-            <span>저장소</span>
+            <span>로드맵</span>
           </router-link>
           <router-link
             :to="`/project/${selectedProject.id}/log`"
@@ -202,7 +198,7 @@ const clearSelectedProject = () => {
 }
 
 .menu-item {
-  font-size: 1.25rem;
+  font-size: 1.4rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   color: #e2e8f0;
@@ -212,7 +208,7 @@ const clearSelectedProject = () => {
 }
 
 .sub-menu-item {
-  font-size: 0.925rem;
+  font-size: 1.15rem;
   font-weight: 500;
   border-left: 2px solid transparent;
 }
