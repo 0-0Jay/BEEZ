@@ -5,6 +5,8 @@ import com.beez.beez.logs.service.LogsService;
 import com.beez.beez.project.dto.*;
 import com.beez.beez.project.mapper.ProjectMapper;
 import com.beez.beez.project.service.ProjectService;
+import com.beez.beez.websocket.dto.NotificationRequest;
+import com.beez.beez.websocket.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -20,6 +22,7 @@ import java.util.List;
 public class ProjectServiceImpl implements ProjectService {
   
   private final ProjectMapper projectMapper;
+  private final NotificationService notificationService;
   
   //세션에서 아이디 받아오기
   private String getCurrentUserId() {
@@ -161,6 +164,15 @@ public class ProjectServiceImpl implements ProjectService {
   @Override
   public void insertProjectMember(ProjectMemberRequest dto) {
     projectMapper.insertProjectMember(dto);
+    List<String> users = dto.getUserIds();
+    for (String u : users) {
+      notificationService.sendNotification(NotificationRequest.builder()
+        .userId(u)
+        .content("프로젝트의 구성원으로 추가되었습니다.")
+        .link("/project/list")
+        .projectId(dto.getProjectId())
+        .build());
+    }
   }
   
   //프로젝트 구성원 삭제

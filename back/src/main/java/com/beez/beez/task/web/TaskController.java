@@ -104,9 +104,9 @@ public class TaskController {
   }
   
   // 일감 삭제
-  @DeleteMapping("/{id}")
-  public ResponseEntity<Void> deleteTask(@PathVariable String id) {
-    taskService.deleteTask(id);
+  @DeleteMapping("/{projectId}/{id}")
+  public ResponseEntity<Void> deleteTask(@PathVariable String projectId, @PathVariable String id) {
+    taskService.deleteTask(projectId, id);
     return ResponseEntity.ok().build();
   }
   

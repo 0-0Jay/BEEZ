@@ -58,7 +58,7 @@ public interface TaskService {
   void insertTaskRelation(TaskRelationRequest taskRelationRequest);
   
   // 일감 삭제
-  void deleteTask(String id);
+  void deleteTask(String projectId, String id);
   
   // 소요시간 기록
   void insertTaskTime(TaskTimeRequest taskTimeRequest);

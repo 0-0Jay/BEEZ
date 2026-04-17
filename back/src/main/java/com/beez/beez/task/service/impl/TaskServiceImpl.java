@@ -1,5 +1,6 @@
 package com.beez.beez.task.service.impl;
 
+import com.beez.beez.aop.Loggable;
 import com.beez.beez.file.dto.FileDetailRequest;
 import com.beez.beez.file.service.FileService;
 import com.beez.beez.task.dto.*;
@@ -102,6 +103,13 @@ public class TaskServiceImpl implements TaskService {
   }
   
   // 일감 등록 / 복사
+  @Loggable(
+    logType = "A1",
+    logCategory = "B2",
+    content = "일감 생성({id})",
+    link = "/task/{id}",
+    idField = "projectId"
+  )
   @Override
   public String insertTask(TaskRequest task, List<MultipartFile> files) {
     List<FileDetailRequest> fileDetails = fileService.saveFile(files);
@@ -136,6 +144,13 @@ public class TaskServiceImpl implements TaskService {
   }
   
   // 일감 수정
+  @Loggable(
+    logType = "A2",
+    logCategory = "B2",
+    content = "일감 수정({id})",
+    link = "/task/{id}",
+    idField = "projectId"
+  )
   @Override
   public void updateTask(TaskRequest task, List<MultipartFile> files) {
     List<FileDetailRequest> fileDetails = fileService.saveFile(files);
@@ -168,6 +183,14 @@ public class TaskServiceImpl implements TaskService {
   @Override
   public void insertTaskReply(TaskReplyRequest taskReplyRequest) {
     taskMapper.insertTaskReply(taskReplyRequest);
+    if (!taskReplyRequest.getTaskUser().equals(taskReplyRequest.getUserId())) {
+      notificationService.sendNotification(NotificationRequest.builder()
+        .userId(taskReplyRequest.getTaskUser())
+        .content("일감에 새 댓글이 달렸습니다.")
+        .link("/task/" + taskReplyRequest.getTaskId())
+        .projectId(taskReplyRequest.getProjectId())
+        .build());
+    }
   }
   
   // 공통코드 목록
@@ -200,8 +223,15 @@ public class TaskServiceImpl implements TaskService {
   }
   
   // 일감 삭제
+  @Loggable(
+    logType = "A3",
+    logCategory = "B2",
+    content = "일감 삭제({id})",
+    link = "/tasks",
+    idField = "projectId"
+  )
   @Override
-  public void deleteTask(String id) {
+  public void deleteTask(String projectId, String id) {
     taskMapper.deleteTask(id);
     // 진척도 계산
     taskMapper.calcSubProgress(id);

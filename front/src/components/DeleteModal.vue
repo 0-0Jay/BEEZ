@@ -1,4 +1,5 @@
 <script setup>
+import { useProjectStore } from '@/stores/project';
 import { computed, ref, watch } from 'vue';
 
 const props = defineProps({
@@ -8,7 +9,8 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:visible', 'confirm', 'cancel']);
-
+const projectStore = useProjectStore();
+const projectId = computed(() => projectStore.selectedProject?.id);
 const inputValue = ref('');
 
 watch(
@@ -23,7 +25,7 @@ const showError = computed(() => inputValue.value.length > 0 && !isMatched.value
 
 function handleConfirm() {
   if (!isMatched.value) return;
-  emit('confirm', props.taskId);
+  emit('confirm', { id: props.taskId, projectId: projectId.value });
 }
 function handleCancel() {
   emit('update:visible', false);
