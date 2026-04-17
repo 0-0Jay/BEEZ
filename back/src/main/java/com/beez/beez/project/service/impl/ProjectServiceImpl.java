@@ -136,6 +136,7 @@ public class ProjectServiceImpl implements ProjectService {
   @Override
   public ProjectInfoResponse updateProject(String id, ProjectUpdateRequest dto) {
     dto.setId(id);
+    dto.setUserId(getCurrentUserId());
     projectMapper.updateProject(dto);
     return projectMapper.findById(id);
   }
