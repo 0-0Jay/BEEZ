@@ -363,7 +363,7 @@ onMounted(async () => {
               </div>
 
               <div v-if="myTasks.length === 0" class="text-center text-slate-400 text-base py-8">
-                <i class="pi pi-list text-3xl block mb-2 opacity-40" />
+                <i class="pi pi-list text-3xl block opacity-40" style="margin-right: 3px" />
                 담당 일감이 없습니다.
               </div>
             </div>
@@ -395,7 +395,7 @@ onMounted(async () => {
             </TransitionGroup>
 
             <div v-if="memos.length === 0" class="text-center text-slate-400 text-base py-8">
-              <i class="pi pi-inbox text-3xl block mb-2 opacity-40" />
+              <i class="pi pi-inbox text-3xl block opacity-40" style="margin-right: 3px" />
               메모가 없습니다.
             </div>
           </div>

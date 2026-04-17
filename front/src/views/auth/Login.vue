@@ -12,6 +12,12 @@ const rememberMe = ref(false);
 const submitted = ref(false);
 const loginErrorMsg = ref('');
 
+const isPasswordVisible = ref(false);
+
+const togglePassword = () => {
+  isPasswordVisible.value = !isPasswordVisible.value;
+};
+
 onMounted(() => {
   const savedId = localStorage.getItem('savedEmployeeId');
   if (savedId) {
@@ -77,7 +83,6 @@ async function validateAndLogin() {
                 placeholder="사원번호를 입력해 주세요."
                 autofocus
                 class="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm outline-none transition-all duration-200 border"
-                :class="submitted && !id.trim() ? 'border-amber-err bg-amber-50-custom' : 'border-stone-200-custom bg-stone-50-custom'"
               />
             </div>
             <p v-if="submitted && !id.trim()" class="flex items-center gap-1 text-xs font-medium" style="color: #e8920e; margin-top: 3px">
@@ -96,12 +101,15 @@ async function validateAndLogin() {
                 id="password"
                 v-model="password"
                 @input="submitted = false"
-                type="password"
+                :type="isPasswordVisible ? 'text' : 'password'"
                 autocomplete="current-password"
                 placeholder="비밀번호를 입력해 주세요."
                 class="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm outline-none transition-all duration-200 border"
-                :class="submitted && !password.trim() ? 'border-amber-err bg-amber-50-custom' : 'border-stone-200-custom bg-stone-50-custom'"
               />
+
+              <button type="button" @click="togglePassword" class="absolute inset-y-0 right-3 flex items-center">
+                <i class="pi" :class="isPasswordVisible ? 'pi-eye-slash' : 'pi-eye'" style="color: #9a9690; font-size: 0.9rem"></i>
+              </button>
             </div>
             <p v-if="submitted && !password.trim()" class="flex items-center gap-1 text-xs font-medium" style="color: #f44336; margin-top: 3px">
               <i class="pi pi-exclamation-circle text-xs" />
@@ -171,11 +179,6 @@ async function validateAndLogin() {
 }
 .bg-amber-50-custom {
   background-color: #fafaf8;
-}
-
-input:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px #fff0c2;
 }
 
 input::placeholder {
