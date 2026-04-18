@@ -29,8 +29,11 @@ const pageTitle = computed(() => {
 });
 
 // 하위 일감 추가로 진입 시
-const fixedParentId = route.query.parentId ?? null;
-const fixedParentName = route.query.parentName ? decodeURIComponent(route.query.parentName) : null;
+const parentCtx = taskStore.parentTaskContext;
+const fixedParentId = parentCtx?.id ?? null;
+const fixedParentName = parentCtx?.title ?? null;
+const fixedParentVersionId = parentCtx?.versionId ?? null;
+const fixedParentVersionName = parentCtx?.versionName ?? null;
 
 const commonCodes = computed(() => taskStore.commonCodeList);
 const typeOptions = computed(() => taskStore.typeList);
@@ -53,16 +56,11 @@ const userOptionGroups = computed(() => {
 
 const parentTaskName = computed(() => {
   if (fixedParentId) return fixedParentName;
-  if (form.parentId) return taskStore.taskList.find((t) => t.id == form.parentId)?.title ?? String(form.parentId);
   return null;
 });
 
-// 상위 일감 전체 객체 (날짜 범위 검증용)
 const parentTask = computed(() => {
-  const pid = fixedParentId ?? form.parentId ?? null;
-  if (!pid) return null;
-  // taskList에서 먼저 찾고, 없으면 현재 로드된 task 활용 (하위 일감 추가 진입 시)
-  return taskStore.taskList.find((t) => t.id == pid) ?? (String(taskStore.task?.id) === String(pid) ? taskStore.task : null);
+  if (fixedParentId) return parentCtx;
 });
 
 const parentPlannedStart = computed(() => parseDate(parentTask.value?.plannedStart));
@@ -103,7 +101,7 @@ const form = reactive({
   parentId: fixedParentId ?? (isPopulated ? (task.value?.parentId ?? null) : null),
   category: isPopulated ? (task.value?.category ?? null) : null,
   userId: isPopulated ? (task.value?.userId ?? null) : null,
-  versionId: isPopulated ? (task.value?.versionId ?? null) : defaultVersionId.value,
+  versionId: fixedParentVersionId ?? (isPopulated ? (task.value?.versionId ?? null) : defaultVersionId.value),
   plannedStart: isPopulated ? parseDate(task.value?.plannedStart) : null,
   plannedEnd: isPopulated ? parseDate(task.value?.plannedEnd) : null,
   actualStart: isPopulated ? parseDate(task.value?.actualStart) : null,
@@ -463,9 +461,9 @@ onMounted(async () => {
   loading.value = true;
   await Promise.all([taskStore.findVersionList(project.value.id), taskStore.findCateList(), taskStore.findTypeList(), taskStore.findMember(project.value.id), taskStore.findCommonCodeList()]);
   if (isEditMode) {
-    console.log(roleId.value);
     await taskStore.findWorkflow({ roleId: roleId.value.map((r) => r.id), typeId: taskStore.task?.type, conditionType: condition.value });
   }
+  taskStore.clearParentTaskContext();
   loading.value = false;
 });
 </script>
