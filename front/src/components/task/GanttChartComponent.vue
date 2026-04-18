@@ -10,7 +10,7 @@ const emit = defineEmits(['task-click']);
 const ganttContainer = ref(null);
 let ganttInstance = null;
 
-const ALLOWED_FROM = new Set(['선행', '막고있음']);
+const ALLOWED_FROM = new Set(['후행', '막혀있음']);
 
 const mapDependencies = (rawTasks) => {
   const deps = [];

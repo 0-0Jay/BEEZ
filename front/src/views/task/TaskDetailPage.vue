@@ -330,13 +330,8 @@ const goToTask = (id) => router.push(`/task/${id}`);
 const goToEdit = () => router.push('/task/edit');
 const goToCopy = () => router.push('/task/copy');
 const goToAddSubTask = () => {
-  router.push({
-    path: '/task/create',
-    query: {
-      parentId: taskId.value,
-      parentName: task.value?.title
-    }
-  });
+  taskStore.setParentTaskContext(task.value);
+  router.push('/task/create');
 };
 
 // 하위 일감 최초 생성 경고 모달

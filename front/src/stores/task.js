@@ -16,7 +16,8 @@ export const useTaskStore = defineStore('task', {
     task: ref(null),
     overview: [],
     spent: [],
-    ganttData: []
+    ganttData: [],
+    parentTaskContext: null
   }),
   // getters
   // actions
@@ -129,6 +130,21 @@ export const useTaskStore = defineStore('task', {
         responseType: 'blob'
       });
       return res;
+    },
+    setParentTaskContext(task) {
+      this.parentTaskContext = task
+        ? {
+            id: task.id,
+            title: task.title,
+            versionId: task.versionId,
+            versionName: task.versionName,
+            plannedStart: task.plannedStart,
+            plannedEnd: task.plannedEnd
+          }
+        : null;
+    },
+    clearParentTaskContext() {
+      this.parentTaskContext = null;
     }
   },
   persist: {
