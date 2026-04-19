@@ -75,7 +75,7 @@ const onRowClick = (event) => {
     <h1 class="text-2xl font-bold text-[#1A1816] mb-2">사용자 목록</h1>
 
     <div class="flex justify-end mb-2">
-      <Button label="사용자 추가" icon="pi pi-plus" style="background: #2d8fad; border: #2d8fad" @click="openUserFormModal" />
+      <Button label="사용자 추가" icon="pi pi-plus" class="!bg-[#2D8FAD] !border-[#2D8FAD] hover:!bg-[#257892]" raised @click="openUserFormModal" />
     </div>
 
     <!-- 검색 필터 -->

@@ -149,8 +149,8 @@ onUnmounted(() => {
 
     <template #footer>
       <div class="flex justify-end gap-2 pt-1">
-        <Button label="취소" severity="secondary" raised @click="close" />
         <Button label="저장" raised @click="handleSave" />
+        <Button label="취소" severity="secondary" raised @click="close" />
       </div>
     </template>
   </Dialog>

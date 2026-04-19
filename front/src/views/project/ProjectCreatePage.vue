@@ -157,7 +157,7 @@ const handleCancel = () => {
 </script>
 
 <template>
-  <div class="p-8 bg-[#ffffff] h-full">
+  <div class="px-8 py-5 bg-[#ffffff] h-full">
     <!-- 타이틀 -->
     <div class="mb-4">
       <h1 class="text-2xl font-bold text-[#1A1816]">새 프로젝트 등록</h1>
@@ -250,7 +250,7 @@ const handleCancel = () => {
                     <small v-if="errors.endDate" class="text-red-500 mt-1">{{ errors.endDate }}</small>
                   </div>
                 </div>
-                <small v-if="selectedParent" class="text-[#9A9B90] mt-1"> 하위 프로젝트는 상위 프로젝트 기간({{ formatDate(selectedParent.startDate) }} ~ {{ formatDate(selectedParent.endDate) }})을 벗어날 수 없습니다. </small>
+                <small v-if="selectedParent" class="text-red-400 mt-1"> 하위 프로젝트는 상위 프로젝트 기간({{ formatDate(selectedParent.startDate) }} ~ {{ formatDate(selectedParent.endDate) }})을 벗어날 수 없습니다. </small>
               </div>
             </td>
           </tr>

@@ -168,7 +168,7 @@ const handleMemberSaved = async () => {
             </div>
             <div class="col-actions accordion-actions">
               <button class="btn-save" @click="saveEdit(user)">저장</button>
-              <button class="btn-cancel" @click="closeEdit">취소</button>
+              <button class="btn-cancel-sm" @click="closeEdit">취소</button>
             </div>
           </div>
         </Transition>
@@ -176,7 +176,7 @@ const handleMemberSaved = async () => {
 
       <!-- 그룹 -->
       <template v-for="group in groupList" :key="group.projectMemberId">
-        <div class="table-row">
+        <div class="table-row group-row">
           <div class="col-name">
             <span>{{ group.groupName }}</span>
           </div>
@@ -196,7 +196,6 @@ const handleMemberSaved = async () => {
             <button class="action-btn delete-btn" @click="openDeleteConfirm(group.projectMemberId)"><i class="pi pi-trash" /> 삭제</button>
           </div>
         </div>
-        <!-- 그룹 편집 아코디언 (멤버 목록 위) -->
         <Transition name="accordion">
           <div v-if="expandedEditId === group.projectMemberId" class="accordion-row">
             <div class="col-name"></div>
@@ -210,7 +209,7 @@ const handleMemberSaved = async () => {
             </div>
             <div class="col-actions accordion-actions">
               <button class="btn-save" @click="saveEdit(group)">저장</button>
-              <button class="btn-cancel" @click="closeEdit">취소</button>
+              <button class="btn-cancel-sm" @click="closeEdit">취소</button>
             </div>
           </div>
         </Transition>
@@ -237,7 +236,6 @@ const handleMemberSaved = async () => {
               </button>
             </div>
           </div>
-          <!-- 멤버 편집 아코디언 -->
           <Transition name="accordion">
             <div v-if="expandedEditId === member.projectMemberId" class="accordion-row">
               <div class="col-name"></div>
@@ -254,7 +252,7 @@ const handleMemberSaved = async () => {
               </div>
               <div class="col-actions accordion-actions">
                 <button class="btn-save" @click="saveEdit(member, true, entry)">저장</button>
-                <button class="btn-cancel" @click="closeEdit">취소</button>
+                <button class="btn-cancel-sm" @click="closeEdit">취소</button>
               </div>
             </div>
           </Transition>
@@ -265,6 +263,7 @@ const handleMemberSaved = async () => {
       <div v-if="userList.length === 0 && groupList.length === 0" class="empty-state">등록된 구성원이 없습니다.</div>
     </div>
   </div>
+
   <ConfirmDialog v-model:visible="visible" confirmLabel="확인" @confirm="handleDelConfirm">
     <span class="text-gray-700 font-medium">{{ confirmMsg }}</span>
   </ConfirmDialog>
@@ -280,92 +279,131 @@ const handleMemberSaved = async () => {
 </template>
 
 <style scoped>
-/* ── 공통 변수 ── */
 :root {
-  --color-bg: #f2f0eb;
-  --color-border: #c7c7c2;
+  --color-primary: #5b6e96;
+  --color-primary-light: #ebf0f8;
+  --color-border: #d6e4ea;
+  --color-border-inner: #e4edf2;
+  --color-bg-group: #eef3f8;
+  --color-bg-member: #f2f6fb;
+  --color-accordion: #dce8f2;
+  --color-accordion-member: #d4e4f0;
   --color-text: #3a3b35;
-  --color-link: #4a7fc1;
   --color-gray: #6b6b63;
-  --color-accordion: #e8e6e0;
-  --color-red: #e57373;
+  --color-red: #e05050;
 }
 
-/* ── 버튼 ── */
 .btn-outline {
   border: 1px solid var(--color-border) !important;
-  color: var(--color-text) !important;
+  color: var(--color-primary) !important;
   background: white !important;
   height: 36px !important;
   font-size: 13px !important;
 }
-
-.btn-solid {
-  background: #c0392b !important;
-  border-color: #c0392b !important;
-  color: white !important;
-  height: 36px !important;
-  font-size: 13px !important;
+.btn-outline:hover {
+  background: var(--color-primary-light) !important;
 }
 
-/* ── 테이블 전체 ── */
 .members-table {
   background: white;
   border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: 8px;
   overflow: hidden;
   font-size: 13px;
   color: var(--color-text);
+  box-shadow: 0 1px 4px rgba(91, 110, 150, 0.07);
 }
 
-/* ── 헤더 ── */
+/* 헤더 - 네이비 */
 .table-header-row {
   display: grid;
   grid-template-columns: 1fr 220px 180px;
-  background: var(--color-bg);
+  background: var(--color-primary);
   padding: 10px 16px;
   font-weight: 600;
   border-bottom: 1px solid var(--color-border);
-  color: var(--color-text);
+  color: var(--color-primary-light);
+  font-size: 13px;
 }
 
-/* ── 일반 행 ── */
+/* 섹션 구분 레이블 */
+.section-label {
+  font-size: 11px;
+  color: var(--color-primary);
+  font-weight: 600;
+  padding: 5px 16px 4px;
+  background: #f2f3f8;
+  border-top: 1px solid var(--color-border-inner);
+  letter-spacing: 0.04em;
+}
+
+/* 일반 행 - 흰 배경 */
 .table-row {
   display: grid;
   grid-template-columns: 1fr 220px 180px;
   padding: 10px 16px;
-  border-bottom: 1px solid #ebebeb;
+  border-top: 1px solid var(--color-border-inner);
   align-items: center;
   transition: background 0.15s;
+  background: white;
 }
 .table-row:hover {
-  background: #fafaf8;
-}
-.table-row:last-child {
-  border-bottom: none;
+  background: #f7f9fc;
 }
 
+/* 그룹 행 - 연한 파란 배경 */
+.group-row {
+  background: var(--color-bg-group);
+  font-weight: 500;
+}
+.group-row:hover {
+  background: #e3edf6;
+}
+
+/* 그룹 멤버 행 - 더 연한 파란 배경 */
 .member-row {
-  background: #f9f8f5;
+  background: var(--color-bg-member);
 }
 .member-row:hover {
-  background: #f2f0eb;
+  background: #e8f0f8;
+}
+
+/* 편집 아코디언 - 파란 계열 + 왼쪽 강조선 */
+.accordion-row {
+  display: grid;
+  grid-template-columns: 1fr 220px 180px;
+  padding: 12px 16px;
+  background: var(--color-accordion);
+  border-top: 1px solid var(--color-border);
+  align-items: start;
+  border-left: 3px solid var(--color-primary);
+}
+
+/* 그룹 멤버 편집 아코디언 - 더 짙은 배경 */
+.accordion-row-member {
+  display: grid;
+  grid-template-columns: 1fr 220px 180px;
+  padding: 12px 16px;
+  background: var(--color-accordion-member);
+  border-top: 1px solid var(--color-border);
+  align-items: start;
+  border-left: 3px solid #3d5a80;
 }
 
 .fixed-badge {
   font-size: 11px;
-  padding: 2px 6px;
+  padding: 2px 7px;
   border-radius: 4px;
-  background: #f0eeea;
-  color: var(--color-gray);
-  border: 1px solid var(--color-border);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  border: 1px solid #c5d5e8;
+  font-weight: 500;
 }
 
-/* ── 칸 ── */
 .col-name {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 .col-role {
   display: flex;
@@ -383,12 +421,12 @@ const handleMemberSaved = async () => {
 }
 
 .member-indent {
-  color: var(--color-gray);
+  color: var(--color-primary);
+  opacity: 0.5;
   margin-right: 2px;
   font-size: 12px;
 }
 
-/* ── 액션 버튼 ── */
 .action-btn {
   display: inline-flex;
   align-items: center;
@@ -402,10 +440,10 @@ const handleMemberSaved = async () => {
   transition: background 0.12s;
 }
 .edit-btn {
-  color: var(--color-gray);
+  color: var(--color-primary);
 }
 .edit-btn:hover {
-  background: #f0eeea;
+  background: var(--color-primary-light);
 }
 .delete-btn {
   color: var(--color-red);
@@ -414,22 +452,11 @@ const handleMemberSaved = async () => {
   background: #fdf0f0;
 }
 
-/* ── 아코디언 행 ── */
-.accordion-row {
-  display: grid;
-  grid-template-columns: 1fr 220px 180px;
-  padding: 12px 16px;
-  background: var(--color-accordion);
-  border-bottom: 1px solid var(--color-border);
-  align-items: start;
-}
-
 .role-checklist {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
-
 .role-item {
   display: flex;
   align-items: center;
@@ -439,13 +466,13 @@ const handleMemberSaved = async () => {
   color: var(--color-text);
 }
 .role-item input[type='checkbox'] {
-  accent-color: #c0392b;
+  accent-color: var(--color-primary);
   width: 14px;
   height: 14px;
   cursor: pointer;
 }
 .role-inherited {
-  opacity: 0.65;
+  opacity: 0.6;
   cursor: default;
 }
 .role-inherited input {
@@ -457,45 +484,52 @@ const handleMemberSaved = async () => {
   color: var(--color-gray);
 }
 
+/* 저장/취소 버튼 세로 배치 */
 .accordion-actions {
   display: flex;
+  flex-direction: column;
   gap: 6px;
-  align-items: flex-start;
-  justify-content: flex-end;
+  align-items: flex-end;
+  justify-content: flex-start;
 }
 
-.btn-save,
-.btn-cancel {
+.btn-save {
+  padding: 4px 14px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  border: none;
+  background: #e8920e;
+  color: white;
+  font-weight: 500;
+  transition: background 0.12s;
+}
+.btn-save:hover {
+  background: #c97700;
+}
+
+.btn-cancel-sm {
   padding: 4px 14px;
   border-radius: 4px;
   font-size: 12px;
   cursor: pointer;
   border: 1px solid var(--color-border);
-}
-.btn-save {
-  background: white;
-  color: var(--color-text);
-}
-.btn-save:hover {
-  background: #f0eeea;
-}
-.btn-cancel {
   background: white;
   color: var(--color-gray);
+  transition: background 0.12s;
 }
-.btn-cancel:hover {
-  background: #f0eeea;
+.btn-cancel-sm:hover {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
 }
 
-/* ── 빈 상태 ── */
 .empty-state {
   text-align: center;
   padding: 40px;
-  color: #aaa;
+  color: #aab4c8;
   font-size: 13px;
 }
 
-/* ── 아코디언 트랜지션 ── */
 .accordion-enter-active,
 .accordion-leave-active {
   transition: all 0.2s ease;
