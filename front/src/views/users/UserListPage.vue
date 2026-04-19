@@ -103,7 +103,7 @@ const onRowClick = (event) => {
 
     <span class="text-sm text-[#3A3B35] font-medium">전체 {{ totalCount }}명</span>
     <!-- 테이블 -->
-    <div class="bg-white rounded-xl shadow-sm border border-[#5B6E96] overflow-hidden mb-6">
+    <div class="bg-white rounded-xl shadow-sm border border-[#5B6E96] overflow-hidden mb-6 mt-2">
       <DataTable
         :value="usersStore.userList"
         v-model:first="first"
