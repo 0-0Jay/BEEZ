@@ -2,6 +2,7 @@
 import { useAuthStore } from '@/stores/auth';
 import { useWikiStore } from '@/stores/wiki';
 import * as Diff from 'diff';
+import { useToast } from 'primevue/usetoast';
 import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -9,6 +10,7 @@ const route = useRoute();
 const router = useRouter();
 const wikiStore = useWikiStore();
 const authStore = useAuthStore();
+const toast = useToast();
 
 const versions = ref([]);
 const openIndex = ref(null);
@@ -93,8 +95,12 @@ const executeRollback = async () => {
 
   if (result) {
     showRollbackModal.value = false;
-    alert('롤백이 완료되었습니다.');
-    // 버전 목록 새로고침
+    toast.add({
+      severity: 'success',
+      summary: '롤백 완료',
+      detail: '선택한 버전으로 성공적으로 롤백되었습니다.',
+      life: 3000
+    }); // 버전 목록 새로고침
     versions.value = await wikiStore.fetchWikiVersionList(wikiId);
   }
 };
@@ -120,7 +126,7 @@ const goBack = () => router.back();
         </div>
         <div class="version-right">
           작성자 : {{ version.userName }} / 작성일 : {{ version.createdOn?.substring(0, 10) }}
-          <Button v-if="index !== 0" raised class="ml-4" @click.stop="confirmRollback(version)">이 버전으로 롤백</button>
+          <Button v-if="index !== 0" raised class="ml-4" @click.stop="confirmRollback(version)">이 버전으로 롤백</Button>
         </div>
       </div>
 
