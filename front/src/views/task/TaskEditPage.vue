@@ -208,8 +208,6 @@ const buildChangeLog = () => {
   dateFields.forEach((field) => {
     const oldValue = formatDate(originalValues[field]) ?? '';
     const newValue = formatDate(form[field]) ?? '';
-    console.log(oldValue);
-    console.log(newValue);
     if (oldValue !== newValue) {
       changeLog.push({ fieldName: fieldMapper[field], oldValue, newValue });
     }

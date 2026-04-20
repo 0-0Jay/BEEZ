@@ -137,8 +137,6 @@ const loading = ref(false);
 onMounted(async () => {
   loading.value = true;
   await Promise.all([taskStore.findTypeList(), taskStore.findCateList(), taskStore.findCommonCodeList()]);
-  console.log(taskTypes.value);
-  console.log(taskCategories.value);
   loading.value = false;
 });
 </script>

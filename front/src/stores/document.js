@@ -36,8 +36,6 @@ export const useDocumentStore = defineStore('document', {
         }
       } catch (error) {
         console.error('즐겨찾기 실패:', error);
-        console.log(this.currentDocument?.id, typeof this.currentDocument?.id);
-        console.log(documentId, typeof documentId);
         throw error;
       }
     },
@@ -77,8 +75,6 @@ export const useDocumentStore = defineStore('document', {
           targetFileDetailId: id,
           isDeleted: true
         }));
-        console.log('deletedFileIds:', deletedFileIds); // ← 추가
-        console.log('fileUpdates:', fileUpdates); // ← 추가
 
         updateRequest.fileUpdates = fileUpdates;
 

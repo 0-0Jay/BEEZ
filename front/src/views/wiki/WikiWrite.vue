@@ -230,7 +230,6 @@ function cancelLink() {
 
 function registerLink() {
   const validLinks = linkItems.value.filter((l) => l.title || l.url);
-  console.log('등록할 링크:', validLinks);
   // TODO: API 연동
 }
 
@@ -253,11 +252,9 @@ async function confirmEdit() {
 
   //신규 위키는ID생성하고, 기존위키면 기존ID 사용
   const currentWikiId = isEditMode.value ? wikiId.value : (wikiStore.wikiDetail.id ?? null);
-  console.log('currentWikiId:', currentWikiId); // 확인용
 
   const commentRegex = new RegExp('<!--v-if-->', 'g'); // 에디터로 본문 작성하면 생기는 주석 삭제하고 DB에 저장하려함
   const cleanContent = editorContent.value ? editorContent.value.replace(commentRegex, '') : '';
-  console.log('정제된 데이터 확인:', cleanContent);
 
   //유효한 링크만 필터링해서 JSON처리
   const validLinks = linkItems.value.filter((l) => l.title.trim() || l.url.trim());
@@ -280,8 +277,6 @@ async function confirmEdit() {
   }; // saveData end
 
   const result = await wikiStore.saveWiki(saveData);
-
-  console.log('저장 결과:', result);
 
   if (result) {
     showEditModal.value = false;

@@ -18,9 +18,7 @@ export const useGitStore = defineStore('git', {
 
     // 저장소 등록
     async insertRepositories(payload) {
-      console.log('🔥 insertRepositories 호출됨', payload);
       await axios.post('/gits/repo', payload);
-      console.log(payload);
     },
 
     // 동기화
@@ -39,7 +37,6 @@ export const useGitStore = defineStore('git', {
     async findCommitsByTaskId(taskId) {
       const response = await axios.get(`/gits/commits/${taskId}`);
       this.commitList = response.data;
-      console.log(this.commitList);
     }
   }
   // ,persist: true

@@ -42,8 +42,6 @@ const fetchRepos = async () => {
 // 동기화 실행
 const onSync = async (data) => {
   loading.value = true;
-  console.log('지금 동기화 시도하는 ID:', data.id);
-  console.log('ID의 타입:', typeof data.id);
 
   if (!data.id || typeof data.id === 'object') {
     console.error('에러 발생! ID가 정상이 아닙니다.');
