@@ -85,7 +85,6 @@
     WHERE  pm.group_id = #{id}
     AND pm.user_id IS NULL
     AND pm.is_delete = 'F0'
-    AND p.is_lock = 'L0'
     AND p.status = 'K1'
     AND rm.is_inherited = 'P0'
     GROUP BY p.id, p.title

@@ -124,6 +124,16 @@ const validate = () => {
     isValid = false;
   }
 
+  if (userForm.newPassword || userForm.confirmPassword) {
+    if (userForm.newPassword.length < 4) {
+      errors.password = '비밀번호는 4자 이상이어야 합니다.';
+      isValid = false;
+    } else if (userForm.newPassword !== userForm.confirmPassword) {
+      errors.password = '비밀번호가 일치하지 않습니다.';
+      isValid = false;
+    }
+  }
+
   return isValid;
 };
 

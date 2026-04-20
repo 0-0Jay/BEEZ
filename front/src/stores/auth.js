@@ -4,12 +4,6 @@ import { defineStore } from 'pinia';
 import { computed } from 'vue';
 import { useProjectStore } from './project';
 
-function formatDate(dt) {
-  if (!dt) return '-';
-  const d = new Date(dt);
-  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}.`;
-}
-
 export const useAuthStore = defineStore('auth', {
   // state
   state: () => ({
@@ -156,8 +150,8 @@ export const useAuthStore = defineStore('auth', {
               selectedProject: {
                 id: projectId,
                 title: selectedProject?.title,
-                startDate: formatDate(selectedProject?.startDate),
-                endDate: formatDate(selectedProject?.endDate)
+                startDate: selectedProject?.startDate,
+                endDate: selectedProject?.endDate
               }
             })
           );
