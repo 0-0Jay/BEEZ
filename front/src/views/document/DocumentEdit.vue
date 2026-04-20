@@ -439,6 +439,7 @@ const goToDetail = () => {
   justify-content: flex-end;
   gap: 8px;
   margin-top: 8px;
+  padding-right: 40px;
 }
 
 .file-badge {

@@ -57,7 +57,7 @@ public class FileServiceImpl implements FileService {
           ? originalName.substring(originalName.lastIndexOf(".") + 1) : "";
         String storedName = UUID.randomUUID().toString() + (extension.isEmpty() ? "" : "." + extension);
         
-        // 실제 파일 저장 부분 + 추후에 S3 전용 코드로 바꿔야 함! - 기존의 코드임
+        // 로컬 기능 코드
 //        try {
 //          Path savePath = Paths.get(uploadPath, storedName);
 //          Files.createDirectories(savePath.getParent());
@@ -66,7 +66,7 @@ public class FileServiceImpl implements FileService {
 //          throw new RuntimeException("파일 저장 실패: " + originalName, e);
 //        }
         
-        // S3 업로드 (SDK v2) - S3안쓸경우 아래 try - catch 주석하고 위에 코드 살리면 됨
+        // S3 업로드
         try {
           s3Client.putObject(
             PutObjectRequest.builder()
