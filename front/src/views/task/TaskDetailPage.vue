@@ -212,16 +212,11 @@ watch(
 const activeTab = ref('comments');
 
 const commentData = ref({
-  taskId: taskId.value,
-  userId: userId.value,
   content: ''
 });
 
 const replyData = ref({
-  taskId: taskId.value,
-  userId: userId.value,
-  content: '',
-  parentId: null
+  content: ''
 });
 
 // 답글 UI 상태 (어느 댓글에 답글 입력창을 열었는지)
@@ -232,7 +227,11 @@ const addComment = async () => {
   if (commentData.value.content.length > 500) {
     return;
   }
-  await taskStore.insertTaskReply(commentData.value);
+  await taskStore.insertTaskReply({
+    taskId: taskId.value,
+    userId: userId.value,
+    content: commentData.value.content
+  });
   commentData.value.content = '';
   await taskStore.findTaskDetail(taskId.value);
   toast.add({
@@ -249,8 +248,13 @@ const addReply = async (comment) => {
   if (replyData.value.content.length > 500) {
     return;
   }
-  replyData.value.parentId = comment.id;
-  await taskStore.insertTaskReply(replyData.value);
+
+  await taskStore.insertTaskReply({
+    taskId: taskId.value,
+    userId: userId.value,
+    content: replyData.value.content,
+    parentId: comment.id
+  });
   replyData.value.content = '';
   replyData.value.parentId = null;
   replyingTo.value = null;
@@ -507,7 +511,7 @@ onMounted(async () => {
           <tr v-if="subTasks.length === 0" class="divide-x divide-[#D6E4EA]">
             <td class="px-6 py-3 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35]">추정 시간</td>
             <td class="px-6 py-3 text-base text-[#1A1816]">{{ formatHours(task.estimatedTime) }}</td>
-            <td class="px-6 py-3 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35]">작업</td>
+            <td class="px-6 py-3 bg-[#F2F3F8] text-base font-semibold text-[#3A3B35]">소요 시간</td>
             <td class="px-6 py-3">
               <div class="flex items-center gap-3">
                 <span class="text-base text-[#1A1816]">{{ formatHours(spentTime) }}</span>
@@ -811,7 +815,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- 수정 이력 -->
+      <!-- 수정 이력 탭 -->
       <div v-if="activeTab === 'history'" class="p-6">
         <DataTable :value="history" paginator :rows="10" paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown" stripedRows class="text-base" table-style="table-layout: fixed; width: 100%">
           <Column field="userId" header="수정자" :style="{ width: '160px' }">
@@ -895,18 +899,9 @@ onMounted(async () => {
         </DataTable>
       </div>
 
-      <!-- 커밋 로그 -->
+      <!-- 커밋 로그 탭 -->
       <div v-if="activeTab === 'commits'" class="p-6">
-        <DataTable
-          :value="commitList"
-          paginator
-          :rows="5"
-          :rowsPerPageOptions="[5, 10, 20]"
-          paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
-          stripedRows
-          class="text-base"
-          table-style="table-layout: fixed; width: 100%"
-        >
+        <DataTable :value="commitList" paginator :rows="10" paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown" stripedRows class="text-base" table-style="table-layout: fixed; width: 100%">
           <template #empty>
             <div class="flex flex-col items-center justify-center py-10">
               <i class="pi pi-github text-4xl text-[#C7C7C2] mb-3"></i>

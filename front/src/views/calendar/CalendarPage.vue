@@ -264,7 +264,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="h-full flex flex-col bg-gray-50 px-10 py-8 font-sans overflow-hidden">
+  <div class="h-full flex flex-col bg-white px-10 py-8 font-sans overflow-hidden">
     <div class="mb-6">
       <h1 class="text-2xl font-bold text-gray-900 tracking-tight">달력</h1>
     </div>
