@@ -79,7 +79,6 @@ export const useAuthStore = defineStore('auth', {
     async requestPasswordReset(payload) {
       try {
         const response = await axios.post('/auth/reset-request', payload);
-        console.log(response.data);
 
         return { success: true, message: response.data };
       } catch (err) {
@@ -91,7 +90,6 @@ export const useAuthStore = defineStore('auth', {
     async resetPassword(payload) {
       try {
         const response = await axios.post('/auth/reset-password', payload);
-        console.log(response.data);
 
         return { success: true, message: response.data };
       } catch (err) {
@@ -118,13 +116,13 @@ export const useAuthStore = defineStore('auth', {
       const response = await axios.get(`/project-auth/permissions/${projectId}`);
       this.projectPermissions = response.data;
       this.currentProjectId = projectId;
-      console.log('프로젝트별 권한 -> ', this.projectPermissions);
+      // console.log('프로젝트별 권한 -> ', this.projectPermissions);
     },
 
     async findRolesByProject(projectId) {
       const response = await axios.get(`/project-auth/roles/${projectId}`);
       this.projectRoles = response.data;
-      console.log('프로젝트별 역할 -> ', this.projectRoles);
+      // console.log('프로젝트별 역할 -> ', this.projectRoles);
     },
 
     async selectProject(projectId) {

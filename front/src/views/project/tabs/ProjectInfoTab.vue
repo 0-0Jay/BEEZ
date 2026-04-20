@@ -50,8 +50,6 @@ onMounted(async () => {
         endDate: p.endDate
       }))
   ];
-  console.log('parentId:', info.parentId);
-  console.log('selectedParent:', selectedParent.value);
 });
 
 const selectedParent = computed(() => projectOptions.value.find((p) => p.value && p.value === form.parentId) ?? null);

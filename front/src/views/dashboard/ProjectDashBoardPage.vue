@@ -277,7 +277,6 @@ onMounted(async () => {
     };
   }
   loading.value = false;
-  console.log(d);
 });
 </script>
 

@@ -154,7 +154,6 @@ export const useProjectStore = defineStore('project', {
 
     // 사용자 + 그룹 (검색)
     async fetchSearchMembers(keyword = null) {
-      console.log('selectedProject:', this.selectedProject);
       const response = await axios.get(`/project/members/search`, {
         params: { projectId: this.selectedProject.id, keyword }
       });

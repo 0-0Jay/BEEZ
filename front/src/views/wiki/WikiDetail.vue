@@ -82,9 +82,6 @@ const generateTOC = () => {
 onMounted(async () => {
   const { projectId, wikiId } = route.params;
 
-  console.log('projectId:', projectId);
-  console.log('wikiId:', wikiId);
-
   if (wikiId) {
     await wikiStore.fetchWikiDetail(wikiId);
   }

@@ -20,8 +20,6 @@ export const useWorkflowStore = defineStore('workflow', {
 
       // 데이터가 아예 없거나 빈 배열일 때
       if (!response.data || response.data.length === 0) {
-        console.log(`${params.conditionType} 데이터 없음: 기본 판 생성`);
-
         const defaultMatrix = this.generateDefaultMatrix(params.conditionType);
         this.workflowMatrices[params.conditionType] = defaultMatrix;
         return defaultMatrix;

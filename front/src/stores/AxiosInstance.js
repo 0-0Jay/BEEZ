@@ -33,7 +33,6 @@ axiosInstance.interceptors.request.use(
 
     if (projectId) {
       config.headers['X-Project-Id'] = projectId;
-      console.log('최종 projectId:', projectId);
     }
     //  else {
     //   console.warn('projectId 없음 - 권한 문제 발생 가능');
@@ -55,7 +54,6 @@ axiosInstance.interceptors.response.use(
 
     // 공통 에러 핸들링
     handleError(status, message, error);
-    console.log(error);
 
     // 호출부에서 추가 처리가 필요하면 reject로 전달
     error.message = message;
@@ -113,13 +111,13 @@ function handleError(status, message, error) {
     case 404:
     case 405:
     case 409:
-      console.log(error.response);
-      console.log(error.response.data);
+      // console.log(error.response);
+      // console.log(error.response.data);
       break;
     case 500:
     case 501:
       // 예: 전역 토스트/알림 출력
-      console.log(message); // 실제론 toast 라이브러리 권장
+      // console.log(message); // 실제론 toast 라이브러리 권장
       break;
 
     default:

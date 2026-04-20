@@ -59,7 +59,7 @@ export const setupAuthGuard = async (to, from, next) => {
       }
     }
 
-    console.log(`[Guard] 현재 페이지: ${to.name}, 찾은 ID: ${projectId}`);
+    // console.log(`[Guard] 현재 페이지: ${to.name}, 찾은 ID: ${projectId}`);
 
     if (!projectId) {
       if (to.meta.isGlobal && (authStore.user.role === 'ROLE0001' || authStore.user.role === 'ROLE0002')) {
@@ -90,11 +90,6 @@ export const setupAuthGuard = async (to, from, next) => {
         return next({ name: 'dashboard' });
       }
     }
-
-    console.log('내 역할:', authStore.user?.role);
-    console.log('필요한 코드:', to.meta.permission);
-    console.log('보유 권한 리스트:', JSON.stringify(authStore.projectPermissions));
-    // console.log('포함 여부:', authStore.projectPermissions.includes(to.meta.permission));
   }
 
   const ROLE_NAMES = {
@@ -113,11 +108,6 @@ export const setupAuthGuard = async (to, from, next) => {
     }
 
     if (!userRole.includes(to.meta.role)) {
-      // const roleName = ROLE_NAMES[to.meta.role] || to.meta.role;
-      // const myRoleName = userRole.length ? userRole.map((r) => ROLE_NAMES[r] || r).join(', ') : '없음';
-
-      // console.log('alert 직전');
-      // alertStore.setAlert(`접근 권한이 없습니다!\n(보유 권한: ${myRoleName}, 필요: ${roleName})`);
       alertStore.setAlert('접근 권한이 없습니다!');
 
       return next({ name: 'dashboard' });

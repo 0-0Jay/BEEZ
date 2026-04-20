@@ -13,7 +13,6 @@ const projectToDelete = ref({ id: '', identifier: '' });
 const auth = useAuthStore();
 
 const currentRoleIds = auth.user.role;
-console.log(auth.user.role);
 
 const openDeleteModal = (data) => {
   // 1. 현재 화면에 있는 목록 중 나를 부모로 가진 프로젝트가 있는지 확인
@@ -136,10 +135,8 @@ const toggleMenu = (event, data) => {
 };
 
 const goToDetail = (project) => {
-  console.log(project);
   if (project.isLock === 'L1') return;
   projectStore.selectedProject = { title: project.title, id: project.id, startDate: project.startDate, endDate: project.endDate };
-  console.log(projectStore.selectedProject);
   router.push(`/project`);
 };
 
@@ -226,8 +223,6 @@ const lockProject = async (id) => {
   } catch (error) {
     // 1. 서버에서 보낸 메시지 추출 (구조 확인)
     const errorMsg = error.response?.data?.message || error.message;
-
-    console.log('추출된 메시지:', errorMsg); // "CHILD_PROJECT_NOT_LOCKED"가 찍히는지 확인
 
     if (errorMsg === 'CHILD_PROJECT_NOT_LOCKED') {
       toast.add({
