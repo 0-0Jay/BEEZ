@@ -214,11 +214,11 @@ const workflowSeverity = (workflow) => {
 
     <!-- 필터 -->
     <div class="bg-[#F2F3F8] px-6 py-4 rounded-lg mb-6 shadow-sm border border-[#ECEEF4] flex items-center flex-wrap gap-4">
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-3 mr-3">
         <label class="filter-label">버전</label>
         <Select v-model="filters.versionId" :options="versionOptions" optionLabel="label" optionValue="value" placeholder="선택" class="filter-input w-36" showClear />
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-3 mr-10">
         <label class="filter-label">버전 상태</label>
         <Select v-model="filters.versionStatus" :options="versionStatusOptions" optionLabel="name" optionValue="id" placeholder="선택" class="filter-input w-36" showClear />
       </div>
@@ -226,7 +226,7 @@ const workflowSeverity = (workflow) => {
         <Checkbox v-model="filters.includeSubProject" :binary="true" inputId="subProject" />
         <label for="subProject" class="filter-label cursor-pointer">하위 프로젝트 일감 포함</label>
       </div>
-      <div class="ml-auto flex gap-2">
+      <div class="ml-auto flex gap-3">
         <Button label="초기화" severity="secondary" raised @click="resetFilters" />
         <Button label="조회" icon="pi pi-search" raised @click="fetchRoadmaps" />
       </div>
@@ -244,11 +244,11 @@ const workflowSeverity = (workflow) => {
         <p class="text-[#6B6B63]">조회된 데이터가 없습니다.</p>
       </div>
 
-      <div v-else class="flex flex-col gap-4">
+      <div v-else class="flex flex-col gap-4 mb-10">
         <div v-for="version in groupedRoadmap" :key="version.versionId" class="bg-white rounded-xl border border-[#ECEEF4] shadow-sm overflow-hidden">
           <!-- 버전 헤더 -->
           <div class="bg-[#5B6E96] px-5 py-3 flex items-center gap-3 border-b border-[#4a5d82]">
-            <span class="text-lg font-semibold text-white"> {{ version.projectName }} {{ version.versionName }}</span>
+            <span class="text-lg font-medium text-white"> {{ version.projectName }} {{ version.versionName }}</span>
             <Tag :value="version.versionStatus === 'N1' ? '진행' : '닫힘'" :severity="version.versionStatus === 'N1' ? 'success' : 'secondary'" />
           </div>
 
@@ -256,12 +256,12 @@ const workflowSeverity = (workflow) => {
           <div class="px-5 py-4">
             <!-- 날짜 / 지연 -->
             <template v-if="calcDelay(version.endDate)">
-              <div class="text mb-1">
+              <div class="text-lg mb-1">
                 <span
                   :class="{
-                    'font-semibold text-[#D85A30]': calcDelay(version.endDate).type === 'delay',
-                    'font-semibold text-[#0f6e56]': calcDelay(version.endDate).type === 'remain',
-                    'font-semibold text-[#185fa5]': calcDelay(version.endDate).type === 'today'
+                    'font-bold text-[#D85A30]': calcDelay(version.endDate).type === 'delay',
+                    'font-bold text-[#0f6e56]': calcDelay(version.endDate).type === 'remain',
+                    'font-bold text-[#185fa5]': calcDelay(version.endDate).type === 'today'
                   }"
                 >
                   <template v-if="calcDelay(version.endDate).type === 'delay'">{{ calcDelay(version.endDate).days }}일 지연</template>
@@ -318,7 +318,7 @@ const workflowSeverity = (workflow) => {
               <div class="bg-[#F2F3F8] rounded-lg p-4 mb-4">
                 <div class="flex items-center gap-2 mb-3">
                   <Select v-model="getGroupState(version.versionId).groupBy" :options="GROUP_OPTIONS" optionLabel="label" optionValue="value" class="filter-input w-32" @change="onGroupByChange(version.versionId)" />
-                  <span class="text-sm font-semibold text-[#1A1816]">별 일감 현황</span>
+                  <span class="text-sm font-medium text-[#1A1816]">별 일감 현황</span>
                 </div>
 
                 <!-- 그룹별 현황 바 -->
