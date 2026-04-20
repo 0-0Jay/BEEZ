@@ -143,7 +143,7 @@ const goToDetail = () => {
         <div class="form-group full align-top">
           <label class="form-label">문서 설명<span class="text-red-500 pl-1">*</span></label>
           <div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
-            <Textarea v-model="form.content" class="h-40" :class="{ 'is-error': submitted && !form.content }" placeholder="문서 설명을 입력해주세요." />
+            <Textarea v-model="form.content" class="h-40" :class="{ 'is-error': submitted && !form.content }" placeholder="문서 설명을 입력해주세요." maxlength="500" />
             <div class="char-count">
               <span :class="{ 'text-error': contentCount > 500 }">{{ contentCount }}</span> / 500
             </div>
@@ -161,7 +161,7 @@ const goToDetail = () => {
         <div class="form-group full align-top">
           <span class="form-label pt">수정 사유<span class="text-red-500 pl-2">*</span></span>
           <div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
-            <Textarea v-model="form.editReason" class="h-40" :class="{ 'is-error': submitted && !form.editReason }" placeholder="수정 사유를 입력해주세요." />
+            <Textarea v-model="form.editReason" class="h-40" :class="{ 'is-error': submitted && !form.editReason }" placeholder="수정 사유를 입력해주세요." maxlength="500" />
             <div class="char-count">
               <span :class="{ 'text-error': editReasoncount > 500 }">{{ editReasoncount }}</span> / 500
             </div>
