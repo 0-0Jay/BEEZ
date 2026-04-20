@@ -101,43 +101,42 @@ const formatDateTime = (datetime) => {
 </script>
 
 <template>
-  <div class="p-8 bg-[#ffffff] h-full">
+  <div class="px-8 py-5 bg-[#ffffff] h-full">
     <h1 class="text-2xl font-bold text-[#1A1816] mb-4">로그 목록</h1>
 
     <!-- 검색 필터 -->
-    <div class="bg-[#F2F3F8] px-10 py-8 rounded-lg mb-4 shadow-sm border border-[#ECEEF4]">
-      <!-- 1줄: 드롭다운 + 날짜 -->
-      <div class="flex items-center flex-wrap gap-y-3 mb-8">
-        <div class="flex items-center mr-15">
-          <label class="filter-label mr-5">구분</label>
-          <Select v-model="filters.category" :options="categoryOptions" optionLabel="name" optionValue="id" placeholder="선택" class="filter-input w-45" showClear />
+    <div class="bg-[#F2F3F8] border border-[#C7C7C2] rounded-xl shadow-sm px-7 pt-5 pb-5 mb-5">
+      <div class="grid grid-cols-8 gap-x-5 gap-y-4">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-base font-semibold uppercase tracking-wider text-stone-500">구분</label>
+          <Select v-model="filters.category" :options="categoryOptions" optionLabel="name" optionValue="id" placeholder="선택" showClear />
         </div>
 
-        <div class="flex items-center mr-15">
-          <label class="filter-label mr-5 ml-20">로그 유형</label>
-          <Select v-model="filters.type" :options="typeOptions" optionLabel="name" optionValue="id" placeholder="선택" class="filter-input w-45" showClear />
+        <div class="flex flex-col gap-1.5">
+          <label class="text-base font-semibold uppercase tracking-wider text-stone-500">로그 유형</label>
+          <Select v-model="filters.type" :options="typeOptions" optionLabel="name" optionValue="id" placeholder="선택" showClear />
         </div>
 
-        <div class="flex items-center mr-15">
-          <label class="filter-label mr-5 ml-20">담당자</label>
-          <Select v-model="filters.userId" :options="userOptions" optionLabel="label" optionValue="value" placeholder="선택" class="filter-input w-45" showClear />
+        <div class="flex flex-col gap-1.5">
+          <label class="text-base font-semibold uppercase tracking-wider text-stone-500">담당자</label>
+          <Select v-model="filters.userId" :options="userOptions" optionLabel="label" optionValue="value" placeholder="선택" showClear />
         </div>
-      </div>
 
-      <!-- 2줄: 내용 + 버튼 -->
-      <div class="flex items-center">
-        <div class="flex items-center mr-8">
-          <label class="filter-label mr-5">내용</label>
+        <div class="flex flex-col gap-1.5 col-span-2">
+          <label class="text-base font-semibold uppercase tracking-wider text-stone-500">발생일</label>
+          <div class="flex items-center gap-2">
+            <DatePicker v-model="filters.startDate" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" :maxDate="filters.endDate" showIcon inputClass="w-full" />
+            <span class="text-stone-500 text-base shrink-0">~</span>
+            <DatePicker v-model="filters.endDate" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" :minDate="filters.startDate" showIcon inputClass="w-full" />
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-1.5 col-span-2">
+          <label class="text-base font-semibold uppercase tracking-wider text-stone-500">내용</label>
           <InputText v-model="filters.content" placeholder="검색할 키워드를 입력하세요." class="filter-input w-100" @keyup.enter="handleSearch" />
         </div>
 
-        <div class="flex items-center">
-          <label class="filter-label mr-5 ml-30">발생일</label>
-          <DatePicker v-model="filters.startDate" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" class="filter-input w-50" :maxDate="filters.endDate" showIcon inputClass="w-full" />
-          <span class="text-sm text-[#6B6B63] px-2">~</span>
-          <DatePicker v-model="filters.endDate" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" class="filter-input w-50" :minDate="filters.startDate" showIcon inputClass="w-full" />
-        </div>
-        <div class="flex gap-2 ml-auto">
+        <div class="flex gap-2 ml-auto mt-8 mb-1">
           <Button label="초기화" severity="secondary" raised @click="resetFilters" />
           <Button label="조회" icon="pi pi-search" raised @click="handleSearch" />
         </div>
@@ -227,7 +226,7 @@ const formatDateTime = (datetime) => {
 </template>
 
 <style scoped>
-.filter-label {
+/* .filter-label {
   font-size: 1rem;
   font-weight: 600;
   color: #000000c2;
@@ -239,7 +238,7 @@ const formatDateTime = (datetime) => {
 :deep(.filter-input .p-select-label) {
   display: flex;
   align-items: center;
-}
+} */
 
 :deep(.table-header) {
   background-color: #5b6e96 !important;

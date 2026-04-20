@@ -255,7 +255,7 @@ function progressBarColor(p) {
       <Button v-if="['ROLE0001', 'ROLE0002'].includes(currentRoleIds)" label="프로젝트 등록" icon="pi pi-plus" class="!bg-[#2D8FAD] !border-[#2D8FAD] hover:!bg-[#257892]" raised @click="router.push('/project/create')" />
     </div>
 
-    <div class="bg-[#F2F3F8] px-10 py-8 rounded-lg mb-4 shadow-sm border border-[#ECEEF4] flex items-center">
+    <div class="bg-[#F2F3F8] border border-[#C7C7C2] rounded-xl shadow-sm px-7 pt-5 pb-5 mb-5">
       <!-- 입력칸 + 체크박스 묶음 -->
       <div class="flex items-center flex-wrap gap-y-3">
         <label class="filter-label mr-3 self-start mt-3">프로젝트명</label>

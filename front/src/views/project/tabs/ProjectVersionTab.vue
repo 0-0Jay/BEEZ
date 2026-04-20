@@ -104,15 +104,15 @@ const formatDate = (date) => {
 
 <template>
   <div class="bg-[#ffffff] h-full">
-    <div class="flex justify-end mb-4">
-      <Button v-if="!projectInfo?.parentId" label="버전 추가" icon="pi pi-plus" severity="contrast" outlined @click="modalVisible = true" />
+    <div class="flex justify-end mb-2">
+      <Button v-if="!projectInfo?.parentId" label="버전 추가" icon="pi pi-plus" class="!bg-[#2D8FAD] !border-[#2D8FAD] hover:!bg-[#257892]" raised @click="modalVisible = true" />
     </div>
     <!-- 조회 영역 -->
-    <div class="flex bg-[#E8E5DC] px-10 py-8 rounded-lg mb-8 shadow-sm border border-[#C7C7C2]">
-      <div class="flex items-center flex-1 flex-wrap gap-y-3">
-        <label class="filter-label mr-5">버전명</label>
+    <div class="bg-[#F2F3F8] px-10 py-8 rounded-lg mb-8 shadow-sm border border-[#ECEEF4] flex items-center">
+      <div class="flex items-center flex-wrap gap-y-3">
+        <label class="filter-label mr-3">버전명</label>
         <Select v-model="filters.id" :options="versionOptions" optionLabel="label" optionValue="value" placeholder="선택" class="filter-input w-80 mr-10" />
-        <label class="filter-label mr-5">상태</label>
+        <label class="filter-label mr-3">상태</label>
         <Select v-model="filters.status" :options="statusOptions" optionLabel="name" optionValue="id" placeholder="선택" class="filter-input w-50 mr-10" />
       </div>
 
@@ -122,7 +122,7 @@ const formatDate = (date) => {
       </div>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm border border-[#C7C7C2] overflow-hidden">
+    <div class="bg-white rounded-xl shadow-sm border border-[#5B6E96] overflow-hidden mb-6">
       <DataTable :value="versions" :loading="loading" dataKey="id" :rowHover="true" tableStyle="width: 100%">
         <template #empty>
           <div class="text-center py-10 text-gray-400">등록된 버전이 없습니다.</div>
@@ -177,7 +177,7 @@ const formatDate = (date) => {
 .filter-label {
   font-size: 1rem;
   font-weight: 600;
-  color: #3a3b35;
+  color: #000000c2;
   white-space: nowrap;
 }
 
@@ -190,26 +190,24 @@ const formatDate = (date) => {
 }
 
 :deep(.table-header) {
-  background-color: #e8e5dc !important;
-  color: #1a1816 !important;
+  background-color: #5b6e96 !important;
+  color: #ffffff !important;
   font-weight: 700 !important;
   text-align: center !important;
   padding: 1.25rem 0 !important;
 }
-
 :deep(.table-header .p-datatable-column-header-content) {
   justify-content: center;
+}
+:deep(.p-datatable-tbody > tr > td) {
+  text-align: center !important;
+  padding: 1rem 0 !important;
+  border-bottom: 1px solid #f2f0eb !important;
 }
 
 :deep(.btn-register-outline) {
   border-color: #c7c7c2 !important;
   color: #3a3b35 !important;
   height: 36px !important;
-}
-
-:deep(.p-datatable-tbody > tr > td) {
-  text-align: center !important;
-  padding: 1rem 0 !important;
-  border-bottom: 1px solid #f2f0eb !important;
 }
 </style>

@@ -2,7 +2,7 @@
 import { useProjectStore } from '@/stores/project';
 import { useVersionStore } from '@/stores/version';
 import { storeToRefs } from 'pinia';
-import { computed, onMounted, reactive } from 'vue';
+import { computed, onMounted, reactive, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
 const projectStore = useProjectStore();
@@ -28,6 +28,13 @@ const filters = reactive({
   versionStatus: '',
   includeSubProject: true
 });
+
+watch(
+  () => filters.includeSubProject,
+  () => {
+    fetchRoadmaps();
+  }
+);
 
 const versionStatusOptions = computed(() => commonCodeList.value.filter((c) => c.cgroup === '0N'));
 
@@ -162,6 +169,14 @@ const calcProgress = (tasks) => {
   return Math.round((done / tasks.length) * 100);
 };
 
+function progressBarColor(p) {
+  if (p === 100) return '#22C55E';
+  if (p >= 90) return '#86EFAC';
+  if (p >= 60) return '#EAB308';
+  if (p >= 30) return '#F97316';
+  return '#EF4444';
+}
+
 // ─── 날짜 유틸 ───────────────────────────────────────────────
 const calcDelay = (endDate) => {
   if (!endDate) return null;
@@ -224,104 +239,126 @@ const workflowSeverity = (workflow) => {
 
     <!-- 로드맵 목록 -->
     <div v-else class="flex flex-col gap-4">
-      <div v-for="version in groupedRoadmap" :key="version.versionId" class="bg-white rounded-xl border border-[#ECEEF4] shadow-sm overflow-hidden">
-        <!-- 버전 헤더 -->
-        <div class="bg-[#F2F3F8] px-5 py-3 flex items-center gap-3 border-b border-[#ECEEF4]">
-          <span class="text-base font-semibold text-[#1A1816]">{{ version.projectName }} {{ version.versionName }}</span>
-          <Tag :value="version.versionStatus === 'N1' ? '진행' : '닫힘'" :severity="version.versionStatus === 'N1' ? 'success' : 'secondary'" />
-        </div>
+      <div v-if="groupedRoadmap.length === 0" class="flex flex-col items-center justify-center py-10">
+        <i class="pi pi-search text-4xl text-[#C7C7C2] mb-3"></i>
+        <p class="text-[#6B6B63]">조회된 데이터가 없습니다.</p>
+      </div>
 
-        <!-- 버전 바디 -->
-        <div class="px-5 py-4">
-          <!-- 날짜 / 지연 -->
-          <template v-if="calcDelay(version.endDate)">
-            <div v-if="calcDelay(version.endDate).type === 'delay'" class="text-sm font-semibold text-[#D85A30]">{{ calcDelay(version.endDate).days }}일 지연</div>
-            <div v-else-if="calcDelay(version.endDate).type === 'remain'" class="text-sm font-semibold text-[#0f6e56]">{{ calcDelay(version.endDate).days }}일 남음</div>
-            <div v-else class="text-sm font-semibold text-[#185fa5]">오늘 마감</div>
-          </template>
-          <div v-if="version.endDate" class="text-sm text-[#6B6B63] mb-1">({{ formatDate(version.endDate) }})</div>
-
-          <!-- 버전 설명 -->
-          <div v-if="version.description" class="text-sm text-[#6B6B63] mb-4">{{ version.description }}</div>
-
-          <!-- 전체 진척률 -->
-          <div class="flex items-center gap-3 mb-1">
-            <div class="flex-1 h-2 bg-[#ECEEF4] rounded-full overflow-hidden">
-              <div class="h-full rounded-full bg-[#5B6E96]" :style="{ width: calcProgress(version.tasks) + '%' }" />
-            </div>
-            <span class="text-sm text-[#6B6B63] min-w-[36px] text-right">{{ calcProgress(version.tasks) }}%</span>
+      <div v-else class="flex flex-col gap-4">
+        <div v-for="version in groupedRoadmap" :key="version.versionId" class="bg-white rounded-xl border border-[#ECEEF4] shadow-sm overflow-hidden">
+          <!-- 버전 헤더 -->
+          <div class="bg-[#5B6E96] px-5 py-3 flex items-center gap-3 border-b border-[#4a5d82]">
+            <span class="text-lg font-semibold text-white"> {{ version.projectName }} {{ version.versionName }}</span>
+            <Tag :value="version.versionStatus === 'N1' ? '진행' : '닫힘'" :severity="version.versionStatus === 'N1' ? 'success' : 'secondary'" />
           </div>
-          <div class="text-xs text-[#9A9B90] mb-4">{{ version.tasks.length }} 일감 ({{ version.tasks.filter((t) => t.taskWorkflow === 'Q3').length }}건 완료 / {{ version.tasks.filter((t) => t.taskWorkflow !== 'Q3').length }}건 진행중)</div>
 
-          <!-- ── 작업시간 관리 ── -->
-          <template v-if="version.tasks.length > 0">
-            <div class="mb-1 text-xs font-semibold text-[#1A1816]">작업 시간 관리</div>
-            <div class="grid grid-cols-2 gap-3 mb-2">
-              <div class="bg-[#F2F3F8] rounded-lg py-3 text-center">
-                <div class="text-xs text-[#6B6B63] mb-1">추정시간</div>
-                <div class="text-xl font-semibold text-[#185fa5]">{{ calcTimeStats(version.tasks).estimated }}h</div>
+          <!-- 버전 바디 -->
+          <div class="px-5 py-4">
+            <!-- 날짜 / 지연 -->
+            <template v-if="calcDelay(version.endDate)">
+              <div class="text mb-1">
+                <span
+                  :class="{
+                    'font-semibold text-[#D85A30]': calcDelay(version.endDate).type === 'delay',
+                    'font-semibold text-[#0f6e56]': calcDelay(version.endDate).type === 'remain',
+                    'font-semibold text-[#185fa5]': calcDelay(version.endDate).type === 'today'
+                  }"
+                >
+                  <template v-if="calcDelay(version.endDate).type === 'delay'">{{ calcDelay(version.endDate).days }}일 지연</template>
+                  <template v-else-if="calcDelay(version.endDate).type === 'remain'">{{ calcDelay(version.endDate).days }}일 남음</template>
+                  <template v-else>오늘 마감</template>
+                </span>
+                <span v-if="version.endDate" class="text-[#6B6B63]"> ({{ formatDate(version.endDate) }})</span>
               </div>
-              <div class="bg-[#F2F3F8] rounded-lg py-3 text-center">
-                <div class="text-xs text-[#6B6B63] mb-1">소요시간</div>
-                <div class="text-xl font-semibold text-[#185fa5]">{{ calcTimeStats(version.tasks).spent }}h</div>
+            </template>
+
+            <!-- 버전 설명 -->
+            <div v-if="version.description" class="text text-[#6B6B63] mb-4 mt-2">{{ version.description }}</div>
+
+            <!-- 전체 진척률 -->
+            <div class="flex items-center gap-3 mb-1">
+              <div class="flex-1 h-5 bg-[#ECEEF4] rounded-lg overflow-hidden">
+                <ProgressBar
+                  :style="{
+                    width: calcProgress(version.tasks) + '%',
+                    background: progressBarColor(calcProgress(version.tasks))
+                  }"
+                />
               </div>
+              <span class="text-sm text-[#6B6B63] min-w-[36px] text-right">{{ calcProgress(version.tasks) }}%</span>
             </div>
-            <div class="h-1.5 bg-[#ECEEF4] rounded-full overflow-hidden mb-1">
-              <div class="h-full rounded-full bg-[#5B6E96]" :style="{ width: calcTimeStats(version.tasks).pct + '%' }" />
-            </div>
-            <div class="text-xs text-[#9A9B90] mb-4">추정 대비 {{ calcTimeStats(version.tasks).pct }}% 소요</div>
-          </template>
+            <div class="text-xs text-[#9A9B90] mb-4">{{ version.tasks.length }} 일감 ({{ version.tasks.filter((t) => t.taskWorkflow === 'Q3').length }}건 완료 / {{ version.tasks.filter((t) => t.taskWorkflow !== 'Q3').length }}건 진행중)</div>
 
-          <!-- 일감 없음 -->
-          <div v-if="version.tasks.length === 0" class="text-sm text-[#9A9B90] py-2">이 버전에 해당하는 일감 없음</div>
-
-          <template v-else>
-            <div class="border-t border-[#ECEEF4] my-3" />
-
-            <!-- ── 일감 현황 (그룹 드롭다운) ── -->
-            <div class="bg-[#F2F3F8] rounded-lg p-4 mb-4">
-              <div class="flex items-center gap-2 mb-3">
-                <Select v-model="getGroupState(version.versionId).groupBy" :options="GROUP_OPTIONS" optionLabel="label" optionValue="value" class="filter-input w-32" @change="onGroupByChange(version.versionId)" />
-                <span class="text-sm font-semibold text-[#1A1816]">별 일감 현황</span>
-              </div>
-
-              <!-- 그룹별 현황 바 -->
-              <div
-                v-for="(stat, key) in calcGroupStats(version.tasks, getGroupState(version.versionId).groupBy)"
-                :key="key"
-                class="flex items-center gap-2 mb-2 cursor-pointer px-2 py-1 rounded-md transition-all"
-                :class="getGroupState(version.versionId).selectedKey === key ? 'bg-white outline outline-[1.5px] outline-[#5B6E96]' : 'hover:bg-white'"
-                @click="selectGroupKey(version.versionId, key)"
-              >
-                <span class="text-xs text-[#185fa5] font-medium text-right" style="min-width: 80px">{{ key }}</span>
-                <div class="flex-1 h-2 bg-white rounded-full overflow-hidden">
-                  <div class="h-full rounded-full bg-[#5B6E96]" :style="{ width: Math.round((stat.done / stat.total) * 100) + '%' }" />
+            <!-- ── 작업시간 관리 ── -->
+            <template v-if="version.tasks.length > 0">
+              <div class="mb-1 text font-semibold text-[#1A1816]">작업 시간 관리</div>
+              <div class="grid grid-cols-2 gap-3 mb-2">
+                <div class="bg-[#F2F3F8] rounded-lg py-3 text-center">
+                  <div class="text-m text-[#6B6B63] mb-1">추정시간</div>
+                  <div class="text-2xl font-semibold text-[#185fa5]">{{ calcTimeStats(version.tasks).estimated }}h</div>
                 </div>
-                <span class="text-xs text-[#9A9B90]" style="min-width: 36px; text-align: right">{{ stat.done }}/{{ stat.total }}</span>
-              </div>
-            </div>
-
-            <!-- ── 연결된 일감 ── -->
-            <div class="flex items-center gap-2 mb-2">
-              <span class="text-sm font-semibold text-[#1A1816]">연결된 일감</span>
-              <span class="text-xs text-[#6B6B63]">
-                <template v-if="getGroupState(version.versionId).selectedKey"> — {{ getGroupState(version.versionId).selectedKey }} ({{ filteredTasks(version.versionId, version.tasks).length }}건) </template>
-                <template v-else> (전체 {{ version.tasks.length }}건) </template>
-              </span>
-            </div>
-
-            <div class="flex flex-col gap-2">
-              <div v-for="task in filteredTasks(version.versionId, version.tasks)" :key="task.taskId" class="flex items-center justify-between px-4 py-2 bg-[#F2F3F8] rounded-lg border border-[#ECEEF4]">
-                <div class="flex items-center gap-3">
-                  <Tag :value="task.taskTypeName" severity="info" />
-                  <div class="text-sm text-[#1A1816] cursor-pointer hover:underline hover:text-[#185fa5]" @click="router.push(`/task/${task.taskId}`)">{{ task.projectName }} - #{{ task.taskId }}: {{ task.taskTitle }}</div>
-                </div>
-                <div class="flex items-center gap-2">
-                  <Tag :value="workflowLabel(task.taskWorkflow)" :severity="workflowSeverity(task.taskWorkflow)" />
+                <div class="bg-[#F2F3F8] rounded-lg py-3 text-center">
+                  <div class="text-m text-[#6B6B63] mb-1">소요시간</div>
+                  <div class="text-2xl font-semibold text-[#185fa5]">{{ calcTimeStats(version.tasks).spent }}h</div>
                 </div>
               </div>
-            </div>
-          </template>
+              <!-- <div class="h-1.5 bg-[#ECEEF4] rounded-full overflow-hidden mb-1">
+                <div class="h-full rounded-full bg-[#5B6E96]" :style="{ width: calcTimeStats(version.tasks).pct + '%' }" />
+              </div> -->
+              <!-- <div class="text-xs text-[#9A9B90] mb-4">추정 대비 {{ calcTimeStats(version.tasks).pct }}% 소요</div> -->
+            </template>
+
+            <!-- 일감 없음 -->
+            <div v-if="version.tasks.length === 0" class="text-sm text-[#9A9B90] py-2">이 버전에 해당하는 일감 없음</div>
+
+            <template v-else>
+              <div class="border-t border-[#ECEEF4] my-3" />
+
+              <!-- ── 일감 현황 (그룹 드롭다운) ── -->
+              <div class="bg-[#F2F3F8] rounded-lg p-4 mb-4">
+                <div class="flex items-center gap-2 mb-3">
+                  <Select v-model="getGroupState(version.versionId).groupBy" :options="GROUP_OPTIONS" optionLabel="label" optionValue="value" class="filter-input w-32" @change="onGroupByChange(version.versionId)" />
+                  <span class="text-sm font-semibold text-[#1A1816]">별 일감 현황</span>
+                </div>
+
+                <!-- 그룹별 현황 바 -->
+                <div
+                  v-for="(stat, key) in calcGroupStats(version.tasks, getGroupState(version.versionId).groupBy)"
+                  :key="key"
+                  class="flex items-center gap-2 mb-2 cursor-pointer px-2 py-1 rounded-md transition-all"
+                  :class="getGroupState(version.versionId).selectedKey === key ? 'bg-white outline outline-[1.5px] outline-[#5B6E96]' : 'hover:bg-white'"
+                  @click="selectGroupKey(version.versionId, key)"
+                >
+                  <span class="text-m text-[#185fa5] font-medium text-right" style="min-width: 80px">{{ key }}</span>
+                  <div class="flex-1 h-4 bg-white rounded-lg overflow-hidden">
+                    <div class="h-full rounded-lg bg-[#5B6E96]" :style="{ width: Math.round((stat.done / stat.total) * 100) + '%' }" />
+                  </div>
+                  <span class="text-xs text-[#9A9B90]" style="min-width: 36px; text-align: right">{{ stat.done }}/{{ stat.total }}</span>
+                </div>
+              </div>
+
+              <!-- ── 연결된 일감 ── -->
+              <div class="flex items-center gap-2 mb-3 mt-3">
+                <span class="text font-semibold text-[#1A1816]">연결된 일감</span>
+                <span class="text text-[#6B6B63]">
+                  <template v-if="getGroupState(version.versionId).selectedKey"> — {{ getGroupState(version.versionId).selectedKey }} ({{ filteredTasks(version.versionId, version.tasks).length }}건) </template>
+                  <template v-else> (전체 {{ version.tasks.length }}건) </template>
+                </span>
+              </div>
+
+              <div class="flex flex-col gap-2">
+                <div v-for="task in filteredTasks(version.versionId, version.tasks)" :key="task.taskId" class="flex items-center justify-between px-4 py-2 bg-[#F2F3F8] rounded-lg border border-[#ECEEF4]">
+                  <div class="flex items-center gap-3">
+                    <Tag :value="task.taskTypeName" severity="info" />
+                    <div class="text-sm text-[#1A1816] cursor-pointer hover:underline hover:text-[#185fa5]" @click="router.push(`/task/${task.taskId}`)">{{ task.projectName }} - #{{ task.taskId }}: {{ task.taskTitle }}</div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <Tag :value="workflowLabel(task.taskWorkflow)" :severity="workflowSeverity(task.taskWorkflow)" />
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
         </div>
       </div>
     </div>

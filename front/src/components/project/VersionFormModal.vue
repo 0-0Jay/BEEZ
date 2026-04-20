@@ -191,7 +191,7 @@ onMounted(async () => {
               <label for="isShare" class="text-sm text-[#3A3B35] cursor-pointer">공유</label>
             </div>
           </div>
-          <small v-if="form.isDefaultYn" class="text-orange-500">기본 버전은 필수로 공유됩니다.</small>
+          <small v-if="form.isDefaultYn" class="text-red-400">기본 버전은 필수로 공유됩니다.</small>
         </div>
       </div>
 
@@ -200,7 +200,7 @@ onMounted(async () => {
         <label class="form-label w-32 pt-2 shrink-0">상태<span class="text-red-500">*</span></label>
         <div class="flex flex-col gap-1">
           <Select v-model="form.status" :options="statusOptions" optionLabel="name" optionValue="id" placeholder="선택" class="form-input w-50" :disabled="form.isDefaultYn" />
-          <small v-if="form.isDefaultYn" class="text-orange-500 mt-1 block">기본 버전은 진행 중 상태로 고정됩니다.</small>
+          <small v-if="form.isDefaultYn" class="text-red-400 mt-1 block">기본 버전은 진행 상태로 고정됩니다.</small>
           <small v-if="errors.status" class="text-red-500 mt-1 block">{{ errors.status }}</small>
         </div>
       </div>
@@ -211,7 +211,7 @@ onMounted(async () => {
         <div class="flex items-start gap-5">
           <div class="flex flex-col w-42">
             <DatePicker v-model="form.startDate" dateFormat="yy-mm-dd" placeholder="시작일" class="form-input w-50" :minDate="projectStart" :maxDate="form.endDate || projectEnd" showIcon inputClass="w-full" />
-            <small class="text-[#9A9B90] mt-2 block w-100"> 버전은 프로젝트 기간({{ formatDate(projectStart) }} ~ {{ formatDate(projectEnd) }}) 내에 설정해주세요. </small>
+            <small class="text-red-400 mt-2 block w-100"> 버전은 프로젝트 기간({{ formatDate(projectStart) }} ~ {{ formatDate(projectEnd) }}) 내에 설정해주세요. </small>
             <small v-if="errors.startDate" class="text-red-500 block">{{ errors.startDate }}</small>
           </div>
           <span class="text-[#6B6B63] pt-2 shrink-0">~</span>
@@ -225,8 +225,8 @@ onMounted(async () => {
 
     <template #footer>
       <div class="flex justify-end gap-2 pt-2">
+        <Button :label="isEdit ? '수정' : '저장'" raised @click="handleRegister" />
         <Button label="취소" severity="secondary" raised @click="close" />
-        <Button :label="isEdit ? '수정' : '등록'" raised @click="handleRegister" />
       </div>
     </template>
   </Dialog>
