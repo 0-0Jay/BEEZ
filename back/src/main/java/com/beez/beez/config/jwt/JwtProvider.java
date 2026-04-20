@@ -47,8 +47,8 @@ public class JwtProvider {
 
     Date now = new Date();
 
-    // 토큰 유효 시간 : 8시간
-    long tokenValidTime = 480 * 60 * 1000L;
+    // 토큰 유효 시간 : 1시간
+    long tokenValidTime = 60 * 60 * 1000L;
 
     return Jwts.builder()
       .subject(user.getId()) // 사원번호를 식별
