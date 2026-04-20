@@ -154,6 +154,17 @@ const goToSetting = (project) => {
   router.push(`/project/setting/${project.id}/info`);
 };
 
+const goToOverview = (project) => {
+  projectStore.selectedProject = {
+    title: project.title,
+    id: project.id,
+    startDate: project.startDate,
+    endDate: project.endDate
+  };
+
+  router.push('/task/overview');
+};
+
 // 날짜 포맷 변환 함수
 const formatDate = (date) => {
   if (!date) return null;
@@ -195,6 +206,11 @@ const actionItems = computed(() => [
       await auth.selectProject(selectedRow.value.id);
       openDeleteModal(selectedRow.value);
     }
+  },
+  {
+    label: '태스크 개요',
+    icon: 'pi pi-list',
+    command: () => goToOverview(selectedRow.value)
   }
 ]);
 
@@ -250,7 +266,7 @@ function progressBarColor(p) {
 <template>
   <div class="p-8 bg-[#ffffff] h-full">
     <!-- 타이틀 + 등록 버튼 -->
-    <div class="flex justify-between items-end mb-2">
+    <div class="flex justify-between items-end mb-3">
       <h1 class="text-2xl font-bold text-[#1A1816]">프로젝트 목록</h1>
       <Button v-if="['ROLE0001', 'ROLE0002'].includes(currentRoleIds)" label="프로젝트 등록" icon="pi pi-plus" class="!bg-[#2D8FAD] !border-[#2D8FAD] hover:!bg-[#257892]" raised @click="router.push('/project/create')" />
     </div>

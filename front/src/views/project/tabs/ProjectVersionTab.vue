@@ -150,8 +150,8 @@ const formatDate = (date) => {
         <Column headerClass="table-header" v-if="!projectInfo?.parentId" style="width: 10%">
           <template #body="{ data }">
             <div class="flex gap-2">
-              <Button label="편집" icon="pi pi-pencil" text size="small" class="text-[#6B6B63]" @click="openEditModal(data)" />
-              <Button label="삭제" icon="pi pi-trash" text size="small" class="text-red-400" @click="openDeleteConfirm(data)" />
+              <button class="action-btn edit-btn" @click="openEditModal(data)"><i class="pi pi-pencil" /> 편집</button>
+              <button class="action-btn delete-btn" @click="openDeleteConfirm(data)"><i class="pi pi-trash" /> 삭제</button>
             </div>
           </template>
         </Column>
@@ -209,5 +209,30 @@ const formatDate = (date) => {
   border-color: #c7c7c2 !important;
   color: #3a3b35 !important;
   height: 36px !important;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.12s;
+}
+.edit-btn {
+  color: #5b6e96;
+}
+.edit-btn:hover {
+  background: #ebf0f8;
+}
+.delete-btn {
+  color: #e05050;
+}
+.delete-btn:hover {
+  background: #fdf0f0;
 }
 </style>

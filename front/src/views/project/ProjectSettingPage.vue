@@ -28,7 +28,7 @@ const isActive = (tabName) => {
 
     <!-- 탭 버튼 -->
     <div class="flex gap-1 mb-6 border-b border-[#C7C7C2]">
-      <button v-for="tab in tabs" :key="tab.name" class="tab-btn px-6 py-3 text-sm font-medium transition-all" :class="isActive(tab.name) ? 'tab-active' : 'tab-inactive'" @click="goToTab(tab.name)">
+      <button v-for="tab in tabs" :key="tab.name" class="tab-btn px-6 py-2 text font-medium transition-all" :class="isActive(tab.name) ? 'tab-active' : 'tab-inactive'" @click="goToTab(tab.name)">
         <i :class="tab.icon" class="f mr-2" />
         {{ tab.label }}
       </button>

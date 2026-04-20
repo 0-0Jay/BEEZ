@@ -111,24 +111,19 @@ const handleMemberSaved = async () => {
   await projectStore.fetchProjectMembers(projectId);
 };
 </script>
-
 <template>
-  <div class="bg-[#ffffff] h-full">
-    <!-- 상단 버튼 영역 -->
+  <div class="bg-[#ffffff] min-h-full pb-5">
     <div class="flex justify-end gap-2 mb-4">
-      <Button label="구성원 추가" icon="pi pi-user-plus" outlined class="btn-outline" @click="openAddModal" />
+      <Button label="구성원 추가" icon="pi pi-user-plus" class="!bg-[#2D8FAD] !border-[#2D8FAD] hover:!bg-[#257892]" raised @click="openAddModal" />
     </div>
 
-    <!-- 테이블 -->
     <div class="members-table">
-      <!-- 헤더 -->
       <div class="table-header-row">
-        <div class="col-name">그룹 / 사용자</div>
-        <div class="col-role">역할</div>
+        <div class="col-name text-base">그룹 / 사용자</div>
+        <div class="col-role text-base">역할</div>
         <div class="col-actions"></div>
       </div>
 
-      <!-- 개별 사용자 -->
       <template v-for="user in userList" :key="user.projectMemberId">
         <div class="table-row">
           <div class="col-name">
@@ -174,7 +169,6 @@ const handleMemberSaved = async () => {
         </Transition>
       </template>
 
-      <!-- 그룹 -->
       <template v-for="group in groupList" :key="group.projectMemberId">
         <div class="table-row group-row">
           <div class="col-name">
@@ -214,7 +208,6 @@ const handleMemberSaved = async () => {
           </div>
         </Transition>
 
-        <!-- 그룹 멤버 행들 -->
         <template v-for="member in getGroupMembers(group.groupId)" :key="member.projectMemberId">
           <div class="table-row member-row">
             <div class="col-name">
@@ -259,7 +252,6 @@ const handleMemberSaved = async () => {
         </template>
       </template>
 
-      <!-- 빈 상태 -->
       <div v-if="userList.length === 0 && groupList.length === 0" class="empty-state">등록된 구성원이 없습니다.</div>
     </div>
   </div>
@@ -278,55 +270,57 @@ const handleMemberSaved = async () => {
   />
 </template>
 
-<style scoped>
+<!-- CSS 변수는 non-scoped로 분리 -->
+<style>
 :root {
   --color-primary: #5b6e96;
   --color-primary-light: #ebf0f8;
   --color-border: #d6e4ea;
   --color-border-inner: #e4edf2;
-  --color-bg-group: #eef3f8;
-  --color-bg-member: #f2f6fb;
-  --color-accordion: #dce8f2;
-  --color-accordion-member: #d4e4f0;
+  --color-bg-group: #eaf0f7; /* 그룹 행 */
+  --color-bg-member: #ffffff; /* 그룹 소속 사용자 행 */
+  --color-accordion: #f9fbfe; /* 아코디언 */
+  --color-accordion-member: #f5f8fd; /* 멤버 아코디언 */
   --color-text: #3a3b35;
   --color-gray: #6b6b63;
   --color-red: #e05050;
 }
 
-.btn-outline {
+/* PrimeVue 외부 컴포넌트만 :deep() 유지 */
+.btn-outline.p-button {
   border: 1px solid var(--color-border) !important;
   color: var(--color-primary) !important;
   background: white !important;
   height: 36px !important;
   font-size: 13px !important;
 }
-.btn-outline:hover {
+.btn-outline.p-button:hover {
   background: var(--color-primary-light) !important;
 }
+</style>
 
+<!-- 이 컴포넌트 자체 클래스는 scoped로 -->
+<style scoped>
 .members-table {
   background: white;
   border: 1px solid var(--color-border);
   border-radius: 8px;
   overflow: hidden;
-  font-size: 13px;
   color: var(--color-text);
   box-shadow: 0 1px 4px rgba(91, 110, 150, 0.07);
+  margin-bottom: 40px;
 }
 
-/* 헤더 - 네이비 */
 .table-header-row {
   display: grid;
-  grid-template-columns: 1fr 220px 180px;
+  grid-template-columns: 1fr 300px 180px;
   background: var(--color-primary);
-  padding: 10px 16px;
+  padding: 12px 16px;
   font-weight: 600;
   border-bottom: 1px solid var(--color-border);
   color: var(--color-primary-light);
-  font-size: 13px;
 }
 
-/* 섹션 구분 레이블 */
 .section-label {
   font-size: 11px;
   color: var(--color-primary);
@@ -337,10 +331,9 @@ const handleMemberSaved = async () => {
   letter-spacing: 0.04em;
 }
 
-/* 일반 행 - 흰 배경 */
 .table-row {
   display: grid;
-  grid-template-columns: 1fr 220px 180px;
+  grid-template-columns: 1fr 300px 180px;
   padding: 10px 16px;
   border-top: 1px solid var(--color-border-inner);
   align-items: center;
@@ -351,47 +344,48 @@ const handleMemberSaved = async () => {
   background: #f7f9fc;
 }
 
-/* 그룹 행 - 연한 파란 배경 */
 .group-row {
   background: var(--color-bg-group);
   font-weight: 500;
 }
 .group-row:hover {
-  background: #e3edf6;
+  background: #f7f9fc;
 }
 
-/* 그룹 멤버 행 - 더 연한 파란 배경 */
 .member-row {
   background: var(--color-bg-member);
 }
 .member-row:hover {
-  background: #e8f0f8;
+  background: #f7f9fc;
 }
 
-/* 편집 아코디언 - 파란 계열 + 왼쪽 강조선 */
-.accordion-row {
+.accordion-row,
+.accordion-row-member {
   display: grid;
-  grid-template-columns: 1fr 220px 180px;
+  grid-template-columns: 1fr 300px 180px; /* 기존 그리드 유지 */
+  grid-template-rows: auto auto; /* 2줄로 */
   padding: 12px 16px;
   background: var(--color-accordion);
   border-top: 1px solid var(--color-border);
-  align-items: start;
   border-left: 3px solid var(--color-primary);
 }
 
-/* 그룹 멤버 편집 아코디언 - 더 짙은 배경 */
 .accordion-row-member {
-  display: grid;
-  grid-template-columns: 1fr 220px 180px;
-  padding: 12px 16px;
   background: var(--color-accordion-member);
-  border-top: 1px solid var(--color-border);
-  align-items: start;
   border-left: 3px solid #3d5a80;
 }
 
+.accordion-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  justify-content: flex-end;
+  grid-column: 1 / -1; /* 전체 너비 차지 */
+  margin-top: 10px;
+}
+
 .fixed-badge {
-  font-size: 11px;
+  font-size: 12px;
   padding: 2px 7px;
   border-radius: 4px;
   background: var(--color-primary-light);
@@ -403,7 +397,8 @@ const handleMemberSaved = async () => {
 .col-name {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  padding-left: 8px;
 }
 .col-role {
   display: flex;
@@ -411,7 +406,7 @@ const handleMemberSaved = async () => {
 }
 .col-actions {
   display: flex;
-  gap: 6px;
+  gap: 10px;
   align-items: center;
   justify-content: flex-end;
 }
@@ -482,15 +477,6 @@ const handleMemberSaved = async () => {
 .inherited-label {
   font-size: 11px;
   color: var(--color-gray);
-}
-
-/* 저장/취소 버튼 세로 배치 */
-.accordion-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  align-items: flex-end;
-  justify-content: flex-start;
 }
 
 .btn-save {
