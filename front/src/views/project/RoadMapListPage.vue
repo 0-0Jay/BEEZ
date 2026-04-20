@@ -74,7 +74,7 @@ const groupedRoadmap = computed(() => {
         taskCategoryName: row.taskCategoryName,
         progress: row.progress,
         estimatedTime: row.estimatedTime,
-        spent: row.spent,
+        spent: row.totalSpent,
         projectName: row.projectName
       });
     }
@@ -161,6 +161,16 @@ const calcTimeStats = (tasks) => {
   const pct = estimated > 0 ? Math.round((spent / estimated) * 100) : 0;
   return { estimated, spent, pct };
 };
+
+function formatHours(hrs) {
+  if (!hrs && hrs !== 0) return '-';
+  const d = Math.floor(hrs / 8);
+  const h = hrs % 8;
+  const parts = [];
+  if (d > 0) parts.push(`${d}일`);
+  if (h > 0) parts.push(`${h}시간`);
+  return parts.length > 0 ? parts.join(' ') : '0시간';
+}
 
 // ─── 전체 진척률 ─────────────────────────────────────────────
 const calcProgress = (tasks) => {
@@ -295,11 +305,15 @@ const workflowSeverity = (workflow) => {
               <div class="grid grid-cols-2 gap-3 mb-2">
                 <div class="bg-[#F2F3F8] rounded-lg py-3 text-center">
                   <div class="text-m text-[#6B6B63] mb-1">추정시간</div>
-                  <div class="text-2xl font-semibold text-[#185fa5]">{{ calcTimeStats(version.tasks).estimated }}h</div>
+                  <div class="text-2xl font-semibold text-[#185fa5]">
+                    {{ formatHours(calcTimeStats(version.tasks).estimated) }}
+                  </div>
                 </div>
                 <div class="bg-[#F2F3F8] rounded-lg py-3 text-center">
                   <div class="text-m text-[#6B6B63] mb-1">소요시간</div>
-                  <div class="text-2xl font-semibold text-[#185fa5]">{{ calcTimeStats(version.tasks).spent }}h</div>
+                  <div class="text-2xl font-semibold text-[#185fa5]">
+                    {{ formatHours(calcTimeStats(version.tasks).spent) }}
+                  </div>
                 </div>
               </div>
               <!-- <div class="h-1.5 bg-[#ECEEF4] rounded-full overflow-hidden mb-1">
