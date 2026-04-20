@@ -35,5 +35,6 @@ public class RoadmapListResponse {
   private String plannedEnd;
   private Integer estimatedTime;
   private String taskCreator;
+  private Integer totalSpent;
 
 }

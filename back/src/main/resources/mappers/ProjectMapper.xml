@@ -344,31 +344,32 @@
           resultType="com.beez.beez.project.dto.RoadmapListResponse">
 
     SELECT v.id              AS versionId,
-    v.name            AS versionName,
-    v.status          AS versionStatus,
-    v.end_date        AS endDate,
-    v.description     AS description,
-    v.project_id      AS projectId,
-    p2.title          AS projectName,
-    t.id              AS taskId,
-    t.title           AS taskTitle,
-    t.project_id      AS taskProjectId,
-    tp.title          AS taskProjectName,
-    t.user_id         AS taskUserId,
-    u.name            AS taskUserName,
-    t.type            AS taskType,
-    tt.name           AS taskTypeName,
-    t.category        AS taskCategory,
-    tc.name           AS taskCategoryName,
-    t.workflow        AS taskWorkflow,
-    t.priority        AS taskPriority,
-    t.status          AS taskStatus,
-    t.progress        AS progress,
-    t.sub_progress    AS subProgress,
-    t.planned_start   AS plannedStart,
-    t.planned_end     AS plannedEnd,
-    t.estimated_time  AS estimatedTime,
-    t.creator         AS taskCreator
+           v.name            AS versionName,
+           v.status          AS versionStatus,
+           v.end_date        AS endDate,
+           v.description     AS description,
+           v.project_id      AS projectId,
+           p2.title          AS projectName,
+           t.id              AS taskId,
+           t.title           AS taskTitle,
+           t.project_id      AS taskProjectId,
+           tp.title          AS taskProjectName,
+           t.user_id         AS taskUserId,
+           u.name            AS taskUserName,
+           t.type            AS taskType,
+           tt.name           AS taskTypeName,
+           t.category        AS taskCategory,
+           tc.name           AS taskCategoryName,
+           t.workflow        AS taskWorkflow,
+           t.priority        AS taskPriority,
+           t.status          AS taskStatus,
+           t.progress        AS progress,
+           t.sub_progress    AS subProgress,
+           t.planned_start   AS plannedStart,
+           t.planned_end     AS plannedEnd,
+           t.estimated_time  AS estimatedTime,
+           t.creator         AS taskCreator,
+           NVL(ts.totalSpent, 0) AS totalSpent
 
     FROM version v
 
@@ -377,34 +378,40 @@
     AND t.status     = 'T1'
     AND t.is_public  = 'J1'
     AND t.project_id IN (
-    SELECT p.id
-    FROM   project p
-    WHERE  p.status  = 'K1'
-    AND  p.is_lock = 'L0'
-    <choose>
-      <when test="includeSubProject">
-        START WITH p.id = #{projectId}
-        CONNECT BY NOCYCLE PRIOR p.id = p.parent_id
-      </when>
-      <otherwise>
-        AND p.id = #{projectId}
-      </otherwise>
-    </choose>
-    )
+              SELECT p.id
+              FROM   project p
+              WHERE  p.status  = 'K1'
+              AND  p.is_lock = 'L0'
+              <choose>
+                <when test="includeSubProject">
+                  START WITH p.id = #{projectId}
+                  CONNECT BY NOCYCLE PRIOR p.id = p.parent_id
+                </when>
+                <otherwise>
+                  AND p.id = #{projectId}
+                </otherwise>
+              </choose>
+        )
 
     LEFT JOIN project      tp ON tp.id = t.project_id
     LEFT JOIN users         u ON u.id  = t.user_id
     LEFT JOIN task_type    tt ON tt.id = t.type
     LEFT JOIN task_category tc ON tc.id = t.category
     LEFT JOIN project      p2 ON p2.id = v.project_id
+    LEFT JOIN (
+                SELECT task_id,
+                SUM(spent) AS totalSpent
+                FROM   time
+                GROUP  BY task_id
+        ) ts ON ts.task_id = t.id
 
     WHERE v.project_id IN (
-    SELECT id
-    FROM   project
-    WHERE  parent_id IS NULL
-    START WITH id = #{projectId}
-    CONNECT BY NOCYCLE PRIOR parent_id = id
-    )
+              SELECT id
+              FROM   project
+              WHERE  parent_id IS NULL
+              START WITH id = #{projectId}
+              CONNECT BY NOCYCLE PRIOR parent_id = id
+        )
     AND v.is_delete = 'F0'
 
     <if test="versionStatus != null and versionStatus != ''">
