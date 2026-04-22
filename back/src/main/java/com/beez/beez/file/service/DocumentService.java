@@ -1,0 +1,32 @@
+package com.beez.beez.file.service;
+
+import com.beez.beez.file.dto.CreateRequest;
+import com.beez.beez.file.dto.DetailResponse;
+import com.beez.beez.file.dto.ListResponse;
+import com.beez.beez.file.dto.UpdateRequest;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+
+public interface DocumentService {
+  //문서 등록
+  String registerDocument(CreateRequest request, List<MultipartFile> files);
+  
+  //문서 목록 조회
+  List<ListResponse> getDocumentList(String projectId, String userId);
+  
+  //문서 상세 조회(문서 정보 + 최신파일 리스트)
+  DetailResponse getDocumentDetail(String id);
+  
+  //문서 수정(버전 관리 로직 포함)
+  void updateDocument(UpdateRequest request,
+                      List<MultipartFile> newFiles,
+                      String userId);
+  
+  // DocumentService.java 인터페이스에 추가
+  void toggleFavorite(String userId, String documentId);
+
+  
+}

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.beez.beez.dashboard.mapper.DashboardMapper">
+  <select id="findMainDashboard" parameterType="DashboardResponse" statementType="CALLABLE">
+    {
+      CALL GET_MAIN_DASHBOARD(
+        #{userId,        mode=IN,  jdbcType=VARCHAR},
+        #{projectList,   mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=projectResultMap,    typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
+        #{taskList,      mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=taskResultMap,       typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
+        #{memoList,      mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=memoResultMap,       typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
+        #{scheduleList,  mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=scheduleResultMap,   typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler}
+      )
+    }
+  </select>
+  
+  <select id="findProjectDashboard" parameterType="DashboardResponse" statementType="CALLABLE">
+    {
+      CALL GET_PROJ_DASHBOARD(
+        #{userId,        mode=IN,  jdbcType=VARCHAR},
+        #{projectId,     mode=IN,  jdbcType=VARCHAR},
+        #{pmpl,          mode=OUT, jdbcType=VARCHAR},
+        #{startDate,     mode=OUT, jdbcType=TIMESTAMP},
+        #{endDate,       mode=OUT, jdbcType=TIMESTAMP},
+        #{progress,      mode=OUT, jdbcType=NUMERIC},
+        #{projectList,   mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=projectResultMap,    typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
+        #{taskList,      mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=taskResultMap,       typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
+        #{memoList,      mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=memoResultMap,       typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
+        #{scheduleList,  mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=scheduleResultMap,   typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
+        #{memberList,    mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=memberResultMap,   typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler}
+      )
+    }
+  </select>
+  
+  <resultMap id="projectResultMap" type="com.beez.beez.dashboard.dto.ProjectRecapResponse">
+    <result property="id" column="id" />
+    <result property="title" column="title" />
+    <result property="plannedEnd" column="planned_end" />
+    <result property="progress" column="progress" />
+  </resultMap>
+  
+  <resultMap id="taskResultMap" type="com.beez.beez.dashboard.dto.TaskRecapResponse">
+    <result property="id" column="id" />
+    <result property="title" column="title"/>
+    <result property="projectId" column="project_id"/>
+    <result property="projectTitle" column="project_title" />
+    <result property="progress" column="progress" />
+    <result property="workflow" column="workflow" />
+    <result property="plannedEnd" column="planned_end" />
+  </resultMap>
+  
+  <resultMap id="memoResultMap" type="com.beez.beez.dashboard.dto.MemoResponse">
+    <result property="id" column="id" />
+    <result property="title" column="title" />
+    <result property="content" column="content" />
+    <result property="editedOn" column="edited_on" />
+  </resultMap>
+  
+  <resultMap id="scheduleResultMap" type="com.beez.beez.dashboard.dto.ScheduleResponse">
+    <result property="id" column="id" />
+    <result property="title" column="title" />
+    <result property="content" column="content" />
+    <result property="projectTitle" column="project_title" />
+    <result property="startDate" column="start_date" />
+    <result property="endDate" column="end_date" />
+  </resultMap>
+  
+  <resultMap id="memberResultMap" type="com.beez.beez.dashboard.dto.MemberListResponse">
+    <result property="id" column="id" />
+    <result property="name" column="name" />
+    <result property="role" column="role" />
+  </resultMap>
+  
+  <insert id="insertMemo" parameterType="MemoRequest">
+    <selectKey keyProperty="id" resultType="String" order="BEFORE">
+      SELECT BEEZ.generate_pk_auto('memo') FROM dual
+    </selectKey>
+    INSERT INTO memo(id, user_id, project_id, title, content, edited_on)
+    VALUES(#{id}, #{userId}, #{projectId}, #{title}, #{content}, SYSDATE)
+  </insert>
+  
+  <update id="updateMemo" parameterType="MemoRequest">
+    UPDATE memo
+    SET user_id = #{userId}, title = #{title}, content = #{content}, edited_on = SYSDATE
+    WHERE id = #{id}
+  </update>
+  
+  <delete id="deleteMemo">
+    DELETE FROM memo
+    WHERE id = #{id}
+  </delete>
+</mapper>

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.beez.beez.group.mapper.GroupMapper">
+
+  <resultMap id="groupMap" type="com.beez.beez.group.dto.GroupListResponse">
+    <result property="id" column="id"/>
+    <result property="name" column="name"/>
+    <result property="description" column="description"/>
+    <result property="memberCnt" column="member_cnt"/>
+    <result property="projectCnt" column="project_cnt"/>
+  </resultMap>
+  <!-- 그룹 목록 조회 -->
+  <select id="findAllGroup" resultMap="groupMap">
+    SELECT g.id,
+           g.name,
+           g.description,
+           COUNT(DISTINCT CASE WHEN gm.is_delete = 'F0' THEN gm.user_id END) AS member_cnt,
+           COUNT(DISTINCT CASE WHEN pm.is_delete = 'F0' AND p.status = 'K1' THEN pm.project_id END) AS project_cnt
+    FROM groups g
+    LEFT OUTER JOIN group_member gm
+    ON g.id = gm.group_id AND gm.is_delete = 'F0'
+    LEFT OUTER JOIN project_member pm
+    ON g.id = pm.group_id AND pm.is_delete = 'F0'
+    LEFT OUTER JOIN project p
+    ON pm.project_id = p.id
+    <where>
+      g.is_delete = 'F0'
+      <if test="name != null and name != ''">
+        AND g.name LIKE '%' || #{name} || '%'
+      </if>
+    </where>
+    GROUP BY g.id, g.name, g.description
+    ORDER BY g.id DESC
+  </select>
+
+  <select id="countProjectByGroupId" resultType="int">
+    SELECT COUNT(*)
+    FROM project_member
+    WHERE group_id = #{id}
+  </select>
+
+  <!-- 그룹 이름 중복 체크 -->
+  <select id="checkGroupNameExists" resultType="int">
+    SELECT COUNT(*)
+    FROM   groups
+    WHERE  name = #{name}
+    AND  is_delete = 'F0'
+    <if test="id != null and id != ''">
+      AND  id != #{id}
+    </if>
+  </select>
+
+  <!-- 그룹 기본 정보 단건 조회 -->
+  <select id="findByIdGroups" resultType="map">
+    SELECT id,
+           name,
+           description,
+           is_delete
+    FROM   groups
+    WHERE  id = #{id}
+       AND is_delete = 'F0'
+  </select>
+
+  <!-- 그룹 소속 사원 조회 -->
+  <select id="findGroupMembers" resultType="com.beez.beez.group.dto.GroupMemberResponse">
+    SELECT u.id AS u_id,
+           u.name AS u_name,
+           u.email AS u_email
+    FROM   group_member gm
+    JOIN   users u ON gm.user_id = u.id
+    WHERE  gm.group_id = #{id}
+       AND gm.is_delete = 'F0' AND u.status = 'H1'
+  </select>
+
+  <!-- 참여 프로젝트 및 역할 조회 -->
+  <select id="findGroupProjects" resultType="com.beez.beez.group.dto.GroupProjectResponse">
+    SELECT p.id AS project_id,
+           p.title AS project_name,
+           LISTAGG(rm.role_id, ',') WITHIN GROUP (ORDER BY rm.role_id) AS role_id,
+           LISTAGG((SELECT name FROM roles WHERE id = rm.role_id), ',')
+    WITHIN GROUP (ORDER BY rm.role_id) AS role_name
+    FROM   project_member pm
+    JOIN   project p ON pm.project_id = p.id
+    JOIN   role_mapping rm ON pm.id = rm.member_id
+    WHERE  pm.group_id = #{id}
+    AND pm.user_id IS NULL
+    AND pm.is_delete = 'F0'
+    AND p.status = 'K1'
+    AND rm.is_inherited = 'P0'
+    GROUP BY p.id, p.title
+  </select>
+
+  <!-- 그룹 등록 -->
+  <insert id="insertGroup" statementType="CALLABLE">
+    { CALL PROC_CREATE_GROUP(
+    #{name, mode=IN, jdbcType=VARCHAR},
+    #{description, mode=IN, jdbcType=VARCHAR},
+    #{userIds, mode=IN, jdbcType=ARRAY, jdbcTypeName=USER_ID_TAB, typeHandler=com.beez.beez.config.OracleTypeHandler.ArrayTypeHandler},
+    #{projects, mode=IN, jdbcType=ARRAY, jdbcTypeName=PROJECT_TAB, typeHandler=com.beez.beez.config.OracleTypeHandler.ProjectArrayTypeHandler}
+    )}
+  </insert>
+
+  <!-- 그룹 수정 -->
+  <update id="updateGroup" statementType="CALLABLE">
+    { CALL PROC_UPDATE_GROUP(
+    #{id, mode=IN, jdbcType=VARCHAR},
+    #{name, mode=IN, jdbcType=VARCHAR},
+    #{description, mode=IN, jdbcType=VARCHAR},
+    #{userIds, mode=IN, jdbcType=ARRAY, jdbcTypeName=USER_ID_TAB, typeHandler=com.beez.beez.config.OracleTypeHandler.ArrayTypeHandler},
+    #{projects, mode=IN, jdbcType=ARRAY, jdbcTypeName=PROJECT_TAB, typeHandler=com.beez.beez.config.OracleTypeHandler.ProjectArrayTypeHandler}
+    )}
+  </update>
+
+  <!-- 그룹 삭제 -->
+  <delete id="deleteGroup" statementType="CALLABLE">
+    { CALL PROC_DELETE_GROUP(#{id, mode=IN, jdbcType=VARCHAR}) }
+  </delete>
+
+</mapper>

@@ -1,0 +1,459 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.beez.beez.project.mapper.ProjectMapper">
+
+  <!--  프로젝트 생성  -->
+  <insert id="insertProject" parameterType="com.beez.beez.project.dto.ProjectCreateRequest"
+          statementType="CALLABLE">
+    {
+        CALL proc_create_project(
+                  #{identifier},
+                  #{title},
+                  #{description},
+                  #{isPublic},
+                  #{parentId},
+                  #{startDate},
+                  #{endDate},
+                  #{userId},
+                  #{pmId},
+                  #{id, mode=OUT, jdbcType=VARCHAR}
+                  )
+    }
+  </insert>
+  
+  <!-- 프로젝트 타이틀 중복체크 -->
+  <select id="countByTitle" resultType="int">
+    SELECT COUNT(*) FROM project
+                    WHERE title = #{title}
+                    AND status = 'K1'
+  </select>
+  
+  <!-- 프로젝트 식별자 중복체크 -->
+  <select id="countByIdentifier" resultType="int">
+    SELECT COUNT(*) FROM project
+                    WHERE identifier = #{identifier}
+                    AND status = 'K1'
+  </select>
+  
+  <!-- 프로젝트 수정 -->
+  <update id="updateProject" parameterType="com.beez.beez.project.dto.ProjectUpdateRequest" statementType="CALLABLE">
+    {call proc_update_project(
+        #{id},
+        #{identifier},
+        #{title},
+        #{description},
+        #{isPublic},
+        #{parentId},
+        #{startDate},
+        #{endDate},
+        #{userId},
+        #{pmId}
+          )}
+  </update>
+  
+  <!-- 프로젝트 수정 시 식별자 중복체크 -->
+  <select id="countByIdentifierExclude" resultType="int">
+    SELECT COUNT(*) FROM project
+    WHERE identifier = #{identifier}
+      AND status = 'K1'
+      AND id != #{projectId}
+  </select>
+  
+  <!-- 프로젝트 수정 시 타이틀 중복 체크 -->
+  <select id="countByTitleExclude" resultType="int">
+    SELECT COUNT(*) FROM project
+    WHERE title = #{title}
+      AND status = 'K1'
+      AND id != #{projectId}
+  </select>
+  
+  <!-- 프로젝트 단건 조회 -->
+  <select id="findById" resultType="com.beez.beez.project.dto.ProjectInfoResponse">
+    SELECT identifier,
+           title,
+           description,
+           is_public,
+           parent_id,
+           start_date,
+           end_date,
+           default_version_id,
+           user_id,
+           pm_id
+    FROM project
+    WHERE id = #{id}
+  </select>
+  
+  <!-- 프로젝트 목록 조회 (필터 겸용) -->
+  <select id="selectProjectList"
+          parameterType="com.beez.beez.project.dto.ProjectFilterRequest"
+          resultType="com.beez.beez.project.dto.ProjectListResponse">
+    SELECT p.id,
+           p.title,
+           p.identifier,
+           p.user_id creator,
+           u.name AS creatorName,
+           p.start_date As startDate,
+           p.end_date AS endDate,
+           p.is_lock AS isLock,
+           p.parent_id AS parentId,
+           p.pm_id,
+           u2.name AS pmName,
+           (LEVEL - 1) AS "level",
+           (
+             SELECT COUNT(*)
+             FROM task t
+             WHERE t.project_id = p.id
+             AND t.status = 'T1'
+           ) AS totalTaskCount,
+           (
+             SELECT COUNT(*)
+             FROM task t
+             WHERE t.project_id = p.id
+             AND t.status = 'T1'
+             AND t.workflow = 'Q3'
+           ) AS completedTaskCount,
+           (
+           SELECT ROUND(
+             SUM(
+                 (t.planned_end - t.planned_start + 1)
+                 * CASE
+                 WHEN EXISTS (
+                 SELECT 1 FROM task ch
+                 WHERE ch.parent_id = t.id
+                 AND ch.status = 'T1'
+               ) THEN t.sub_progress
+                 ELSE t.progress
+                 END
+                 ) / NULLIF(SUM(t.planned_end - t.planned_start + 1), 0)
+           )
+           FROM task t
+           WHERE t.project_id = p.id
+           AND t.status = 'T1'
+           ) AS progressRate
+      FROM project p
+      LEFT JOIN users u ON u.id = p.user_id
+      LEFT JOIN users u2 ON u2.id = p.pm_id
+      WHERE p.status = 'K1'
+    <if test="currentUserRole != 'ROLE0001'">
+      AND (
+            p.user_id = #{currentUserId}
+            OR p.pm_id = #{currentUserId}
+            OR EXISTS (
+            SELECT 1 FROM project_member pm
+            WHERE pm.project_id = p.id
+            AND pm.user_id = #{currentUserId}
+            AND pm.is_delete = 'F0'
+        )
+        OR EXISTS (
+            SELECT 1
+            FROM project ancestor
+            WHERE ancestor.pm_id = #{currentUserId}
+            AND ancestor.status = 'K1'
+            AND ancestor.id IN (
+                SELECT sub.parent_id
+                FROM project sub
+                START WITH sub.id = p.id
+                CONNECT BY PRIOR sub.parent_id = sub.id
+                )
+            )
+        )
+    </if>
+      <if test="title != null and title != ''">
+        AND p.title LIKE '%' || #{title} || '%'
+      </if>
+      <if test="pmId != null and pmId != ''">
+        AND p.pm_id = #{pmId}
+      </if>
+      <if test="startDate != null">
+        AND p.end_date &gt;= #{startDate}
+      </if>
+      <if test="endDate != null">
+        AND p.end_date &lt; #{endDate} + 1
+      </if>
+      <if test="isLock == null or isLock == 'false'">
+        AND p.is_lock = 'L0'
+      </if>
+    START WITH p.parent_id IS NULL
+    CONNECT BY PRIOR p.id = p.parent_id
+    ORDER SIBLINGS BY p.id ASC
+  </select>
+  
+  <!-- 프로젝트 잠금보관 -->
+  <update id="updateProjectLock">
+    UPDATE project
+    SET is_lock = 'L1'
+    WHERE id = #{id}
+      AND NOT EXISTS (
+      /* 하위 프로젝트 중 잠금되지 않은(L0) 프로젝트가 있는지 확인 */
+      SELECT 1
+      FROM project
+      WHERE is_lock = 'L0'
+        AND id != #{id}  -- 자기 자신은 제외
+      START WITH parent_id = #{id}
+      CONNECT BY PRIOR id = parent_id
+    )
+  </update>
+  
+  <!-- 프로젝트 잠금보관 해제 -->
+  <update id="updateUnProjectLock">
+    UPDATE project
+    SET is_lock = 'L0'
+    WHERE id = #{id}
+  </update>
+  
+  <!-- 프로젝트 삭제 -->
+  <update id="deleteProject">
+    UPDATE project p
+    SET p.status = 'K0'
+    WHERE p.id = #{id}
+    AND NOT EXISTS(
+        SELECT 1
+        FROM project child
+        WHERE child.parent_id = #{id}
+        AND child.status != 'K0'
+    )
+  </update>
+  
+<!-- 프로젝트 기본버전 조회 -->
+  <select id="findDefaultVersionId" resultType="string">
+    SELECT default_version_id
+    FROM project
+    WHERE id = #{projectId}
+  </select>
+  
+<!-- 프로젝트 기본버전 업데이트 -->
+  <update id="updateDefaultVersion">
+    UPDATE project
+    SET default_version_id = #{versionId}
+    WHERE id = #{projectId}
+  </update>
+  
+<!-- 프로젝트 구성원 조회 -->
+  <select id="findProjectMember" statementType="CALLABLE">
+    {
+      CALL GET_PROJECT_MEMBER(
+        #{projectId,       mode=IN,  jdbcType=VARCHAR},
+        #{userList,        mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=usersResultMap, typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
+        #{groupList,       mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=groupsResultMap, typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
+        #{groupMemberList, mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=groupMembersResultMap, typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler}
+      )
+    }
+  </select>
+  
+  <resultMap id="usersResultMap" type="com.beez.beez.project.dto.MemberUserResponse">
+    <result property="projectMemberId" column="project_member_id" />
+    <result property="userId" column="user_id" />
+    <result property="userName" column="user_name" />
+    <result property="roleId" column="role_id" />
+    <result property="roleName" column="role_name" />
+    <result property="fixedReason" column="fixed_reason" />
+  </resultMap>
+  
+  <resultMap id="groupsResultMap" type="com.beez.beez.project.dto.MemberGroupResponse">
+    <result property="projectMemberId" column="project_member_id" />
+    <result property="groupId" column="group_id" />
+    <result property="groupName" column="group_name" />
+    <result property="roleId" column="role_id" />
+    <result property="roleName" column="role_name" />
+  </resultMap>
+  
+  <resultMap id="groupMembersResultMap" type="com.beez.beez.project.dto.MemberGroupMemberResponse">
+    <result property="projectMemberId" column="project_member_id" />
+    <result property="userId" column="user_id" />
+    <result property="groupId" column="group_id" />
+    <result property="userName" column="user_name" />
+    <result property="roleId" column="role_id" />
+    <result property="roleName" column="role_name" />
+    <result property="isInherited" column="is_inherited" />
+  </resultMap>
+  
+<!-- 프로젝트 구성원 삭제 -->
+  <update id="deleteProjectMember" statementType="CALLABLE">
+    { CALL DELETE_PROJECT_MEMBER ( #{projectMemberId, mode=IN, jdbcType=VARCHAR}) }
+  </update>
+  
+<!-- 프로젝트 구성원 수정 -->
+  <update id="updateProjectMember" parameterType="com.beez.beez.project.dto.ProjectMemberUpdateRequest" statementType="CALLABLE">
+    {
+        CALL update_project_member_role(
+             #{memberId, mode=IN, jdbcType=VARCHAR},
+             #{roleIds,  mode=IN, jdbcType=ARRAY, typeHandler=com.beez.beez.config.OracleTypeHandler.VarcharTypeHandler}
+        )
+    }
+  </update>
+  
+  <!-- 역할 조회 -->
+  <select id="findRoles" resultType="com.beez.beez.project.dto.RolesResponse">
+    SELECT id AS roleId,
+           name AS roleName
+    FROM roles
+    WHERE id NOT IN ('ROLE0001', 'ROLE0003')
+  </select>
+  
+  <!-- 프로젝트 구성원 추가 모달(사용자 리스트) -->
+  <select id="findUsers" resultType="com.beez.beez.project.dto.UserResponse">
+    SELECT id,
+           name,
+           role
+    FROM users u
+    WHERE status = 'H1'
+    AND role != 'ROLE0001'
+    AND NOT EXISTS( SELECT 1
+                    FROM project_member pm
+                    WHERE pm.user_id = u.id
+                    AND pm.project_id = #{projectId}
+                    AND pm.is_delete = 'F0'
+                   )
+      <if test="keyword != null and keyword != ''">
+        AND name LIKE '%' || #{keyword} || '%'
+      </if>
+    ORDER BY CASE WHEN role = 'ROLE0002' THEN 0 ELSE 1 END, name
+  </select>
+  
+  <!-- 프로젝트 구성원 추가 모달(그룹 리스트) -->
+  <select id="findGroups" resultType="GroupResponse">
+    SELECT id,
+           name
+    FROM groups g
+    WHERE NOT EXISTS( SELECT 1
+                      FROM project_member pm
+                      WHERE pm.group_id = g.id
+                      AND pm.project_id = #{projectId}
+                      AND pm.is_delete = 'F0'
+                      )
+      <if test="keyword != null and keyword != ''">
+        AND name LIKE '%' || #{keyword} || '%'
+      </if>
+  </select>
+  
+  <!-- 프로젝트 구성원 추가 -->
+  <insert id="insertProjectMember" parameterType="com.beez.beez.project.dto.ProjectMemberRequest" statementType="CALLABLE">
+    {
+        CALL add_project_member_role(
+             #{projectId, mode=IN, jdbcType=VARCHAR},
+             #{userIds,   mode=IN, jdbcType=ARRAY, typeHandler=com.beez.beez.config.OracleTypeHandler.VarcharTypeHandler},
+             #{groupIds,  mode=IN, jdbcType=ARRAY, typeHandler=com.beez.beez.config.OracleTypeHandler.VarcharTypeHandler},
+             #{roleIds,   mode=IN, jdbcType=ARRAY, typeHandler=com.beez.beez.config.OracleTypeHandler.VarcharTypeHandler}
+             )
+    }
+  </insert>
+
+  <!-- 로드맵 목록 조회 -->
+  <select id="findRoadmapList"
+          parameterType="com.beez.beez.project.dto.RoadmapFilterRequest"
+          resultType="com.beez.beez.project.dto.RoadmapListResponse">
+
+    SELECT v.id              AS versionId,
+           v.name            AS versionName,
+           v.status          AS versionStatus,
+           v.end_date        AS endDate,
+           v.description     AS description,
+           v.project_id      AS projectId,
+           p2.title          AS projectName,
+           t.id              AS taskId,
+           t.title           AS taskTitle,
+           t.project_id      AS taskProjectId,
+           tp.title          AS taskProjectName,
+           t.user_id         AS taskUserId,
+           u.name            AS taskUserName,
+           t.type            AS taskType,
+           tt.name           AS taskTypeName,
+           t.category        AS taskCategory,
+           tc.name           AS taskCategoryName,
+           t.workflow        AS taskWorkflow,
+           t.priority        AS taskPriority,
+           t.status          AS taskStatus,
+           t.progress        AS progress,
+           t.sub_progress    AS subProgress,
+           t.planned_start   AS plannedStart,
+           t.planned_end     AS plannedEnd,
+           t.estimated_time  AS estimatedTime,
+           t.creator         AS taskCreator,
+           NVL(ts.totalSpent, 0) AS totalSpent
+
+    FROM version v
+
+    LEFT JOIN task t
+    ON t.version_id = v.id
+    AND t.status     = 'T1'
+    AND t.is_public  = 'J1'
+    AND t.project_id IN (
+              SELECT p.id
+              FROM   project p
+              WHERE  p.status  = 'K1'
+              AND  p.is_lock = 'L0'
+              <choose>
+                <when test="includeSubProject">
+                  START WITH p.id = #{projectId}
+                  CONNECT BY NOCYCLE PRIOR p.id = p.parent_id
+                </when>
+                <otherwise>
+                  AND p.id = #{projectId}
+                </otherwise>
+              </choose>
+        )
+
+    LEFT JOIN project      tp ON tp.id = t.project_id
+    LEFT JOIN users         u ON u.id  = t.user_id
+    LEFT JOIN task_type    tt ON tt.id = t.type
+    LEFT JOIN task_category tc ON tc.id = t.category
+    LEFT JOIN project      p2 ON p2.id = v.project_id
+    LEFT JOIN (
+                SELECT task_id,
+                SUM(spent) AS totalSpent
+                FROM   time
+                GROUP  BY task_id
+        ) ts ON ts.task_id = t.id
+
+    WHERE v.project_id IN (
+              SELECT id
+              FROM   project
+              WHERE  parent_id IS NULL
+              START WITH id = #{projectId}
+              CONNECT BY NOCYCLE PRIOR parent_id = id
+        )
+    AND v.is_delete = 'F0'
+
+    <if test="versionStatus != null and versionStatus != ''">
+      AND v.status = #{versionStatus}
+    </if>
+    <if test="versionId != null and versionId != ''">
+      AND v.id = #{versionId}
+    </if>
+
+    ORDER BY v.end_date ASC, t.planned_start ASC
+  </select>
+  
+  <!-- 프로젝트 복사 -->
+  <update id="copyProject" statementType="CALLABLE" parameterType="com.beez.beez.project.dto.ProjectCopyRequest">
+    {
+      CALL PROC_COPY_PROJECT(
+      #{sourceProjectId, mode=IN,  jdbcType=VARCHAR},
+      #{identifier,      mode=IN,  jdbcType=VARCHAR},
+      #{title,           mode=IN,  jdbcType=VARCHAR},
+      #{description,     mode=IN,  jdbcType=VARCHAR},
+      #{isPublic,        mode=IN,  jdbcType=VARCHAR},
+      #{parentId,        mode=IN,  jdbcType=VARCHAR},
+      #{startDate,       mode=IN,  jdbcType=DATE},
+      #{endDate,         mode=IN,  jdbcType=DATE},
+      #{userId,          mode=IN,  jdbcType=VARCHAR},
+      #{pmId,            mode=IN,  jdbcType=VARCHAR},
+      #{copyMembers,     mode=IN,  jdbcType=VARCHAR},
+      #{copyVersions,    mode=IN,  jdbcType=VARCHAR},
+      #{copyIssues,      mode=IN,  jdbcType=VARCHAR},
+      #{copyDocs,        mode=IN,  jdbcType=VARCHAR},
+      #{copyWiki,        mode=IN,  jdbcType=VARCHAR},
+      #{newProjectId,    mode=OUT, jdbcType=VARCHAR}
+      )
+    }
+  </update>
+  
+  <!-- PM 조회 -->
+  <select id="findUserPm" resultType="UserResponse">
+    SELECT id,
+           name
+    FROM users
+    WHERE status = 'H1'
+    AND role = 'ROLE0002'
+  </select>
+</mapper>

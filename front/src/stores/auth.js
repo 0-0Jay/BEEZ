@@ -1,0 +1,177 @@
+import axios from '@/stores/AxiosInstance';
+import { jwtDecode } from 'jwt-decode';
+import { defineStore } from 'pinia';
+import { computed } from 'vue';
+import { useProjectStore } from './project';
+
+export const useAuthStore = defineStore('auth', {
+  // state
+  state: () => ({
+    accessToken: null, // 엑세스 토큰
+    user: {
+      id: '',
+      name: '',
+      email: '',
+      role: ''
+      // authorities: []
+    }, // 사용자 정보
+    projectPermissions: [],
+    projectRoles: [],
+    currentProjectId: null,
+
+    loadingProjectId: null,
+    loadingPromise: null
+  }),
+
+  // getters
+  getters: {
+    // 로그인 여부
+    isLoggedIn: (state) => !!state.accessToken
+  },
+
+  // actions
+  actions: {
+    async login(id, password) {
+      try {
+        const response = await axios.post('/auth/login', {
+          id: id,
+          password: password
+        });
+
+        const token = response.data.accessToken;
+
+        if (token) {
+          this.accessToken = token;
+
+          const decoded = jwtDecode(token);
+          // console.log('디코딩된 토큰 내용:', decoded);
+
+          this.user = {
+            id: decoded.sub,
+            name: decoded.name,
+            email: decoded.email,
+            // authorities: decoded.auth ? decoded.auth.split(',') : [],
+            role: decoded.role
+          };
+
+          //console.log(this.user.authorities);
+          return true;
+        }
+      } catch (error) {
+        console.error('로그인 에러 발생:', error);
+        throw error;
+      }
+    },
+
+    logout() {
+      this.accessToken = null;
+      this.user = {
+        id: '',
+        name: '',
+        email: '',
+        role: ''
+      };
+      this.projectPermissions = [];
+      this.projectRoles = [];
+      this.currentProjectId = null;
+      sessionStorage.clear();
+    },
+    async requestPasswordReset(payload) {
+      try {
+        const response = await axios.post('/auth/reset-request', payload);
+
+        return { success: true, message: response.data };
+      } catch (err) {
+        const errorMsg = err.response?.data?.message || '서버 오류가 발생했습니다.';
+        return { success: false, message: errorMsg };
+      }
+    },
+
+    async resetPassword(payload) {
+      try {
+        const response = await axios.post('/auth/reset-password', payload);
+
+        return { success: true, message: response.data };
+      } catch (err) {
+        const errorMsg = err.response?.data?.message || '서버 오류가 발생했습니다.';
+        return { success: false, message: errorMsg };
+      }
+    },
+
+    hasPermissions(targetCode) {
+      if (this.user?.role === 'ROLE0001') {
+        return true;
+      }
+
+      if (!this.projectPermissions || this.projectPermissions.length === 0) {
+        return false;
+      }
+
+      return this.projectPermissions.some((p) => p.id === targetCode);
+    },
+
+    async findPermissionsByProject(projectId) {
+      if (this.currentProjectId === projectId) return;
+
+      const response = await axios.get(`/project-auth/permissions/${projectId}`);
+      this.projectPermissions = response.data;
+      this.currentProjectId = projectId;
+      // console.log('프로젝트별 권한 -> ', this.projectPermissions);
+    },
+
+    async findRolesByProject(projectId) {
+      const response = await axios.get(`/project-auth/roles/${projectId}`);
+      this.projectRoles = response.data;
+      // console.log('프로젝트별 역할 -> ', this.projectRoles);
+    },
+
+    async selectProject(projectId) {
+      // 같은 프로젝트면 스킵
+      if (this.currentProjectId === projectId) return;
+      // 이미 로딩 중이면 그 Promise 그대로 반환
+      if (this.loadingProjectId === projectId && this.loadingPromise) {
+        return this.loadingPromise;
+      }
+
+      // 새로운 로딩 시작
+      this.loadingProjectId = projectId;
+
+      this.loadingPromise = (async () => {
+        try {
+          const pStore = useProjectStore();
+          const selectedProject = computed(() => pStore.selectedProject);
+
+          // sessionStorage 저장
+          sessionStorage.setItem(
+            'project',
+            JSON.stringify({
+              selectedProject: {
+                id: projectId,
+                title: selectedProject?.title,
+                startDate: selectedProject?.startDate,
+                endDate: selectedProject?.endDate
+              }
+            })
+          );
+
+          // 초기화
+          this.projectPermissions = [];
+          this.projectRoles = [];
+
+          // API 호출
+          await Promise.all([this.findPermissionsByProject(projectId), this.findRolesByProject(projectId)]);
+
+          // 완료 처리
+          this.currentProjectId = projectId;
+        } finally {
+          // 초기화
+          this.loadingProjectId = null;
+          this.loadingPromise = null;
+        }
+      })();
+
+      return this.loadingPromise;
+    }
+  },
+  persist: true
+});

@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.beez.beez.roles.mapper.RolesMapper">
+
+  <!-- 역할 목록 조회 -->
+  <select id="findAllRoles" resultType="com.beez.beez.roles.dto.RoleListResponse">
+    SELECT r.id,
+           r.name,
+           (SELECT LISTAGG(p.name, ', ') WITHIN GROUP (ORDER BY p.name)
+            FROM   permission_mapping pm
+            JOIN   permission p ON pm.perm_id = p.id
+            WHERE  pm.role_id = r.id ) AS perNames,
+           (SELECT COUNT(*)
+            FROM   role_mapping
+            WHERE  role_id = r.id) AS useCount
+    FROM roles r
+    WHERE id != 'ROLE0001' AND id != 'ROLE0003'
+    ORDER BY id ASC
+  </select>
+
+  <!-- 역할 상세 조회 -->
+  <resultMap id="roleDetailMap" type="com.beez.beez.roles.dto.RoleDetailResponse">
+    <id property="id" column="id"/>
+    <result property="name" column="name"/>
+    <result property="isAssignee" column="is_assignee"/>
+    <collection property="perIds" ofType="String">
+      <result column="perm_id"/>
+    </collection>
+  </resultMap>
+
+  <select id="findByRoleIdRole" resultMap="roleDetailMap">
+    SELECT r.id,
+           r.name,
+           r.is_assignee,
+           pm.perm_id
+    FROM   roles r
+    LEFT OUTER JOIN permission_mapping pm ON r.id = pm.role_id
+    WHERE  r.id = #{id}
+  </select>
+
+  <select id="isProjectMember" resultType="int">
+    SELECT COUNT(*)
+    FROM project_member
+    WHERE user_id = #{userId}
+    AND project_id = #{projectId}
+    AND is_delete = 'F0'
+  </select>
+
+  <!-- 프로젝트별 권한 조회 -->
+<!--  <select id="findPermissionsByProject" resultType="String">-->
+<!--    SELECT DISTINCT-->
+<!--           pm.perm_id-->
+<!--    FROM   role_mapping rm-->
+<!--    JOIN   project_member pmbr ON pmbr.id = rm.member_id-->
+<!--    JOIN   permission_mapping pm ON rm.role_id = pm.role_id-->
+<!--    WHERE  pmbr.user_id = #{userId}-->
+<!--           AND pmbr.project_id = #{projectId}-->
+<!--           AND pmbr.is_delete = 'F0'-->
+<!--           AND rm.is_delete = 'F0'-->
+<!--  </select>-->
+
+  <select id="findPermissionsByProject" resultType="com.beez.beez.roles.dto.ProjectPermissionResponse">
+    SELECT DISTINCT
+           p.id,
+           p.name
+    FROM role_mapping rm
+    JOIN project_member pmbr ON pmbr.id = rm.member_id
+    JOIN permission_mapping pm ON rm.role_id = pm.role_id
+    JOIN permission p ON pm.perm_id = p.id
+    WHERE pmbr.user_id = #{userId}
+      AND pmbr.project_id = #{projectId}
+      AND pmbr.is_delete = 'F0'
+      AND rm.is_delete = 'F0'
+    ORDER BY p.id ASC
+  </select>
+
+  <!-- 프로젝트별 역할 조회 -->
+  <select id="findRolesByProject" resultType="com.beez.beez.roles.dto.ProjectRoleResponse">
+    SELECT r.id,
+           r.name
+    FROM role_mapping rm
+    JOIN roles r ON rm.role_id = r.id
+    JOIN project_member pm ON pm.id = rm.member_id
+    WHERE pm.user_id = #{userId}
+      AND pm.project_id = #{projectId}
+      AND pm.is_delete = 'F0'
+      AND rm.is_delete = 'F0'
+    ORDER BY r.id DESC
+  </select>
+
+  <!-- 역할 이름 중복 체크 -->
+  <select id="countByName" resultType="int">
+    SELECT COUNT(*)
+    FROM   roles
+    WHERE  name = #{name}
+  </select>
+
+  <!-- 역할 이름 중복 체크 -> 같은 id 비교 제외 -->
+  <select id="countByNameExcludingMe" resultType="int">
+    SELECT COUNT(*)
+    FROM   roles
+    WHERE  name = #{name} AND id != #{id}
+  </select>
+
+  <!-- 새 역할 기본 정보 등록 -->
+  <insert id="insertRoles" parameterType="com.beez.beez.roles.repository.Roles">
+    <selectKey keyProperty="id" resultType="string" order="BEFORE">
+      SELECT BEEZ.generate_pk_auto('roles') FROM dual
+    </selectKey>
+
+    INSERT INTO roles (
+    id,
+    name,
+    is_assignee)
+    VALUES (
+    #{id},
+    #{name},
+    #{isAssignee})
+  </insert>
+
+  <!-- 역할 수정(이름, 권한 등) -->
+  <update id="updateByIdRoles">
+    UPDATE roles
+    SET    name = #{dto.name}, is_assignee = #{dto.isAssignee}
+    WHERE  id = #{id}
+
+  </update>
+
+  <!-- 역할 삭제 -->
+  <delete id="deleteByIdRoles" >
+    DELETE FROM roles WHERE id = #{id}
+  </delete>
+
+  <!-- 역할 복사 -->
+  <update id="copyRoles" statementType="CALLABLE">
+    <selectKey keyProperty="newId" resultType="string" order="BEFORE">
+      SELECT BEEZ.generate_pk_auto('roles') FROM dual
+    </selectKey>
+
+    { call BEEZ.COPY_ROLE(
+      #{originId},
+      #{newId},
+      #{newName}
+    ) }
+  </update>
+</mapper>

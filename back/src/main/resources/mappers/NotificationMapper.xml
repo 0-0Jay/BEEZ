@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.beez.beez.websocket.mapper.NotificationMapper">
+  <update id="readNotification">
+    UPDATE notifications
+    SET status = 'G0'
+    WHERE id = #{id}
+  </update>
+  
+  <update id="readAllNotification">
+    UPDATE notifications
+    SET status = 'G0'
+    WHERE user_id = #{userId}
+  </update>
+  
+  <select id="findNotification" resultType="NotificationResponse">
+    SELECT *
+    FROM
+      (SELECT *
+       FROM notifications
+       WHERE user_id = #{userId}
+       ORDER BY created_on DESC)
+    WHERE ROWNUM = 1
+  </select>
+  
+  <select id="findAllNotification" resultType="NotificationResponse">
+    SELECT n.id, n.content, n.created_on, n.status, n.link, n.project_id, p.title, p.start_date, p.end_date
+    FROM notifications n
+    JOIN project p ON n.project_id = p.id
+    WHERE n.user_id = #{userId}
+    ORDER BY n.id DESC
+  </select>
+</mapper>

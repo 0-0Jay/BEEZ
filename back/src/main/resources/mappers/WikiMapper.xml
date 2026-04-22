@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.beez.beez.wiki.mapper.WikiMapper">
+  
+  <insert id="insertWikiVersion">
+    <selectKey keyProperty="versionId" resultType="string" order="BEFORE">
+      SELECT BEEZ.generate_pk_auto('wiki_version') FROM dual
+    </selectKey>
+    
+    INSERT INTO wiki_version
+    (
+    version_id,
+    content,
+    user_id,
+    created_on,
+    wiki_id,
+    description,
+    version_name,
+    links,
+    wiki_info
+    )
+    
+    VALUES
+    (
+    #{versionId},
+    #{content},
+    #{userId},
+    SYSTIMESTAMP,
+    #{wikiId},
+    #{description},
+    #{versionName},
+    #{links},
+    #{wikiInfo}
+    )
+  </insert>
+  
+  <insert id="insertWiki">
+    <selectKey keyProperty="id" resultType="string" order="BEFORE">
+      SELECT BEEZ.generate_pk_auto('wiki') FROM dual
+    </selectKey>
+    
+    INSERT INTO wiki (id, project_id, version_id)
+    VALUES (
+    #{id},
+    #{projectId},
+    #{versionId}
+    )
+  </insert>
+  
+  <!-- 버전 업 위함 -->
+  <update id="updateWikiIdInVersion">
+    UPDATE WIKI_VERSION
+    SET WIKI_ID = #{wikiId}
+    WHERE VERSION_ID = #{versionId}
+  </update>
+  
+  <!--wiki테이블 최신화-->
+  <update id="updateWiki" >
+    UPDATE WIKI
+    SET VERSION_ID = #{versionId}
+    WHERE ID = #{id}
+  </update>
+  
+  <!--히스토리 기능 : 프로젝트당 위키아이디 별로 버전 목록 조회 -->
+  <select id="findWikiVersionList" >
+    SELECT
+    V.VERSION_ID,
+    V.CONTENT,
+    V.USER_ID,
+    U.NAME AS USER_NAME,
+    V.CREATED_ON,
+    V.WIKI_ID,
+    V.DESCRIPTION,
+    V.VERSION_NAME,
+    V.LINKS,
+    V.WIKI_INFO
+    FROM WIKI_VERSION V
+    LEFT JOIN USERS U ON V.USER_ID = U.ID
+    WHERE WIKI_ID = #{wikiId}
+    ORDER BY CREATED_ON DESC
+  </select>
+  
+  <!--화면에 출력하는 프로젝트별 최신 위키 내용-->
+  
+  
+  
+  
+  
+  <select id="findWikiByProjectId">
+    SELECT
+    W.ID,
+    W.PROJECT_ID,
+    W.VERSION_ID,
+    V.CONTENT,
+    V.VERSION_NAME,
+    V.CREATED_ON
+    FROM WIKI W
+    LEFT JOIN WIKI_VERSION V ON W.VERSION_ID = V.VERSION_ID
+    WHERE W.PROJECT_ID = #{projectId}
+    ORDER BY V.CREATED_ON DESC
+  </select>
+  
+  <!-- 위키 id에 따라 최신 버전을 가져옴-->
+  <select id="findLatestVersion" >
+    SELECT
+        V.VERSION_ID,
+        V.CONTENT,
+        V.USER_ID,
+        U.NAME AS USER_NAME,
+        V.CREATED_ON,
+        V.WIKI_ID,
+        V.DESCRIPTION,
+        V.VERSION_NAME,
+        V.LINKS,
+        V.WIKI_INFO
+    FROM WIKI W
+    JOIN WIKI_VERSION V ON W.VERSION_ID = V.VERSION_ID
+    LEFT JOIN USERS U ON V.USER_ID = U.ID
+    WHERE W.ID = #{wikiId}
+  </select>
+  
+  <!--이건 헤더 부분에 출력되는거사러 -->
+  <!-- 위키 화면에 프로젝트 관련 정보를 뿌려주기 위함-->
+  <select id="findProjectById" >
+    SELECT
+      p.id,
+      p.title,
+      p.description,
+      p.parent_id,
+      p.created_on,
+      p.start_date,
+      p.end_date,
+      p.status,
+      p.user_id,
+      u.name AS userName
+    FROM project p
+    LEFT JOIN users u ON p.user_id = u.id
+    WHERE p.id = #{projectId}
+  </select>
+  
+  
+</mapper>

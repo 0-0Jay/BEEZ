@@ -1,0 +1,119 @@
+package com.beez.beez.users.service.impl;
+
+import com.beez.beez.users.dto.UserListResponse;
+import com.beez.beez.users.dto.UserRegisterRequest;
+import com.beez.beez.users.dto.UserSearchRequest;
+import com.beez.beez.users.dto.UserUpdateRequest;
+import com.beez.beez.users.mapper.UsersMapper;
+import com.beez.beez.users.repository.Users;
+import com.beez.beez.users.service.MailService;
+import com.beez.beez.users.service.UsersService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.security.SecureRandom;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Transactional
+@RequiredArgsConstructor
+@Service
+public class UsersServiceImpl implements UsersService {
+
+  private final UsersMapper usersMapper;
+  private final MailService mailService;
+  private final PasswordEncoder passwordEncoder;
+
+  // 초기 비밀번호 관련
+  // 사용할 문자셋 (숫자 + 영문 대소문자)
+  private static final String CHAR_SET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  private static final SecureRandom sr = new SecureRandom();
+
+  // 사용자 목록 조회
+  @Override
+  public List<UserListResponse> findAllUsers(UserSearchRequest search) {
+    if (search.getStartDate() != null && search.getEndDate() != null) {
+      if (search.getStartDate().isAfter(search.getEndDate())) {
+        throw new IllegalArgumentException("시작일이 종료일보다 늦을 수 없습니다.");
+      }
+    }
+    return usersMapper.findAllUsers(search);
+  }
+
+  // 사용자 등록 시 자동생성 될 정보 생성
+  @Override
+  public Map<String, String> getInitPw() {
+    // 초기 비밀번호 생성
+    StringBuilder sb = new StringBuilder(8);
+    for(int i = 0; i < 8; i++) {
+      sb.append(CHAR_SET.charAt(sr.nextInt(CHAR_SET.length())));
+    }
+    String initPw = sb.toString();
+
+    Map<String, String> result = new HashMap<>();
+    result.put("password", initPw);
+
+    return result;
+  }
+
+  // 이메일 중복체크
+  @Override
+  public boolean checkEmailExists(String email) {
+    return usersMapper.checkEmailExists(email) > 0;
+  }
+
+  // 사용자 등록
+  @Override
+  public void insertUser(UserRegisterRequest dto){
+    // 이메일 중복 체크
+    if (usersMapper.checkEmailExists(dto.getEmail()) > 0) {
+      throw new RuntimeException("이미 사용 중인 이메일입니다: " + dto.getEmail());
+    }
+
+    // 암호화 전 비밀번호
+    String rawPassword = dto.getPassword();
+
+    // dto -> entity 변환
+    Users user = dto.toEntity();
+
+    // 비밀번호 암호화
+    String encodedPw = passwordEncoder.encode(dto.getPassword());
+    user.setPassword(encodedPw);
+
+    usersMapper.insertUser(user);
+
+    // 메일 발송
+    mailService.sendWelcomeEmail(user.getId(), user.getEmail(), dto.getName(), rawPassword);
+  }
+
+  @Override
+  public void updateUser(UserUpdateRequest dto, String id) {
+    // 로그인 정보 가져오기
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    String loginId = auth.getName();
+
+    // 관리자인지
+    boolean isAdmin = auth.getAuthorities().stream()
+      .anyMatch(a->a.getAuthority().equals("ROLE0001"));
+
+    if(!loginId.equals(id) && !isAdmin){
+      throw new RuntimeException("수정 권한이 없습니다.");
+    }
+
+    // 비밀번호가 입력되었을 때만 암호화
+    if (dto.getNewPassword() != null && !dto.getNewPassword().trim().isEmpty()) {
+      String encodedPw = passwordEncoder.encode(dto.getNewPassword());
+      dto.setNewPassword(encodedPw);
+    } else {
+      dto.setNewPassword(null);
+    }
+
+    usersMapper.updateUser(dto, id);
+  }
+
+}

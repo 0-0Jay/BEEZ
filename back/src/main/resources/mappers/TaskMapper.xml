@@ -1,0 +1,399 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.beez.beez.task.mapper.TaskMapper">
+  <select id="findTaskList" resultType="TaskListResponse">
+    SELECT t.id,
+           t.title,
+           t.user_id,
+           u.name AS user_name,
+           t.type,
+           t.category,
+           t.workflow,
+           t.priority,
+           t.planned_start,
+           t.planned_end,
+           CASE
+             WHEN EXISTS (
+               SELECT 1 FROM task ch
+               WHERE ch.parent_id = t.id AND ch.status = 'T1'
+             )
+               THEN t.sub_progress
+             ELSE t.progress
+             END AS progress,
+           t.parent_id,
+           t.version_id,
+           t.is_public,
+           t.creator
+    FROM task t
+    JOIN users u ON t.user_id = u.id
+    WHERE t.project_id = #{projectId} AND t.status = 'T1'
+  </select>
+  
+  <select id="findMemberList" resultType="MemberResponse">
+    SELECT p.user_id AS id,
+           u.name,
+           r.name AS role,
+           r.is_assignee
+    FROM project_member p
+    JOIN users u ON p.user_id = u.id
+    JOIN role_mapping rm ON p.id = rm.member_id
+    JOIN roles r ON r.id = rm.role_id
+    WHERE p.project_id = #{projectId} AND rm.is_delete = 'F0' AND p.is_delete = 'F0' AND r.id != 'ROLE0001'
+  </select>
+  
+  <select id="findCommonCodeList" resultType="CommonCodeResponse">
+    SELECT group_value AS cgroup,
+           com_value AS id,
+           com_name AS name
+    FROM common_code
+    WHERE is_use = 1
+  </select>
+  
+  <select id="findVersionList" parameterType="TaskVersionResponse" statementType="CALLABLE">
+    {
+      CALL proc_find_version(
+      #{projectId,     mode=IN,  jdbcType=VARCHAR},
+      #{version,       mode=OUT, jdbcType=CURSOR,  javaType=java.sql.ResultSet, resultMap=versionResultMap,  typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler}
+           )
+      }
+  </select>
+  
+  <resultMap id="versionResultMap" type="com.beez.beez.task.dto.VersionResponse">
+    <result property="id" column="id" />
+    <result property="name" column="name" />
+    <result property="defaultVersion" column="default_version" />
+  </resultMap>
+  
+  <select id="insertTask" parameterType="TaskRequest" statementType="CALLABLE">
+    {
+      CALL proc_insert_task(
+        #{projectId,     mode=IN,  jdbcType=VARCHAR},
+        #{versionId,     mode=IN,  jdbcType=VARCHAR},
+        #{title,         mode=IN,  jdbcType=VARCHAR},
+        #{description,   mode=IN,  jdbcType=VARCHAR},
+        #{userId,        mode=IN,  jdbcType=VARCHAR},
+        #{type,          mode=IN,  jdbcType=VARCHAR},
+        #{category,      mode=IN,  jdbcType=VARCHAR},
+        #{workflow,      mode=IN,  jdbcType=VARCHAR},
+        #{priority,      mode=IN,  jdbcType=VARCHAR},
+        #{plannedStart,  mode=IN,  jdbcType=DATE},
+        #{plannedEnd,    mode=IN,  jdbcType=DATE},
+        #{actualStart,   mode=IN,  jdbcType=DATE},
+        #{actualEnd,     mode=IN,  jdbcType=DATE},
+        #{estimatedTime, mode=IN,  jdbcType=NUMERIC},
+        #{progress,      mode=IN,  jdbcType=NUMERIC},
+        #{parentId,      mode=IN,  jdbcType=VARCHAR},
+        #{isPublic,      mode=IN,  jdbcType=VARCHAR},
+        #{creator,       mode=IN,  jdbcType=VARCHAR},
+        #{fileDetails,   mode=IN,  jdbcType=ARRAY,  typeHandler=com.beez.beez.config.OracleTypeHandler.FileDetailTypeHandler},
+        #{id,            mode=OUT, jdbcType=VARCHAR}
+      )
+    }
+  </select>
+  
+  <select id="findTaskDetail" statementType="CALLABLE">
+    {
+      CALL GET_TASK_DETAIL(
+        #{id,            mode=IN,  jdbcType=VARCHAR},
+        #{status,        mode=OUT, jdbcType=VARCHAR},
+        #{versionId,     mode=OUT, jdbcType=VARCHAR},
+        #{versionName,   mode=OUT, jdbcType=VARCHAR},
+        #{title,         mode=OUT, jdbcType=VARCHAR},
+        #{description,   mode=OUT, jdbcType=VARCHAR},
+        #{userId,        mode=OUT, jdbcType=VARCHAR},
+        #{name,          mode=OUT, jdbcType=VARCHAR},
+        #{type,          mode=OUT, jdbcType=VARCHAR},
+        #{category,      mode=OUT, jdbcType=VARCHAR},
+        #{workflow,      mode=OUT, jdbcType=VARCHAR},
+        #{priority,      mode=OUT, jdbcType=VARCHAR},
+        #{reject,        mode=OUT, jdbcType=VARCHAR},
+        #{plannedStart,  mode=OUT, jdbcType=TIMESTAMP},
+        #{plannedEnd,    mode=OUT, jdbcType=TIMESTAMP},
+        #{actualStart,   mode=OUT, jdbcType=TIMESTAMP},
+        #{actualEnd,     mode=OUT, jdbcType=TIMESTAMP},
+        #{estimatedTime, mode=OUT, jdbcType=NUMERIC},
+        #{progress,      mode=OUT, jdbcType=NUMERIC},
+        #{subProgress,   mode=OUT, jdbcType=NUMERIC},
+        #{parentId,      mode=OUT, jdbcType=VARCHAR},
+        #{parentName,    mode=OUT, jdbcType=VARCHAR},
+        #{isPublic,      mode=OUT, jdbcType=VARCHAR},
+        #{creator,       mode=OUT, jdbcType=VARCHAR},
+        #{fileId,        mode=OUT, jdbcType=VARCHAR},
+        #{journalList,   mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=journalResultMap,  typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
+        #{timeList,      mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=timeResultMap,     typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
+        #{replyList,     mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=replyResultMap,    typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
+        #{fileList,      mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=fileResultMap,     typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
+        #{childTaskList, mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=childResultMap,    typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler},
+        #{linkedTaskList,mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=linkedResultMap,   typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler}
+      )
+    }
+  </select>
+  
+  <resultMap id="journalResultMap" type="com.beez.beez.task.dto.JournalResponse">
+    <result property="id" column="id" />
+    <result property="userId" column="user_id" />
+    <result property="name" column="name" />
+    <result property="createdOn" column="created_on" />
+    <result property="fieldName" column="field_name" />
+    <result property="oldValue" column="old_value" />
+    <result property="newValue" column="new_value" />
+  </resultMap>
+  
+  <resultMap id="timeResultMap" type="com.beez.beez.task.dto.TaskTimeResponse">
+    <result property="id" column="id" />
+    <result property="userId" column="user_id"/>
+    <result property="name" column="name"/>
+    <result property="taskStart" column="task_start" />
+    <result property="spent" column="spent" />
+    <result property="description" column="description" />
+    <result property="progress" column="progress" />
+    <result property="activityType" column="activity_type" />
+  </resultMap>
+  
+  <resultMap id="replyResultMap" type="com.beez.beez.task.dto.TaskReplyResponse">
+    <result property="id" column="id" />
+    <result property="userId" column="user_id" />
+    <result property="name" column="name" />
+    <result property="content" column="content" />
+    <result property="createdOn" column="created_on" />
+    <result property="editedOn" column="edited_on" />
+    <result property="parentId" column="parent_id" />
+  </resultMap>
+  
+  <resultMap id="fileResultMap" type="com.beez.beez.file.dto.FileDetailResponse">
+    <result property="id" column="id" />
+    <result property="name" column="original_name" />
+    <result property="storedName" column="stored_name" />
+    <result property="extension" column="extension" />
+    <result property="size" column="file_size" />
+  </resultMap>
+  
+  <resultMap id="childResultMap" type="com.beez.beez.task.dto.TaskListResponse">
+    <result property="id" column="id" />
+    <result property="title" column="title" />
+    <result property="workflow" column="workflow" />
+    <result property="plannedEnd" column="planned_end" />
+    <result property="progress" column="progress" />
+  </resultMap>
+  
+  <resultMap id="linkedResultMap" type="com.beez.beez.task.dto.TaskRelationResponse">
+    <result property="id" column="id" />
+    <result property="title" column="title" />
+    <result property="workflow" column="workflow" />
+    <result property="plannedEnd" column="planned_end" />
+    <result property="progress" column="progress" />
+    <result property="relationType" column="relation_type" />
+    <result property="relationId" column="relation_id"/>
+  </resultMap>
+
+  <insert id="insertTaskReply" parameterType="TaskReplyRequest">
+    <selectKey keyProperty="id,taskUser,projectId" resultType="TaskReplyRequest" order="BEFORE">
+      SELECT BEEZ.generate_pk_auto('task_reply') AS id, user_id AS task_user, project_id FROM task WHERE id = #{taskId}
+    </selectKey>
+      INSERT INTO task_reply(id, task_id, user_id, content, created_on, parent_id)
+      VALUES(#{id}, #{taskId}, #{userId}, #{content}, SYSTIMESTAMP, #{parentId})
+  </insert>
+  
+  <update id="updateTaskReply" parameterType="TaskReplyRequest">
+    UPDATE task_reply
+    SET content = #{content}, edited_on = SYSTIMESTAMP
+    WHERE id=#{id}
+  </update>
+  
+  <delete id="deleteTaskReply">
+    DELETE FROM task_reply
+    WHERE id=#{id}
+  </delete>
+  
+  <select id="updateTask" parameterType="TaskRequest" statementType="CALLABLE">
+    {
+      CALL proc_update_task(
+        #{id,             mode=IN, jdbcType=VARCHAR},
+        #{editor,         mode=IN, jdbcType=VARCHAR},
+        #{fileId,         mode=IN, jdbcType=VARCHAR},
+        #{fileDetails,    mode=IN, jdbcType=ARRAY, typeHandler=com.beez.beez.config.OracleTypeHandler.FileDetailTypeHandler},
+        #{deletedFileIds, mode=IN, jdbcType=ARRAY, typeHandler=com.beez.beez.config.OracleTypeHandler.VarcharTypeHandler},
+        #{journals,       mode=IN, jdbcType=ARRAY, typeHandler=com.beez.beez.config.OracleTypeHandler.JournalTypeHandler}
+      )
+    }
+  </select>
+  
+  <select id="findJournalDetailList" resultType="JournalDetailResponse">
+    SELECT id, field_name, old_value, new_value
+    FROM journal_details
+    WHERE journal_id = #{id}
+  </select>
+  
+  <select id="insertTaskRelation" parameterType="TaskRelationRequest" statementType="CALLABLE">
+    {
+      CALL proc_task_link(
+        #{taskId,          mode=IN, jdbcType=VARCHAR},
+        #{relatedTaskId,   mode=IN, jdbcType=VARCHAR},
+        #{relationType,    mode=IN, jdbcType=VARCHAR},
+        #{reverseType,     mode=IN, jdbcType=VARCHAR}
+      )
+    }
+  </select>
+  
+  <update id="deleteTask">
+    UPDATE task
+    SET status = 'T0'
+    WHERE id IN (
+      SELECT id
+      FROM task
+      START WITH id = #{id}
+      CONNECT BY PRIOR id = parent_id
+    )
+  </update>
+  
+  <select id="copySubTasks" statementType="CALLABLE">
+    {
+      CALL proc_copy_sub(
+        #{taskId,         mode=IN, jdbcType=VARCHAR},
+        #{copiedTaskId,   mode=IN, jdbcType=VARCHAR}
+      )
+    }
+  </select>
+  
+  <select id="insertTaskTime" parameterType="TaskTimeRequest" statementType="CALLABLE">
+    {
+      CALL proc_insert_time(
+        #{taskId,         mode=IN, jdbcType=VARCHAR},
+        #{taskStart,      mode=IN, jdbcType=TIMESTAMP},
+        #{spent,          mode=IN, jdbcType=NUMERIC},
+        #{description,    mode=IN, jdbcType=VARCHAR},
+        #{progress,       mode=IN, jdbcType=NUMERIC},
+        #{activityType,   mode=IN, jdbcType=VARCHAR},
+        #{userId,         mode=IN, jdbcType=VARCHAR}
+      )
+    }
+  </select>
+  
+  <select id="deleteTaskLink" statementType="CALLABLE">
+    {
+      CALL proc_delete_link(
+        #{id,         mode=IN, jdbcType=VARCHAR}
+      )
+    }
+  </select>
+  
+  <select id="calcSubProgress" statementType="CALLABLE">
+    {
+      CALL proc_calc_progress(
+        #{taskId,     mode=IN, jdbcType=VARCHAR}
+      )
+    }
+  </select>
+  
+  <select id="findTaskOverview" resultType="TaskOverviewResponse">
+    SELECT tt.name AS type,
+           tc.name AS category,
+           cc1.com_name AS priority,
+           u1.name || '(' || t.user_id || ')' AS user_id,
+           u2.name || '(' || t.creator || ')' creator,
+           cc2.com_name AS workflow,
+           NVL(v.name, '없음') AS version_id
+    FROM task t
+    JOIN task_type tt ON tt.id = t.type
+    JOIN task_category tc ON tc.id = t.category
+    JOIN common_code cc1 ON cc1.com_value = t.priority
+    JOIN users u1 ON u1.id = t.user_id
+    JOIN users u2 ON u2.id = t.creator
+    JOIN common_code cc2 ON cc2.com_value = t.workflow
+    LEFT JOIN version v ON v.id = t.version_id
+    WHERE t.project_id = #{id} AND t.status = 'T1'
+    ORDER BY priority
+  </select>
+  
+  <select id="findSpentOverview" resultType="TaskSpentResponse">
+    SELECT s.id,
+           s.task_id,
+           t.title AS task_title,
+           t.project_id,
+           p.title AS project_title,
+           t.type,
+           t.category,
+           s.user_id,
+           u.name,
+           s.description,
+           s.activity_type,
+           s.task_start,
+           s.spent
+    FROM time s
+    JOIN task t ON t.id = s.task_id
+    JOIN project p ON t.project_id = p.id
+    JOIN users u ON u.id = s.user_id
+    WHERE p.id = #{id} OR p.parent_id = #{id}
+  </select>
+  
+  <select id="findGanttData" resultType="GanttDataResponse">
+    SELECT t.id AS task_id,
+           t.title AS task_title,
+           t.project_id,
+           p.title AS project_title,
+           t.version_id,
+           v.name AS version_name,
+           t.user_id,
+           u.name,
+           t.planned_start,
+           t.planned_end,
+           t.actual_start,
+           t.actual_end,
+           cc1.com_name AS priority,
+           cc2.com_name AS workflow,
+           tt.name AS type,
+           tc.name AS category,
+           t.progress,
+           t.sub_progress,
+           t.parent_id
+    FROM task t
+    JOIN project p ON p.id = t.project_id
+    LEFT JOIN version v ON v.id = t.version_id
+    JOIN users u ON u.id = t.user_id
+    JOIN common_code cc1 ON cc1.com_value = t.priority
+    JOIN common_code cc2 ON cc2.com_value = t.workflow
+    JOIN task_type tt ON tt.id = t.type
+    JOIN task_category tc ON tc.id = t.category
+    WHERE (p.id = #{id} OR p.parent_id = #{id}) AND t.status = 'T1'
+  </select>
+  
+  <select id="findGanttRelation" resultType="GanttRelationResponse">
+    SELECT tr.task_id,
+           tr.related_task_id,
+           cc.com_name AS relation_type
+    FROM task_relations tr
+    JOIN common_code cc ON tr.relation_type = cc.com_value
+    JOIN task t ON tr.task_id = t.id
+    JOIN project p ON p.id = t.project_id
+    WHERE (p.id = #{id} OR p.parent_id = #{id}) AND t.status = 'T1'
+  </select>
+
+  <select id="findWorkflow" parameterType="TaskWorkflowRequest" resultType="TaskWorkflowResponse" statementType="CALLABLE">
+    {
+      CALL proc_find_workflow(
+        #{roleId,         mode=IN,  jdbcType=ARRAY, typeHandler=com.beez.beez.config.OracleTypeHandler.VarcharTypeHandler},
+        #{typeId,         mode=IN,  jdbcType=VARCHAR},
+        #{conditionType,  mode=IN,  jdbcType=VARCHAR},
+        #{workflows,      mode=OUT, jdbcType=CURSOR, javaType=java.sql.ResultSet, resultMap=workflowResultMap,   typeHandler=com.beez.beez.config.OracleTypeHandler.CursorTypeHandler}
+      )
+    }
+  </select>
+  
+  <resultMap id="workflowResultMap" type="com.beez.beez.task.dto.TaskWorkflowResponse">
+    <result property="before" column="before" />
+    <result property="after" column="after" />
+    <result property="isAllow" column="is_allow" />
+  </resultMap>
+  
+  <select id="findTaskType" resultType="TaskTypeResponse">
+    SELECT t.id, t.name, t.default_status, t.description,
+           (SELECT COUNT(*) FROM task a WHERE a.type = t.id) AS is_used
+    FROM task_type t
+  </select>
+  
+  <select id="findTaskCategory" resultType="TaskCategoryResponse">
+    SELECT t.id, t.name, t.description,
+           (SELECT COUNT(*) FROM task a WHERE a.category = t.id) AS is_used
+    FROM task_category t
+  </select>
+</mapper>

@@ -1,0 +1,17 @@
+package com.beez.beez.gits.dto;
+
+import lombok.Data;
+
+import java.time.LocalDateTime;
+
+@Data
+public class GitCommitResponse {
+
+  private String commitSha;
+  private String repoId;
+  private String repoName;
+  private String taskId;
+  private String message;
+  private String author;
+  private String commitDate;
+}
