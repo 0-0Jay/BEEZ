@@ -1,11 +1,9 @@
-<div align="center">
-  <table border="0">
-    <tr>
-      <td><img width="55" height="55" alt="image" src="https://github.com/user-attachments/assets/7c9717b4-1d96-4560-9ee2-f6a53053bc65" /></td>
-      <td><h1>PMS 프로젝트 : BEEZ</h1></td>
-    </tr>
-  </table>
-</div>
+<p align="center">
+  <img src="이미지주소" width="55" height="55" style="vertical-align: middle;" />
+  <strong style="font-size: 32px; margin-left: 10px;">
+    PMS 프로젝트 : BEEZ
+  </strong>
+</p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Frontend-Vue.js-42b883?logo=vue.js&logoColor=white" />
