@@ -1,5 +1,5 @@
 <div align="center">
-  <table>
+  <table border="0">
     <tr>
       <td><img width="55" height="55" alt="image" src="https://github.com/user-attachments/assets/7c9717b4-1d96-4560-9ee2-f6a53053bc65" /></td>
       <td><h1>PMS 프로젝트 : BEEZ</h1></td>
