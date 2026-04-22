@@ -67,7 +67,7 @@ onMounted(async () => {
 });
 </script>
 <template>
-  <div class="min-h-screen bg-gray-100 p-6">
+  <div class="min-h-screen bg-white p-6">
     <!-- 헤더 -->
     <div class="mb-8">
       <h1 class="text-2xl font-bold text-gray-800">일감 보고서</h1>
