@@ -23,7 +23,7 @@ let stompClient = null;
 /* ---------------- 웹소켓 연결 ---------------- */
 const connect = () => {
   stompClient = new Client({
-    brokerURL: 'ws://localhost:8888/ws/chat',
+    brokerURL: 'ws://pmsbeez.cloud:8888/ws/chat',
     reconnectDelay: 5000,
     onConnect: () => {
       stompClient.subscribe(`/notification/${userId.value}`, (msg) => {
