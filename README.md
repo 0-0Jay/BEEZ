@@ -1,6 +1,6 @@
 <p align="center">
-  <img src="이미지주소" width="55" height="55" style="vertical-align: middle;" />
-  <strong style="font-size: 32px; margin-left: 10px;">
+  <img width="55" height="55" alt="image" src="https://github.com/user-attachments/assets/5e5e9faa-4e85-4b11-8052-f20d0b0d620a" />
+  <strong>
     PMS 프로젝트 : BEEZ
   </strong>
 </p>
