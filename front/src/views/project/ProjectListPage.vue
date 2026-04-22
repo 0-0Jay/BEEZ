@@ -205,7 +205,7 @@ const actionItems = computed(() => [
     }
   },
   {
-    label: '태스크 개요',
+    label: '일감 보고서',
     icon: 'pi pi-list',
     command: () => goToOverview(selectedRow.value)
   }

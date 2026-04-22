@@ -18,6 +18,8 @@ public interface VersionMapper {
   
   //버전 삭제
   int deleteVersion(String id);
+  int hasActiveTask(String id);
+  int isDefaultVersionOfActiveProject(String id);
   
   //버전 목록조회(필터링)
   List<VersionListResponse> selectVersionList(VersionFilterRequest filter);
