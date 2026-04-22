@@ -1,7 +1,12 @@
-<div align="center"><img width="54" height="59" alt="image" src="https://github.com/user-attachments/assets/1ecaa954-d01a-41c5-ad09-fe08b3733b7d" />
+<div align="center">
+  <table>
+    <tr>
+      <td><img width="55" height="55" alt="image" src="https://github.com/user-attachments/assets/7c9717b4-1d96-4560-9ee2-f6a53053bc65" /></td>
+      <td><h1>PMS 프로젝트 : BEEZ</h1></td>
+    </tr>
+  </table>
 </div>
 
-<h1 align="center">PMS 프로젝트 : BEEZ</h1>
 <p align="center">
   <img src="https://img.shields.io/badge/Frontend-Vue.js-42b883?logo=vue.js&logoColor=white" />
   <img src="https://img.shields.io/badge/Backend-Spring-6DB33F?logo=Spring&logoColor=white"/>
