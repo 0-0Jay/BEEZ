@@ -1,7 +1,9 @@
+<div align="center" style="display:flex">
   <img width="55" height="55" alt="image" src="https://github.com/user-attachments/assets/fdd1f93d-f66b-4ab4-8dc0-3442d8316394" />
-  <strong>
+  <h1>
     PMS 프로젝트 : BEEZ
-  </strong>
+  </h1>
+</div>
 
 
 <p align="center">
