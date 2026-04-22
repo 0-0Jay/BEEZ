@@ -1,6 +1,6 @@
 
-<img width="50" height="50" alt="logo" src="https://github.com/user-attachments/assets/ddda8485-081b-4d0a-ac01-849188b6a2f2" />
-<h1 align="center">PMS 프로젝트 : BEEZ</h1>
+
+<h1 align="center"><img width="50" height="50" alt="logo" src="https://github.com/user-attachments/assets/ddda8485-081b-4d0a-ac01-849188b6a2f2" />PMS 프로젝트 : BEEZ</h1>
 <p align="center">
   <img src="https://img.shields.io/badge/Frontend-Vue.js-42b883?logo=vue.js&logoColor=white" />
   <img src="https://img.shields.io/badge/Backend-Spring-6DB33F?logo=Spring&logoColor=white"/>
