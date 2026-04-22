@@ -1,9 +1,8 @@
-<p align="center">
-  <img width="55" height="55" alt="image" src="https://github.com/user-attachments/assets/5e5e9faa-4e85-4b11-8052-f20d0b0d620a" />
+  <img width="55" height="55" alt="image" src="https://github.com/user-attachments/assets/fdd1f93d-f66b-4ab4-8dc0-3442d8316394" />
   <strong>
     PMS 프로젝트 : BEEZ
   </strong>
-</p>
+
 
 <p align="center">
   <img src="https://img.shields.io/badge/Frontend-Vue.js-42b883?logo=vue.js&logoColor=white" />
