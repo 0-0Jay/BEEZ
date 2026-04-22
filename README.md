@@ -1,4 +1,5 @@
-<div align="center"><img width="306" height="204" alt="팀 비즈 로고1" src="https://github.com/user-attachments/assets/97f4933b-5b6d-4e05-b9ad-b76fff66d615" /></div>
+<div align="center"><img width="54" height="59" alt="image" src="https://github.com/user-attachments/assets/1ecaa954-d01a-41c5-ad09-fe08b3733b7d" />
+</div>
 
 <h1 align="center">PMS 프로젝트 : BEEZ</h1>
 <p align="center">
