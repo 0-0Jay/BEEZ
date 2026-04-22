@@ -98,24 +98,31 @@ public class VersionServiceImpl implements VersionService {
   )
   @Override
   public void deleteVersion(String id, String projectId, String versionName) {
+    // 하위 프로젝트 검증 (기존 유지)
     ProjectInfoResponse projectInfo = projectMapper.findById(projectId);
-    
     if (projectInfo.getParentId() != null) {
       throw new IllegalArgumentException("하위 프로젝트에서는 버전을 삭제할 수 없습니다.");
     }
     
-    int result = versionMapper.deleteVersion(id);
-    
-    if (result == 0) {
-      throw new IllegalArgumentException("일감에서 사용 중인 버전은 삭제할 수 없습니다.");
+    // 진행 중인 태스크 검증 (신규)
+    int activeTaskCount = versionMapper.hasActiveTask(id);
+    if (activeTaskCount > 0) {
+      throw new IllegalArgumentException("진행 중인 일감이 있는 버전은 삭제할 수 없습니다.");
     }
     
-    //기본버전이었으면 null로
-    ProjectInfoResponse project = projectMapper.findById(projectId);
-    if (id.equals(project.getDefaultVersionId())) {
+    // 활성 프로젝트 기본버전 검증 (신규)
+    int isDefault = versionMapper.isDefaultVersionOfActiveProject(id);
+    if (isDefault > 0) {
+      throw new IllegalArgumentException("활성 프로젝트의 기본 버전은 삭제할 수 없습니다.");
+    }
+    
+    // 삭제 실행
+    versionMapper.deleteVersion(id);
+    
+    // 기본버전이었으면 null로
+    if (id.equals(projectInfo.getDefaultVersionId())) {
       projectMapper.updateDefaultVersion(projectId, null);
     }
-
   }
   
   //버전 목록 조회(필터링)

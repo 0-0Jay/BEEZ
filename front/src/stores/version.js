@@ -55,7 +55,9 @@ export const useVersionStore = defineStore('version', {
           }
         });
       } catch (error) {
-        throw new Error(error.response?.data);
+        // 서버에서 내려온 메시지 추출
+        const message = error.response?.data?.message ?? error.response?.data ?? '버전 삭제에 실패했습니다.';
+        throw new Error(message);
       }
     },
 

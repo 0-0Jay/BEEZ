@@ -43,17 +43,27 @@
     WHERE id = #{id}
   </update>
   
+  <!-- 진행 중인 task가 있는지 확인 -->
+  <select id="hasActiveTask" resultType="int">
+    SELECT COUNT(*)
+    FROM task
+    WHERE version_id = #{id}
+      AND status = 'T1'
+  </select>
+  
+  <!-- 활성 프로젝트의 기본 버전인지 확인 -->
+  <select id="isDefaultVersionOfActiveProject" resultType="int">
+    SELECT COUNT(*)
+    FROM project
+    WHERE default_version_id = #{id}
+      AND status = 'K1'
+  </select>
+  
   <!-- 버전 삭제 -->
   <update id="deleteVersion">
     UPDATE version
     SET is_delete = 'F1'
     WHERE id = #{id}
-    AND id NOT IN (
-        SELECT version_id
-        FROM task
-        WHERE version_id = #{id}
-        AND status = 'T1'
-      )
   </update>
   
   <!-- 버전 목록 조회 (필터 겸용) -->
