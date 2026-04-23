@@ -1224,3 +1224,68 @@ COMMIT;
 ALTER TABLE project MODIFY pm_id NOT NULL;
 COMMENT ON COLUMN project.pm_id IS '담당PM';
 
+SELECT
+    ui.table_owner                              AS "DB",
+    ui.table_name                               AS "테이블ID",
+    ui.table_name                               AS "테이블명",
+    CASE 
+        WHEN uc.constraint_type = 'P' THEN 'PRIMARY'
+        ELSE ui.index_name
+    END                                         AS "인덱스명",
+    uic.column_name                             AS "컬럼ID",
+    utc.data_type                               AS "데이터타입",
+    utc.data_length                             AS "데이터사이즈",
+    CASE WHEN uc.constraint_type = 'P' THEN 'Y' ELSE 'N' END AS "PRIMARY",
+    CASE WHEN ui.uniqueness = 'UNIQUE' THEN 'Y' ELSE 'N' END AS "UNIQUE",
+    uic.column_position                         AS "컬럼순서"
+FROM user_indexes ui
+JOIN user_ind_columns uic
+    ON ui.index_name = uic.index_name
+   AND ui.table_name = uic.table_name
+JOIN user_tab_columns utc
+    ON uic.table_name = utc.table_name
+   AND uic.column_name = utc.column_name
+LEFT JOIN user_constraints uc
+    ON ui.index_name = uc.index_name
+   AND uc.constraint_type = 'P'
+ORDER BY ui.table_name,
+         CASE WHEN uc.constraint_type = 'P' THEN 0 ELSE 1 END,
+         ui.index_name,
+         uic.column_position;
+         
+SELECT COUNT(*)
+FROM user_ind_columns;
+
+
+SELECT
+    ui.table_owner                              AS "DB",
+    ui.table_name                               AS "테이블ID",
+    ui.table_name                               AS "테이블명",
+    CASE 
+        WHEN uc.constraint_type = 'P' THEN 'PRIMARY'
+        ELSE ui.index_name
+    END                                         AS "인덱스명",
+    uic.column_name                             AS "컬럼ID",
+    utc.data_type                               AS "데이터타입",
+    utc.data_length                             AS "데이터사이즈",
+    CASE WHEN uc.constraint_type = 'P' THEN 'Y' ELSE 'N' END AS "PRIMARY",
+    CASE 
+        WHEN uc.constraint_type = 'U' THEN 'Y'
+        WHEN ui.uniqueness = 'UNIQUE' THEN 'Y'
+        ELSE 'N'
+    END AS "UNIQUE",
+    uic.column_position                         AS "컬럼순서"
+FROM user_indexes ui
+JOIN user_ind_columns uic
+  ON ui.index_name = uic.index_name
+ AND ui.table_name = uic.table_name
+JOIN user_tab_columns utc
+  ON uic.table_name = utc.table_name
+ AND uic.column_name = utc.column_name
+LEFT JOIN user_constraints uc
+  ON ui.index_name = uc.index_name
+ AND uc.constraint_type IN ('P','U')
+ORDER BY ui.table_name,
+         CASE WHEN uc.constraint_type = 'P' THEN 0 ELSE 1 END,
+         ui.index_name,
+         uic.column_position
